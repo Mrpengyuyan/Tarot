@@ -1,0 +1,107 @@
+/* Cosmic Nebula Background */
+.cosmic-nebula {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 50% 50%, #1A0B2E 0%, #0A0512 80%);
+  z-index: -2;
+}
+
+.cosmic-nebula::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(ellipse at 20% 30%, rgba(0, 240, 255, 0.1) 0%, transparent 40%),
+    radial-gradient(ellipse at 80% 70%, rgba(212, 175, 55, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(138, 43, 226, 0.1) 0%, transparent 60%);
+  mix-blend-mode: screen;
+}
+
+/* Star Layers using box-shadow (Procedural Generation) */
+.stars-layer-1 {
+  width: 1px;
+  height: 1px;
+  background: transparent;
+  box-shadow: 10vw 20vh #fff, 40vw 60vh #fff, 80vw 10vh #fff, 20vw 80vh #fff, 
+              90vw 90vh #fff, 50vw 50vh #fff, 70vw 30vh #fff, 15vw 45vh #fff, 
+              35vw 85vh #fff, 95vw 40vh #fff, 5vw 95vh #fff, 60vw 15vh #fff,
+              25vw 25vh #fff, 85vw 75vh #fff, 45vw 5vw #fff, 75vw 65vh #fff,
+              2vw 12vh #fff, 18vw 34vh #fff, 32vw 5vh #fff, 55vw 22vh #fff, 
+              78vw 45vh #fff, 83vw 88vh #fff, 67vw 92vh #fff, 42vw 78vh #fff, 
+              12vw 68vh #fff, 8vw 38vh #fff, 28vw 58vh #fff, 48vw 38vh #fff, 
+              68vw 18vh #fff, 98vw 15vh #fff, 91vw 60vh #fff, 88vw 5vw #fff, 
+              72vw 72vh #fff, 58vw 88vh #fff, 38vw 95vh #fff, 22vw 18vh #fff,
+              15vw 75vh #fff, 35vw 20vh #fff, 55vw 45vh #fff, 75vw 10vh #fff, 
+              95vw 75vh #fff, 62vw 62vh #fff, 45vw 55vh #fff, 25vw 40vh #fff, 
+              10vw 90vh #fff, 5vw 60vh #fff;
+  animation: twinkle 4s infinite alternate;
+}
+
+.stars-layer-2 {
+  width: 2px;
+  height: 2px;
+  background: transparent;
+  box-shadow: 15vw 30vh #00F0FF, 55vw 70vh #fff, 85vw 25vh #D4AF37, 25vw 90vh #fff, 
+              92vw 82vh #00F0FF, 40vw 40vh #D4AF37, 65vw 15vh #fff, 12vw 55vh #00F0FF, 
+              48vw 95vh #fff, 88vw 50vh #D4AF37, 8vw 85vh #fff, 50vw 25vh #00F0FF,
+              3vw 40vh #fff, 18vw 8vh #D4AF37, 35vw 75vh #00F0FF, 52vw 12vh #fff, 
+              72vw 58vh #00F0FF, 82vw 12vh #D4AF37, 98vw 35vh #fff, 95vw 95vh #00F0FF, 
+              75vw 85vh #D4AF37, 60vw 35vh #fff, 42vw 65vh #00F0FF, 28vw 22vh #D4AF37, 
+              5vw 15vh #fff, 22vw 60vh #00F0FF, 38vw 8vh #fff, 68vw 80vh #D4AF37, 
+              85vw 65vh #fff, 90vw 20vh #00F0FF, 78vw 30vh #D4AF37, 58vw 58vh #fff,
+              45vw 85vh #00F0FF, 30vw 50vh #D4AF37, 15vw 95vh #fff, 10vw 70vh #00F0FF, 
+              2vw 25vh #D4AF37;
+  animation: twinkle 6s infinite alternate-reverse;
+  opacity: 0.8;
+}
+
+.stars-layer-3 {
+  width: 3px;
+  height: 3px;
+  background: transparent;
+  border-radius: 50%;
+  box-shadow: 30vw 10vh #D4AF37, 70vw 80vh #00F0FF, 10vw 60vh #fff, 90vw 30vh #D4AF37, 
+              45vw 75vh #00F0FF, 80vw 95vh #fff, 15vw 15vh #00F0FF, 35vw 45vh #D4AF37, 
+              60vw 25vh #fff, 85vw 15vh #00F0FF, 95vw 65vh #D4AF37, 75vw 45vh #fff, 
+              55vw 90vh #00F0FF, 25vw 85vh #D4AF37, 5vw 35vh #fff, 20vw 5vh #D4AF37, 
+              40vw 15vh #00F0FF, 65vw 65vh #D4AF37, 85vw 55vh #fff, 50vw 40vh #00F0FF;
+  animation: pulse-glow 8s infinite alternate;
+  opacity: 0.6;
+}
+
+/* Animations */
+@keyframes twinkle {
+  0% { opacity: 0.3; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1.2); }
+}
+
+@keyframes pulse-glow {
+  0% { opacity: 0.4; filter: blur(1px); }
+  100% { opacity: 1; filter: blur(2px) drop-shadow(0 0 4px rgba(212,175,55,0.8)); }
+}
+
+.rotate-slow {
+  transform-origin: center;
+  animation: rotate 60s linear infinite;
+}
+
+.rotate-slow-reverse {
+  transform-origin: center;
+  animation: rotate-reverse 90s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes rotate-reverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}

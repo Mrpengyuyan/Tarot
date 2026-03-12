@@ -1,0 +1,44 @@
+# Python缓存文件
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 虚拟环境
+tarot-env/
+venv/
+env/
+
+# 包安装信息
+*.egg-info/
+dist/
+build/
+
+# 环境变量文件
+.env
+.env.local
+
+# 数据库文件
+*.db
+*.sqlite
+*.sqlite3
+
+# 日志文件
+*.log
+logs/
+
+# IDE文件
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# 临时文件
+*.tmp
+*.temp 
+# generated verification reports
+app/scripts/reports/
+

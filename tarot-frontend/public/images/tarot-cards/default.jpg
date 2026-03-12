@@ -1,0 +1,47 @@
+<svg width="400" height="666" xmlns="http://www.w3.org/2000/svg">
+  <!-- 深色背景 -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#16213e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f0f23;stop-opacity:1" />
+    </linearGradient>
+
+    <radialGradient id="glowGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#d4af37;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#d4af37;stop-opacity:0" />
+    </radialGradient>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="400" height="666" fill="url(#bgGradient)"/>
+
+  <!-- 发光效果 -->
+  <ellipse cx="200" cy="333" rx="150" ry="200" fill="url(#glowGradient)"/>
+
+  <!-- 主边框 -->
+  <rect x="20" y="20" width="360" height="626" fill="none" stroke="#d4af37" stroke-width="3" rx="20"/>
+
+  <!-- 装饰边框 -->
+  <rect x="30" y="30" width="340" height="606" fill="none" stroke="#d4af37" stroke-width="1" stroke-opacity="0.5" rx="16"/>
+  <rect x="40" y="40" width="320" height="586" fill="none" stroke="#d4af37" stroke-width="1" stroke-opacity="0.3" rx="12"/>
+
+  <!-- 顶部装饰 -->
+  <circle cx="200" cy="100" r="40" fill="none" stroke="#d4af37" stroke-width="2" stroke-opacity="0.6"/>
+  <circle cx="200" cy="100" r="50" fill="none" stroke="#d4af37" stroke-width="1" stroke-opacity="0.3"/>
+  <circle cx="200" cy="100" r="60" fill="none" stroke="#d4af37" stroke-width="1" stroke-opacity="0.2"/>
+
+  <!-- 中央水晶球 -->
+  <circle cx="200" cy="333" r="80" fill="#d4af37" fill-opacity="0.1"/>
+  <circle cx="200" cy="333" r="70" fill="none" stroke="#d4af37" stroke-width="2"/>
+  <text x="200" y="360" font-family="Arial, sans-serif" font-size="80" text-anchor="middle" fill="#d4af37">🔮</text>
+
+  <!-- 底部装饰 -->
+  <circle cx="200" cy="566" r="40" fill="none" stroke="#d4af37" stroke-width="2" stroke-opacity="0.6"/>
+  <circle cx="200" cy="566" r="50" fill="none" stroke="#d4af37" stroke-width="1" stroke-opacity="0.3"/>
+
+  <!-- 文字 -->
+  <text x="200" y="480" font-family="Cinzel, serif" font-size="28" font-weight="bold" text-anchor="middle" fill="#d4af37">塔罗牌</text>
+  <text x="200" y="510" font-family="Cinzel, serif" font-size="20" text-anchor="middle" fill="#d4af37" fill-opacity="0.8">TAROT CARD</text>
+  <text x="200" y="535" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#d4af37" fill-opacity="0.6">The Mystic Tarot</text>
+</svg>
