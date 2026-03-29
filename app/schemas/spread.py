@@ -62,8 +62,14 @@ class SpreadTypeSimple(BaseModel):
     description: str
     card_count: int
     difficulty_level: int
+    positions: Optional[List[SpreadPosition]] = None
     is_beginner_friendly: bool
     usage_count: int = 0
+    suitable_for_love: bool = True
+    suitable_for_career: bool = True
+    suitable_for_finance: bool = True
+    suitable_for_health: bool = True
+    suitable_for_general: bool = True
 
     model_config = ConfigDict(from_attributes=True)
 

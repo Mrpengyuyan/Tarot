@@ -16,19 +16,21 @@ import {
   Star,
   Favorite,
   ArrowForward,
-} from '@mui/icons-material';
+} from 'icons';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../../stores/authStore';
-import { tarotService, ReadingStats, ReadingSummary } from '../../services/tarotService';
-import { formatSmartDate } from '../../utils/dateUtils';
-import { ROUTES } from '../../routes/routeConfig';
+import ReadingFavoriteButton from '../../components/Reading/ReadingFavoriteButton';
 import Loading from '../../components/UI/Loading';
 import { useNotification } from '../../components/UI/Notification';
+import { ROUTES } from '../../routes/routeConfig';
+import { tarotService, ReadingStats, ReadingSummary } from '../../services/tarotService';
+import { useAuthStore } from '../../stores/authStore';
+import { formatSmartDate } from '../../utils/dateUtils';
+import { getReadingQuestionDisplay } from '../../utils/readingQuestion';
 
 const questionTypeLabels: Record<string, { label: string; color: string }> = {
   love: { label: '感情', color: '#FF6B9D' },
   career: { label: '事业', color: '#4ECDC4' },
-  finance: { label: '财运', color: '#FFD93D' },
+  finance: { label: '财务', color: '#FFD93D' },
   health: { label: '健康', color: '#6BCF7F' },
   general: { label: '综合', color: '#AB83A1' },
 };
@@ -38,6 +40,17 @@ const statusLabels: Record<string, { label: string; color: 'default' | 'success'
   processing: { label: '解读中', color: 'warning' },
   pending: { label: '待抽牌', color: 'default' },
   failed: { label: '失败', color: 'error' },
+};
+
+const updateFavoriteCount = (stats: ReadingStats | null, previousValue: boolean, nextValue: boolean) => {
+  if (!stats || previousValue === nextValue) {
+    return stats;
+  }
+
+  return {
+    ...stats,
+    favorite_predictions: Math.max(0, stats.favorite_predictions + (nextValue ? 1 : -1)),
+  };
 };
 
 const ProfilePage: React.FC = () => {
@@ -69,8 +82,21 @@ const ProfilePage: React.FC = () => {
   }, [showError]);
 
   useEffect(() => {
-    fetchProfileData();
+    void fetchProfileData();
   }, [fetchProfileData]);
+
+  const handleFavoriteChanged = (readingId: number, nextValue: boolean) => {
+    let previousValue = false;
+    setRecentReadings((previous) => {
+      previousValue = Boolean(previous.find((item) => item.id === readingId)?.is_favorite);
+      return previous.map((item) => (
+        item.id === readingId
+          ? { ...item, is_favorite: nextValue }
+          : item
+      ));
+    });
+    setStats((previous) => updateFavoriteCount(previous, previousValue, nextValue));
+  };
 
   const summaryCards = useMemo(() => {
     if (!stats) return [];
@@ -211,13 +237,16 @@ const ProfilePage: React.FC = () => {
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
                     <Box>
                       <Typography variant="subtitle1" sx={{ mb: 0.5 }}>
-                        {reading.question}
+                        {getReadingQuestionDisplay({
+                          question: reading.question,
+                          questionType: reading.question_type,
+                        })}
                       </Typography>
                       <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                         {formatSmartDate(reading.created_at)}
                       </Typography>
                     </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                       <Chip
                         label={typeMeta.label}
                         size="small"
@@ -227,7 +256,12 @@ const ProfilePage: React.FC = () => {
                       <Chip label={statusMeta.label} size="small" color={statusMeta.color} />
                     </Box>
                   </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1.5, mt: 1.5, flexWrap: 'wrap' }}>
+                    <ReadingFavoriteButton
+                      readingId={reading.id}
+                      isFavorite={reading.is_favorite}
+                      onChanged={(nextValue) => handleFavoriteChanged(reading.id, nextValue)}
+                    />
                     <Button
                       size="small"
                       endIcon={<ArrowForward />}

@@ -5,6 +5,7 @@
 
 // Coze配置类型
 export interface CozeConfig {
+  // Browser clients must not carry provider credentials.
   apiKey?: string;
   botId?: string;
   baseUrl?: string;
@@ -44,18 +45,28 @@ export class CozeService {
   private config: CozeConfig;
 
   constructor(config: CozeConfig = {}) {
-    this.config = {
+    const merged = {
       baseUrl: 'https://api.coze.cn',
       timeout: 30000,
       ...config,
     };
+    if (merged.apiKey) {
+      console.warn('Ignoring browser-side Coze API key. Configure credentials on backend only.');
+      merged.apiKey = undefined;
+    }
+    this.config = merged;
   }
 
   /**
    * 更新配置
    */
   updateConfig(config: Partial<CozeConfig>): void {
-    this.config = { ...this.config, ...config };
+    const nextConfig = { ...this.config, ...config };
+    if (nextConfig.apiKey) {
+      console.warn('Ignoring browser-side Coze API key. Configure credentials on backend only.');
+      nextConfig.apiKey = undefined;
+    }
+    this.config = nextConfig;
   }
 
   /**
@@ -69,20 +80,17 @@ export class CozeService {
    * 检查配置是否完整
    */
   isConfigured(): boolean {
-    return !!(this.config.apiKey && this.config.botId);
+    return !!this.config.botId;
   }
 
   /**
    * 获取配置状态描述
    */
   getConfigStatus(): string {
-    if (!this.config.apiKey) {
-      return '❌ 缺少API密钥';
-    }
     if (!this.config.botId) {
       return '❌ 缺少Bot ID';
     }
-    return '✅ 配置完整';
+    return '✅ 配置完整（通过后端代理）';
   }
 
   /**
@@ -109,9 +117,7 @@ export class CozeService {
       'Content-Type': 'application/json',
     };
 
-    if (this.config.apiKey) {
-      headers['Authorization'] = `Bearer ${this.config.apiKey}`;
-    }
+    // Intentionally do not set provider Authorization headers in browser code.
 
     return headers;
   }

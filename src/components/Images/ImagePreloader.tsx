@@ -17,7 +17,7 @@ import {
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
   Cached as CachedIcon,
-} from '@mui/icons-material';
+} from 'icons';
 import { useBatchImageLoader } from '../../hooks/useImageLoader';
 import { ImageQuality } from '../../types/cardImages';
 import { getAllCardIds, getMajorArcanaIds, getMinorArcanaIds } from '../../utils/imageUtils';

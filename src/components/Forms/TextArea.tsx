@@ -10,7 +10,7 @@ import {
   alpha,
   IconButton,
 } from '@mui/material';
-import { AutoAwesome, Clear } from '@mui/icons-material';
+import { AutoAwesome, Clear } from 'icons';
 
 const StyledTextField = styled(TextField)(({ theme }) => ({
   '& .MuiOutlinedInput-root': {

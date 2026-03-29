@@ -34,7 +34,7 @@ class PredictionCreate(PredictionBase):
 class PredictionUpdate(BaseModel):
     """更新预测记录数据模型"""
     is_favorite: Optional[bool] = None
-    user_rating: Optional[int] = None
+    user_rating: Optional[int] = Field(default=None, ge=1, le=5)
     user_notes: Optional[str] = None
 
 class Prediction(PredictionBase):
@@ -60,6 +60,15 @@ class PredictionSimple(BaseModel):
     created_at: datetime
     is_favorite: bool = False
     user_rating: Optional[int] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PredictionRecentOverview(PredictionSimple):
+    """仪表盘最近记录概览"""
+    spread_name: Optional[str] = None
+    spread_name_en: Optional[str] = None
+    interpretation_summary: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 

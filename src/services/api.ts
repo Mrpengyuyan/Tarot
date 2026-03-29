@@ -1,6 +1,53 @@
 import axios from 'axios';
 import { config, debugLog } from '../config/env';
 
+const normalizeApiErrorMessage = (payload: unknown): string | null => {
+  if (!payload) {
+    return null;
+  }
+
+  if (typeof payload === 'string') {
+    const trimmed = payload.trim();
+    return trimmed || null;
+  }
+
+  if (Array.isArray(payload)) {
+    const messages = payload
+      .map((item) => normalizeApiErrorMessage(item))
+      .filter((message): message is string => Boolean(message));
+    return messages.length > 0 ? messages.join(' | ') : null;
+  }
+
+  if (typeof payload === 'object') {
+    const record = payload as Record<string, unknown>;
+
+    if (typeof record.msg === 'string' && Array.isArray(record.loc)) {
+      const path = record.loc
+        .filter((segment) => typeof segment === 'string' || typeof segment === 'number')
+        .map((segment) => String(segment))
+        .join('.');
+      return path ? `${path}: ${record.msg}` : record.msg;
+    }
+
+    if (record.detail !== undefined) {
+      return normalizeApiErrorMessage(record.detail);
+    }
+
+    if (typeof record.message === 'string') {
+      const trimmed = record.message.trim();
+      return trimmed || null;
+    }
+
+    try {
+      return JSON.stringify(record);
+    } catch {
+      return null;
+    }
+  }
+
+  return String(payload);
+};
+
 export const api = axios.create({
   baseURL: config.apiBaseUrl,
   timeout: 10000,
@@ -47,8 +94,7 @@ api.interceptors.response.use(
     });
 
     const errorMessage =
-      error.response?.data?.detail ||
-      error.response?.data?.message ||
+      normalizeApiErrorMessage(error.response?.data) ||
       error.message ||
       'Request failed';
 

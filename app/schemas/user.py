@@ -47,8 +47,8 @@ class User(UserBase):
 
 class Token(BaseModel):
     """JWT Token响应模型"""
-    access_token: str
-    token_type: str
+    access_token: Optional[str] = None
+    token_type: str = "bearer"
 
 
 class TokenData(BaseModel):

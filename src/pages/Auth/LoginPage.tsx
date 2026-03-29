@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  Alert,
   Box,
   Container,
   Paper,
-  Tabs,
   Tab,
-  Alert,
-  Fade,
+  Tabs,
 } from '@mui/material';
 import { useLocation } from 'react-router-dom';
 import LoginForm from '../../components/Auth/LoginForm';
 import RegisterForm from '../../components/Auth/RegisterForm';
 import CosmicBackground from '../../components/Effects/CosmicBackground';
+import { useVisualSettings } from '../../hooks/useVisualSettings';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -19,90 +19,84 @@ interface TabPanelProps {
   value: number;
 }
 
-const TabPanel: React.FC<TabPanelProps> = ({ children, value, index, ...other }) => {
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`auth-tabpanel-${index}`}
-      aria-labelledby={`auth-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Fade in={true} timeout={300}>
-          <Box sx={{ pt: 3 }}>
-            {children}
-          </Box>
-        </Fade>
-      )}
-    </div>
-  );
+const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => {
+  if (value !== index) {
+    return null;
+  }
+
+  return <Box sx={{ pt: 3 }}>{children}</Box>;
 };
 
 const LoginPage: React.FC = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState(0);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const visual = useVisualSettings();
 
-  // 检查是否有来自注册页的成功消息
   useEffect(() => {
     if (location.state?.message && location.state?.type === 'success') {
       setSuccessMessage(location.state.message);
-      // 清除location state中的消息
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
-    setSuccessMessage(null); // 切换标签时清除成功消息
-  };
-
-  const handleSwitchToRegister = () => {
-    setActiveTab(1);
     setSuccessMessage(null);
-  };
-
-  const handleSwitchToLogin = () => {
-    setActiveTab(0);
   };
 
   return (
     <Box
       className="hd-noise-overlay"
       sx={{
-        width: '100vw',
-        minHeight: '100vh',
+        width: '100%',
+        height: '100dvh',
         display: 'flex',
         alignItems: 'center',
         position: 'relative',
-        left: '50%',
-        right: '50%',
-        marginLeft: '-50vw',
-        marginRight: '-50vw',
+        overflow: 'hidden',
       }}
     >
-      <CosmicBackground />
-      <Container maxWidth="md" sx={{ position: 'relative', zIndex: 1 }}>
+      <CosmicBackground performanceMode={visual.backgroundMode} />
+
+      <Container
+        maxWidth="md"
+        sx={{
+          position: 'relative',
+          zIndex: 1,
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <Box
           sx={{
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            minHeight: '80vh',
+            minHeight: '100%',
+            width: '100%',
+            position: 'relative',
+            zIndex: 2,
           }}
         >
           <Paper
             elevation={24}
             sx={{
               width: '100%',
-              maxWidth: 500,
-              background: 'rgba(26, 11, 46, 0.65)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              border: '1px solid rgba(0, 240, 255, 0.2)',
+              maxWidth: 520,
+              maxHeight: 'min(720px, calc(100dvh - 48px))',
+              background: 'linear-gradient(155deg, rgba(31, 14, 54, 0.94) 0%, rgba(16, 8, 36, 0.92) 45%, rgba(7, 20, 40, 0.93) 100%)',
+              border: '1px solid rgba(212, 175, 55, 0.2)',
               borderRadius: 4,
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(0, 240, 255, 0.05)',
+              boxShadow: `
+                0 24px 56px rgba(0, 0, 0, 0.5),
+                0 8px 24px rgba(0, 0, 0, 0.22),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08),
+                inset 0 0 26px rgba(0, 240, 255, 0.05),
+                inset 0 -26px 50px rgba(212, 175, 55, 0.04)
+              `,
               overflow: 'hidden',
               position: 'relative',
               '&::before': {
@@ -113,13 +107,29 @@ const LoginPage: React.FC = () => {
                 right: 0,
                 height: '4px',
                 background: 'linear-gradient(90deg, #D4AF37, #FFD700, #00F0FF, #D4AF37)',
-                backgroundSize: '200% auto',
-                animation: 'pulse 3s infinite',
+                backgroundSize: '180% auto',
+                animation: visual.enableAmbientMotion ? 'authPanelPulse 6s linear infinite' : 'none',
+              },
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                inset: 0,
+                pointerEvents: 'none',
+                background: `
+                  radial-gradient(circle at 14% 18%, rgba(212, 175, 55, 0.12), transparent 28%),
+                  radial-gradient(circle at 85% 12%, rgba(0, 240, 255, 0.13), transparent 26%),
+                  radial-gradient(circle at 80% 82%, rgba(149, 101, 255, 0.1), transparent 30%)
+                `,
+                mixBlendMode: 'screen',
+                opacity: 0.92,
+              },
+              '@keyframes authPanelPulse': {
+                '0%': { backgroundPosition: '0% 50%' },
+                '100%': { backgroundPosition: '180% 50%' },
               },
             }}
             className="slide-up"
           >
-            {/* 成功消息提示 */}
             {successMessage && (
               <Alert
                 severity="success"
@@ -137,8 +147,7 @@ const LoginPage: React.FC = () => {
               </Alert>
             )}
 
-            {/* 标签栏 */}
-            <Box sx={{ borderBottom: 1, borderColor: 'rgba(0, 240, 255, 0.2)' }}>
+            <Box sx={{ borderBottom: 1, borderColor: 'rgba(0, 240, 255, 0.18)' }}>
               <Tabs
                 value={activeTab}
                 onChange={handleTabChange}
@@ -148,18 +157,20 @@ const LoginPage: React.FC = () => {
                   '& .MuiTabs-indicator': {
                     background: 'linear-gradient(90deg, #D4AF37, #00F0FF)',
                     height: 3,
-                    boxShadow: '0 -2px 10px rgba(0, 240, 255, 0.5)',
+                    boxShadow: '0 -2px 10px rgba(0, 240, 255, 0.34)',
                   },
                   '& .MuiTab-root': {
                     color: 'text.secondary',
                     fontFamily: 'Cinzel, serif',
-                    fontSize: '1rem',
-                    fontWeight: 500,
+                    fontSize: '1.2rem',
+                    fontWeight: 600,
                     textTransform: 'none',
-                    py: 2,
+                    py: 2.1,
+                    minHeight: 64,
+                    transition: 'color 160ms ease, text-shadow 160ms ease',
                     '&.Mui-selected': {
                       color: 'secondary.main',
-                      textShadow: '0 0 10px rgba(0, 240, 255, 0.4)',
+                      textShadow: '0 0 10px rgba(0, 240, 255, 0.24)',
                     },
                     '&:hover': {
                       color: 'primary.light',
@@ -172,183 +183,152 @@ const LoginPage: React.FC = () => {
               </Tabs>
             </Box>
 
-            {/* 表单内容 */}
             <Box sx={{ px: 4, pb: 4 }}>
               <TabPanel value={activeTab} index={0}>
-                <LoginForm onSwitchToRegister={handleSwitchToRegister} />
+                <LoginForm onSwitchToRegister={() => setActiveTab(1)} />
               </TabPanel>
 
               <TabPanel value={activeTab} index={1}>
-                <RegisterForm onSwitchToLogin={handleSwitchToLogin} />
+                <RegisterForm onSwitchToLogin={() => setActiveTab(0)} />
               </TabPanel>
             </Box>
           </Paper>
         </Box>
 
-        {/* 装饰性引言 */}
         <Box
           sx={{
             position: 'absolute',
-            top: '10%',
-            left: '10%',
+            top: '6%',
+            left: '2.5%',
             transform: 'rotate(-5deg)',
-            opacity: 0.7,
+            opacity: 0.82,
             display: { xs: 'none', md: 'block' },
+            zIndex: 3,
           }}
         >
           <Box
             sx={{
-              background: 'rgba(16, 8, 32, 0.5)',
+              background: 'linear-gradient(135deg, rgba(14, 8, 28, 0.86) 0%, rgba(26, 11, 46, 0.76) 100%)',
               backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(0, 240, 255, 0.2)',
-              borderRadius: 2,
-              p: 2,
+              WebkitBackdropFilter: 'blur(10px)',
+              border: '1.2px solid rgba(212, 175, 55, 0.38)',
+              borderRadius: '16px',
+              p: 2.5,
               fontStyle: 'italic',
-              color: 'text.secondary',
-              fontSize: '0.875rem',
-              maxWidth: 200,
-              boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+              color: '#F0DEAA',
+              fontSize: '1rem',
+              fontWeight: 600,
+              letterSpacing: '0.04em',
+              lineHeight: 1.7,
+              maxWidth: 236,
+              textShadow: '0 0 12px rgba(212, 175, 55, 0.18)',
+              boxShadow: '0 12px 34px rgba(0, 0, 0, 0.36), inset 0 0 22px rgba(212, 175, 55, 0.04)',
+              transition: 'transform 260ms ease, box-shadow 260ms ease, border-color 260ms ease, background 260ms ease',
+              cursor: 'default',
+              '&:hover': {
+                transform: visual.enableHoverMotion ? 'rotate(-4deg) translateY(-4px)' : 'rotate(-5deg)',
+                borderColor: 'rgba(255, 218, 128, 0.56)',
+                background: 'linear-gradient(135deg, rgba(26, 12, 46, 0.88) 0%, rgba(38, 18, 56, 0.76) 100%)',
+                boxShadow: '0 18px 40px rgba(0, 0, 0, 0.42), 0 0 24px rgba(212, 175, 55, 0.14), inset 0 0 28px rgba(212, 175, 55, 0.08)',
+              },
             }}
           >
-            "命运不是偶然，而是选择的结果。"
+            “命运不会替你作答，它只会让你更清楚自己真正想要什么。”
           </Box>
         </Box>
 
         <Box
           sx={{
             position: 'absolute',
-            bottom: '15%',
-            right: '10%',
+            bottom: '4.5%',
+            right: '2.8%',
             transform: 'rotate(3deg)',
-            opacity: 0.7,
+            opacity: 0.8,
             display: { xs: 'none', md: 'block' },
+            zIndex: 3,
           }}
         >
           <Box
             sx={{
-              background: 'rgba(16, 8, 32, 0.5)',
+              background: 'linear-gradient(135deg, rgba(8, 16, 36, 0.8) 0%, rgba(16, 8, 32, 0.7) 100%)',
               backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(0, 240, 255, 0.2)',
-              borderRadius: 2,
-              p: 2,
+              WebkitBackdropFilter: 'blur(10px)',
+              border: '1.2px solid rgba(0, 240, 255, 0.34)',
+              borderRadius: '16px',
+              p: 2.5,
               fontStyle: 'italic',
-              color: 'text.secondary',
-              fontSize: '0.875rem',
-              maxWidth: 200,
-              boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+              color: '#CDEBFA',
+              fontSize: '1rem',
+              fontWeight: 600,
+              letterSpacing: '0.04em',
+              lineHeight: 1.7,
+              maxWidth: 236,
+              textShadow: '0 0 10px rgba(0, 240, 255, 0.14)',
+              boxShadow: '0 12px 34px rgba(0, 0, 0, 0.36), inset 0 0 22px rgba(0, 240, 255, 0.03)',
+              transition: 'transform 260ms ease, box-shadow 260ms ease, border-color 260ms ease, background 260ms ease',
+              cursor: 'default',
+              '&:hover': {
+                transform: visual.enableHoverMotion ? 'rotate(2deg) translateY(-4px)' : 'rotate(3deg)',
+                borderColor: 'rgba(114, 242, 255, 0.54)',
+                background: 'linear-gradient(135deg, rgba(9, 20, 44, 0.84) 0%, rgba(16, 10, 36, 0.74) 100%)',
+                boxShadow: '0 18px 40px rgba(0, 0, 0, 0.42), 0 0 26px rgba(0, 240, 255, 0.12), inset 0 0 26px rgba(0, 240, 255, 0.06)',
+              },
             }}
           >
-            "每一张塔罗牌都诉说着宇宙的秘密。"
+            “每一次翻牌，都是一次重新整理情绪、问题与方向的机会。”
           </Box>
         </Box>
 
-        {/* 动态六芒星装饰 (Star of David / Hexagram) */}
         <Box
           sx={{
             position: 'absolute',
-            top: '25%',
-            left: '10%',
-            width: 120,
-            height: 120,
-            animation: 'rotate-reverse 30s linear infinite',
-            opacity: 0.6,
+            top: '28%',
+            left: '5.5%',
+            width: 102,
+            height: 102,
+            opacity: 0.34,
             display: { xs: 'none', md: 'block' },
-            zIndex: 0,
+            zIndex: 1,
           }}
         >
-          <svg viewBox="0 0 100 100" className="pulse-glow">
-            <polygon points="50,10 85,75 15,75" fill="none" stroke="#D4AF37" strokeWidth="1" filter="url(#neon-glow)" />
-            <polygon points="50,90 15,25 85,25" fill="none" stroke="#00F0FF" strokeWidth="1" filter="url(#neon-glow)" />
-            <circle cx="50" cy="50" r="10" fill="#D4AF37" filter="url(#neon-glow-strong)" />
+          <svg
+            viewBox="0 0 100 100"
+            className={visual.enableAmbientMotion ? 'rotate-slow-reverse' : undefined}
+            style={{ width: '100%', height: '100%' }}
+          >
+            <polygon points="50,12 83,69 17,69" fill="none" stroke="#D4AF37" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+            <polygon points="50,88 17,31 83,31" fill="none" stroke="#00F0FF" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="50" cy="50" r="8" fill="#D4AF37" opacity="0.68" />
           </svg>
         </Box>
-        
-        {/* 小型塔罗符号碎片漂浮 */}
-        {/* Core Dust */}
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '20%',
-            right: '20%',
-            width: 8,
-            height: 8,
-            background: 'rgba(0, 240, 255, 0.6)',
-            boxShadow: '0 0 10px rgba(0, 240, 255, 0.8)',
-            borderRadius: '50%',
-            animation: 'float 4s ease-in-out infinite',
-            zIndex: 0,
-          }}
-        />
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '60%',
-            left: '15%',
-            width: 6,
-            height: 6,
-            background: 'rgba(171, 131, 161, 0.6)',
-            borderRadius: '50%',
-            boxShadow: '0 0 8px rgba(171, 131, 161, 0.8)',
-            animation: 'float 5s ease-in-out infinite reverse',
-            zIndex: 0,
-          }}
-        />
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '30%',
-            left: '70%',
-            width: 4,
-            height: 4,
-            background: 'rgba(212, 175, 55, 0.8)',
-            boxShadow: '0 0 8px rgba(212, 175, 55, 1)',
-            borderRadius: '50%',
-            animation: 'float 6s ease-in-out infinite',
-            zIndex: 0,
-          }}
-        />
-        <Box
-          sx={{
-            position: 'absolute',
-            bottom: '25%',
-            right: '30%',
-            width: 5,
-            height: 5,
-            background: 'rgba(0, 240, 255, 0.5)',
-            boxShadow: '0 0 6px rgba(0, 240, 255, 0.8)',
-            borderRadius: '50%',
-            animation: 'float 7s ease-in-out infinite reverse',
-            zIndex: 0,
-          }}
-        />
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '40%',
-            right: '10%',
-            width: 7,
-            height: 7,
-            background: 'rgba(212, 175, 55, 0.4)',
-            boxShadow: '0 0 12px rgba(212, 175, 55, 0.6)',
-            borderRadius: '50%',
-            animation: 'float 3.5s ease-in-out infinite',
-            zIndex: 0,
-          }}
-        />
-        <Box
-          sx={{
-            position: 'absolute',
-            bottom: '10%',
-            left: '30%',
-            width: 3,
-            height: 3,
-            background: 'rgba(255, 255, 255, 0.7)',
-            boxShadow: '0 0 5px rgba(255, 255, 255, 0.9)',
-            borderRadius: '50%',
-            animation: 'float 5.5s ease-in-out infinite reverse',
-            zIndex: 0,
-          }}
-        />
+
+        {visual.enableAnimations && ([
+          { top: '18%', right: '20%', size: 7, color: 'rgba(0, 240, 255, 0.62)', duration: '4.8s' },
+          { top: '62%', left: '14%', size: 6, color: 'rgba(171, 131, 161, 0.56)', duration: '5.6s' },
+          { top: '32%', left: '72%', size: 4, color: 'rgba(212, 175, 55, 0.74)', duration: '6.2s' },
+        ] as Array<{ top?: string; bottom?: string; left?: string; right?: string; size: number; color: string; duration: string }>).map((spark, index) => (
+          <Box
+            key={index}
+            sx={{
+              position: 'absolute',
+              top: spark.top,
+              bottom: spark.bottom,
+              left: spark.left,
+              right: spark.right,
+              width: spark.size,
+              height: spark.size,
+              borderRadius: '50%',
+              background: spark.color,
+              boxShadow: `0 0 12px ${spark.color}`,
+              opacity: 0.82,
+              animation: `authFloat ${spark.duration} ease-in-out infinite`,
+              '@keyframes authFloat': {
+                '0%, 100%': { transform: 'translate3d(0, 0, 0)' },
+                '50%': { transform: 'translate3d(0, -10px, 0)' },
+              },
+            }}
+          />
+        ))}
       </Container>
     </Box>
   );

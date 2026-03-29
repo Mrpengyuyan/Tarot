@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import {
   Snackbar,
   Alert,
@@ -17,7 +17,7 @@ import {
   Info,
   Close,
   AutoAwesome,
-} from '@mui/icons-material';
+} from 'icons';
 import { create } from 'zustand';
 
 const shimmer = keyframes`
@@ -48,7 +48,7 @@ const StyledAlert = styled(Alert)(({ theme, severity }) => ({
     flexGrow: 1,
   },
 
-  // 神秘风格特效
+  // 缁佺偟顫濇搴㈢壐閻楄鏅?
   '&.mystical': {
     background: `linear-gradient(135deg,
       rgba(26, 26, 46, 0.95) 0%,
@@ -129,32 +129,52 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
 
 // Notification hook for easy usage
 export const useNotification = () => {
-  const { addNotification, removeNotification, clearAll } = useNotificationStore();
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const removeNotification = useNotificationStore((state) => state.removeNotification);
+  const clearAll = useNotificationStore((state) => state.clearAll);
 
-  const showSuccess = (message: string, options?: Partial<NotificationData>) =>
-    addNotification({ type: 'success', message, ...options });
+  const showSuccess = useCallback(
+    (message: string, options?: Partial<NotificationData>) =>
+      addNotification({ type: 'success', message, ...options }),
+    [addNotification],
+  );
 
-  const showError = (message: string, options?: Partial<NotificationData>) =>
-    addNotification({ type: 'error', message, ...options });
+  const showError = useCallback(
+    (message: string, options?: Partial<NotificationData>) =>
+      addNotification({ type: 'error', message, ...options }),
+    [addNotification],
+  );
 
-  const showWarning = (message: string, options?: Partial<NotificationData>) =>
-    addNotification({ type: 'warning', message, ...options });
+  const showWarning = useCallback(
+    (message: string, options?: Partial<NotificationData>) =>
+      addNotification({ type: 'warning', message, ...options }),
+    [addNotification],
+  );
 
-  const showInfo = (message: string, options?: Partial<NotificationData>) =>
-    addNotification({ type: 'info', message, ...options });
+  const showInfo = useCallback(
+    (message: string, options?: Partial<NotificationData>) =>
+      addNotification({ type: 'info', message, ...options }),
+    [addNotification],
+  );
 
-  const showMystical = (message: string, options?: Partial<NotificationData>) =>
-    addNotification({ type: 'mystical', message, ...options });
+  const showMystical = useCallback(
+    (message: string, options?: Partial<NotificationData>) =>
+      addNotification({ type: 'mystical', message, ...options }),
+    [addNotification],
+  );
 
-  return {
-    showSuccess,
-    showError,
-    showWarning,
-    showInfo,
-    showMystical,
-    remove: removeNotification,
-    clearAll,
-  };
+  return useMemo(
+    () => ({
+      showSuccess,
+      showError,
+      showWarning,
+      showInfo,
+      showMystical,
+      remove: removeNotification,
+      clearAll,
+    }),
+    [clearAll, removeNotification, showError, showInfo, showMystical, showSuccess, showWarning],
+  );
 };
 
 interface NotificationItemProps {
@@ -284,7 +304,8 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onClo
 };
 
 const NotificationContainer: React.FC = () => {
-  const { notifications, removeNotification } = useNotificationStore();
+  const notifications = useNotificationStore((state) => state.notifications);
+  const removeNotification = useNotificationStore((state) => state.removeNotification);
 
   return (
     <Box
@@ -311,3 +332,4 @@ const NotificationContainer: React.FC = () => {
 };
 
 export default NotificationContainer;
+

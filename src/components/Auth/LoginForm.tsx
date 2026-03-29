@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Alert,
   Box,
@@ -16,12 +16,12 @@ import {
   Person,
   Visibility,
   VisibilityOff,
-} from '@mui/icons-material';
+} from 'icons';
 import { useNavigate } from 'react-router-dom';
-
 import { ROUTES } from '../../routes/routeConfig';
 import { authService } from '../../services/authService';
 import { useAuthStore } from '../../stores/authStore';
+import { AUTH_TEXT_FIELD_SX } from './authFieldStyles';
 
 interface LoginFormData {
   username: string;
@@ -41,7 +41,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
   const navigate = useNavigate();
   const { login, setLoading, setError, error, isLoading } = useAuthStore();
 
-  const [formData, setFormData] = useState<LoginFormData>({
+  const formDataRef = useRef<LoginFormData>({
     username: '',
     password: '',
   });
@@ -51,23 +51,25 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
   const handleInputChange =
     (field: keyof LoginFormData) =>
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      setFormData((prev) => ({ ...prev, [field]: event.target.value }));
+      formDataRef.current[field] = event.target.value;
+
       if (validationErrors[field]) {
         setValidationErrors((prev) => ({ ...prev, [field]: undefined }));
       }
     };
 
-  const validateForm = (): boolean => {
+  const validateForm = () => {
     const errors: ValidationErrors = {};
+    const { username, password } = formDataRef.current;
 
-    if (!formData.username.trim()) {
+    if (!username.trim()) {
       errors.username = '请输入用户名或邮箱';
     }
 
-    if (!formData.password) {
+    if (!password) {
       errors.password = '请输入密码';
-    } else if (formData.password.length < 6) {
-      errors.password = '密码长度至少 6 位';
+    } else if (password.length < 8) {
+      errors.password = '密码长度至少 8 位';
     }
 
     setValidationErrors(errors);
@@ -85,14 +87,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
     setError(null);
 
     try {
-      const authResponse = await authService.login(formData);
-
-      if (!authResponse.access_token) {
-        throw new Error('登录响应缺少 access token');
-      }
+      await authService.login(formDataRef.current);
 
       const userInfo = await authService.getCurrentUser();
-      login(userInfo, authResponse.access_token);
+      login(userInfo);
       navigate(ROUTES.DASHBOARD);
     } catch (err) {
       setError(err instanceof Error ? err.message : '登录失败，请检查用户名和密码');
@@ -102,15 +100,18 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
   };
 
   return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%', maxWidth: 400, mx: 'auto' }}>
+    <Box
+      component="form"
+      onSubmit={handleSubmit}
+      sx={{ width: '100%', maxWidth: 400, mx: 'auto', contain: 'layout paint style', isolation: 'isolate' }}
+    >
       <Box sx={{ textAlign: 'center', mb: 4 }}>
         <LoginIcon
           sx={{
             fontSize: '3rem',
             color: 'primary.main',
             mb: 2,
-            filter: 'drop-shadow(0 0 10px rgba(212, 175, 55, 0.5))',
-            animation: 'float 3s ease-in-out infinite',
+            filter: 'drop-shadow(0 0 8px rgba(212, 175, 55, 0.24))',
           }}
         />
         <Typography
@@ -123,7 +124,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
             backgroundClip: 'text',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
-            textShadow: '0 0 20px rgba(212, 175, 55, 0.3)',
             mb: 1,
           }}
         >
@@ -148,46 +148,61 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
 
       <TextField
         fullWidth
+        defaultValue=""
         label="用户名或邮箱"
-        value={formData.username}
         onChange={handleInputChange('username')}
         error={!!validationErrors.username}
         helperText={validationErrors.username}
         disabled={isLoading}
+        autoComplete="username"
+        inputProps={{
+          spellCheck: false,
+          autoCapitalize: 'none',
+          autoCorrect: 'off',
+        }}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              <Person sx={{ color: 'primary.main' }} />
+              <Person sx={{ color: 'primary.main', fontSize: '1.35rem' }} />
             </InputAdornment>
           ),
         }}
-        sx={{ mb: 3 }}
+        sx={{ ...AUTH_TEXT_FIELD_SX, mb: 3 }}
       />
 
       <TextField
         fullWidth
+        defaultValue=""
         type={showPassword ? 'text' : 'password'}
         label="密码"
-        value={formData.password}
         onChange={handleInputChange('password')}
         error={!!validationErrors.password}
         helperText={validationErrors.password}
         disabled={isLoading}
+        autoComplete="current-password"
+        inputProps={{
+          spellCheck: false,
+        }}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              <Lock sx={{ color: 'primary.main' }} />
+              <Lock sx={{ color: 'primary.main', fontSize: '1.35rem' }} />
             </InputAdornment>
           ),
           endAdornment: (
             <InputAdornment position="end">
-              <IconButton onClick={() => setShowPassword((prev) => !prev)} edge="end" disabled={isLoading}>
+              <IconButton
+                onClick={() => setShowPassword((prev) => !prev)}
+                edge="end"
+                disabled={isLoading}
+                sx={{ color: 'rgba(212, 175, 55, 0.74)' }}
+              >
                 {showPassword ? <VisibilityOff /> : <Visibility />}
               </IconButton>
             </InputAdornment>
           ),
         }}
-        sx={{ mb: 3 }}
+        sx={{ ...AUTH_TEXT_FIELD_SX, mb: 3 }}
       />
 
       <Button

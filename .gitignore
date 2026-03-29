@@ -24,6 +24,9 @@ logs/
 *.sqlite
 *.sqlite3
 app/scripts/reports/
+.edge-smoke/
+.npm-cache/
+.playwright-browsers/
 
 # Environment files (keep examples tracked)
 .env

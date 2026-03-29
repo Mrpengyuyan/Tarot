@@ -27,7 +27,7 @@ import {
   Cloud,
   Storage,
   Psychology,
-} from '@mui/icons-material';
+} from 'icons';
 import {
   runSystemTests,
   validateEnvironment,

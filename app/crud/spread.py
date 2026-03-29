@@ -143,7 +143,7 @@ def increment_spread_usage(db: Session, spread_id: int) -> bool:
     """增加牌阵使用次数"""
     db_spread = get_spread_by_id(db, spread_id)
     if db_spread:
-        db_spread.usage_count += 1
+        db_spread.usage_count = (db_spread.usage_count or 0) + 1
         db.commit()
         return True
     return False

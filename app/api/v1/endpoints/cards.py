@@ -35,9 +35,13 @@ def get_cards(
         # 转换枚举
         db_card_type = CardType(card_type.value)
         db_suit = Suit(suit.value)
-        cards = card_crud.get_cards_by_suit(db, suit=db_suit, skip=skip, limit=limit)
-        # 进一步筛选类型
-        cards = [card for card in cards if card.card_type == db_card_type]
+        cards = card_crud.get_cards_by_type_and_suit(
+            db,
+            card_type=db_card_type,
+            suit=db_suit,
+            skip=skip,
+            limit=limit,
+        )
     elif card_type:
         db_card_type = CardType(card_type.value)
         cards = card_crud.get_cards_by_type(db, card_type=db_card_type, skip=skip, limit=limit)

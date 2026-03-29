@@ -28,7 +28,7 @@ import {
   Star,
   Speed,
   Explore,
-} from '@mui/icons-material';
+} from 'icons';
 import { SpreadType } from '../../types/api';
 import { useGameStore, QuestionType, getQuestionTypeLabel } from '../../stores/gameStore';
 import { spreadService } from '../../services/spreadService';

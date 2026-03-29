@@ -234,21 +234,52 @@ body {
   border: 0;
 }
 
-/* 4K/8K 分辨率锐化与质感补偿遮罩 */
+/* 4K/8K noise texture overlay - no mix-blend-mode for performance */
 .hd-noise-overlay {
   position: relative;
 }
 
 .hd-noise-overlay::after {
-  content: "";
+  content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: 0.08; /* 非常微弱的颗粒感 */
-  mix-blend-mode: overlay;
-  pointer-events: none; /* 防止阻挡交互 */
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
+  opacity: 0.06;
+  pointer-events: none;
   z-index: 0;
+}
+
+[data-visual-quality='lite'] .hd-noise-overlay::after {
+  opacity: 0.035;
+}
+
+[data-visual-quality='minimal'] .hd-noise-overlay::after {
+  opacity: 0.02;
+}
+
+[data-visual-quality='minimal'] .fade-in,
+[data-visual-quality='minimal'] .slide-up,
+[data-visual-quality='minimal'] .scale-in,
+[data-visual-quality='minimal'] .loading-spinner,
+[data-visual-quality='minimal'] .loading-pulse,
+[data-visual-quality='minimal'] .loading-float {
+  animation: none !important;
+}
+
+[data-visual-quality='minimal'] .card-hover,
+[data-visual-quality='minimal'] .mystical-glow {
+  transition: none !important;
+}
+
+[data-visual-quality='minimal'] .card-hover:hover,
+[data-visual-quality='minimal'] .mystical-glow:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+[data-visual-quality='lite'] .card-hover:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 10px 26px rgba(212, 175, 55, 0.18);
 }

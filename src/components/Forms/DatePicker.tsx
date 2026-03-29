@@ -10,7 +10,7 @@ import {
   styled,
   alpha,
 } from '@mui/material';
-import { CalendarToday, Clear, AutoAwesome } from '@mui/icons-material';
+import { CalendarToday, Clear, AutoAwesome } from 'icons';
 
 const StyledFormControl = styled(FormControl)(({ theme }) => ({
   '& .MuiOutlinedInput-root': {

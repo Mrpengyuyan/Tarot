@@ -23,13 +23,14 @@ import {
   Autorenew,
   Refresh,
   Visibility,
-} from '@mui/icons-material';
+} from 'icons';
 import { useNavigate } from 'react-router-dom';
 import CardSpread from '../../components/Tarot/CardSpread';
 import Loading from '../../components/UI/Loading';
 import { useNotification } from '../../components/UI/Notification';
 import { ROUTES } from '../../routes/routeConfig';
 import CosmicBackground from '../../components/Effects/CosmicBackground';
+import { useVisualSettings } from '../../hooks/useVisualSettings';
 import {
   CardDrawWithMeaning,
   CreateReadingParams,
@@ -40,6 +41,10 @@ import {
 } from '../../services/tarotService';
 import { GamePhase, useGameStore } from '../../stores/gameStore';
 import { SpreadType } from '../../types/api';
+import {
+  getSpreadDisplayDescription,
+  getSpreadDisplayName,
+} from '../../utils/spreadDisplay';
 
 type QuestionType = CreateReadingParams['questionType'];
 
@@ -57,6 +62,8 @@ const DrawCards: React.FC = () => {
   const navigate = useNavigate();
   const { showError } = useNotification();
   const { setPhase } = useGameStore();
+  const showErrorRef = useRef(showError);
+  const visual = useVisualSettings();
 
   const [activeStep, setActiveStep] = useState(0);
   const [spreads, setSpreads] = useState<SpreadType[]>([]);
@@ -74,6 +81,7 @@ const DrawCards: React.FC = () => {
   const [readingId, setReadingId] = useState<number | null>(null);
   const readingIdRef = useRef<number | null>(null);
   const aiRequestStartedRef = useRef(false);
+  const spreadsLoadRequestRef = useRef(0);
 
   const [aiRequested, setAiRequested] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
@@ -96,21 +104,40 @@ const DrawCards: React.FC = () => {
   const allCardsFlipped = drawnCards.length > 0 && flippedPositions.length === drawnCards.length;
 
   useEffect(() => {
+    showErrorRef.current = showError;
+  }, [showError]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const requestId = spreadsLoadRequestRef.current + 1;
+    spreadsLoadRequestRef.current = requestId;
+
     const loadSpreads = async () => {
       setIsLoadingSpreads(true);
       try {
         const spreadList = await tarotService.getAllSpreads();
+        if (cancelled || requestId !== spreadsLoadRequestRef.current) {
+          return;
+        }
         setSpreads(spreadList);
       } catch (error) {
+        if (cancelled || requestId !== spreadsLoadRequestRef.current) {
+          return;
+        }
         const message = error instanceof Error ? error.message : '加载牌阵失败';
-        showError(message);
+        showErrorRef.current(message);
       } finally {
-        setIsLoadingSpreads(false);
+        if (!cancelled && requestId === spreadsLoadRequestRef.current) {
+          setIsLoadingSpreads(false);
+        }
       }
     };
 
-    loadSpreads();
-  }, [showError]);
+    void loadSpreads();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (activeStep === 0) {
@@ -282,10 +309,10 @@ const DrawCards: React.FC = () => {
   const drawTipText = useMemo(() => {
     if (!drawnCards.length) return '请先开始抽牌';
     if (!allCardsFlipped) return `点击牌面翻开（${flippedPositions.length}/${drawnCards.length}）`;
-    if (aiLoading) return 'AI 解读中...';
-    if (interpretation) return '解读已完成';
-    if (aiError) return '解读失败，请重试';
-    return '正在等待解读结果...';
+    if (aiLoading) return '✦ 星辰正在为您揭示命运...';
+    if (interpretation) return '✦ 命运已揭示';
+    if (aiError) return '星辰暂时沉默，请再次感应';
+    return '正在等待命运的回响...';
   }, [aiError, aiLoading, allCardsFlipped, drawnCards.length, flippedPositions.length, interpretation]);
 
   return (
@@ -300,7 +327,7 @@ const DrawCards: React.FC = () => {
       pt: { xs: 2, md: 4 },
       pb: { xs: 8, md: 4 }
     }}>
-      <CosmicBackground showRings={false} />
+      <CosmicBackground showRings={false} performanceMode={visual.backgroundMode} />
       
       {/* 魔法阵装饰背景 */}
       <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1, '& .MuiPaper-root': { backdropFilter: 'blur(16px)', background: 'rgba(16, 8, 32, 0.7)' } }}>
@@ -332,8 +359,8 @@ const DrawCards: React.FC = () => {
       </Paper>
 
       {activeStep === 0 && (
-        <Paper sx={{ p: 3 }}>
-          <Typography variant="h5" sx={{ mb: 3, fontFamily: 'Cinzel, serif', fontWeight: 700 }}>
+        <Paper sx={{ p: { xs: 3, md: 4 } }}>
+          <Typography variant="h4" sx={{ mb: 4, fontFamily: 'Cinzel, serif', fontWeight: 700 }}>
             选择牌阵
           </Typography>
 
@@ -344,7 +371,7 @@ const DrawCards: React.FC = () => {
               sx={{
                 display: 'grid',
                 gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
-                gap: 2,
+                gap: 3,
               }}
             >
               {spreads.map((spread) => {
@@ -358,18 +385,18 @@ const DrawCards: React.FC = () => {
                     }}
                   >
                     <CardActionArea onClick={() => setSelectedSpreadId(spread.id)}>
-                      <CardContent>
-                        <Typography variant="h6" sx={{ mb: 1 }}>
-                          {spread.name}
+                      <CardContent sx={{ p: 3 }}>
+                        <Typography variant="h5" sx={{ mb: 1.5 }}>
+                          {getSpreadDisplayName(spread)}
                         </Typography>
-                        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1.5 }}>
-                          {spread.description}
+                        <Typography variant="body1" sx={{ color: 'text.secondary', mb: 2 }}>
+                          {getSpreadDisplayDescription(spread)}
                         </Typography>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                          <Chip size="small" label={`${spread.card_count} 张牌`} />
-                          <Chip size="small" variant="outlined" label={`难度 ${spread.difficulty_level}`} />
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
+                          <Chip label={`${spread.card_count} 张牌`} />
+                          <Chip variant="outlined" label={`难度 ${spread.difficulty_level}`} />
                           {spread.is_beginner_friendly && (
-                            <Chip size="small" color="success" variant="outlined" label="新手友好" />
+                            <Chip color="success" variant="outlined" label="新手友好" />
                           )}
                         </Box>
                       </CardContent>
@@ -394,12 +421,12 @@ const DrawCards: React.FC = () => {
       )}
 
       {activeStep === 1 && (
-        <Paper sx={{ p: 3 }}>
-          <Typography variant="h5" sx={{ mb: 1, fontFamily: 'Cinzel, serif', fontWeight: 700 }}>
+        <Paper sx={{ p: { xs: 3, md: 4 } }}>
+          <Typography variant="h4" sx={{ mb: 2, fontFamily: 'Cinzel, serif', fontWeight: 700 }}>
             输入问题
           </Typography>
-          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
-            当前牌阵：{selectedSpread?.name}
+          <Typography variant="body1" sx={{ color: 'text.secondary', mb: 3 }}>
+            当前牌阵：{getSpreadDisplayName(selectedSpread)}
           </Typography>
 
           <ToggleButtonGroup
@@ -409,7 +436,7 @@ const DrawCards: React.FC = () => {
             onChange={(_, value: QuestionType | null) => {
               if (value) setQuestionType(value);
             }}
-            sx={{ mb: 2, flexWrap: 'wrap', gap: 1 }}
+            sx={{ mb: 3, flexWrap: 'wrap', gap: 1.5 }}
           >
             {questionTypeOptions.map((option) => (
               <ToggleButton key={option.value} value={option.value}>
@@ -421,7 +448,7 @@ const DrawCards: React.FC = () => {
           <TextField
             fullWidth
             multiline
-            minRows={4}
+            minRows={5}
             label="你的问题"
             value={question}
             onChange={(event) => setQuestion(event.target.value)}
@@ -489,49 +516,93 @@ const DrawCards: React.FC = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   mb: 4,
-                  mt: 2
+                  mt: 2,
+                  width: { xs: 300, sm: 420, md: 520 },
+                  height: { xs: 300, sm: 420, md: 520 },
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    inset: { xs: 12, sm: 18, md: 24 },
+                    borderRadius: '50%',
+                    border: '1px solid rgba(212, 175, 55, 0.22)',
+                    boxShadow: '0 0 40px rgba(212, 175, 55, 0.16), inset 0 0 24px rgba(212, 175, 55, 0.08)',
+                    background: `
+                      radial-gradient(circle, rgba(212, 175, 55, 0.12) 0%, rgba(212, 175, 55, 0.03) 45%, transparent 72%),
+                      repeating-conic-gradient(
+                        from 0deg,
+                        rgba(212, 175, 55, 0.16) 0deg 10deg,
+                        transparent 10deg 28deg
+                      )
+                    `,
+                    animation: visual.enableAmbientMotion ? 'draw-spin 24s linear infinite' : 'none',
+                  },
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    inset: { xs: 42, sm: 58, md: 76 },
+                    borderRadius: '50%',
+                    border: '1px dashed rgba(120, 220, 255, 0.28)',
+                    opacity: visual.quality === 'minimal' ? 0.34 : 0.7,
+                    animation: visual.enableAmbientMotion ? 'draw-spin 18s linear infinite reverse' : 'none',
+                  },
+                  '@keyframes draw-spin': {
+                    '0%': { transform: 'rotate(0deg)' },
+                    '100%': { transform: 'rotate(360deg)' },
+                  },
                 }}
               >
                 <Box
-                  component="img"
-                  src="/images/theme/magic_circle_accent.png"
                   sx={{
-                    position: 'absolute',
-                    width: { xs: 350, sm: 450, md: 550 },
-                    height: { xs: 350, sm: 450, md: 550 },
-                    objectFit: 'contain',
-                    opacity: 0.6,
-                    animation: 'draw-spin 20s linear infinite',
-                    pointerEvents: 'none',
-                    mixBlendMode: 'screen',
-                    '@keyframes draw-spin': {
-                      '0%': { transform: 'rotate(0deg)' },
-                      '100%': { transform: 'rotate(360deg)' },
-                    },
-                  }}
-                />
-                <Box
-                  sx={{
-                    width: { xs: 220, sm: 260, md: 300 },
+                    width: { xs: 220, sm: 280, md: 320 },
                     aspectRatio: '2 / 3',
-                    borderRadius: 3,
-                    border: '2px solid rgba(212, 175, 55, 0.4)',
-                    background: 'url(/images/theme/card_back_nebula.png)',
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
+                    borderRadius: 4,
+                    border: '2.5px solid rgba(212, 175, 55, 0.85)',
+                    background: 'linear-gradient(155deg, #0c0920 0%, #1a1040 35%, #0f1c38 65%, #080614 100%)',
                     boxShadow: '0 24px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 240, 255, 0.2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
                     position: 'relative',
                     zIndex: 2,
-                    transition: 'all 0.3s ease',
+                    transition: visual.enableHoverMotion ? 'all 0.3s ease' : 'box-shadow 0.2s ease',
+                    overflow: 'hidden',
                     '&:hover': {
-                      boxShadow: '0 30px 70px rgba(0, 0, 0, 0.8), 0 0 50px rgba(0, 240, 255, 0.4)',
-                      transform: 'translateY(-5px)',
-                    }
+                      boxShadow: visual.enableHoverMotion
+                        ? '0 30px 70px rgba(0, 0, 0, 0.82), 0 0 50px rgba(0, 240, 255, 0.32)'
+                        : '0 24px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 240, 255, 0.2)',
+                      transform: visual.enableHoverMotion ? 'translateY(-5px)' : 'none',
+                    },
                   }}
-                />
+                >
+                  <svg viewBox="0 0 400 660" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <radialGradient id="pg" cx="50%" cy="50%" r="42%"><stop offset="0%" stopColor="#f5d97b" stopOpacity="0.4" /><stop offset="60%" stopColor="#c9a84c" stopOpacity="0.1" /><stop offset="100%" stopColor="#f5d97b" stopOpacity="0" /></radialGradient>
+                      <radialGradient id="pgc" cx="50%" cy="50%" r="45%"><stop offset="0%" stopColor="#56bdf8" stopOpacity="0.1" /><stop offset="100%" stopColor="#56bdf8" stopOpacity="0" /></radialGradient>
+                      <filter id="pn" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2.5" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+                    </defs>
+                    {[[32,45,1.4,'#f5d97b',0.5],[370,28,1.1,'#8cd3ff',0.4],[55,120,1,'#fff',0.35],[345,95,1.3,'#c99bff',0.4],[28,250,1.2,'#f5d97b',0.3],[372,200,0.9,'#8cd3ff',0.35],[40,400,1.1,'#fff',0.3],[360,440,1.3,'#f5d97b',0.4],[50,550,1,'#8cd3ff',0.35],[350,580,1.2,'#c99bff',0.3],[200,25,1.1,'#fff',0.3],[200,635,1,'#fff',0.3]].map(([cx,cy,r,f,o],i)=>(<circle key={i} cx={cx as number} cy={cy as number} r={r as number} fill={f as string} opacity={o as number} />))}
+                    <rect x="12" y="12" width="376" height="636" rx="18" fill="none" stroke="#d4af37" strokeWidth="2.5" opacity="0.8" />
+                    <rect x="22" y="22" width="356" height="616" rx="14" fill="none" stroke="#d4af37" strokeWidth="1" opacity="0.35" />
+                    <rect x="30" y="30" width="340" height="600" rx="11" fill="none" stroke="#56bdf8" strokeWidth="0.6" opacity="0.2" strokeDasharray="5 6" />
+                    <g opacity="0.65" filter="url(#pn)">
+                      <path d="M32 40 L32 72 L64 40 Z" fill="none" stroke="#d4af37" strokeWidth="1.5" /><circle cx="38" cy="46" r="2.5" fill="#d4af37" opacity="0.7" />
+                      <path d="M368 40 L368 72 L336 40 Z" fill="none" stroke="#d4af37" strokeWidth="1.5" /><circle cx="362" cy="46" r="2.5" fill="#d4af37" opacity="0.7" />
+                      <path d="M32 620 L32 588 L64 620 Z" fill="none" stroke="#d4af37" strokeWidth="1.5" /><circle cx="38" cy="614" r="2.5" fill="#d4af37" opacity="0.7" />
+                      <path d="M368 620 L368 588 L336 620 Z" fill="none" stroke="#d4af37" strokeWidth="1.5" /><circle cx="362" cy="614" r="2.5" fill="#d4af37" opacity="0.7" />
+                    </g>
+                    <circle cx="200" cy="330" r="200" fill="url(#pgc)" /><circle cx="200" cy="330" r="160" fill="url(#pg)" />
+                    <circle cx="200" cy="330" r="140" fill="none" stroke="#d4af37" strokeWidth="2.5" opacity="0.7" filter="url(#pn)" />
+                    <circle cx="200" cy="330" r="128" fill="none" stroke="#d4af37" strokeWidth="0.8" opacity="0.3" strokeDasharray="10 5" />
+                    <circle cx="200" cy="330" r="100" fill="none" stroke="#56bdf8" strokeWidth="1.5" opacity="0.4" filter="url(#pn)" />
+                    <circle cx="200" cy="330" r="70" fill="none" stroke="#d4af37" strokeWidth="1.2" opacity="0.5" />
+                    <polygon points="200,185 222,300 340,330 222,360 200,475 178,360 60,330 178,300" fill="none" stroke="#f5d97b" strokeWidth="3" opacity="0.75" filter="url(#pn)" />
+                    <g transform="rotate(22.5, 200, 330)"><polygon points="200,225 212,305 292,330 212,355 200,435 188,355 108,330 188,305" fill="none" stroke="#56bdf8" strokeWidth="1.5" opacity="0.35" /></g>
+                    {[0,45,90,135,180,225,270,315].map((a,i)=>{const r=(a*Math.PI)/180;return <circle key={`p${i}`} cx={200+140*Math.cos(r)} cy={330+140*Math.sin(r)} r={i%2===0?4:3} fill={i%2===0?'#f5d97b':'#56bdf8'} opacity={i%2===0?0.85:0.6} filter="url(#pn)" />;})}
+                    <circle cx="200" cy="330" r="20" fill="#f5d97b" opacity="0.8" filter="url(#pn)" /><circle cx="200" cy="330" r="10" fill="#0d0820" /><circle cx="200" cy="330" r="4.5" fill="#56bdf8" opacity="0.9" />
+                    <path d="M172 330 Q200 310 228 330 Q200 350 172 330" fill="none" stroke="#f5d97b" strokeWidth="1.8" opacity="0.6" />
+                    <text x="200" y="88" textAnchor="middle" fontSize="26" fontFamily="Georgia, serif" fill="#f5d97b" letterSpacing="8" opacity="0.85" filter="url(#pn)">TAROT</text>
+                    <text x="200" y="115" textAnchor="middle" fontSize="11" fill="#d4af37" opacity="0.5" letterSpacing="3">✦   ✦   ✦</text>
+                    <text x="200" y="575" textAnchor="middle" fontSize="15" fontFamily="Georgia, serif" fill="#8cd3ff" letterSpacing="7" opacity="0.55">ARCANA</text>
+                    <text x="200" y="553" textAnchor="middle" fontSize="11" fill="#d4af37" opacity="0.5" letterSpacing="3">✦   ✦   ✦</text>
+                  </svg>
+                </Box>
               </Box>
 
               <Typography variant="body1" sx={{ color: 'text.secondary', textAlign: 'center', zIndex: 2 }}>
@@ -577,21 +648,23 @@ const DrawCards: React.FC = () => {
                   cardSizeOverride={drawnCards.length <= 5 ? 'large' : 'medium'}
                   showSpreadMeta={false}
                   showSpreadDescription={false}
+                  visualQuality={visual.quality}
+                  motionPreset={visual.cardMotionPreset}
                 />
               </Paper>
 
               <Paper sx={{ p: 3 }}>
-                <Typography variant="h6" sx={{ mb: 2 }}>
-                  AI 解读结果
+                <Typography variant="h5" sx={{ mb: 2, fontFamily: 'Cinzel, serif', color: 'primary.main' }}>
+                  ✦ 命运的启示
                 </Typography>
 
                 {!allCardsFlipped && (
-                  <Alert severity="info">请先翻开全部牌面，系统将自动开始 AI 解读。</Alert>
+                  <Alert severity="info" sx={{ fontSize: '1rem' }}>请先翻开全部牌面，命运将自动为您揭晓。</Alert>
                 )}
 
                 {aiLoading && (
                   <Box sx={{ py: 2 }}>
-                    <Loading variant="simple" message="AI 正在解读，请稍候..." />
+                    <Loading variant="cosmic" message="古老的智慧正在聆听牌面的低语..." />
                   </Box>
                 )}
 
@@ -612,7 +685,7 @@ const DrawCards: React.FC = () => {
                 {interpretation && (
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <Box>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+                      <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, color: 'primary.main' }}>
                         总览
                       </Typography>
                       <Typography variant="body2" sx={{ lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
@@ -622,7 +695,7 @@ const DrawCards: React.FC = () => {
 
                     {interpretationThemes.length > 0 && (
                       <Box>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, color: 'primary.main' }}>
                           关键主题
                         </Typography>
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -635,7 +708,7 @@ const DrawCards: React.FC = () => {
 
                     {interpretation.card_analysis && (
                       <Box>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, color: 'primary.main' }}>
                           逐牌分析
                         </Typography>
                         <Typography variant="body2" sx={{ lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
@@ -646,7 +719,7 @@ const DrawCards: React.FC = () => {
 
                     {interpretation.relationship_analysis && (
                       <Box>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, color: 'primary.main' }}>
                           牌面关系
                         </Typography>
                         <Typography variant="body2" sx={{ lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
@@ -657,7 +730,7 @@ const DrawCards: React.FC = () => {
 
                     {interpretation.advice && (
                       <Box>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, color: 'primary.main' }}>
                           建议
                         </Typography>
                         <Typography variant="body2" sx={{ lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>

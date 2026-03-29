@@ -14,6 +14,9 @@ export const ROUTES = {
   READING_DETAIL: '/reading/:id',
   HISTORY: '/history',
   PROFILE: '/profile',
+  CARDS: '/cards',
+  SPREADS: '/spreads',
+  FAVORITES: '/favorites',
 
   // 演示页面
   DEMO: '/demo',
@@ -87,6 +90,27 @@ export const ROUTE_METADATA: Record<string, RouteMetadata> = {
     requiresAuth: true,
     showInNav: true,
     icon: 'person',
+  },
+  [ROUTES.CARDS]: {
+    title: '塔罗牌库',
+    description: '浏览全部塔罗牌信息',
+    requiresAuth: true,
+    showInNav: false,
+    icon: 'menu_book',
+  },
+  [ROUTES.SPREADS]: {
+    title: '牌阵目录',
+    description: '查看牌阵与用途',
+    requiresAuth: true,
+    showInNav: false,
+    icon: 'timeline',
+  },
+  [ROUTES.FAVORITES]: {
+    title: '我的收藏',
+    description: '查看收藏的占卜记录',
+    requiresAuth: true,
+    showInNav: false,
+    icon: 'star',
   },
   [ROUTES.DEMO]: {
     title: '功能演示',

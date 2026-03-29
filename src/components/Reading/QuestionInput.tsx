@@ -32,7 +32,7 @@ import {
   ExpandMore,
   ExpandLess,
   Help,
-} from '@mui/icons-material';
+} from 'icons';
 import { QuestionType, getQuestionTypeLabel } from '../../stores/gameStore';
 import { promptService } from '../../services/promptService';
 

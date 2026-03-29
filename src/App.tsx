@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { Box, CircularProgress } from '@mui/material';
-
 import AppRouter from './routes/AppRouter';
 import { useAuthStore } from './stores/authStore';
 import './styles/globals.css';

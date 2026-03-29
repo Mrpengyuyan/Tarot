@@ -44,6 +44,29 @@ export interface ReadingSummary {
   user_rating?: number | null;
 }
 
+export interface UpdateReadingParams {
+  user_notes?: string;
+  user_rating?: number;
+  is_favorite?: boolean;
+}
+
+export interface ReadingQueryParams {
+  skip?: number;
+  limit?: number;
+  status?: Reading['status'];
+  questionType?: Reading['question_type'];
+  favoritesOnly?: boolean;
+  search?: string;
+  sortBy?: 'created_at' | 'completed_at' | 'status' | 'question_type';
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface ReadingOverview extends ReadingSummary {
+  spread_name?: string | null;
+  spread_name_en?: string | null;
+  interpretation_summary?: string | null;
+}
+
 export interface ReadingDetail extends Reading {
   spread_type?: SpreadType;
   card_draws?: CardDrawWithMeaning[];
@@ -107,6 +130,21 @@ export interface ReadingWithCards {
   reading: Reading;
   cards: CardDrawWithMeaning[];
 }
+
+const buildReadingQuery = (params: ReadingQueryParams): string => {
+  const query = new URLSearchParams();
+
+  if (params.skip !== undefined) query.set('skip', String(params.skip));
+  if (params.limit !== undefined) query.set('limit', String(params.limit));
+  if (params.status) query.set('status', params.status);
+  if (params.questionType) query.set('question_type', params.questionType);
+  if (params.favoritesOnly) query.set('favorites_only', 'true');
+  if (params.search) query.set('search', params.search);
+  if (params.sortBy) query.set('sort_by', params.sortBy);
+  if (params.sortOrder) query.set('sort_order', params.sortOrder);
+
+  return query.toString();
+};
 
 export const tarotService = {
   // 获取所有塔罗牌
@@ -217,8 +255,40 @@ export const tarotService = {
   },
 
   // 获取用户的阅读记录
-  getUserReadings: async (skip = 0, limit = 20): Promise<ReadingSummary[]> => {
-    return api.get(`/records/?skip=${skip}&limit=${limit}`);
+  getUserReadings: async (params: ReadingQueryParams = {}): Promise<ReadingSummary[]> => {
+    const query = buildReadingQuery({
+      skip: params.skip ?? 0,
+      limit: params.limit ?? 20,
+      status: params.status,
+      questionType: params.questionType,
+      favoritesOnly: params.favoritesOnly,
+      search: params.search,
+      sortBy: params.sortBy,
+      sortOrder: params.sortOrder,
+    });
+    return api.get(`/records/?${query}`);
+  },
+
+  getFavoriteReadings: async (params: ReadingQueryParams = {}): Promise<ReadingSummary[]> => {
+    const query = buildReadingQuery({
+      skip: params.skip ?? 0,
+      limit: params.limit ?? 20,
+      status: params.status,
+      questionType: params.questionType,
+      favoritesOnly: true,
+      search: params.search,
+      sortBy: params.sortBy,
+      sortOrder: params.sortOrder,
+    });
+    return api.get(`/records/?${query}`);
+  },
+
+  updateReading: async (readingId: number, updates: UpdateReadingParams): Promise<Reading> => {
+    return api.put(`/records/${readingId}`, updates);
+  },
+
+  toggleFavorite: async (readingId: number, isFavorite: boolean): Promise<Reading> => {
+    return api.put(`/records/${readingId}`, { is_favorite: isFavorite });
   },
 
   getReadingDetailInfo: async (readingId: number): Promise<ReadingDetail> => {
@@ -240,6 +310,10 @@ export const tarotService = {
   // 获取最近的阅读
   getRecentReadings: async (days = 7, limit = 10): Promise<ReadingSummary[]> => {
     return api.get(`/records/recent?days=${days}&limit=${limit}`);
+  },
+
+  getRecentReadingsOverview: async (limit = 4): Promise<ReadingOverview[]> => {
+    return api.get(`/records/dashboard/recent-overview?limit=${limit}`);
   },
 };
 

@@ -19,6 +19,9 @@ const DrawCards = React.lazy(() => import('../pages/Reading/DrawCards'));
 const ReadingDetail = React.lazy(() => import('../pages/Reading/ReadingDetail'));
 const HistoryPage = React.lazy(() => import('../pages/History/HistoryPage'));
 const ProfilePage = React.lazy(() => import('../pages/Profile/ProfilePage'));
+const TarotLibraryPage = React.lazy(() => import('../pages/Library/TarotLibraryPage'));
+const SpreadCatalogPage = React.lazy(() => import('../pages/Library/SpreadCatalogPage'));
+const FavoritesPage = React.lazy(() => import('../pages/Favorites/FavoritesPage'));
 const DemoPage = React.lazy(() => import('../pages/Demo/DemoPage'));
 const TarotCardDemo = React.lazy(() => import('../pages/Demo/TarotCardDemo'));
 const SystemStatus = React.lazy(() => import('../pages/Debug/SystemStatus'));
@@ -176,6 +179,30 @@ const router = createBrowserRouter([
             element: (
               <Suspense fallback={<LoadingFallback />}>
                 <ProfilePage />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'cards',
+            element: (
+              <Suspense fallback={<LoadingFallback />}>
+                <TarotLibraryPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'spreads',
+            element: (
+              <Suspense fallback={<LoadingFallback />}>
+                <SpreadCatalogPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: 'favorites',
+            element: (
+              <Suspense fallback={<LoadingFallback />}>
+                <FavoritesPage />
               </Suspense>
             ),
           },

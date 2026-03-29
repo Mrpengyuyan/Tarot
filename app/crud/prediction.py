@@ -1,7 +1,7 @@
 from typing import List, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import and_, or_, desc, func
+from sqlalchemy import and_, or_, desc, asc, func
 from app.models.record import Prediction, CardDraw, Interpretation, QuestionType, PredictionStatus
 from app.models.user import User
 from app.models.tarot_card import TarotCard
@@ -13,6 +13,48 @@ from app.schemas.prediction import (
 )
 
 # ======= 预测记录相关 =======
+
+def _apply_prediction_filters(
+    query,
+    user_id: int,
+    status: Optional[PredictionStatus] = None,
+    question_type: Optional[QuestionType] = None,
+    favorites_only: bool = False,
+    search_term: Optional[str] = None,
+):
+    query = query.filter(Prediction.user_id == user_id)
+
+    if status is not None:
+        query = query.filter(Prediction.status == status)
+
+    if question_type is not None:
+        query = query.filter(Prediction.question_type == question_type)
+
+    if favorites_only:
+        query = query.filter(Prediction.is_favorite.is_(True))
+
+    if search_term:
+        search_pattern = f"%{search_term}%"
+        query = query.filter(
+            or_(
+                Prediction.question.ilike(search_pattern),
+                Prediction.user_notes.ilike(search_pattern),
+            )
+        )
+
+    return query
+
+
+def _apply_prediction_sort(query, sort_by: str = "created_at", sort_order: str = "desc"):
+    sort_field_map = {
+        "created_at": Prediction.created_at,
+        "completed_at": Prediction.completed_at,
+        "status": Prediction.status,
+        "question_type": Prediction.question_type,
+    }
+    sort_column = sort_field_map.get(sort_by, Prediction.created_at)
+    sort_direction = asc if sort_order == "asc" else desc
+    return query.order_by(sort_direction(sort_column), desc(Prediction.created_at))
 
 def get_prediction_by_id(db: Session, prediction_id: int) -> Optional[Prediction]:
     """根据ID获取预测记录"""
@@ -29,36 +71,77 @@ def get_prediction_with_details(db: Session, prediction_id: int) -> Optional[Pre
 
 def get_user_predictions(db: Session, user_id: int, skip: int = 0, limit: int = 100) -> List[Prediction]:
     """获取用户的预测记录"""
-    return db.query(Prediction).filter(
-        Prediction.user_id == user_id
-    ).order_by(desc(Prediction.created_at)).offset(skip).limit(limit).all()
+    return get_filtered_user_predictions(db, user_id=user_id, skip=skip, limit=limit)
+
+def get_filtered_user_predictions(
+    db: Session,
+    user_id: int,
+    skip: int = 0,
+    limit: int = 100,
+    status: Optional[PredictionStatus] = None,
+    question_type: Optional[QuestionType] = None,
+    favorites_only: bool = False,
+    search_term: Optional[str] = None,
+    sort_by: str = "created_at",
+    sort_order: str = "desc",
+) -> List[Prediction]:
+    """按搜索、筛选、排序条件获取用户预测记录"""
+    query = db.query(Prediction)
+    query = _apply_prediction_filters(
+        query,
+        user_id=user_id,
+        status=status,
+        question_type=question_type,
+        favorites_only=favorites_only,
+        search_term=search_term,
+    )
+    query = _apply_prediction_sort(query, sort_by=sort_by, sort_order=sort_order)
+    return query.offset(skip).limit(limit).all()
 
 def get_user_predictions_by_status(db: Session, user_id: int, status: PredictionStatus, skip: int = 0, limit: int = 100) -> List[Prediction]:
     """根据状态获取用户预测记录"""
-    return db.query(Prediction).filter(
-        and_(
-            Prediction.user_id == user_id,
-            Prediction.status == status
-        )
-    ).order_by(desc(Prediction.created_at)).offset(skip).limit(limit).all()
+    return get_filtered_user_predictions(
+        db,
+        user_id=user_id,
+        status=status,
+        skip=skip,
+        limit=limit,
+    )
 
 def get_user_predictions_by_question_type(db: Session, user_id: int, question_type: QuestionType, skip: int = 0, limit: int = 100) -> List[Prediction]:
     """根据问题类型获取用户预测记录"""
-    return db.query(Prediction).filter(
-        and_(
-            Prediction.user_id == user_id,
-            Prediction.question_type == question_type
-        )
-    ).order_by(desc(Prediction.created_at)).offset(skip).limit(limit).all()
+    return get_filtered_user_predictions(
+        db,
+        user_id=user_id,
+        question_type=question_type,
+        skip=skip,
+        limit=limit,
+    )
 
 def get_user_favorite_predictions(db: Session, user_id: int, skip: int = 0, limit: int = 100) -> List[Prediction]:
     """获取用户收藏的预测记录"""
-    return db.query(Prediction).filter(
-        and_(
-            Prediction.user_id == user_id,
-            Prediction.is_favorite == True
+    return get_filtered_user_predictions(
+        db,
+        user_id=user_id,
+        favorites_only=True,
+        skip=skip,
+        limit=limit,
+    )
+
+
+def get_recent_prediction_overview(db: Session, user_id: int, limit: int = 4) -> List[Prediction]:
+    """获取仪表盘最近记录所需的聚合数据"""
+    return (
+        db.query(Prediction)
+        .options(
+            joinedload(Prediction.spread_type),
+            joinedload(Prediction.interpretation),
         )
-    ).order_by(desc(Prediction.created_at)).offset(skip).limit(limit).all()
+        .filter(Prediction.user_id == user_id)
+        .order_by(desc(Prediction.created_at))
+        .limit(limit)
+        .all()
+    )
 
 def create_prediction(db: Session, user_id: int, prediction_create: PredictionCreate) -> Prediction:
     """创建预测记录"""
@@ -276,16 +359,13 @@ def get_user_prediction_stats(db: Session, user_id: int) -> PredictionStats:
 
 def search_user_predictions(db: Session, user_id: int, search_term: str, skip: int = 0, limit: int = 100) -> List[Prediction]:
     """搜索用户的预测记录"""
-    search_pattern = f"%{search_term}%"
-    return db.query(Prediction).filter(
-        and_(
-            Prediction.user_id == user_id,
-            or_(
-                Prediction.question.ilike(search_pattern),
-                Prediction.user_notes.ilike(search_pattern)
-            )
-        )
-    ).order_by(desc(Prediction.created_at)).offset(skip).limit(limit).all()
+    return get_filtered_user_predictions(
+        db,
+        user_id=user_id,
+        search_term=search_term,
+        skip=skip,
+        limit=limit,
+    )
 
 def get_recent_predictions(db: Session, user_id: int, days: int = 7, limit: int = 10) -> List[Prediction]:
     """获取用户最近的预测记录"""
@@ -326,7 +406,7 @@ def increment_user_prediction_count(db: Session, user_id: int) -> bool:
     """增加用户预测次数"""
     user = db.query(User).filter(User.id == user_id).first()
     if user:
-        user.prediction_count += 1
+        user.prediction_count = (user.prediction_count or 0) + 1
         db.commit()
         return True
     return False 

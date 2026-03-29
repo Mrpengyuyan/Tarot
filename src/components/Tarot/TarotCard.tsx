@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import {
   Flip as FlipIcon,
-} from '@mui/icons-material';
+} from 'icons';
 import { TarotCard as TarotCardType } from '../../types/api';
 
 interface TarotCardProps {

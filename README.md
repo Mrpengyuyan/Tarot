@@ -26,6 +26,43 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
+## Reusable UI Smoke Test
+
+This project includes a browser-driven smoke script that validates the full user path:
+
+1. Login
+2. Select a spread
+3. Enter a question
+4. Draw cards
+5. Flip cards
+6. Wait for AI interpretation
+7. Verify the same-page result and the persisted detail page
+
+Run it with:
+
+```powershell
+python scripts/smoke_ui_interpretation.py
+```
+
+Or use the npm shortcut:
+
+```powershell
+npm run smoke:ui
+```
+
+Useful options:
+
+```powershell
+python scripts/smoke_ui_interpretation.py --headed
+python scripts/smoke_ui_interpretation.py --question "我最近适合换工作吗？"
+python scripts/smoke_ui_interpretation.py --spread-index 1
+```
+
+Notes:
+- The script prefers a local Microsoft Edge install by default.
+- You can override the browser path with `SMOKE_BROWSER_PATH`.
+- The script expects the frontend and backend to already be running locally.
+
 ## LLM Provider (DeepSeek)
 
 Configure these variables in `.env`:
@@ -75,3 +112,4 @@ Notes:
 - `AI_BUDGET_GUARD_ENABLED` uses process-local counters. Keep it `false` for multi-instance deployment unless you provide a centralized budget store.
 - In Docker Compose, backend `DATABASE_URL` is overridden to Postgres automatically.
 - OpenAPI docs at `/docs` are available only when `DEBUG=true`.
+- Production builds disable source map generation via `.env.production` to avoid third-party source map warnings from `@mediapipe/tasks-vision`.

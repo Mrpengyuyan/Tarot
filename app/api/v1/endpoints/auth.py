@@ -1,9 +1,10 @@
-﻿from datetime import timedelta
+from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+from typing import cast
 
 from app.api.deps import get_current_active_user
 from app.core.config import settings
@@ -85,9 +86,9 @@ def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    access_token = _issue_access_token(user.username)
+    access_token = _issue_access_token(cast(str, user.username))
     _set_auth_cookie(response, access_token)
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"token_type": "bearer"}
 
 
 @router.post("/refresh", response_model=Token, summary="Refresh access token")
@@ -95,9 +96,9 @@ def refresh_token(
     response: Response,
     current_user: UserModel = Depends(get_current_active_user),
 ):
-    access_token = _issue_access_token(current_user.username)
+    access_token = _issue_access_token(cast(str, current_user.username))
     _set_auth_cookie(response, access_token)
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"token_type": "bearer"}
 
 
 @router.post("/logout", summary="Logout")

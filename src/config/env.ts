@@ -7,7 +7,6 @@ export interface AppConfig {
   coze: {
     apiUrl: string;
     botId: string;
-    accessToken: string;
   };
   app: {
     name: string;
@@ -41,7 +40,6 @@ export const config: AppConfig = {
   coze: {
     apiUrl: getEnvVar('REACT_APP_COZE_API_URL', 'https://api.coze.cn/open_api/v2'),
     botId: getEnvVar('REACT_APP_COZE_BOT_ID'),
-    accessToken: getEnvVar('REACT_APP_COZE_ACCESS_TOKEN'),
   },
   app: {
     name: getEnvVar('REACT_APP_NAME', 'Tarot Game'),

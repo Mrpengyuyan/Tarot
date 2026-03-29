@@ -3,18 +3,21 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
-from app.core.config import settings
+
 from app.api.v1.api import api_router
-from app.db.session import engine
+from app.core.config import settings
+from app.db import base  # noqa: F401
 from app.db.base_class import Base
+from app.db.bootstrap import ensure_reference_data
+from app.db.session import SessionLocal, engine
 
 logger = logging.getLogger(__name__)
 
 
 def create_tables():
-    """创建数据库表"""
+    """Create database tables and required uniqueness indexes."""
     Base.metadata.create_all(bind=engine)
-    # Ensure uniqueness constraints exist for pre-existing local databases.
+
     with engine.begin() as conn:
         conn.execute(
             text(
@@ -33,24 +36,38 @@ def create_tables():
 def create_start_app_handler(app: FastAPI):
     async def start_app() -> None:
         create_tables()
-        print("Database tables created successfully")
-        print("Tip: Run 'python -m app.scripts.init_demo_data' to initialize demo data")
+        logger.info("Database tables created successfully")
+
+        with SessionLocal() as db:
+            reference_data = ensure_reference_data(db)
+
+        logger.info(
+            "Reference data ready. cards=%s spreads=%s imported_cards=%s imported_spreads=%s repaired_questions=%s",
+            reference_data["cards_after"],
+            reference_data["spreads_after"],
+            reference_data["cards_imported"],
+            reference_data["spreads_imported"],
+            reference_data["questions_repaired"],
+        )
+        logger.info("Tip: Run 'python -m app.scripts.init_demo_data' to initialize demo users")
+
     return start_app
 
 
 def get_application():
-    docs_url = "/docs" if settings.DEBUG else None
-    redoc_url = "/redoc" if settings.DEBUG else None
+    environment = str(settings.ENVIRONMENT).strip().lower()
+    enable_docs = settings.DEBUG or environment in {"dev", "development", "local"}
+    docs_url = "/docs" if enable_docs else None
+    redoc_url = "/redoc" if enable_docs else None
 
     app = FastAPI(
-        title=settings.PROJECT_NAME, 
+        title=settings.PROJECT_NAME,
         version=settings.PROJECT_VERSION,
-        description="塔罗牌游戏后端API",
+        description="Tarot game backend API",
         docs_url=docs_url,
-        redoc_url=redoc_url
+        redoc_url=redoc_url,
     )
-    
-    # 添加CORS中间件
+
     allowed_origins = settings.cors_origins_list
     allow_credentials = settings.CORS_ALLOW_CREDENTIALS and "*" not in allowed_origins
 
@@ -66,10 +83,10 @@ def get_application():
         allowed_origins,
         allow_credentials,
     )
-    
+
     app.add_event_handler("startup", create_start_app_handler(app))
     app.include_router(api_router, prefix=settings.API_V1_STR)
     return app
 
 
-app = get_application() 
+app = get_application()

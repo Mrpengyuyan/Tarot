@@ -12,7 +12,7 @@ import {
   keyframes,
   Backdrop,
 } from '@mui/material';
-import { Close, AutoAwesome } from '@mui/icons-material';
+import { Close, AutoAwesome } from 'icons';
 
 const mysticalPulse = keyframes`
   0%, 100% {

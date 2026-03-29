@@ -57,11 +57,20 @@ class CozeService:
         self.chat_endpoint = (settings.DEEPSEEK_CHAT_ENDPOINT or "chat/completions").strip("/")
         self.chat_model = (settings.DEEPSEEK_CHAT_MODEL or "deepseek-chat").strip()
         self.reasoner_model = (settings.DEEPSEEK_REASONER_MODEL or "deepseek-reasoner").strip()
+        self.trust_env_proxy = bool(settings.DEEPSEEK_TRUST_ENV_PROXY)
         self.enable_reasoner_fallback = bool(settings.DEEPSEEK_ENABLE_REASONER_FALLBACK)
         self.reasoner_trigger_chars = int(settings.DEEPSEEK_REASONER_TRIGGER_CHARS or 120)
         self.reasoner_keywords = settings.deepseek_reasoner_keywords
         self.force_json_output = bool(settings.DEEPSEEK_FORCE_JSON_OUTPUT)
         self.max_output_tokens = max(0, int(settings.AI_MAX_OUTPUT_TOKENS or 0))
+        self.reproducible_mode = bool(settings.AI_REPRODUCIBLE_MODE)
+        self.chat_temperature = max(0.0, min(2.0, float(settings.AI_CHAT_TEMPERATURE or 0.0)))
+        self.reasoner_temperature = max(0.0, min(2.0, float(settings.AI_REASONER_TEMPERATURE or 0.0)))
+
+        if self.reproducible_mode:
+            self.enable_reasoner_fallback = False
+            self.chat_temperature = 0.0
+            self.reasoner_temperature = 0.0
 
         # Retry policy
         self.max_retries = max(0, int(settings.AI_MAX_RETRIES or 0))
@@ -113,6 +122,13 @@ class CozeService:
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
         }
+
+    @staticmethod
+    def _exception_text(exc: Exception) -> str:
+        message = str(exc).strip()
+        if message:
+            return message
+        return repr(exc)
 
     def _candidate_chat_endpoints(self) -> List[str]:
         endpoints: List[str] = []
@@ -306,7 +322,11 @@ class CozeService:
         for endpoint in self._candidate_chat_endpoints():
             url = f"{self.base_url}/{endpoint}"
             try:
-                async with httpx.AsyncClient(timeout=request_timeout) as client:
+                async with httpx.AsyncClient(
+                    timeout=request_timeout,
+                    follow_redirects=True,
+                    trust_env=self.trust_env_proxy,
+                ) as client:
                     response = await client.post(url, headers=self._headers(), json=payload)
             except httpx.TimeoutException as exc:
                 last_error = CozeTimeoutError(
@@ -314,8 +334,9 @@ class CozeService:
                 )
                 continue
             except httpx.RequestError as exc:
+                detail = self._exception_text(exc)
                 last_error = CozeRequestError(
-                    f"DeepSeek request error on endpoint '{endpoint}': {exc}"
+                    f"DeepSeek request error on endpoint '{endpoint}' ({type(exc).__name__}): {detail}"
                 )
                 continue
 
@@ -451,7 +472,7 @@ class CozeService:
             "model": model,
             "messages": messages,
             "stream": False,
-            "temperature": 0.6 if model == self.chat_model else 0.5,
+            "temperature": self.chat_temperature if model == self.chat_model else self.reasoner_temperature,
         }
         if self.max_output_tokens > 0:
             payload["max_tokens"] = self.max_output_tokens

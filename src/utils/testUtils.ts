@@ -137,7 +137,7 @@ export const getDebugInfo = () => ({
   environment: process.env.NODE_ENV,
   config: {
     apiBaseUrl: config.apiBaseUrl,
-    legacyCozeConfigured: !!(config.coze.botId && config.coze.accessToken),
+    legacyCozeConfigured: !!config.coze.botId,
     featuresEnabled: config.features,
   },
   browser: {

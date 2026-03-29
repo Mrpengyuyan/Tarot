@@ -3,13 +3,16 @@ import {
   Box,
   CssBaseline,
   ThemeProvider,
+  useMediaQuery,
 } from '@mui/material';
 import { useLocation } from 'react-router-dom';
 import { darkTheme } from '../../styles/theme';
 import Header from './Header';
 import Sidebar from './Sidebar';
-import { useUiStore } from '../../stores/uiStore';
+import NotificationContainer from '../UI/Notification';
 import { useAuthStore } from '../../stores/authStore';
+import { useUiStore } from '../../stores/uiStore';
+import { useVisualSettings } from '../../hooks/useVisualSettings';
 import '../../styles/globals.css';
 
 interface AppLayoutProps {
@@ -18,57 +21,63 @@ interface AppLayoutProps {
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const location = useLocation();
+  const isDesktop = useMediaQuery(darkTheme.breakpoints.up('lg'));
   const { sidebarOpen } = useUiStore();
   const { isLoggedIn } = useAuthStore();
-
-  // 检查是否是认证页面（不显示侧边栏）
+  const visual = useVisualSettings();
   const isAuthPage = location.pathname.startsWith('/auth');
+  const animateDesktopShell = isLoggedIn && !isAuthPage && isDesktop && visual.enableAnimations;
+  const desktopShellTransition = darkTheme.transitions.create('transform', {
+    duration: sidebarOpen ? 380 : 260,
+    easing: sidebarOpen
+      ? 'cubic-bezier(0.22, 1, 0.36, 1)'
+      : 'cubic-bezier(0.4, 0, 0.2, 1)',
+  });
 
   return (
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
-      <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-        {/* 侧边栏 - 仅在已登录且非认证页面时显示 */}
+      <Box
+        sx={{ display: 'flex', minHeight: '100vh' }}
+        data-visual-quality={visual.quality}
+      >
         {isLoggedIn && !isAuthPage && <Sidebar />}
 
-        {/* 主内容区域 */}
         <Box
           component="main"
           sx={{
             flexGrow: 1,
+            minWidth: 0,
             display: 'flex',
             flexDirection: 'column',
             minHeight: '100vh',
-            transition: 'margin-left 0.3s ease',
-            marginLeft: isLoggedIn && !isAuthPage && sidebarOpen ? '280px' : '0',
+            transform: animateDesktopShell && sidebarOpen ? 'translateX(20px) scale(0.992)' : 'translateX(0) scale(1)',
+            transformOrigin: 'left center',
+            transition: desktopShellTransition,
             position: 'relative',
             overflow: 'hidden',
+            willChange: animateDesktopShell ? 'transform' : 'auto',
           }}
         >
-          {/* 顶部导航栏 */}
-          <Header />
+          {!isAuthPage && <Header />}
 
-          {/* 页面内容 */}
           <Box
             sx={{
               flexGrow: 1,
-              p: isAuthPage ? 0 : 3,
-              pt: isAuthPage ? 0 : 4,
+              p: isAuthPage ? 0 : 2,
+              pt: isAuthPage ? 0 : 2,
               background: isAuthPage
                 ? 'linear-gradient(135deg, rgba(10, 10, 15, 0.95) 0%, rgba(46, 0, 58, 0.95) 100%)'
                 : 'transparent',
               position: 'relative',
-              minHeight: 'calc(100vh - 64px)',
+              minHeight: isAuthPage ? '100vh' : 'calc(100vh - 64px)',
+              overflow: isAuthPage ? 'hidden' : 'visible',
             }}
           >
-            {/* 背景装饰效果 */}
             <Box
               sx={{
                 position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
+                inset: 0,
                 background: `
                   radial-gradient(circle at 20% 80%, rgba(212, 175, 55, 0.1) 0%, transparent 50%),
                   radial-gradient(circle at 80% 20%, rgba(106, 5, 114, 0.1) 0%, transparent 50%),
@@ -79,23 +88,23 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               }}
             />
 
-            {/* 页面内容容器 */}
             <Box
               sx={{
                 position: 'relative',
                 zIndex: 1,
-                maxWidth: '1200px',
-                margin: '0 auto',
+                maxWidth: 'none',
+                margin: '0',
                 width: '100%',
               }}
-              className="fade-in"
+              className={visual.enableAnimations ? 'fade-in' : undefined}
             >
               {children}
             </Box>
           </Box>
         </Box>
 
-        {/* 全局背景粒子效果 */}
+        <NotificationContainer />
+
         <Box
           sx={{
             position: 'fixed',
@@ -105,9 +114,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             height: '100%',
             pointerEvents: 'none',
             zIndex: -1,
-            background: `
-              linear-gradient(135deg, #0A0A0F 0%, #2E003A 100%)
-            `,
+            background: 'linear-gradient(135deg, #0A0A0F 0%, #2E003A 100%)',
             '&::before': {
               content: '""',
               position: 'absolute',
@@ -124,8 +131,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               `,
               backgroundRepeat: 'repeat',
               backgroundSize: '200px 100px',
-              animation: 'float 20s ease-in-out infinite',
-              opacity: 0.5,
+              animation: visual.enableAmbientMotion ? 'float 20s ease-in-out infinite' : 'none',
+              opacity: visual.quality === 'minimal' ? 0.22 : visual.quality === 'lite' ? 0.34 : 0.5,
             },
           }}
         />

@@ -1,6 +1,7 @@
 from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import func
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
 from app.core.security import get_password_hash, verify_password
@@ -18,7 +19,10 @@ def get_user_by_username(db: Session, username: str) -> Optional[User]:
 
 def get_user_by_email(db: Session, email: str) -> Optional[User]:
     """根据邮箱获取用户"""
-    return db.query(User).filter(User.email == email).first()
+    normalized = (email or "").strip().lower()
+    if not normalized:
+        return None
+    return db.query(User).filter(func.lower(User.email) == normalized).first()
 
 
 def create_user(db: Session, user_create: UserCreate) -> User:
@@ -64,7 +68,10 @@ def update_user(db: Session, db_user: User, user_update: UserUpdate) -> User:
 
 def authenticate_user(db: Session, username: str, password: str) -> Optional[User]:
     """验证用户身份"""
-    user = get_user_by_username(db, username)
+    identifier = (username or "").strip()
+    user = get_user_by_username(db, identifier)
+    if not user and identifier:
+        user = get_user_by_email(db, identifier)
     if not user:
         return None
     if not verify_password(password, user.hashed_password):

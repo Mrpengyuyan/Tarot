@@ -93,11 +93,9 @@ export class TarotImageService implements ImageManager {
    * 获取牌背图片URL
    */
   getCardBackUrl(backId: string = 'classic', quality: ImageQuality = 'standard'): string {
-    const qualityParam = this.urlConfig.qualityParams?.[quality];
+    void quality;
     const baseUrl = this.urlConfig.cdnUrl || this.urlConfig.baseUrl;
-    const url = `${baseUrl}/card-backs/${backId}.jpg`;
-
-    return qualityParam ? `${url}?${qualityParam}` : url;
+    return `${baseUrl}/card-backs/${backId}.svg`;
   }
 
   /**

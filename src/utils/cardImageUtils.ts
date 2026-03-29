@@ -93,8 +93,8 @@ export function getCardImageUrl(cardId: number, quality: ImageQuality = 'standar
  * 获取卡片背面图片URL
  */
 export function getCardBackUrl(backStyle: string = 'classic', quality: ImageQuality = 'standard'): string {
-  const suffix = QUALITY_SUFFIXES[quality];
-  return `/images/tarot-cards/card-backs/${backStyle}${suffix}.jpg`;
+  void quality;
+  return `/images/tarot-cards/card-backs/${backStyle}.svg`;
 }
 
 /**

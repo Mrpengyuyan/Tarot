@@ -33,6 +33,7 @@ sleep 10
 action_compose ps
 
 echo "Initializing demo data..."
+docker exec tarot_fastapi_app python -m app.scripts.init_tarot_data
 docker exec tarot_fastapi_app python -m app.scripts.init_demo_data
 
 echo

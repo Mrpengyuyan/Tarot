@@ -1,21 +1,18 @@
 import { create } from 'zustand';
 import { TarotCard, SpreadType } from '../types/api';
 
-// 游戏阶段枚举
 export enum GamePhase {
-  IDLE = 'idle',                    // 空闲状态
-  SELECTING_SPREAD = 'selecting_spread', // 选择牌阵
-  ASKING_QUESTION = 'asking_question',   // 输入问题
-  DRAWING_CARDS = 'drawing_cards',       // 抽牌中
-  CARDS_DRAWN = 'cards_drawn',           // 抽牌完成
-  INTERPRETING = 'interpreting',         // AI解读中
-  COMPLETED = 'completed',               // 占卜完成
+  IDLE = 'idle',
+  SELECTING_SPREAD = 'selecting_spread',
+  ASKING_QUESTION = 'asking_question',
+  DRAWING_CARDS = 'drawing_cards',
+  CARDS_DRAWN = 'cards_drawn',
+  INTERPRETING = 'interpreting',
+  COMPLETED = 'completed',
 }
 
-// 问题类型
 export type QuestionType = 'love' | 'career' | 'finance' | 'health' | 'general';
 
-// 抽取的牌信息
 export interface DrawnCard {
   card: TarotCard;
   position: number;
@@ -23,7 +20,6 @@ export interface DrawnCard {
   positionMeaning: string;
 }
 
-// 占卜会话状态
 export interface ReadingSession {
   id: string;
   question: string;
@@ -36,27 +32,18 @@ export interface ReadingSession {
 }
 
 interface GameState {
-  // 当前游戏状态
   currentPhase: GamePhase;
   currentSession: ReadingSession | null;
-
-  // 可用的牌阵和卡牌
   availableSpreads: SpreadType[];
   tarotDeck: TarotCard[];
-
-  // UI状态
   isLoading: boolean;
   loadingMessage: string;
   error: string | null;
-
-  // 动画控制
   cardAnimations: {
     isDrawing: boolean;
     currentDrawingCard: number;
     showCards: boolean;
   };
-
-  // Actions
   setPhase: (phase: GamePhase) => void;
   startNewReading: () => void;
   setQuestion: (question: string, type: QuestionType) => void;
@@ -65,21 +52,14 @@ interface GameState {
   setInterpretation: (interpretation: string) => void;
   completeReading: () => void;
   resetGame: () => void;
-
-  // 数据管理
   setSpreads: (spreads: SpreadType[]) => void;
   setTarotDeck: (cards: TarotCard[]) => void;
-
-  // UI控制
   setLoading: (loading: boolean, message?: string) => void;
   setError: (error: string | null) => void;
-
-  // 动画控制
   setCardAnimations: (animations: Partial<GameState['cardAnimations']>) => void;
 }
 
 export const useGameStore = create<GameState>((set, get) => ({
-  // 初始状态
   currentPhase: GamePhase.IDLE,
   currentSession: null,
   availableSpreads: [],
@@ -93,11 +73,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     showCards: false,
   },
 
-  // 游戏流程控制
   setPhase: (phase) => set({ currentPhase: phase }),
 
   startNewReading: () => {
-    const sessionId = `reading_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const sessionId = `reading_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
     set({
       currentPhase: GamePhase.SELECTING_SPREAD,
       currentSession: {
@@ -119,73 +98,73 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   setQuestion: (question, type) => {
     const { currentSession } = get();
-    if (currentSession) {
-      set({
-        currentSession: {
-          ...currentSession,
-          question,
-          questionType: type,
-        },
-        currentPhase: GamePhase.ASKING_QUESTION,
-      });
-    }
+    if (!currentSession) return;
+
+    set({
+      currentSession: {
+        ...currentSession,
+        question,
+        questionType: type,
+      },
+      currentPhase: GamePhase.ASKING_QUESTION,
+    });
   },
 
   selectSpread: (spread) => {
     const { currentSession } = get();
-    if (currentSession) {
-      set({
-        currentSession: {
-          ...currentSession,
-          spread,
-        },
-        currentPhase: GamePhase.ASKING_QUESTION,
-      });
-    }
+    if (!currentSession) return;
+
+    set({
+      currentSession: {
+        ...currentSession,
+        spread,
+      },
+      currentPhase: GamePhase.ASKING_QUESTION,
+    });
   },
 
   drawCards: (cards) => {
     const { currentSession } = get();
-    if (currentSession) {
-      set({
-        currentSession: {
-          ...currentSession,
-          drawnCards: cards,
-        },
-        currentPhase: GamePhase.CARDS_DRAWN,
-        cardAnimations: {
-          isDrawing: false,
-          currentDrawingCard: 0,
-          showCards: true,
-        },
-      });
-    }
+    if (!currentSession) return;
+
+    set({
+      currentSession: {
+        ...currentSession,
+        drawnCards: cards,
+      },
+      currentPhase: GamePhase.CARDS_DRAWN,
+      cardAnimations: {
+        isDrawing: false,
+        currentDrawingCard: 0,
+        showCards: true,
+      },
+    });
   },
 
   setInterpretation: (interpretation) => {
     const { currentSession } = get();
-    if (currentSession) {
-      set({
-        currentSession: {
-          ...currentSession,
-          interpretation,
-        },
-        currentPhase: GamePhase.COMPLETED,
-      });
-    }
+    if (!currentSession) return;
+
+    set({
+      currentSession: {
+        ...currentSession,
+        interpretation,
+      },
+      currentPhase: GamePhase.COMPLETED,
+    });
   },
 
   completeReading: () => {
     const { currentSession } = get();
-    if (currentSession) {
-      set({
-        currentSession: {
-          ...currentSession,
-          completedAt: new Date(),
-        },
-        currentPhase: GamePhase.COMPLETED,
-      });
-    }
+    if (!currentSession) return;
+
+    set({
+      currentSession: {
+        ...currentSession,
+        completedAt: new Date(),
+      },
+      currentPhase: GamePhase.COMPLETED,
+    });
   },
 
   resetGame: () => {
@@ -203,20 +182,11 @@ export const useGameStore = create<GameState>((set, get) => ({
     });
   },
 
-  // 数据管理
   setSpreads: (spreads) => set({ availableSpreads: spreads }),
-
   setTarotDeck: (cards) => set({ tarotDeck: cards }),
-
-  // UI控制
-  setLoading: (loading, message = '') => set({
-    isLoading: loading,
-    loadingMessage: message
-  }),
-
+  setLoading: (loading, message = '') => set({ isLoading: loading, loadingMessage: message }),
   setError: (error) => set({ error }),
 
-  // 动画控制
   setCardAnimations: (animations) => {
     const { cardAnimations } = get();
     set({
@@ -228,7 +198,6 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 }));
 
-// 辅助函数
 export const getPhaseTitle = (phase: GamePhase): string => {
   switch (phase) {
     case GamePhase.IDLE:
@@ -236,13 +205,13 @@ export const getPhaseTitle = (phase: GamePhase): string => {
     case GamePhase.SELECTING_SPREAD:
       return '选择牌阵';
     case GamePhase.ASKING_QUESTION:
-      return '提出问题';
+      return '输入问题';
     case GamePhase.DRAWING_CARDS:
-      return '抽取塔罗牌';
+      return '正在抽牌';
     case GamePhase.CARDS_DRAWN:
       return '查看牌面';
     case GamePhase.INTERPRETING:
-      return 'AI解读中';
+      return 'AI 解读中';
     case GamePhase.COMPLETED:
       return '占卜完成';
     default:
@@ -253,13 +222,13 @@ export const getPhaseTitle = (phase: GamePhase): string => {
 export const getQuestionTypeLabel = (type: QuestionType): string => {
   switch (type) {
     case 'love':
-      return '感情恋爱';
+      return '感情关系';
     case 'career':
       return '事业工作';
     case 'finance':
-      return '财运投资';
+      return '财务规划';
     case 'health':
-      return '健康养生';
+      return '健康状态';
     case 'general':
       return '综合运势';
     default:

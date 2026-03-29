@@ -204,7 +204,7 @@ def main() -> int:
     # Avoid local API calls being routed to corporate/system HTTP proxy.
     session.trust_env = False
     results: List[StepResult] = []
-    token: Optional[str] = None
+    is_authenticated = False
     reading_id: Optional[int] = None
     spread_used: Optional[Dict[str, Any]] = None
     interpretation_payload: Optional[Dict[str, Any]] = None
@@ -223,14 +223,14 @@ def main() -> int:
             timeout=args.request_timeout,
             form_data={"username": args.username, "password": args.password},
         )
-        if status == 200 and isinstance(payload, dict) and payload.get("access_token"):
-            token = str(payload["access_token"])
+        if status == 200 and isinstance(payload, dict):
+            is_authenticated = True
             add_step(
                 StepResult(
                     name="login",
                     ok=True,
                     status_code=status,
-                    detail="token received",
+                    detail="session cookie established",
                     elapsed_ms=elapsed,
                 )
             )
@@ -248,11 +248,11 @@ def main() -> int:
     except Exception as exc:
         add_step(StepResult(name="login", ok=False, detail=f"exception: {exc}"))
 
-    headers = {"Authorization": f"Bearer {token}"} if token else {}
+    headers: Dict[str, str] = {}
 
     # Step 2: spreads
     spreads: List[Dict[str, Any]] = []
-    if token:
+    if is_authenticated:
         try:
             status, payload, raw, elapsed = request_json(
                 session,
@@ -300,7 +300,7 @@ def main() -> int:
             add_step(StepResult(name="get_spreads", ok=False, detail=f"exception: {exc}"))
 
     # Step 3: create record
-    if token and spread_used:
+    if is_authenticated and spread_used:
         question = f"[trace:{trace_id}] Integration check at {started_at}"
         body = {
             "spread_type_id": int(spread_used["id"]),
@@ -342,7 +342,7 @@ def main() -> int:
             add_step(StepResult(name="create_record", ok=False, detail=f"exception: {exc}"))
 
     # Step 4: draw cards
-    if token and reading_id is not None:
+    if is_authenticated and reading_id is not None:
         try:
             status, payload, raw, elapsed = request_json(
                 session,
@@ -367,7 +367,7 @@ def main() -> int:
             add_step(StepResult(name="draw_cards", ok=False, detail=f"exception: {exc}"))
 
     # Step 5: get cards
-    if token and reading_id is not None:
+    if is_authenticated and reading_id is not None:
         try:
             status, payload, raw, elapsed = request_json(
                 session,
@@ -396,7 +396,7 @@ def main() -> int:
     # Step 6: request interpretation
     interpret_status: Optional[int] = None
     interpret_error: Optional[str] = None
-    if token and reading_id is not None:
+    if is_authenticated and reading_id is not None:
         try:
             status, payload, raw, elapsed = request_json(
                 session,
@@ -437,7 +437,7 @@ def main() -> int:
 
     # Step 7: poll interpretation endpoint if needed
     polled_interpretation: Optional[Dict[str, Any]] = None
-    if token and reading_id is not None and interpretation_payload is None:
+    if is_authenticated and reading_id is not None and interpretation_payload is None:
         for i in range(max(0, args.poll_attempts)):
             try:
                 status, payload, raw, elapsed = request_json(
@@ -479,7 +479,7 @@ def main() -> int:
             time.sleep(max(0.0, args.poll_interval))
 
     # Step 8: fetch detail
-    if token and reading_id is not None:
+    if is_authenticated and reading_id is not None:
         try:
             status, payload, raw, elapsed = request_json(
                 session,

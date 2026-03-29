@@ -4,17 +4,25 @@ import './CosmicBackground.css';
 
 interface CosmicBackgroundProps {
   showRings?: boolean;
+  performanceMode?: 'full' | 'lite' | 'minimal';
 }
 
-const CosmicBackground: React.FC<CosmicBackgroundProps> = ({ showRings = true }) => {
+const ORBIT_DOTS_FULL = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
+const ORBIT_DOTS_LITE = [0, 90, 180, 270];
+
+const CosmicBackground: React.FC<CosmicBackgroundProps> = ({
+  showRings = true,
+  performanceMode = 'full',
+}) => {
+  const isLite = performanceMode === 'lite';
+  const isMinimal = performanceMode === 'minimal';
+  const orbitDots = isLite ? ORBIT_DOTS_LITE : ORBIT_DOTS_FULL;
+
   return (
     <Box
       sx={{
         position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
+        inset: 0,
         width: '100vw',
         height: '100vh',
         zIndex: -1,
@@ -22,206 +30,134 @@ const CosmicBackground: React.FC<CosmicBackgroundProps> = ({ showRings = true })
         pointerEvents: 'none',
       }}
     >
-      {/* 深空星云背景 */}
-      <div className="cosmic-nebula">
+      <div className={`cosmic-nebula is-${performanceMode}`}>
+        <div className="cosmic-aurora"></div>
+        <div className="cosmic-vignette"></div>
         <div className="stars-layer-1"></div>
         <div className="stars-layer-2"></div>
         <div className="stars-layer-3"></div>
+        {!isLite && !isMinimal && <div className="stars-layer-4"></div>}
+        {!isLite && !isMinimal && <div className="stars-layer-5"></div>}
+        {!isLite && !isMinimal && (
+          <>
+            <div className="star-orbit star-orbit-1"><span></span></div>
+            <div className="star-orbit star-orbit-2"><span></span></div>
+            <div className="shooting-star shooting-star-1"></div>
+          </>
+        )}
       </div>
 
-      {showRings && (
+      {showRings && !isMinimal && (
         <Box
           sx={{
             position: 'absolute',
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            width: { xs: '800px', md: '1200px' },
-            height: { xs: '800px', md: '1200px' },
-            opacity: 0.6,
+            width: isLite ? { xs: '760px', md: '980px' } : { xs: '860px', md: '1120px' },
+            height: isLite ? { xs: '760px', md: '980px' } : { xs: '860px', md: '1120px' },
+            opacity: isLite ? 0.46 : 0.58,
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
           }}
         >
-          <svg
-            viewBox="0 0 1000 1000"
-            xmlns="http://www.w3.org/2000/svg"
-            className="magic-circle-svg"
-          >
-            <defs>
-              <filter id="neon-glow" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="3" result="coloredBlur" />
-                <feMerge>
-                  <feMergeNode in="coloredBlur" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-              
-              <filter id="neon-glow-strong" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="6" result="coloredBlur" />
-                <feMerge>
-                  <feMergeNode in="coloredBlur" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-            </defs>
-
-            {/* 旋转的外部魔法环组 */}
-            <g className="rotate-slow">
-              {/* 外圈虚线环 */}
+          <svg viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" className={isLite ? 'magic-circle-svg-lite' : 'magic-circle-svg'}>
+            <g className="rotate-slow" style={isLite ? { animationDuration: '56s' } : { animationDuration: '66s' }}>
               <circle
                 cx="500"
                 cy="500"
-                r="480"
+                r="470"
                 fill="none"
                 stroke="#00F0FF"
-                strokeWidth="2"
-                strokeDasharray="10 20"
-                filter="url(#neon-glow)"
-                opacity="0.3"
+                strokeWidth="1.5"
+                strokeDasharray={isLite ? '8 16' : '10 20'}
+                opacity="0.28"
               />
-              
-              {/* 外层主干线 */}
               <circle
                 cx="500"
                 cy="500"
-                r="450"
+                r="436"
                 fill="none"
                 stroke="#D4AF37"
                 strokeWidth="1.5"
-                filter="url(#neon-glow)"
-                opacity="0.5"
+                opacity="0.38"
               />
-              
-              {/* 装饰性外部几何形态：六芒星 (Hexagram - Star of David) */}
-              <g opacity="0.4" filter="url(#neon-glow)">
-                <polygon
-                  points="500,50 890,725 110,725"
-                  fill="none"
-                  stroke="#00F0FF"
-                  strokeWidth="1.5"
-                />
-                <polygon
-                  points="500,950 890,275 110,275"
-                  fill="none"
-                  stroke="#00F0FF"
-                  strokeWidth="1.5"
-                />
-              </g>
+              <polygon
+                points="500,88 850,704 150,704"
+                fill="none"
+                stroke="#00F0FF"
+                strokeWidth="1.4"
+                opacity={isLite ? '0.2' : '0.3'}
+              />
+              <polygon
+                points="500,912 850,296 150,296"
+                fill="none"
+                stroke="#D4AF37"
+                strokeWidth="1.4"
+                opacity={isLite ? '0.18' : '0.28'}
+              />
+              {!isLite && (
+                <>
+                  <path d="M 500 78 A 412 412 0 0 1 548 86 A 430 430 0 0 0 500 56 Z" fill="#00F0FF" opacity="0.5" />
+                  <path d="M 500 922 A 412 412 0 0 1 452 914 A 430 430 0 0 0 500 944 Z" fill="#D4AF37" opacity="0.5" />
+                  <path d="M 78 500 A 412 412 0 0 1 86 452 A 430 430 0 0 0 56 500 Z" fill="#00F0FF" opacity="0.42" />
+                  <path d="M 922 500 A 412 412 0 0 1 914 548 A 430 430 0 0 0 944 500 Z" fill="#D4AF37" opacity="0.42" />
+                </>
+              )}
             </g>
 
-            {/* 逆向旋转的内圈神秘符号组 */}
-            <g className="rotate-slow-reverse">
+            <g className="rotate-slow-reverse" style={isLite ? { animationDuration: '72s' } : { animationDuration: '96s' }}>
               <circle
                 cx="500"
                 cy="500"
-                r="380"
+                r="360"
                 fill="none"
                 stroke="#D4AF37"
-                strokeWidth="3"
-                strokeDasharray="150 50 20 50"
-                filter="url(#neon-glow-strong)"
-                opacity="0.6"
+                strokeWidth="2.4"
+                strokeDasharray={isLite ? '120 28' : '150 50 20 50'}
+                opacity="0.42"
               />
-              
-              {/* 内层八角星 */}
               <polygon
-                points="500,150 590,410 850,500 590,590 500,850 410,590 150,500 410,410"
+                points="500,176 610,390 824,500 610,610 500,824 390,610 176,500 390,390"
                 fill="none"
                 stroke="#00F0FF"
-                strokeWidth="1.5"
-                opacity="0.4"
-                filter="url(#neon-glow)"
+                strokeWidth="1.2"
+                opacity={isLite ? '0.22' : '0.32'}
               />
-              
-              {/* 八卦/占星定位圆点 */}
-              {[0, 45, 90, 135, 180, 225, 270, 315].map((angle, i) => {
+
+              {orbitDots.map((angle) => {
                 const rad = (angle * Math.PI) / 180;
-                const r = 380;
+                const radius = 360;
                 return (
                   <circle
-                    key={i}
-                    cx={500 + r * Math.cos(rad)}
-                    cy={500 + r * Math.sin(rad)}
-                    r="6"
+                    key={angle}
+                    cx={500 + radius * Math.cos(rad)}
+                    cy={500 + radius * Math.sin(rad)}
+                    r={isLite ? '4' : '5.5'}
                     fill="#D4AF37"
-                    filter="url(#neon-glow)"
+                    opacity="0.78"
                   />
                 );
               })}
-              {/* 装饰行星轨道环 */}
-              <circle
-                cx="500"
-                cy="500"
-                r="300"
-                fill="none"
-                stroke="#00F0FF"
-                strokeWidth="1"
-                opacity="0.3"
-                filter="url(#neon-glow)"
-              />
-              <circle cx="800" cy="500" r="15" fill="#00F0FF" filter="url(#neon-glow)" opacity="0.8" />
-              <circle cx="200" cy="500" r="8" fill="#D4AF37" filter="url(#neon-glow-strong)" opacity="0.9" />
-              <circle cx="500" cy="800" r="12" fill="#D4AF37" filter="url(#neon-glow)" opacity="0.5" />
+
+              {!isLite && (
+                <>
+                  <circle cx="800" cy="500" r="12" fill="#00F0FF" opacity="0.68" />
+                  <circle cx="200" cy="500" r="7" fill="#D4AF37" opacity="0.82" />
+                  <circle cx="500" cy="800" r="10" fill="#D4AF37" opacity="0.48" />
+                  <circle cx="500" cy="500" r="302" fill="none" stroke="#00F0FF" strokeWidth="1" opacity="0.24" />
+                </>
+              )}
             </g>
 
-            {/* 新月装饰 (Crescent Moons) */}
-            <g className="rotate-slow-reverse" style={{ transformOrigin: 'center', animationDuration: '45s' }}>
-              <path
-                d="M 500 110 A 370 370 0 0 1 550 120 A 380 380 0 0 0 500 90 Z"
-                fill="#00F0FF"
-                filter="url(#neon-glow)"
-                opacity="0.8"
-              />
-              <path
-                d="M 500 890 A 370 370 0 0 1 450 880 A 380 380 0 0 0 500 910 Z"
-                fill="#D4AF37"
-                filter="url(#neon-glow)"
-                opacity="0.8"
-              />
-              <path
-                d="M 110 500 A 370 370 0 0 1 120 450 A 380 380 0 0 0 90 500 Z"
-                fill="#00F0FF"
-                filter="url(#neon-glow)"
-                opacity="0.8"
-              />
-              <path
-                d="M 890 500 A 370 370 0 0 1 880 550 A 380 380 0 0 0 910 500 Z"
-                fill="#D4AF37"
-                filter="url(#neon-glow)"
-                opacity="0.8"
-              />
-            </g>
-
-            {/* 最核心区域稳定的圆环 */}
-            <g className="pulse-glow">
-              <circle
-                cx="500"
-                cy="500"
-                r="250"
-                fill="none"
-                stroke="#D4AF37"
-                strokeWidth="1"
-                opacity="0.3"
-                filter="url(#neon-glow)"
-              />
-              <circle
-                cx="500"
-                cy="500"
-                r="240"
-                fill="none"
-                stroke="#00F0FF"
-                strokeWidth="0.5"
-                strokeDasharray="5 5"
-                opacity="0.4"
-              />
-
-              {/* 全视之眼 Eye of Providence (Central) */}
-              <polygon points="500,380 400,560 600,560" fill="none" stroke="#D4AF37" strokeWidth="2" filter="url(#neon-glow-strong)" opacity="0.8" />
-              <path d="M 440 500 Q 500 460 560 500 Q 500 540 440 500" fill="none" stroke="#00F0FF" strokeWidth="2" filter="url(#neon-glow)" opacity="0.9" />
-              <circle cx="500" cy="500" r="15" fill="#D4AF37" filter="url(#neon-glow-strong)" />
-              <circle cx="500" cy="500" r="5" fill="#0A0512" />
+            <g className="pulse-glow-lite">
+              <circle cx="500" cy="500" r="248" fill="none" stroke="#D4AF37" strokeWidth="1.1" opacity="0.24" />
+              <circle cx="500" cy="500" r="236" fill="none" stroke="#00F0FF" strokeWidth="0.9" strokeDasharray="5 7" opacity="0.26" />
+              <polygon points="500,392 412,554 588,554" fill="none" stroke="#D4AF37" strokeWidth="1.8" opacity="0.7" />
+              <path d="M 444 502 Q 500 462 556 502 Q 500 542 444 502" fill="none" stroke="#00F0FF" strokeWidth="1.8" opacity="0.76" />
+              <circle cx="500" cy="502" r="12" fill="#D4AF37" opacity="0.82" />
+              <circle cx="500" cy="502" r="4" fill="#0A0512" opacity="0.9" />
             </g>
           </svg>
         </Box>
@@ -230,4 +166,4 @@ const CosmicBackground: React.FC<CosmicBackgroundProps> = ({ showRings = true })
   );
 };
 
-export default CosmicBackground;
+export default React.memo(CosmicBackground);

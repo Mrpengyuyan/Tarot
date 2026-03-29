@@ -35,9 +35,14 @@
     "zustand": "^5.0.8"
   },
   "scripts": {
+    "postinstall": "node scripts/fixMediapipeSourceMap.js",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "smoke:ui": "python scripts/smoke_ui_interpretation.py",
+    "smoke:ui:headed": "python scripts/smoke_ui_interpretation.py --headed",
+    "smoke:pages": "python scripts/smoke_ui_pages.py",
+    "smoke:pages:headed": "python scripts/smoke_ui_pages.py --headed",
     "eject": "react-scripts eject",
     "download-images": "node scripts/downloadTarotImages.js",
     "generate-placeholders": "node scripts/generatePlaceholders.js",
@@ -61,5 +66,10 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "baseline-browser-mapping": "^2.10.10",
+    "browserslist": "^4.28.1",
+    "caniuse-lite": "^1.0.30001781"
   }
 }

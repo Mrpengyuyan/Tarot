@@ -20,7 +20,7 @@ import {
   Hd as HDIcon,
   Error as ErrorIcon,
   Refresh as RefreshIcon,
-} from '@mui/icons-material';
+} from 'icons';
 import { TarotCard as TarotCardType } from '../../types/api';
 import { getCardImageUrl, getCardBackUrl, ImageQuality } from '../../utils/cardImageUtils';
 

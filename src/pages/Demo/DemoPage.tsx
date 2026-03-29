@@ -16,7 +16,7 @@ import {
   Refresh as RefreshIcon,
   Visibility as ViewIcon,
   Psychology as AiIcon,
-} from '@mui/icons-material';
+} from 'icons';
 import TarotCard from '../../components/Tarot/TarotCard';
 import CardSpread from '../../components/Tarot/CardSpread';
 import { tarotService, localDrawingUtils, DrawnCard } from '../../services/tarotService';

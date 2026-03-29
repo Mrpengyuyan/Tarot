@@ -35,14 +35,14 @@ export const darkTheme = createTheme({
   },
   typography: {
     fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    h1: { fontFamily: '"Cinzel", serif', fontSize: '2.5rem', fontWeight: 700, color: tarotColors.primary.main, textShadow: '0 0 15px rgba(212, 175, 55, 0.4)' },
-    h2: { fontFamily: '"Cinzel", serif', fontSize: '2rem', fontWeight: 600, color: tarotColors.primary.main, textShadow: '0 0 10px rgba(212, 175, 55, 0.3)' },
-    h3: { fontFamily: '"Cinzel", serif', fontSize: '1.75rem', fontWeight: 600, color: tarotColors.primary.main },
-    h4: { fontFamily: '"Cinzel", serif', fontSize: '1.5rem', fontWeight: 500, color: tarotColors.text.primary },
-    h5: { fontFamily: '"Cinzel", serif', fontSize: '1.25rem', fontWeight: 600, color: tarotColors.primary.main },
-    h6: { fontFamily: '"Cinzel", serif', fontSize: '1.125rem', fontWeight: 600, color: tarotColors.text.primary },
-    body1: { fontSize: '1rem', lineHeight: 1.6, color: tarotColors.text.primary },
-    body2: { fontSize: '0.875rem', lineHeight: 1.5, color: tarotColors.text.secondary },
+    h1: { fontFamily: '"Cinzel", serif', fontSize: '3.2rem', fontWeight: 700, color: tarotColors.primary.main, textShadow: '0 0 15px rgba(212, 175, 55, 0.4)' },
+    h2: { fontFamily: '"Cinzel", serif', fontSize: '2.6rem', fontWeight: 600, color: tarotColors.primary.main, textShadow: '0 0 10px rgba(212, 175, 55, 0.3)' },
+    h3: { fontFamily: '"Cinzel", serif', fontSize: '2.2rem', fontWeight: 600, color: tarotColors.primary.main },
+    h4: { fontFamily: '"Cinzel", serif', fontSize: '2rem', fontWeight: 500, color: tarotColors.text.primary },
+    h5: { fontFamily: '"Cinzel", serif', fontSize: '1.75rem', fontWeight: 600, color: tarotColors.primary.main },
+    h6: { fontFamily: '"Cinzel", serif', fontSize: '1.5rem', fontWeight: 600, color: tarotColors.text.primary },
+    body1: { fontSize: '1.25rem', lineHeight: 1.75, color: tarotColors.text.primary },
+    body2: { fontSize: '1.15rem', lineHeight: 1.7, color: tarotColors.text.secondary },
   },
   components: {
     MuiCssBaseline: {
@@ -69,10 +69,12 @@ export const darkTheme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 8,
+          borderRadius: 10,
           textTransform: 'none',
           fontWeight: 600,
+          fontSize: '1.1rem',
           letterSpacing: '0.05em',
+          padding: '10px 24px',
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           '&:hover': {
             transform: 'translateY(-2px)',
@@ -121,12 +123,34 @@ export const darkTheme = createTheme({
         root: {
           backdropFilter: 'blur(4px)',
           background: 'rgba(26, 11, 46, 0.4)',
+          fontSize: '1rem',
+          height: 'auto',
+          padding: '6px 4px',
         },
         outlined: {
           borderColor: 'rgba(0, 240, 255, 0.3)',
           color: tarotColors.secondary.main,
-        }
+        },
+        sizeSmall: {
+          fontSize: '0.95rem',
+          padding: '4px 2px',
+        },
       }
+    },
+    MuiStepLabel: {
+      styleOverrides: {
+        label: {
+          fontSize: '1.15rem !important',
+        },
+      },
+    },
+    MuiToggleButton: {
+      styleOverrides: {
+        root: {
+          fontSize: '1.1rem',
+          padding: '10px 20px',
+        },
+      },
     }
   },
 });

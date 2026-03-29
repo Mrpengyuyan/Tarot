@@ -54,14 +54,9 @@ export const useAuth = (): UseAuthReturn => {
         password: credentials.password,
       };
 
-      const response = await authService.login(loginData);
-      const token = response?.access_token || response?.data?.token;
-      if (!token) {
-        throw new Error('Login response missing access token');
-      }
-
-      const userInfo = response?.data?.user || (await authService.getCurrentUser());
-      loginStore(userInfo, token);
+      await authService.login(loginData);
+      const userInfo = await authService.getCurrentUser();
+      loginStore(userInfo);
       showSuccess('登录成功');
       return true;
     } catch (err: any) {
@@ -86,8 +81,8 @@ export const useAuth = (): UseAuthReturn => {
         return false;
       }
 
-      if (data.password.length < 6) {
-        const msg = '密码长度至少需要 6 位';
+      if (data.password.length < 8) {
+        const msg = '密码长度至少需要 8 位';
         setError(msg);
         showError(msg);
         return false;
@@ -133,15 +128,10 @@ export const useAuth = (): UseAuthReturn => {
 
   const refreshToken = useCallback(async (): Promise<boolean> => {
     try {
-      const response = await authService.refreshToken();
-      const token = response?.access_token || response?.data?.token;
-      if (!token) {
-        logoutStore();
-        return false;
-      }
+      await authService.refreshToken();
 
-      const userInfo = response?.data?.user || (await authService.getCurrentUser());
-      loginStore(userInfo, token);
+      const userInfo = await authService.getCurrentUser();
+      loginStore(userInfo);
       return true;
     } catch {
       logoutStore();

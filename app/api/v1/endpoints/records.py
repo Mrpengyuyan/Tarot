@@ -24,6 +24,7 @@ from app.schemas.prediction import (
     Prediction,
     PredictionCreate,
     PredictionDetail,
+    PredictionRecentOverview,
     PredictionSimple,
     PredictionStats,
     PredictionStatusEnum,
@@ -31,6 +32,7 @@ from app.schemas.prediction import (
     QuestionTypeEnum,
 )
 from app.schemas.user import User
+from app.services.coze_service import CozeError, CozeHttpStatusError, CozeRequestError, CozeTimeoutError
 from app.services.tarot_service import tarot_interpretation_service
 
 logger = logging.getLogger(__name__)
@@ -58,45 +60,27 @@ def get_user_predictions(
     question_type: Optional[QuestionTypeEnum] = Query(None, description="Filter by question type"),
     favorites_only: bool = Query(False, description="Only favorite records"),
     search: Optional[str] = Query(None, description="Search question/user notes"),
+    sort_by: str = Query("created_at", description="Sort field: created_at/completed_at/status/question_type"),
+    sort_order: str = Query("desc", description="Sort order: asc/desc"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    if search:
-        return prediction_crud.search_user_predictions(
-            db,
-            user_id=current_user.id,
-            search_term=search,
-            skip=skip,
-            limit=limit,
-        )
-    if favorites_only:
-        return prediction_crud.get_user_favorite_predictions(
-            db,
-            user_id=current_user.id,
-            skip=skip,
-            limit=limit,
-        )
-    if status:
-        return prediction_crud.get_user_predictions_by_status(
-            db,
-            user_id=current_user.id,
-            status=PredictionStatus(status.value),
-            skip=skip,
-            limit=limit,
-        )
-    if question_type:
-        return prediction_crud.get_user_predictions_by_question_type(
-            db,
-            user_id=current_user.id,
-            question_type=QuestionType(question_type.value),
-            skip=skip,
-            limit=limit,
-        )
-    return prediction_crud.get_user_predictions(
+    if sort_by not in {"created_at", "completed_at", "status", "question_type"}:
+        raise HTTPException(status_code=400, detail="Unsupported sort field")
+    if sort_order not in {"asc", "desc"}:
+        raise HTTPException(status_code=400, detail="Unsupported sort order")
+
+    return prediction_crud.get_filtered_user_predictions(
         db,
         user_id=current_user.id,
         skip=skip,
         limit=limit,
+        status=PredictionStatus(status.value) if status else None,
+        question_type=QuestionType(question_type.value) if question_type else None,
+        favorites_only=favorites_only,
+        search_term=search,
+        sort_by=sort_by,
+        sort_order=sort_order,
     )
 
 
@@ -123,7 +107,51 @@ def get_recent_predictions(
     )
 
 
-@router.get("/{prediction_id}", response_model=PredictionDetail, summary="Get record detail")
+@router.get("/recent-overview", response_model=List[PredictionRecentOverview], summary="List recent record overviews")
+@router.get(
+    "/dashboard/recent-overview",
+    response_model=List[PredictionRecentOverview],
+    summary="List recent record overviews",
+)
+def get_recent_prediction_overview(
+    limit: int = Query(4, ge=1, le=12, description="Records to return"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    predictions = prediction_crud.get_recent_prediction_overview(
+        db,
+        user_id=current_user.id,
+        limit=limit,
+    )
+
+    result: List[PredictionRecentOverview] = []
+    for prediction in predictions:
+        interpretation_summary = None
+        if prediction.interpretation:
+            interpretation_summary = (
+                prediction.interpretation.summary
+                or prediction.interpretation.overall_interpretation
+            )
+
+        result.append(
+            PredictionRecentOverview(
+                id=prediction.id,
+                question=prediction.question,
+                question_type=prediction.question_type,
+                status=prediction.status,
+                created_at=prediction.created_at,
+                is_favorite=prediction.is_favorite,
+                user_rating=prediction.user_rating,
+                spread_name=prediction.spread_type.name if prediction.spread_type else None,
+                spread_name_en=prediction.spread_type.name_en if prediction.spread_type else None,
+                interpretation_summary=interpretation_summary,
+            )
+        )
+
+    return result
+
+
+@router.get("/{prediction_id:int}", response_model=PredictionDetail, summary="Get record detail")
 def get_prediction_detail(
     prediction_id: int,
     db: Session = Depends(get_db),
@@ -158,7 +186,7 @@ def create_prediction(
     )
 
 
-@router.put("/{prediction_id}", response_model=Prediction, summary="Update record")
+@router.put("/{prediction_id:int}", response_model=Prediction, summary="Update record")
 def update_prediction(
     prediction_id: int,
     prediction_update: PredictionUpdate,
@@ -183,7 +211,7 @@ def update_prediction(
     )
 
 
-@router.delete("/{prediction_id}", summary="Delete record")
+@router.delete("/{prediction_id:int}", summary="Delete record")
 def delete_prediction(
     prediction_id: int,
     db: Session = Depends(get_db),
@@ -202,7 +230,7 @@ def delete_prediction(
     return {"message": "Record deleted"}
 
 
-@router.post("/{prediction_id}/draw", response_model=DrawCardsResponse, summary="Draw cards for record")
+@router.post("/{prediction_id:int}/draw", response_model=DrawCardsResponse, summary="Draw cards for record")
 def draw_cards_for_prediction(
     prediction_id: int,
     seed: Optional[int] = Query(None, description="Optional deterministic draw seed (for reproducible experiments)"),
@@ -264,7 +292,7 @@ def draw_cards_for_prediction(
     )
 
 
-@router.get("/{prediction_id}/cards", response_model=List[CardDrawWithMeaning], summary="Get drawn cards")
+@router.get("/{prediction_id:int}/cards", response_model=List[CardDrawWithMeaning], summary="Get drawn cards")
 def get_prediction_cards(
     prediction_id: int,
     db: Session = Depends(get_db),
@@ -332,7 +360,7 @@ def get_prediction_cards(
     return result
 
 
-@router.post("/{prediction_id}/interpret", response_model=Interpretation, summary="Create AI interpretation")
+@router.post("/{prediction_id:int}/interpret", response_model=Interpretation, summary="Create AI interpretation")
 async def create_ai_interpretation(
     prediction_id: int,
     interpretation_create: Optional[InterpretationCreate] = None,
@@ -354,6 +382,12 @@ async def create_ai_interpretation(
 
     existing_interpretation = prediction_crud.get_prediction_interpretation(db, prediction_id=prediction_id)
     if existing_interpretation:
+        if prediction.status != PredictionStatus.COMPLETED or prediction.completed_at is None:
+            prediction_crud.update_prediction_status(
+                db,
+                prediction_id=prediction_id,
+                status=PredictionStatus.COMPLETED,
+            )
         return existing_interpretation
 
     if not interpretation_create or force_ai:
@@ -407,6 +441,30 @@ async def create_ai_interpretation(
             )
         except HTTPException:
             raise
+        except CozeTimeoutError as exc:
+            logger.error("AI interpretation timed out: %s", exc)
+            prediction_crud.update_prediction_status(
+                db,
+                prediction_id=prediction_id,
+                status=PredictionStatus.FAILED,
+            )
+            raise HTTPException(status_code=504, detail="AI interpretation request timed out") from exc
+        except CozeHttpStatusError as exc:
+            logger.error("AI interpretation provider HTTP error: %s", exc)
+            prediction_crud.update_prediction_status(
+                db,
+                prediction_id=prediction_id,
+                status=PredictionStatus.FAILED,
+            )
+            raise HTTPException(status_code=502, detail="AI interpretation upstream service error") from exc
+        except (CozeRequestError, CozeError) as exc:
+            logger.error("AI interpretation upstream request failed: %s", exc)
+            prediction_crud.update_prediction_status(
+                db,
+                prediction_id=prediction_id,
+                status=PredictionStatus.FAILED,
+            )
+            raise HTTPException(status_code=502, detail="AI interpretation request failed") from exc
         except Exception as exc:
             logger.error("AI interpretation generation failed: %s", exc)
             prediction_crud.update_prediction_status(
@@ -437,7 +495,7 @@ async def create_ai_interpretation(
     return interpretation
 
 
-@router.get("/{prediction_id}/interpretation", response_model=Interpretation, summary="Get interpretation")
+@router.get("/{prediction_id:int}/interpretation", response_model=Interpretation, summary="Get interpretation")
 def get_prediction_interpretation(
     prediction_id: int,
     db: Session = Depends(get_db),
@@ -456,7 +514,7 @@ def get_prediction_interpretation(
     return interpretation
 
 
-@router.put("/{prediction_id}/interpretation", response_model=Interpretation, summary="Update interpretation")
+@router.put("/{prediction_id:int}/interpretation", response_model=Interpretation, summary="Update interpretation")
 def update_interpretation(
     prediction_id: int,
     interpretation_update: InterpretationCreate,

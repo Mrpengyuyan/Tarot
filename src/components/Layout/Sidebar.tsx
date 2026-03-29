@@ -17,17 +17,17 @@ import {
   Dashboard,
   AutoAwesome,
   History,
+  Menu as MenuIcon,
   Person,
   MenuBook,
   Timeline,
   Star,
-} from '@mui/icons-material';
+} from 'icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useUiStore } from '../../stores/uiStore';
 import { useAuthStore } from '../../stores/authStore';
 import { ROUTES } from '../../routes/routeConfig';
 
-// 导航菜单项配置
 interface NavItem {
   id: string;
   label: string;
@@ -37,60 +37,61 @@ interface NavItem {
   description?: string;
 }
 
+const DESKTOP_DRAWER_WIDTH = 340;
+const MOBILE_DRAWER_WIDTH = 320;
+
 const navItems: NavItem[] = [
   {
     id: 'dashboard',
-    label: '主控台',
+    label: '仪表盘',
     path: ROUTES.DASHBOARD,
     icon: <Dashboard />,
-    description: '总览您的塔罗之旅',
+    description: '查看今日概览与最近状态',
   },
   {
     id: 'new-reading',
     label: '新占卜',
     path: ROUTES.NEW_READING,
     icon: <AutoAwesome />,
-    description: '开始一次神秘的占卜',
+    description: '开始一次新的塔罗解读',
   },
   {
     id: 'history',
-    label: '占卜历史',
+    label: '历史记录',
     path: ROUTES.HISTORY,
     icon: <History />,
-    description: '查看过往的预言',
+    description: '回看过往抽牌与 AI 解读',
   },
   {
     id: 'profile',
     label: '个人中心',
     path: ROUTES.PROFILE,
     icon: <Person />,
-    description: '管理账户设置',
+    description: '管理账号资料与偏好',
   },
 ];
 
-// 快捷功能菜单
 const quickActions: NavItem[] = [
   {
     id: 'cards',
     label: '塔罗牌库',
-    path: '/cards',
+    path: ROUTES.CARDS,
     icon: <MenuBook />,
-    description: '探索78张塔罗牌',
+    description: '浏览 78 张牌的基础信息',
   },
   {
     id: 'spreads',
-    label: '牌阵大全',
-    path: '/spreads',
+    label: '牌阵目录',
+    path: ROUTES.SPREADS,
     icon: <Timeline />,
-    description: '学习各种牌阵',
+    description: '快速了解不同牌阵用途',
   },
   {
     id: 'favorites',
-    label: '收藏夹',
-    path: '/favorites',
+    label: '我的收藏',
+    path: ROUTES.FAVORITES,
     icon: <Star />,
-    badge: '3',
-    description: '您收藏的内容',
+    description: '查看你标记的常用内容',
   },
 ];
 
@@ -114,7 +115,6 @@ const Sidebar: React.FC = () => {
     setSidebarOpen(false);
   };
 
-  // 检查当前路径是否激活
   const isActive = (path: string) => {
     if (path === ROUTES.DASHBOARD) {
       return location.pathname === path;
@@ -125,14 +125,24 @@ const Sidebar: React.FC = () => {
   const drawerContent = (
     <Box
       sx={{
-        width: 280,
+        width: isMobile ? MOBILE_DRAWER_WIDTH : DESKTOP_DRAWER_WIDTH,
         height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
         background: 'linear-gradient(180deg, #1A1A2E 0%, #16213E 100%)',
         borderRight: '1px solid rgba(212, 175, 55, 0.2)',
-        overflow: 'hidden',
+        overflow: 'auto',
+        opacity: sidebarOpen ? 1 : 0,
+        transform: sidebarOpen ? 'translateX(0)' : 'translateX(-18px)',
+        transition: theme.transitions.create(['opacity', 'transform'], {
+          duration: sidebarOpen ? 360 : 220,
+          easing: sidebarOpen
+            ? 'cubic-bezier(0.22, 1, 0.36, 1)'
+            : 'cubic-bezier(0.4, 0, 0.2, 1)',
+        }),
+        willChange: 'transform, opacity',
       }}
     >
-      {/* 侧边栏头部 */}
       <Box
         sx={{
           p: 3,
@@ -140,7 +150,7 @@ const Sidebar: React.FC = () => {
           background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, transparent 100%)',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 2 }}>
           <AutoAwesome
             sx={{
               fontSize: '1.5rem',
@@ -159,11 +169,41 @@ const Sidebar: React.FC = () => {
               WebkitTextFillColor: 'transparent',
             }}
           >
-            神秘导航
+            塔罗导航
           </Typography>
+          {!isMobile && (
+            <Box
+              component="button"
+              type="button"
+              aria-label="close sidebar"
+              onClick={handleClose}
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: '14px',
+                border: '1px solid rgba(212, 175, 55, 0.18)',
+                background: 'rgba(10, 12, 28, 0.36)',
+                color: 'primary.main',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                flexShrink: 0,
+                transition: theme.transitions.create(['background-color', 'transform', 'border-color'], {
+                  duration: 180,
+                }),
+                '&:hover': {
+                  background: 'rgba(212, 175, 55, 0.10)',
+                  borderColor: 'rgba(212, 175, 55, 0.34)',
+                  transform: 'translateX(1px)',
+                },
+              }}
+            >
+              <MenuIcon fontSize="small" />
+            </Box>
+          )}
         </Box>
 
-        {/* 用户信息卡片 */}
         <Box
           sx={{
             p: 2,
@@ -180,7 +220,7 @@ const Sidebar: React.FC = () => {
               mb: 0.5,
             }}
           >
-            欢迎回来
+            当前旅者
           </Typography>
           <Typography
             variant="body2"
@@ -194,31 +234,31 @@ const Sidebar: React.FC = () => {
         </Box>
       </Box>
 
-      {/* 主导航菜单 */}
-      <Box sx={{ py: 1 }}>
+      <Box sx={{ py: 2.5 }}>
         <Typography
           variant="overline"
           sx={{
             px: 3,
             py: 1,
             color: 'text.secondary',
-            fontSize: '0.75rem',
+            fontSize: '0.85rem',
             fontFamily: 'Cinzel, serif',
             letterSpacing: 1,
           }}
         >
-          主要功能
+          主导航
         </Typography>
 
         <List sx={{ px: 1 }}>
           {navItems.map((item) => (
-            <ListItem key={item.id} disablePadding sx={{ mb: 0.5 }}>
+            <ListItem key={item.id} disablePadding sx={{ mb: 1.5 }}>
               <ListItemButton
                 onClick={() => handleNavigate(item.path)}
                 selected={isActive(item.path)}
                 sx={{
                   borderRadius: 2,
                   mx: 1,
+                  py: 1.5,
                   transition: 'all 0.3s ease',
                   '&.Mui-selected': {
                     background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.1) 100%)',
@@ -237,7 +277,7 @@ const Sidebar: React.FC = () => {
                 <ListItemIcon
                   sx={{
                     color: isActive(item.path) ? 'primary.main' : 'text.secondary',
-                    minWidth: 40,
+                    minWidth: 44,
                   }}
                 >
                   {item.icon}
@@ -246,12 +286,12 @@ const Sidebar: React.FC = () => {
                   primary={item.label}
                   secondary={item.description}
                   primaryTypographyProps={{
-                    fontSize: '0.9rem',
+                    fontSize: '1.1rem',
                     fontWeight: isActive(item.path) ? 600 : 400,
                     color: isActive(item.path) ? 'primary.main' : 'text.primary',
                   }}
                   secondaryTypographyProps={{
-                    fontSize: '0.75rem',
+                    fontSize: '0.85rem',
                     color: 'text.secondary',
                   }}
                 />
@@ -273,33 +313,33 @@ const Sidebar: React.FC = () => {
         </List>
       </Box>
 
-      <Divider sx={{ mx: 2, borderColor: 'rgba(212, 175, 55, 0.2)' }} />
+      <Divider sx={{ mx: 2, my: 1, borderColor: 'rgba(212, 175, 55, 0.2)' }} />
 
-      {/* 快捷功能菜单 */}
-      <Box sx={{ py: 1 }}>
+      <Box sx={{ py: 2.5 }}>
         <Typography
           variant="overline"
           sx={{
             px: 3,
             py: 1,
             color: 'text.secondary',
-            fontSize: '0.75rem',
+            fontSize: '0.85rem',
             fontFamily: 'Cinzel, serif',
             letterSpacing: 1,
           }}
         >
-          探索更多
+          快捷入口
         </Typography>
 
         <List sx={{ px: 1 }}>
           {quickActions.map((item) => (
-            <ListItem key={item.id} disablePadding sx={{ mb: 0.5 }}>
+            <ListItem key={item.id} disablePadding sx={{ mb: 1.5 }}>
               <ListItemButton
                 onClick={() => handleNavigate(item.path)}
                 selected={isActive(item.path)}
                 sx={{
                   borderRadius: 2,
                   mx: 1,
+                  py: 1.5,
                   transition: 'all 0.3s ease',
                   '&.Mui-selected': {
                     background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.1) 100%)',
@@ -315,7 +355,7 @@ const Sidebar: React.FC = () => {
                 <ListItemIcon
                   sx={{
                     color: isActive(item.path) ? 'primary.main' : 'text.secondary',
-                    minWidth: 40,
+                    minWidth: 44,
                   }}
                 >
                   {item.icon}
@@ -324,12 +364,12 @@ const Sidebar: React.FC = () => {
                   primary={item.label}
                   secondary={item.description}
                   primaryTypographyProps={{
-                    fontSize: '0.85rem',
+                    fontSize: '1.05rem',
                     fontWeight: isActive(item.path) ? 600 : 400,
                     color: isActive(item.path) ? 'primary.main' : 'text.primary',
                   }}
                   secondaryTypographyProps={{
-                    fontSize: '0.7rem',
+                    fontSize: '0.8rem',
                     color: 'text.secondary',
                   }}
                 />
@@ -351,20 +391,16 @@ const Sidebar: React.FC = () => {
         </List>
       </Box>
 
-      {/* 底部装饰 */}
       <Box
         sx={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          p: 2,
+          mt: 'auto',
+          p: 2.5,
           background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.05) 0%, transparent 100%)',
           borderTop: '1px solid rgba(212, 175, 55, 0.1)',
         }}
       >
         <Typography
-          variant="caption"
+          variant="body2"
           sx={{
             color: 'text.secondary',
             textAlign: 'center',
@@ -372,7 +408,7 @@ const Sidebar: React.FC = () => {
             fontStyle: 'italic',
           }}
         >
-          "星辰指引着我们的道路"
+          “命运不是偶然，而是你每次选择的回响。”
         </Typography>
       </Box>
     </Box>
@@ -380,19 +416,25 @@ const Sidebar: React.FC = () => {
 
   return (
     <>
-      {/* 桌面端持久侧边栏 */}
       {!isMobile && (
         <Drawer
-          variant="persistent"
+          variant="temporary"
           anchor="left"
           open={sidebarOpen}
+          onClose={handleClose}
+          transitionDuration={{ enter: 360, exit: 220 }}
+          ModalProps={{
+            keepMounted: true,
+            hideBackdrop: true,
+          }}
           sx={{
-            width: sidebarOpen ? 280 : 0,
-            flexShrink: 0,
             '& .MuiDrawer-paper': {
-              width: 280,
+              width: DESKTOP_DRAWER_WIDTH,
               boxSizing: 'border-box',
               border: 'none',
+              boxShadow: '22px 0 56px rgba(0, 0, 0, 0.26)',
+              backgroundImage: 'linear-gradient(180deg, rgba(26, 26, 46, 0.98) 0%, rgba(22, 33, 62, 0.98) 100%)',
+              overflow: 'hidden',
             },
           }}
         >
@@ -400,7 +442,6 @@ const Sidebar: React.FC = () => {
         </Drawer>
       )}
 
-      {/* 移动端临时侧边栏 */}
       {isMobile && (
         <Drawer
           variant="temporary"
@@ -408,11 +449,11 @@ const Sidebar: React.FC = () => {
           open={sidebarOpen}
           onClose={handleClose}
           ModalProps={{
-            keepMounted: true, // 更好的移动端性能
+            keepMounted: true,
           }}
           sx={{
             '& .MuiDrawer-paper': {
-              width: 280,
+              width: MOBILE_DRAWER_WIDTH,
               boxSizing: 'border-box',
               border: 'none',
             },

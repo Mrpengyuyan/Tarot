@@ -1,4 +1,4 @@
-﻿"""Health and system status endpoints."""
+"""Health and system status endpoints."""
 
 from datetime import datetime
 
@@ -7,9 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.crud.card import get_total_cards_count
-from app.crud.prediction import get_total_predictions_count
 from app.crud.spread import get_total_spreads_count
-from app.crud.user import get_total_users_count
 from app.db.session import get_db
 from app.services.tarot_service import tarot_interpretation_service
 
@@ -36,14 +34,18 @@ async def system_status(
         try:
             total_cards = get_total_cards_count(db)
             total_spreads = get_total_spreads_count(db)
-            total_users = get_total_users_count(db)
-            total_predictions = get_total_predictions_count(db)
         except Exception:
             db_status = False
             db_error = "database_unavailable"
-            total_cards = total_spreads = total_users = total_predictions = -1
+            total_cards = total_spreads = -1
 
         ai_status = await tarot_interpretation_service.health_check()
+        public_ai_status = {
+            "status": ai_status.get("status", "unknown"),
+            "is_healthy": bool(ai_status.get("is_healthy", False)),
+            "provider": ai_status.get("provider", "deepseek"),
+            "message": ai_status.get("message"),
+        }
 
         status_payload = {
             "timestamp": datetime.now().isoformat(),
@@ -58,7 +60,7 @@ async def system_status(
                         "error": db_error,
                     },
                 },
-                "ai_service": ai_status,
+                "ai_service": public_ai_status,
                 "api": {
                     "status": "healthy",
                     "details": "api operational",
@@ -67,8 +69,6 @@ async def system_status(
             "statistics": {
                 "total_tarot_cards": total_cards,
                 "total_spreads": total_spreads,
-                "total_users": total_users,
-                "total_predictions": total_predictions,
                 "data_integrity": "good" if total_cards > 0 and total_spreads > 0 else "warning",
             },
         }
@@ -94,9 +94,22 @@ async def system_status(
 async def ai_service_status():
     try:
         status_payload = await tarot_interpretation_service.health_check()
+        details = status_payload.get("details") or {}
+        if isinstance(details, dict):
+            details = {
+                "model_used": details.get("model_used"),
+                "fallback_used": details.get("fallback_used"),
+            }
+        else:
+            details = None
         return {
             "timestamp": datetime.now().isoformat(),
-            **status_payload,
+            "service_name": status_payload.get("service_name", "tarot-interpretation-service"),
+            "status": status_payload.get("status", "unknown"),
+            "is_healthy": bool(status_payload.get("is_healthy", False)),
+            "provider": status_payload.get("provider"),
+            "message": status_payload.get("message"),
+            "details": details,
         }
     except Exception:
         return {
@@ -117,8 +130,6 @@ async def system_metrics(
             "database": {
                 "tarot_cards_count": get_total_cards_count(db),
                 "spreads_count": get_total_spreads_count(db),
-                "users_count": get_total_users_count(db),
-                "predictions_count": get_total_predictions_count(db),
             },
             "ai_service": {
                 "configured": tarot_interpretation_service.ai_service.is_configured(),
@@ -131,22 +142,26 @@ async def system_metrics(
         cards_score = (
             min(metrics["database"]["tarot_cards_count"] / expected_cards * 100, 100)
             if expected_cards > 0
-            else 100.0
+            else None
         )
         spreads_score = (
             min(metrics["database"]["spreads_count"] / expected_spreads * 100, 100)
             if expected_spreads > 0
-            else 100.0
+            else None
         )
+        available_scores = [score for score in (cards_score, spreads_score) if score is not None]
+        overall_score = (sum(available_scores) / len(available_scores)) if available_scores else None
 
         metrics["data_integrity"] = {
             "cards_completeness": f"{cards_score:.1f}%"
-            if expected_cards > 0
+            if cards_score is not None
             else "n/a (no expected baseline configured)",
             "spreads_completeness": f"{spreads_score:.1f}%"
-            if expected_spreads > 0
+            if spreads_score is not None
             else "n/a (no expected baseline configured)",
-            "overall_score": f"{(cards_score + spreads_score) / 2:.1f}%",
+            "overall_score": f"{overall_score:.1f}%"
+            if overall_score is not None
+            else "n/a (no expected baseline configured)",
             "expected_cards": expected_cards if expected_cards > 0 else None,
             "expected_spreads": expected_spreads if expected_spreads > 0 else None,
         }

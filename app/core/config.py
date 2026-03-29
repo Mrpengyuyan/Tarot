@@ -1,6 +1,6 @@
 import os
-import secrets
 import sys
+from pathlib import Path
 from typing import List, Optional
 
 from pydantic import field_validator
@@ -18,6 +18,12 @@ if sys.platform.startswith("win"):
             pass
 
 
+BASE_DIR = Path(__file__).resolve().parents[2]
+DEFAULT_SQLITE_PATH = (BASE_DIR / "tarot_game.db").resolve()
+DEFAULT_DATABASE_URL = f"sqlite:///{DEFAULT_SQLITE_PATH.as_posix()}"
+DEFAULT_DEV_SECRET_KEY = "dev-local-secret-key-change-me-before-production"
+
+
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Tarot Game API"
     PROJECT_VERSION: str = "1.0.0"
@@ -29,10 +35,10 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = "tarot_game"
     POSTGRES_SERVER: str = "localhost"
     POSTGRES_PORT: int = 5432
-    DATABASE_URL: str = "sqlite:///./tarot_game.db"
+    DATABASE_URL: str = DEFAULT_DATABASE_URL
 
     # Security
-    SECRET_KEY: str = secrets.token_urlsafe(64)
+    SECRET_KEY: str = DEFAULT_DEV_SECRET_KEY
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REQUIRE_STRONG_SECRET: bool = False
@@ -52,6 +58,7 @@ class Settings(BaseSettings):
     DEEPSEEK_CHAT_ENDPOINT: str = "chat/completions"
     DEEPSEEK_CHAT_MODEL: str = "deepseek-chat"
     DEEPSEEK_REASONER_MODEL: str = "deepseek-reasoner"
+    DEEPSEEK_TRUST_ENV_PROXY: bool = False
     DEEPSEEK_ENABLE_REASONER_FALLBACK: bool = True
     DEEPSEEK_REASONER_TRIGGER_CHARS: int = 120
     DEEPSEEK_REASONER_TRIGGER_KEYWORDS: str = "why,how,analyze,strategy,complex,why not,tradeoff,risk,plan"
@@ -66,6 +73,9 @@ class Settings(BaseSettings):
     AI_RETRY_ON_429: bool = True
     AI_RETRY_ON_5XX: bool = True
     AI_MAX_OUTPUT_TOKENS: int = 900
+    AI_REPRODUCIBLE_MODE: bool = False
+    AI_CHAT_TEMPERATURE: float = 0.6
+    AI_REASONER_TEMPERATURE: float = 0.5
 
     AI_BUDGET_GUARD_ENABLED: bool = False
     AI_DAILY_BUDGET_USD: float = 0.0
@@ -97,6 +107,7 @@ class Settings(BaseSettings):
     LOG_ENCODING: str = "utf-8"
     METRICS_EXPECTED_TAROT_CARDS: int = 0
     METRICS_EXPECTED_SPREADS: int = 0
+    AUTO_REPAIR_PREDICTION_QUESTIONS_ON_STARTUP: bool = False
 
     model_config = {
         "case_sensitive": True,
@@ -111,12 +122,15 @@ class Settings(BaseSettings):
         "AUTH_COOKIE_SECURE",
         "ALLOW_MOCK_AI_FALLBACK",
         "DEEPSEEK_ENABLE_REASONER_FALLBACK",
+        "DEEPSEEK_TRUST_ENV_PROXY",
         "DEEPSEEK_FORCE_JSON_OUTPUT",
         "AI_RETRY_ON_TIMEOUT",
         "AI_RETRY_ON_429",
         "AI_RETRY_ON_5XX",
         "AI_BUDGET_GUARD_ENABLED",
         "AI_DISABLE_REASONER_WHEN_BUDGET_HIGH",
+        "AI_REPRODUCIBLE_MODE",
+        "AUTO_REPAIR_PREDICTION_QUESTIONS_ON_STARTUP",
         mode="before",
     )
     @classmethod
@@ -161,14 +175,24 @@ class Settings(BaseSettings):
     def validate_runtime(self) -> None:
         weak_values = {
             "",
+            "change-me-in-production",
             "change-this-secret-key-in-production",
             "your-super-secret-key-here-change-in-production",
+            DEFAULT_DEV_SECRET_KEY,
         }
-        env = str(self.ENVIRONMENT).strip().lower()
-        is_production = env in {"prod", "production"}
-        if self.REQUIRE_STRONG_SECRET and is_production and self.SECRET_KEY in weak_values:
+        secret_too_short = len(self.SECRET_KEY or "") < 32
+        environment = str(self.ENVIRONMENT).strip().lower()
+        production_like = environment in {"prod", "production", "staging"}
+        enforce_strong_secret = self.REQUIRE_STRONG_SECRET or production_like
+
+        if enforce_strong_secret and (self.SECRET_KEY in weak_values or secret_too_short):
             raise ValueError(
                 "Weak SECRET_KEY detected. Set a strong SECRET_KEY in environment before production startup."
+            )
+
+        if production_like and not self.AUTH_COOKIE_SECURE:
+            raise ValueError(
+                "AUTH_COOKIE_SECURE must be true in production-like environments."
             )
 
 

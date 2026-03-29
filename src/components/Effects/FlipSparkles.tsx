@@ -1,86 +1,106 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
 
-interface FlipSparklesProps {
+type SparkleQuality = 'full' | 'lite' | 'off';
+
+interface ParticleBurstProps {
   isActive: boolean;
-  color?: string;
-  count?: number;
-  size?: number;
-  speed?: number;
+  quality?: SparkleQuality;
 }
 
-const ParticleBurst = ({ isActive, color = '#D4AF37', count = 100, size = 15, speed = 1.5 }: FlipSparklesProps) => {
+const PARTICLE_PRESETS: Record<Exclude<SparkleQuality, 'off'>, { count: number; size: number; speed: number; scale: number }> = {
+  full: { count: 100, size: 15, speed: 1.5, scale: 4 },
+  lite: { count: 48, size: 10, speed: 1.1, scale: 3.2 },
+};
+
+const ParticleBurst: React.FC<ParticleBurstProps> = ({ isActive, quality = 'full' }) => {
   const groupRef = useRef<THREE.Group>(null);
-  const [scale, setScale] = useState(0);
+  const scaleRef = useRef(0);
+  const presetKey = quality === 'off' ? 'lite' : quality;
 
   useEffect(() => {
-    if (isActive) {
-      setScale(0); // Reset scale
+    if (!isActive) {
+      scaleRef.current = 0;
+      if (groupRef.current) {
+        groupRef.current.scale.set(0, 0, 0);
+      }
     }
   }, [isActive]);
 
-  useFrame((state, delta) => {
-    if (isActive && groupRef.current) {
-      // Create a rapid burst outwards then slowly fade
-      if (scale < 3) {
-        setScale((prev) => Math.min(prev + delta * speed * 5, 3));
-      }
-      groupRef.current.scale.set(scale, scale, scale);
-      groupRef.current.rotation.y += delta * 0.5;
-      groupRef.current.rotation.z += delta * 0.2;
+  useFrame((_, delta) => {
+    if (!isActive || !groupRef.current) {
+      return;
     }
+
+    if (scaleRef.current < 3) {
+      scaleRef.current = Math.min(scaleRef.current + delta * PARTICLE_PRESETS[presetKey].speed * 5, 3);
+    }
+
+    groupRef.current.scale.setScalar(scaleRef.current);
+    groupRef.current.rotation.y += delta * 0.45;
+    groupRef.current.rotation.z += delta * 0.18;
   });
 
-  if (!isActive) return null;
+  if (!isActive) {
+    return null;
+  }
+
+  const preset = PARTICLE_PRESETS[presetKey];
+  const fadeOpacity = scaleRef.current > 2 ? 1 - (scaleRef.current - 2) : 1;
 
   return (
     <group ref={groupRef}>
       <Sparkles
-        count={count}
-        scale={4}
-        size={size}
-        speed={speed}
-        opacity={scale > 2 ? 1 - (scale - 2) : 1}
-        color={color}
-        noise={3} // Randomness of particle movement
+        count={preset.count}
+        scale={preset.scale}
+        size={preset.size}
+        speed={preset.speed}
+        opacity={fadeOpacity}
+        color="#D4AF37"
+        noise={quality === 'full' ? 3 : 2}
       />
-      <Sparkles
-        count={count / 2}
-        scale={6}
-        size={size * 1.5}
-        speed={speed * 0.5}
-        opacity={scale > 2 ? 1 - (scale - 2) : 0.8}
-        color="#00F0FF"
-        noise={4}
-      />
+      {quality === 'full' && (
+        <Sparkles
+          count={Math.round(preset.count / 2)}
+          scale={preset.scale + 2}
+          size={preset.size * 1.35}
+          speed={preset.speed * 0.55}
+          opacity={fadeOpacity * 0.78}
+          color="#00F0FF"
+          noise={4}
+        />
+      )}
     </group>
   );
 };
 
-export const FlipSparklesContainer: React.FC<{ isActive: boolean }> = ({ isActive }) => {
-  if (!isActive) return null;
+export const FlipSparklesContainer: React.FC<{ isActive: boolean; quality?: SparkleQuality }> = ({
+  isActive,
+  quality = 'full',
+}) => {
+  if (!isActive || quality === 'off') {
+    return null;
+  }
 
   return (
     <div
       style={{
         position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
+        inset: 0,
         pointerEvents: 'none',
         zIndex: 10,
       }}
     >
       <Canvas
         camera={{ position: [0, 0, 5], fov: 45 }}
-        gl={{ alpha: true, antialias: false }}
+        gl={{ alpha: true, antialias: quality === 'full' }}
+        dpr={quality === 'full' ? [1, 1.5] : [1, 1.2]}
         style={{ pointerEvents: 'none' }}
       >
-        <ambientLight intensity={1} />
-        <ParticleBurst isActive={isActive} />
+        <ambientLight intensity={quality === 'full' ? 1 : 0.85} />
+        <ParticleBurst isActive={isActive} quality={quality} />
       </Canvas>
     </div>
   );

@@ -26,6 +26,10 @@ try:
     print(f"project_name: {settings.PROJECT_NAME}")
     print(f"api_prefix: {settings.API_V1_STR}")
     print(f"database_url: {mask_database_url(settings.DATABASE_URL)}")
+    print(f"environment: {settings.ENVIRONMENT}")
+    print(f"debug: {settings.DEBUG}")
+    docs_enabled = settings.DEBUG or str(settings.ENVIRONMENT).strip().lower() in {"dev", "development", "local"}
+    print(f"docs_enabled: {docs_enabled}")
 
     print("\nDeepSeek config:")
     print("api_key: configured" if settings.DEEPSEEK_API_KEY else "api_key: missing")

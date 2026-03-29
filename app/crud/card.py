@@ -33,6 +33,27 @@ def get_cards_by_suit(db: Session, suit: Suit, skip: int = 0, limit: int = 100) 
     """根据花色获取塔罗牌列表"""
     return db.query(TarotCard).filter(TarotCard.suit == suit).offset(skip).limit(limit).all()
 
+def get_cards_by_type_and_suit(
+    db: Session,
+    card_type: CardType,
+    suit: Suit,
+    skip: int = 0,
+    limit: int = 100,
+) -> List[TarotCard]:
+    """根据牌类型和花色获取塔罗牌列表"""
+    return (
+        db.query(TarotCard)
+        .filter(
+            and_(
+                TarotCard.card_type == card_type,
+                TarotCard.suit == suit,
+            )
+        )
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
 def search_cards(db: Session, search_term: str, skip: int = 0, limit: int = 100) -> List[TarotCard]:
     """搜索塔罗牌"""
     search_pattern = f"%{search_term}%"
@@ -91,7 +112,7 @@ def draw_random_cards(
     seed: Optional[int] = None,
 ) -> List[TarotCard]:
     """随机抽取指定数量的塔罗牌"""
-    query = db.query(TarotCard)
+    query = db.query(TarotCard).order_by(TarotCard.id.asc())
     
     # 排除指定的卡牌
     if exclude_ids:

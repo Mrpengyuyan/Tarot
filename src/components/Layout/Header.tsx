@@ -19,7 +19,7 @@ import {
   Settings,
   History,
   AutoAwesome,
-} from '@mui/icons-material';
+} from 'icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useUiStore } from '../../stores/uiStore';
@@ -30,9 +30,10 @@ const Header: React.FC = () => {
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isDesktop = useMediaQuery(theme.breakpoints.up('lg'));
 
   const { user, isLoggedIn, logout } = useAuthStore();
-  const { toggleSidebar } = useUiStore();
+  const { toggleSidebar, sidebarOpen } = useUiStore();
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -59,19 +60,36 @@ const Header: React.FC = () => {
   // 检查是否是认证页面
   const isAuthPage = location.pathname.startsWith('/auth');
   const currentPageTitle = getRouteTitle(location.pathname);
+  const animateDesktopHeader = isLoggedIn && !isAuthPage && isDesktop;
+  const headerTransition = theme.transitions.create('transform', {
+    duration: sidebarOpen ? 380 : 260,
+    easing: sidebarOpen
+      ? 'cubic-bezier(0.22, 1, 0.36, 1)'
+      : 'cubic-bezier(0.4, 0, 0.2, 1)',
+  });
 
   return (
     <AppBar
       position="sticky"
       elevation={0}
       sx={{
+        top: 0,
+        transform: animateDesktopHeader && sidebarOpen ? 'translateX(20px) scale(0.992)' : 'translateX(0) scale(1)',
+        transformOrigin: 'center top',
         background: 'linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 0.95) 100%)',
         backdropFilter: 'blur(10px)',
         borderBottom: '1px solid rgba(212, 175, 55, 0.2)',
         zIndex: theme.zIndex.drawer + 1,
+        transition: headerTransition,
+        willChange: animateDesktopHeader ? 'transform' : 'auto',
       }}
     >
-      <Toolbar sx={{ px: { xs: 1, sm: 3 } }}>
+      <Toolbar
+        sx={{
+          px: { xs: 1, sm: 3 },
+          minHeight: 64,
+        }}
+      >
         {/* 左侧：菜单按钮和Logo */}
         <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
           {/* 侧边栏切换按钮 - 仅在已登录且非认证页面时显示 */}

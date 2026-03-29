@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 1000">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d0820"/>
+      <stop offset="30%" stop-color="#1a1040"/>
+      <stop offset="70%" stop-color="#0f1c38"/>
+      <stop offset="100%" stop-color="#080614"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="42%">
+      <stop offset="0%" stop-color="#f5d97b" stop-opacity="0.55"/>
+      <stop offset="60%" stop-color="#c9a84c" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#f5d97b" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow-cyan" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#56bdf8" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#56bdf8" stop-opacity="0"/>
+    </radialGradient>
+    <!-- 星辰散点 -->
+    <pattern id="stars" width="100" height="100" patternUnits="userSpaceOnUse">
+      <circle cx="12" cy="18" r="1.8" fill="#f5d97b" opacity="0.55"/>
+      <circle cx="78" cy="8" r="1.2" fill="#8cd3ff" opacity="0.4"/>
+      <circle cx="45" cy="35" r="1.5" fill="#ffffff" opacity="0.35"/>
+      <circle cx="88" cy="52" r="1" fill="#c99bff" opacity="0.45"/>
+      <circle cx="22" cy="68" r="1.6" fill="#f5d97b" opacity="0.3"/>
+      <circle cx="60" cy="80" r="1.3" fill="#8cd3ff" opacity="0.35"/>
+      <circle cx="35" cy="92" r="0.9" fill="#ffffff" opacity="0.4"/>
+      <circle cx="72" cy="28" r="1.1" fill="#c99bff" opacity="0.3"/>
+      <circle cx="5" cy="48" r="0.8" fill="#f5d97b" opacity="0.5"/>
+      <circle cx="95" cy="90" r="1.4" fill="#8cd3ff" opacity="0.25"/>
+    </pattern>
+    <!-- 角落装饰 pattern -->
+    <filter id="neon" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="neon-soft" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- 背景底色 -->
+  <rect width="600" height="1000" rx="36" fill="url(#bg)"/>
+
+  <!-- 星辰散点层 -->
+  <rect x="30" y="30" width="540" height="940" rx="26" fill="url(#stars)" opacity="0.8"/>
+
+  <!-- 柔和的氛围光晕 -->
+  <circle cx="300" cy="500" r="280" fill="url(#glow-cyan)"/>
+
+  <!-- 外框：双线金边 -->
+  <rect x="18" y="18" width="564" height="964" rx="30" fill="none" stroke="#d4af37" stroke-width="3.5" opacity="0.85"/>
+  <rect x="32" y="32" width="536" height="936" rx="24" fill="none" stroke="#d4af37" stroke-width="1.5" opacity="0.45"/>
+  <rect x="44" y="44" width="512" height="912" rx="20" fill="none" stroke="#8cd3ff" stroke-width="0.8" opacity="0.25" stroke-dasharray="6 8"/>
+
+  <!-- 四角装饰三角 -->
+  <g opacity="0.7" filter="url(#neon)">
+    <!-- 左上 -->
+    <path d="M50 60 L50 110 L100 60 Z" fill="none" stroke="#d4af37" stroke-width="1.8"/>
+    <circle cx="60" cy="70" r="4" fill="#d4af37" opacity="0.6"/>
+    <!-- 右上 -->
+    <path d="M550 60 L550 110 L500 60 Z" fill="none" stroke="#d4af37" stroke-width="1.8"/>
+    <circle cx="540" cy="70" r="4" fill="#d4af37" opacity="0.6"/>
+    <!-- 左下 -->
+    <path d="M50 940 L50 890 L100 940 Z" fill="none" stroke="#d4af37" stroke-width="1.8"/>
+    <circle cx="60" cy="930" r="4" fill="#d4af37" opacity="0.6"/>
+    <!-- 右下 -->
+    <path d="M550 940 L550 890 L500 940 Z" fill="none" stroke="#d4af37" stroke-width="1.8"/>
+    <circle cx="540" cy="930" r="4" fill="#d4af37" opacity="0.6"/>
+  </g>
+
+  <!-- 中心辉光 -->
+  <circle cx="300" cy="500" r="200" fill="url(#glow)"/>
+
+  <!-- 外圈 -->
+  <circle cx="300" cy="500" r="180" fill="none" stroke="#d4af37" stroke-width="4" opacity="0.75" filter="url(#neon)"/>
+  <circle cx="300" cy="500" r="165" fill="none" stroke="#d4af37" stroke-width="1" opacity="0.35" stroke-dasharray="14 6"/>
+
+  <!-- 中圈 (青色) -->
+  <circle cx="300" cy="500" r="130" fill="none" stroke="#56bdf8" stroke-width="2" opacity="0.45" filter="url(#neon)"/>
+
+  <!-- 内圈 -->
+  <circle cx="300" cy="500" r="95" fill="none" stroke="#d4af37" stroke-width="1.5" opacity="0.55"/>
+
+  <!-- 八角星 -->
+  <polygon
+    points="300,310 330,450 470,500 330,550 300,690 270,550 130,500 270,450"
+    fill="none" stroke="#f5d97b" stroke-width="5" opacity="0.85" filter="url(#neon-soft)"/>
+
+  <!-- 内八角星 (旋转45°) -->
+  <g transform="rotate(22.5, 300, 500)">
+    <polygon
+      points="300,370 318,465 413,500 318,535 300,630 282,535 187,500 282,465"
+      fill="none" stroke="#56bdf8" stroke-width="2" opacity="0.4" filter="url(#neon)"/>
+  </g>
+
+  <!-- 8个方向定位星点 -->
+  <g filter="url(#neon)">
+    <circle cx="300" cy="320" r="6" fill="#f5d97b" opacity="0.85"/>
+    <circle cx="300" cy="680" r="6" fill="#f5d97b" opacity="0.85"/>
+    <circle cx="120" cy="500" r="6" fill="#f5d97b" opacity="0.85"/>
+    <circle cx="480" cy="500" r="6" fill="#f5d97b" opacity="0.85"/>
+    <circle cx="173" cy="373" r="5" fill="#56bdf8" opacity="0.65"/>
+    <circle cx="427" cy="373" r="5" fill="#56bdf8" opacity="0.65"/>
+    <circle cx="173" cy="627" r="5" fill="#56bdf8" opacity="0.65"/>
+    <circle cx="427" cy="627" r="5" fill="#56bdf8" opacity="0.65"/>
+  </g>
+
+  <!-- 中心核心 -->
+  <circle cx="300" cy="500" r="28" fill="#f5d97b" opacity="0.85" filter="url(#neon-soft)"/>
+  <circle cx="300" cy="500" r="14" fill="#0d0820"/>
+  <circle cx="300" cy="500" r="6" fill="#56bdf8" opacity="0.9"/>
+
+  <!-- 全视之眼 -->
+  <path d="M 258 500 Q 300 472 342 500 Q 300 528 258 500" fill="none" stroke="#f5d97b" stroke-width="2.5" opacity="0.7" filter="url(#neon)"/>
+
+  <!-- 上方文字 TAROT -->
+  <text x="300" y="140" text-anchor="middle" font-size="38" font-family="Georgia, serif" fill="#f5d97b" letter-spacing="14" filter="url(#neon)" opacity="0.9">TAROT</text>
+
+  <!-- 下方 ARCANA -->
+  <text x="300" y="880" text-anchor="middle" font-size="22" font-family="Georgia, serif" fill="#8cd3ff" letter-spacing="10" opacity="0.65">ARCANA</text>
+
+  <!-- 上下四芒星装饰 -->
+  <text x="300" y="195" text-anchor="middle" font-size="22" fill="#d4af37" opacity="0.7">✦  ✦  ✦</text>
+  <text x="300" y="835" text-anchor="middle" font-size="22" fill="#d4af37" opacity="0.7">✦  ✦  ✦</text>
+</svg>

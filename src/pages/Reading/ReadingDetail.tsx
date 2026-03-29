@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowBack, AutoAwesome, Star } from 'icons';
 import {
   Box,
   Button,
@@ -8,34 +9,45 @@ import {
   Paper,
   Typography,
 } from '@mui/material';
-import {
-  ArrowBack,
-  AutoAwesome,
-  Favorite,
-  Star,
-} from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import CardSpread from '../../components/Tarot/CardSpread';
-import { ROUTES } from '../../routes/routeConfig';
-import { tarotService, CardDrawWithMeaning, DrawnCard, ReadingDetail, localDrawingUtils } from '../../services/tarotService';
-import { SpreadType } from '../../types/api';
-import { formatDateTime } from '../../utils/dateUtils';
+import CosmicBackground from '../../components/Effects/CosmicBackground';
+import ReadingFavoriteButton from '../../components/Reading/ReadingFavoriteButton';
 import Loading from '../../components/UI/Loading';
 import { useNotification } from '../../components/UI/Notification';
-import CosmicBackground from '../../components/Effects/CosmicBackground';
+import { ROUTES } from '../../routes/routeConfig';
+import {
+  CardDrawWithMeaning,
+  DrawnCard,
+  localDrawingUtils,
+  ReadingDetail,
+  tarotService,
+} from '../../services/tarotService';
+import { getQuestionTypeLabel } from '../../stores/gameStore';
+import { SpreadType } from '../../types/api';
+import { formatDateTime } from '../../utils/dateUtils';
+import { getReadingQuestionDisplay } from '../../utils/readingQuestion';
+import {
+  getSpreadDisplayDescription,
+  getSpreadDisplayName,
+} from '../../utils/spreadDisplay';
+import { useVisualSettings } from '../../hooks/useVisualSettings';
 
-const questionTypeLabels: Record<string, { label: string; color: string }> = {
-  love: { label: '感情', color: '#FF6B9D' },
-  career: { label: '事业', color: '#4ECDC4' },
-  finance: { label: '财运', color: '#FFD93D' },
-  health: { label: '健康', color: '#6BCF7F' },
-  general: { label: '综合', color: '#AB83A1' },
+const questionTypeColors: Record<string, string> = {
+  love: '#FF6B9D',
+  career: '#4ECDC4',
+  finance: '#FFD93D',
+  health: '#6BCF7F',
+  general: '#AB83A1',
 };
 
-const statusLabels: Record<string, { label: string; color: 'default' | 'success' | 'warning' | 'error' }> = {
+const statusLabels: Record<
+  string,
+  { label: string; color: 'default' | 'success' | 'warning' | 'error' }
+> = {
   completed: { label: '已完成', color: 'success' },
-  processing: { label: '解读中', color: 'warning' },
-  pending: { label: '待抽牌', color: 'default' },
+  processing: { label: '处理中', color: 'warning' },
+  pending: { label: '等待中', color: 'default' },
   failed: { label: '失败', color: 'error' },
 };
 
@@ -43,6 +55,10 @@ const ReadingDetailPage: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { showError } = useNotification();
+  const showErrorRef = useRef(showError);
+  const detailLoadRequestRef = useRef(0);
+  const visual = useVisualSettings();
+
   const [reading, setReading] = useState<ReadingDetail | null>(null);
   const [cards, setCards] = useState<CardDrawWithMeaning[]>([]);
   const [spread, setSpread] = useState<SpreadType | null>(null);
@@ -56,49 +72,68 @@ const ReadingDetailPage: React.FC = () => {
     return Number.isNaN(parsed) ? null : parsed;
   }, [id]);
 
-  const fetchReadingDetail = useCallback(
-    async (targetReadingId: number) => {
-      const [detail, cardDraws] = await Promise.all([
-        tarotService.getReadingDetailInfo(targetReadingId),
-        tarotService.getReadingCards(targetReadingId),
-      ]);
+  useEffect(() => {
+    showErrorRef.current = showError;
+  }, [showError]);
 
-      setReading(detail);
-      setCards(cardDraws);
+  const fetchReadingDetail = useCallback(async (targetReadingId: number) => {
+    const [detail, cardDraws] = await Promise.all([
+      tarotService.getReadingDetailInfo(targetReadingId),
+      tarotService.getReadingCards(targetReadingId),
+    ]);
 
-      if (detail.spread_type) {
-        setSpread(detail.spread_type as SpreadType);
-      } else if (detail.spread_type_id) {
-        const spreadDetail = await tarotService.getSpreadDetail(detail.spread_type_id);
-        setSpread(spreadDetail);
-      }
-    },
-    [],
-  );
+    setReading(detail);
+    setCards(cardDraws);
+
+    if (detail.spread_type) {
+      setSpread(detail.spread_type as SpreadType);
+      return;
+    }
+
+    if (detail.spread_type_id) {
+      const spreadDetail = await tarotService.getSpreadDetail(detail.spread_type_id);
+      setSpread(spreadDetail);
+    }
+  }, []);
 
   useEffect(() => {
     if (!id || readingId === null) {
-      setError('无效的占卜记录');
+      setError('无效的占卜记录 ID');
       setLoading(false);
       return;
     }
 
-    const fetchDetail = async () => {
+    let cancelled = false;
+    const requestId = detailLoadRequestRef.current + 1;
+    detailLoadRequestRef.current = requestId;
+
+    const load = async () => {
       setLoading(true);
       setError(null);
       try {
         await fetchReadingDetail(readingId);
+        if (cancelled || requestId !== detailLoadRequestRef.current) {
+          return;
+        }
       } catch (err) {
+        if (cancelled || requestId !== detailLoadRequestRef.current) {
+          return;
+        }
         const message = err instanceof Error ? err.message : '获取占卜详情失败';
         setError(message);
-        showError(message);
+        showErrorRef.current(message);
       } finally {
-        setLoading(false);
+        if (!cancelled && requestId === detailLoadRequestRef.current) {
+          setLoading(false);
+        }
       }
     };
 
-    fetchDetail();
-  }, [fetchReadingDetail, id, readingId, showError]);
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchReadingDetail, id, readingId]);
 
   useEffect(() => {
     if (!readingId || !reading || reading.interpretation || !['pending', 'processing'].includes(reading.status)) {
@@ -112,7 +147,10 @@ const ReadingDetailPage: React.FC = () => {
     setAiPolling(true);
 
     const interval = window.setInterval(async () => {
-      if (cancelled) return;
+      if (cancelled) {
+        return;
+      }
+
       attempts += 1;
       try {
         const detail = await tarotService.getReadingDetailInfo(readingId);
@@ -143,7 +181,9 @@ const ReadingDetailPage: React.FC = () => {
   }, [reading, readingId]);
 
   const handleGenerateInterpretation = useCallback(async () => {
-    if (!readingId) return;
+    if (!readingId) {
+      return;
+    }
 
     setAiGenerating(true);
     try {
@@ -162,37 +202,41 @@ const ReadingDetailPage: React.FC = () => {
 
   const drawnCards = useMemo<DrawnCard[]>(() => {
     if (!cards.length) return [];
-    const ordered = cards.slice().sort((a, b) => a.position - b.position);
-    return ordered.reduce<DrawnCard[]>((acc, draw, index) => {
-      if (!draw.tarot_card) {
+
+    return cards
+      .slice()
+      .sort((a, b) => a.position - b.position)
+      .reduce<DrawnCard[]>((acc, draw, index) => {
+        if (!draw.tarot_card) return acc;
+
+        acc.push({
+          card: {
+            ...draw.tarot_card,
+            image_url: localDrawingUtils.generateCardImageUrl(draw.tarot_card),
+          },
+          isReversed: draw.is_reversed,
+          position: index,
+        });
+
         return acc;
-      }
-
-      acc.push({
-        card: {
-          ...draw.tarot_card,
-          image_url: localDrawingUtils.generateCardImageUrl(draw.tarot_card),
-        },
-        isReversed: draw.is_reversed,
-        position: index,
-      });
-
-      return acc;
-    }, []);
+      }, []);
   }, [cards]);
 
   const interpretationThemes = useMemo(() => {
     if (!reading?.interpretation) return [];
-    const themeList = (reading.interpretation as any).key_themes_list;
+
+    const themeList = (reading.interpretation as ReadingDetail['interpretation'] & { key_themes_list?: string[] })?.key_themes_list;
     if (Array.isArray(themeList)) {
       return themeList.filter(Boolean);
     }
+
     if (reading.interpretation.key_themes) {
       return reading.interpretation.key_themes
         .split(',')
         .map((item) => item.trim())
         .filter(Boolean);
     }
+
     return [];
   }, [reading?.interpretation]);
 
@@ -212,44 +256,62 @@ const ReadingDetailPage: React.FC = () => {
             {error || '暂无占卜详情'}
           </Typography>
           <Button variant="outlined" onClick={() => navigate(ROUTES.HISTORY)}>
-            返回历史
+            返回历史记录
           </Button>
         </Paper>
       </Container>
     );
   }
 
-  const typeMeta = questionTypeLabels[reading.question_type] || { label: reading.question_type, color: '#D4AF37' };
-  const statusMeta = statusLabels[reading.status] || { label: reading.status, color: 'default' as const };
+  const questionTypeLabel = getQuestionTypeLabel(reading.question_type as any);
+  const questionTypeColor = questionTypeColors[reading.question_type] || '#D4AF37';
+  const statusMeta = statusLabels[reading.status] || {
+    label: reading.status,
+    color: 'default' as const,
+  };
 
   return (
-    <Box className="hd-noise-overlay" sx={{
-      width: '100vw',
-      minHeight: '100vh',
-      position: 'relative',
-      left: '50%',
-      right: '50%',
-      marginLeft: '-50vw',
-      marginRight: '-50vw',
-      pt: { xs: 2, md: 4 },
-      pb: { xs: 8, md: 4 }
-    }}>
-      <CosmicBackground showRings={false} />
+    <Box
+      className="hd-noise-overlay"
+      sx={{
+        width: '100vw',
+        minHeight: '100vh',
+        position: 'relative',
+        left: '50%',
+        right: '50%',
+        marginLeft: '-50vw',
+        marginRight: '-50vw',
+        pt: { xs: 2, md: 4 },
+        pb: { xs: 8, md: 4 },
+      }}
+    >
+      <CosmicBackground showRings={false} performanceMode={visual.backgroundMode} />
 
-      <Container maxWidth="lg" sx={{ py: 4, position: 'relative', zIndex: 1, '& .MuiPaper-root': { backdropFilter: 'blur(16px)', background: 'rgba(16, 8, 32, 0.7)', border: '1px solid rgba(0, 240, 255, 0.15)' } }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-          <Button
-            variant="outlined"
-            startIcon={<ArrowBack />}
-            onClick={() => navigate(ROUTES.HISTORY)}
-          >
-            返回历史
+      <Container
+        maxWidth="lg"
+        sx={{
+          py: 4,
+          position: 'relative',
+          zIndex: 1,
+          '& .MuiPaper-root': {
+            backdropFilter: 'blur(16px)',
+            background: 'rgba(16, 8, 32, 0.7)',
+            border: '1px solid rgba(0, 240, 255, 0.15)',
+          },
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3, gap: 2, flexWrap: 'wrap' }}>
+          <Button variant="outlined" startIcon={<ArrowBack />} onClick={() => navigate(ROUTES.HISTORY)}>
+            返回历史记录
           </Button>
-          <Chip
-            label={statusMeta.label}
-            color={statusMeta.color}
-            size="small"
-          />
+          <Box sx={{ display: 'flex', gap: 1.2, alignItems: 'center', flexWrap: 'wrap' }}>
+            <Chip label={statusMeta.label} color={statusMeta.color} size="small" />
+            <ReadingFavoriteButton
+              readingId={reading.id}
+              isFavorite={reading.is_favorite}
+              onChanged={(nextValue) => setReading((previous) => (previous ? { ...previous, is_favorite: nextValue } : previous))}
+            />
+          </Box>
         </Box>
 
         <Paper sx={{ p: 4, mb: 4 }}>
@@ -258,37 +320,42 @@ const ReadingDetailPage: React.FC = () => {
             <Typography variant="h5" sx={{ fontFamily: 'Cinzel, serif', fontWeight: 700 }}>
               占卜详情
             </Typography>
-            {reading.is_favorite && <Favorite sx={{ color: 'primary.main' }} fontSize="small" />}
           </Box>
 
           <Typography variant="h6" sx={{ mb: 1 }}>
-            {reading.question}
+            {getReadingQuestionDisplay({
+              question: reading.question,
+              questionType: reading.question_type,
+              spreadName: spread ? getSpreadDisplayName(spread) : undefined,
+            })}
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
-            创建于 {formatDateTime(reading.created_at)}
+            创建时间：{formatDateTime(reading.created_at)}
           </Typography>
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
             <Chip
-              label={typeMeta.label}
+              label={questionTypeLabel}
               size="small"
               variant="outlined"
-              sx={{ borderColor: typeMeta.color, color: typeMeta.color }}
+              sx={{ borderColor: questionTypeColor, color: questionTypeColor }}
             />
             {reading.user_rating !== undefined && reading.user_rating !== null && (
-              <Chip
-                label={`评分 ${reading.user_rating}`}
-                size="small"
-                icon={<Star />}
-                variant="outlined"
-              />
+              <Chip label={`评分 ${reading.user_rating}`} size="small" icon={<Star />} variant="outlined" />
             )}
+            {spread && <Chip label={getSpreadDisplayName(spread)} size="small" variant="outlined" />}
           </Box>
+
+          {spread && (
+            <Typography variant="body2" sx={{ color: 'text.secondary', lineHeight: 1.7 }}>
+              {getSpreadDisplayDescription(spread)}
+            </Typography>
+          )}
 
           {reading.user_notes && (
             <Box sx={{ mt: 2 }}>
               <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                我的备注
+                用户备注
               </Typography>
               <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                 {reading.user_notes}
@@ -302,8 +369,10 @@ const ReadingDetailPage: React.FC = () => {
             <CardSpread
               spread={spread}
               drawnCards={drawnCards}
-              isRevealing={false}
-              revealedPositions={drawnCards.map((_, index) => index)}
+              allowManualFlip={false}
+              flippedPositions={drawnCards.map((_, index) => index)}
+              visualQuality={visual.quality}
+              motionPreset={visual.cardMotionPreset}
             />
           </Paper>
         )}
@@ -334,10 +403,10 @@ const ReadingDetailPage: React.FC = () => {
                       />
                     </Box>
                     <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
-                      {draw.position_name ? `${draw.position_name}（位置 ${draw.position}）` : `位置 ${draw.position}`}
+                      {draw.position_name ? `${draw.position_name} · 位置 ${draw.position}` : `位置 ${draw.position}`}
                     </Typography>
                     {draw.position_meaning && (
-                      <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
+                      <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1, lineHeight: 1.7 }}>
                         {draw.position_meaning}
                       </Typography>
                     )}
@@ -352,39 +421,35 @@ const ReadingDetailPage: React.FC = () => {
         </Paper>
 
         <Paper sx={{ p: 4 }}>
-          <Typography variant="h6" sx={{ mb: 2 }}>
+          <Typography variant="h5" sx={{ mb: 2, fontFamily: 'Cinzel, serif', color: 'primary.main' }}>
             AI 解读
           </Typography>
           {!reading.interpretation ? (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                {aiPolling ? 'AI 解读生成中，正在自动刷新...' : '暂无 AI 解读'}
+              <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                {aiPolling ? 'AI 正在整理牌阵关系与关键提示，请稍候...' : '当前还没有生成完整的 AI 解读。'}
               </Typography>
               <Box>
-                <Button
-                  variant="outlined"
-                  onClick={handleGenerateInterpretation}
-                  disabled={aiGenerating}
-                >
-                  {aiGenerating ? '正在生成...' : '生成/重试 AI 解读'}
+                <Button variant="outlined" onClick={handleGenerateInterpretation} disabled={aiGenerating}>
+                  {aiGenerating ? '生成中...' : '请求 AI 解读'}
                 </Button>
               </Box>
             </Box>
           ) : (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Box>
-                <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+                <Typography variant="h6" sx={{ mb: 1, fontWeight: 600, color: 'primary.main' }}>
                   总览
                 </Typography>
-                <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
+                <Typography variant="body2" sx={{ lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
                   {reading.interpretation.overall_interpretation}
                 </Typography>
               </Box>
 
               {interpretationThemes.length > 0 && (
                 <Box>
-                  <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
-                    主题关键词
+                  <Typography variant="h6" sx={{ mb: 1, fontWeight: 600, color: 'primary.main' }}>
+                    关键主题
                   </Typography>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                     {interpretationThemes.map((theme) => (
@@ -396,10 +461,10 @@ const ReadingDetailPage: React.FC = () => {
 
               {reading.interpretation.card_analysis && (
                 <Box>
-                  <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+                  <Typography variant="h6" sx={{ mb: 1, fontWeight: 600, color: 'primary.main' }}>
                     逐牌分析
                   </Typography>
-                  <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
+                  <Typography variant="body2" sx={{ lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
                     {reading.interpretation.card_analysis}
                   </Typography>
                 </Box>
@@ -407,10 +472,10 @@ const ReadingDetailPage: React.FC = () => {
 
               {reading.interpretation.relationship_analysis && (
                 <Box>
-                  <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+                  <Typography variant="h6" sx={{ mb: 1, fontWeight: 600, color: 'primary.main' }}>
                     牌面关系
                   </Typography>
-                  <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
+                  <Typography variant="body2" sx={{ lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
                     {reading.interpretation.relationship_analysis}
                   </Typography>
                 </Box>
@@ -418,10 +483,10 @@ const ReadingDetailPage: React.FC = () => {
 
               {reading.interpretation.advice && (
                 <Box>
-                  <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+                  <Typography variant="h6" sx={{ mb: 1, fontWeight: 600, color: 'primary.main' }}>
                     建议
                   </Typography>
-                  <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
+                  <Typography variant="body2" sx={{ lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
                     {reading.interpretation.advice}
                   </Typography>
                 </Box>
@@ -429,10 +494,10 @@ const ReadingDetailPage: React.FC = () => {
 
               {reading.interpretation.warning && (
                 <Box>
-                  <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+                  <Typography variant="h6" sx={{ mb: 1, fontWeight: 600, color: 'primary.main' }}>
                     提醒
                   </Typography>
-                  <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
+                  <Typography variant="body2" sx={{ lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
                     {reading.interpretation.warning}
                   </Typography>
                 </Box>
@@ -440,10 +505,10 @@ const ReadingDetailPage: React.FC = () => {
 
               {reading.interpretation.summary && (
                 <Box>
-                  <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+                  <Typography variant="h6" sx={{ mb: 1, fontWeight: 600, color: 'primary.main' }}>
                     总结
                   </Typography>
-                  <Typography variant="body2" sx={{ lineHeight: 1.7 }}>
+                  <Typography variant="body2" sx={{ lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
                     {reading.interpretation.summary}
                   </Typography>
                 </Box>
