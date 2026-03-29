@@ -27,6 +27,12 @@ app/scripts/reports/
 .edge-smoke/
 .npm-cache/
 .playwright-browsers/
+_run_*.html
+_run_*_logs.zip
+_run_*_logs/
+_workflow_*.html
+_commit_*.html
+_annotations_*.json
 
 # Environment files (keep examples tracked)
 .env
