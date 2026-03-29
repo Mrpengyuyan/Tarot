@@ -44,6 +44,18 @@ def db_session(db_session_factory) -> Generator[Session, None, None]:
 def client(monkeypatch, db_session_factory) -> Generator[TestClient, None, None]:
     # Avoid creating tables on the default runtime database during startup.
     monkeypatch.setattr("app.main.create_tables", lambda: None)
+    monkeypatch.setattr(
+        "app.main.ensure_reference_data",
+        lambda db: {
+            "cards_before": 0,
+            "spreads_before": 0,
+            "cards_after": 0,
+            "spreads_after": 0,
+            "cards_imported": 0,
+            "spreads_imported": 0,
+            "questions_repaired": 0,
+        },
+    )
 
     def override_get_db():
         db = db_session_factory()
