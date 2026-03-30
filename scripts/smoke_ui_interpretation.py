@@ -8,12 +8,12 @@ import shutil
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 
 def configure_stdout() -> None:
     if hasattr(sys.stdout, "reconfigure"):
-        sys.stdout.reconfigure(encoding="utf-8")
+        cast(Any, sys.stdout).reconfigure(encoding="utf-8")
 
 
 def parse_args() -> argparse.Namespace:
@@ -271,6 +271,7 @@ def main() -> int:
             page.wait_for_timeout(1000)
 
         require(interpret_response is not None, "AI interpretation request was not observed.")
+        assert interpret_response is not None
         require(
             int(interpret_response["status"]) == 200,
             f"AI interpretation failed: {interpret_response['status']} {interpret_response['body']}",
@@ -294,6 +295,7 @@ def main() -> int:
         print("[6/7] Validate detail page persistence")
         reading_id = extract_reading_id(records_responses)
         require(reading_id is not None, "Failed to extract reading id from draw response.")
+        assert reading_id is not None
         page.goto(f"{frontend}/reading/{reading_id}", wait_until="domcontentloaded")
         page.wait_for_timeout(10000)
         detail_body = normalize_text(page.locator("body").inner_text())

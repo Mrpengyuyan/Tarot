@@ -4,6 +4,9 @@ Coze AI塔罗占卜Prompt模板集合
 针对不同牌阵和问题类型的专业Prompt设计
 """
 
+from typing import Optional
+
+
 class CozePrompts:
     """Coze AI塔罗占卜Prompt模板"""
 
@@ -400,7 +403,7 @@ class CozePrompts:
             return cls.get_generic_prompt(question, question_type, spread_name, cards)
 
     @classmethod
-    def add_contextual_info(cls, prompt: str, user_context: str = None) -> str:
+    def add_contextual_info(cls, prompt: str, user_context: Optional[str] = None) -> str:
         """添加用户背景信息到Prompt中"""
         if user_context and user_context.strip():
             context_section = f"""

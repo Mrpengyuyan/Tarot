@@ -6,6 +6,7 @@ UTF-8编码启动脚本
 import os
 import sys
 import locale
+from typing import Any, cast
 
 def setup_utf8_environment():
     """设置UTF-8编码环境"""
@@ -22,8 +23,8 @@ def setup_utf8_environment():
 
             # 重新配置标准输出
             if hasattr(sys.stdout, 'reconfigure'):
-                sys.stdout.reconfigure(encoding='utf-8', errors='ignore')
-                sys.stderr.reconfigure(encoding='utf-8', errors='ignore')
+                cast(Any, sys.stdout).reconfigure(encoding='utf-8', errors='ignore')
+                cast(Any, sys.stderr).reconfigure(encoding='utf-8', errors='ignore')
 
             print("UTF-8编码环境设置完成")
         except Exception as e:

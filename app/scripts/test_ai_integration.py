@@ -13,7 +13,7 @@ from app.crud.prediction import batch_create_card_draws, create_prediction
 from app.crud.spread import get_spread_by_name
 from app.crud.user import get_user_by_username
 from app.db.session import SessionLocal
-from app.schemas.prediction import CardDrawCreate, PredictionCreate
+from app.schemas.prediction import CardDrawCreate, PredictionCreate, QuestionTypeEnum
 from app.services.tarot_service import tarot_interpretation_service
 
 
@@ -34,7 +34,7 @@ async def run_complete_tarot_flow() -> None:
 
         prediction_data = PredictionCreate(
             question='我的事业发展前景如何？',
-            question_type='career',
+            question_type=QuestionTypeEnum.CAREER,
             spread_type_id=spread.id,
         )
         prediction = create_prediction(db, user_id=user.id, prediction_create=prediction_data)

@@ -1,11 +1,9 @@
-from sqlalchemy.orm import as_declarative, declared_attr
+from __future__ import annotations
 
-@as_declarative()
-class Base:
-    id: any
-    __name__: str
+from sqlalchemy.orm import DeclarativeBase
 
-    # to generate tablename from classname
-    @declared_attr
-    def __tablename__(cls) -> str:
-        return cls.__name__.lower() 
+
+class Base(DeclarativeBase):
+    """Application declarative base class."""
+
+    pass

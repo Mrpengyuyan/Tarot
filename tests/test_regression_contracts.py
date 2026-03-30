@@ -89,7 +89,7 @@ def test_system_status_exposes_public_ai_fields_only(client, monkeypatch):
     assert ai_component["provider"] == "deepseek"
 
 
-def test_increment_counters_handle_null_values(db_session):
+def test_increment_counters_handle_zero_values(db_session):
     user = create_user(
         db_session,
         UserCreate(
@@ -98,7 +98,7 @@ def test_increment_counters_handle_null_values(db_session):
             password="password123",
         ),
     )
-    user.prediction_count = None
+    user.prediction_count = 0
     db_session.commit()
 
     spread = SpreadType(
@@ -108,7 +108,7 @@ def test_increment_counters_handle_null_values(db_session):
         card_count=1,
         positions=[{"position": 1, "name": "Now", "meaning": "Current state"}],
         is_active=True,
-        usage_count=None,
+        usage_count=0,
     )
     db_session.add(spread)
     db_session.commit()

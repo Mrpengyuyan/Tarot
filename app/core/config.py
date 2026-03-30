@@ -1,7 +1,7 @@
 import os
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, List, Literal, Optional, cast
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings
@@ -12,8 +12,8 @@ if sys.platform.startswith("win"):
     os.environ.setdefault("PYTHONIOENCODING", "utf-8")
     if hasattr(sys.stdout, "reconfigure"):
         try:
-            sys.stdout.reconfigure(encoding="utf-8", errors="ignore")
-            sys.stderr.reconfigure(encoding="utf-8", errors="ignore")
+            cast(Any, sys.stdout).reconfigure(encoding="utf-8", errors="ignore")
+            cast(Any, sys.stderr).reconfigure(encoding="utf-8", errors="ignore")
         except Exception:
             pass
 
@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     REQUIRE_STRONG_SECRET: bool = False
     AUTH_COOKIE_NAME: str = "access_token"
     AUTH_COOKIE_SECURE: bool = False
-    AUTH_COOKIE_SAMESITE: str = "lax"
+    AUTH_COOKIE_SAMESITE: Literal["lax", "strict", "none"] = "lax"
     AUTH_COOKIE_PATH: str = "/"
 
     # CORS
@@ -157,7 +157,7 @@ class Settings(BaseSettings):
         normalized = str(value).strip().lower()
         if normalized not in {"lax", "strict", "none"}:
             return "lax"
-        return normalized
+        return cast(Literal["lax", "strict", "none"], normalized)
 
     @property
     def cors_origins_list(self) -> List[str]:

@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from typing import Any
+from typing import Any, Dict
 
 from smoke_ui_interpretation import configure_stdout, require, resolve_browser_path
 
@@ -51,7 +51,7 @@ def main() -> int:
     frontend = args.frontend_url.rstrip("/")
 
     with sync_playwright() as playwright:
-        launch_kwargs = {"headless": not args.headed}
+        launch_kwargs: Dict[str, Any] = {"headless": not args.headed}
         if browser_path:
             launch_kwargs["executable_path"] = browser_path
         browser = playwright.chromium.launch(**launch_kwargs)

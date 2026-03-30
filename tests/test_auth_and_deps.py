@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from types import SimpleNamespace
-
 from fastapi.security import HTTPAuthorizationCredentials
 
 from app.api.deps import _extract_token
 from app.core.config import settings
+
+
+class _CookieRequest:
+    def __init__(self, cookies: dict[str, str]) -> None:
+        self.cookies = cookies
 
 
 def _register_and_login(client, username: str = "tester"):
@@ -52,14 +55,14 @@ def test_extract_token_precedence_and_cookie_formats():
         scheme="Bearer",
         credentials="header-token",
     )
-    request = SimpleNamespace(cookies={settings.AUTH_COOKIE_NAME: "cookie-token"})
+    request = _CookieRequest(cookies={settings.AUTH_COOKIE_NAME: "cookie-token"})
     assert _extract_token(credentials, request) == "header-token"
 
-    bearer_cookie_request = SimpleNamespace(cookies={settings.AUTH_COOKIE_NAME: "Bearer cookie-token"})
+    bearer_cookie_request = _CookieRequest(cookies={settings.AUTH_COOKIE_NAME: "Bearer cookie-token"})
     assert _extract_token(None, bearer_cookie_request) == "cookie-token"
 
-    raw_cookie_request = SimpleNamespace(cookies={settings.AUTH_COOKIE_NAME: "raw-cookie-token"})
+    raw_cookie_request = _CookieRequest(cookies={settings.AUTH_COOKIE_NAME: "raw-cookie-token"})
     assert _extract_token(None, raw_cookie_request) == "raw-cookie-token"
 
-    empty_cookie_request = SimpleNamespace(cookies={})
+    empty_cookie_request = _CookieRequest(cookies={})
     assert _extract_token(None, empty_cookie_request) is None

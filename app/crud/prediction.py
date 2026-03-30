@@ -1,7 +1,7 @@
 from typing import List, Optional
 from datetime import datetime
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import and_, or_, desc, asc, func
+from sqlalchemy import and_, or_, desc, asc, func, update
 from app.models.record import Prediction, CardDraw, Interpretation, QuestionType, PredictionStatus
 from app.models.user import User
 from app.models.tarot_card import TarotCard
@@ -164,13 +164,17 @@ def create_prediction_with_stats(db: Session, user_id: int, prediction_create: P
     db.add(db_prediction)
     db.flush()
 
-    user = db.query(User).filter(User.id == user_id).first()
-    if user:
-        user.prediction_count = (user.prediction_count or 0) + 1
-
-    spread = db.query(SpreadType).filter(SpreadType.id == prediction_create.spread_type_id).first()
-    if spread:
-        spread.usage_count = (spread.usage_count or 0) + 1
+    # Use SQL-level increments to avoid lost updates under concurrent requests.
+    db.execute(
+        update(User)
+        .where(User.id == user_id)
+        .values(prediction_count=func.coalesce(User.prediction_count, 0) + 1)
+    )
+    db.execute(
+        update(SpreadType)
+        .where(SpreadType.id == prediction_create.spread_type_id)
+        .values(usage_count=func.coalesce(SpreadType.usage_count, 0) + 1)
+    )
 
     db.commit()
     db.refresh(db_prediction)
@@ -404,9 +408,12 @@ def get_total_predictions_count(db: Session) -> int:
 
 def increment_user_prediction_count(db: Session, user_id: int) -> bool:
     """增加用户预测次数"""
-    user = db.query(User).filter(User.id == user_id).first()
-    if user:
-        user.prediction_count = (user.prediction_count or 0) + 1
-        db.commit()
-        return True
-    return False 
+    result = db.execute(
+        update(User)
+        .where(User.id == user_id)
+        .values(prediction_count=func.coalesce(User.prediction_count, 0) + 1)
+    )
+    if (result.rowcount or 0) <= 0:
+        return False
+    db.commit()
+    return True 

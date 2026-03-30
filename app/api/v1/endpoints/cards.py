@@ -1,137 +1,126 @@
 from typing import List, Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.db.session import get_db
 from app.api.deps import get_current_active_user
 from app.crud import card as card_crud
+from app.db.session import get_db
+from app.models.tarot_card import CardType, Suit
 from app.schemas.card import (
-    TarotCard, TarotCardCreate, TarotCardUpdate, TarotCardSimple,
-    TarotCardMeaning, CardTypeEnum, SuitEnum
+    CardTypeEnum,
+    SuitEnum,
+    TarotCard,
+    TarotCardCreate,
+    TarotCardMeaning,
+    TarotCardSimple,
+    TarotCardUpdate,
 )
 from app.schemas.user import User
-from app.models.tarot_card import CardType, Suit
 
 router = APIRouter()
 
-@router.get("/", response_model=List[TarotCardSimple], summary="获取塔罗牌列表")
-def get_cards(
-    skip: int = Query(0, ge=0, description="跳过的数量"),
-    limit: int = Query(100, ge=1, le=500, description="返回的数量"),
-    card_type: Optional[CardTypeEnum] = Query(None, description="牌类型筛选"),
-    suit: Optional[SuitEnum] = Query(None, description="花色筛选"),
-    search: Optional[str] = Query(None, description="搜索关键词"),
-    db: Session = Depends(get_db)
-):
-    """
-    获取塔罗牌列表
-    - 支持分页
-    - 支持按类型和花色筛选
-    - 支持关键词搜索
-    """
-    if search:
-        cards = card_crud.search_cards(db, search_term=search, skip=skip, limit=limit)
-    elif card_type and suit:
-        # 转换枚举
-        db_card_type = CardType(card_type.value)
-        db_suit = Suit(suit.value)
-        cards = card_crud.get_cards_by_type_and_suit(
-            db,
-            card_type=db_card_type,
-            suit=db_suit,
-            skip=skip,
-            limit=limit,
-        )
-    elif card_type:
-        db_card_type = CardType(card_type.value)
-        cards = card_crud.get_cards_by_type(db, card_type=db_card_type, skip=skip, limit=limit)
-    elif suit:
-        db_suit = Suit(suit.value)
-        cards = card_crud.get_cards_by_suit(db, suit=db_suit, skip=skip, limit=limit)
-    else:
-        cards = card_crud.get_cards(db, skip=skip, limit=limit)
-    
-    return cards
 
-@router.get("/count", summary="获取塔罗牌总数")
+@router.get("/", response_model=List[TarotCardSimple], summary="Get tarot cards")
+def get_cards(
+    skip: int = Query(0, ge=0, description="Records to skip"),
+    limit: int = Query(100, ge=1, le=500, description="Records to return"),
+    card_type: Optional[CardTypeEnum] = Query(None, description="Filter by card type"),
+    suit: Optional[SuitEnum] = Query(None, description="Filter by suit"),
+    search: Optional[str] = Query(None, description="Search keyword"),
+    db: Session = Depends(get_db),
+):
+    db_card_type = CardType(card_type.value) if card_type else None
+    db_suit = Suit(suit.value) if suit else None
+    return card_crud.get_cards(
+        db,
+        skip=skip,
+        limit=limit,
+        card_type=db_card_type,
+        suit=db_suit,
+        search_term=search,
+    )
+
+
+@router.get("/count", summary="Get tarot card counts")
 def get_cards_count(db: Session = Depends(get_db)):
-    """获取塔罗牌总数统计"""
     total_count = card_crud.get_total_cards_count(db)
     major_arcana = card_crud.get_major_arcana_cards(db)
     minor_arcana = card_crud.get_minor_arcana_cards(db)
-    
     return {
         "total_cards": total_count,
         "major_arcana_count": len(major_arcana),
-        "minor_arcana_count": len(minor_arcana)
+        "minor_arcana_count": len(minor_arcana),
     }
 
-@router.get("/major-arcana", response_model=List[TarotCardSimple], summary="获取大阿卡纳牌")
+
+@router.get("/major-arcana", response_model=List[TarotCardSimple], summary="Get major arcana")
 def get_major_arcana_cards(db: Session = Depends(get_db)):
-    """获取所有大阿卡纳牌，按序号排序"""
     return card_crud.get_major_arcana_cards(db)
 
-@router.get("/minor-arcana", response_model=List[TarotCardSimple], summary="获取小阿卡纳牌")
+
+@router.get("/minor-arcana", response_model=List[TarotCardSimple], summary="Get minor arcana")
 def get_minor_arcana_cards(db: Session = Depends(get_db)):
-    """获取所有小阿卡纳牌，按花色和序号排序"""
     return card_crud.get_minor_arcana_cards(db)
 
-@router.get("/draw", response_model=List[TarotCardSimple], summary="随机抽牌")
-def draw_random_cards(
-    count: int = Query(1, ge=1, le=78, description="抽牌数量"),
-    exclude_ids: Optional[List[int]] = Query(None, description="排除的牌ID列表"),
-    seed: Optional[int] = Query(None, description="可选：用于可复现抽牌的随机种子"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """
-    随机抽取指定数量的塔罗牌
-    - 可以排除指定的牌
-    - 需要用户登录
-    """
-    cards = card_crud.draw_random_cards(db, count=count, exclude_ids=exclude_ids, seed=seed)
-    return cards
 
-@router.get("/search", response_model=List[TarotCardSimple], summary="搜索塔罗牌")
+@router.get("/draw", response_model=List[TarotCardSimple], summary="Draw random cards")
+def draw_random_cards(
+    count: int = Query(1, ge=1, le=78, description="Draw count"),
+    exclude_ids: Optional[List[int]] = Query(None, description="Excluded card ids"),
+    seed: Optional[int] = Query(None, description="Optional deterministic draw seed"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    del current_user
+    return card_crud.draw_random_cards(db, count=count, exclude_ids=exclude_ids, seed=seed)
+
+
+@router.get("/search", response_model=List[TarotCardSimple], summary="Search cards")
 def search_cards(
-    q: str = Query(..., description="搜索关键词"),
+    q: str = Query(..., description="Search keyword"),
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """根据关键词搜索塔罗牌"""
     return card_crud.search_cards(db, search_term=q, skip=skip, limit=limit)
 
-@router.get("/{card_id}", response_model=TarotCard, summary="获取塔罗牌详情")
+
+@router.get("/{card_id}", response_model=TarotCard, summary="Get card detail")
 def get_card_detail(
     card_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """根据ID获取塔罗牌的详细信息"""
     card = card_crud.get_card_by_id(db, card_id=card_id)
     if not card:
-        raise HTTPException(status_code=404, detail="塔罗牌不存在")
+        raise HTTPException(status_code=404, detail="Tarot card not found")
     return card
 
-@router.get("/{card_id}/meaning", response_model=TarotCardMeaning, summary="获取塔罗牌含义")
+
+@router.get("/{card_id}/meaning", response_model=TarotCardMeaning, summary="Get card meaning")
 def get_card_meaning(
     card_id: int,
-    is_reversed: bool = Query(False, description="是否逆位"),
-    aspect: str = Query("general", description="解读方面"),
-    position: Optional[int] = Query(None, description="牌位位置"),
-    db: Session = Depends(get_db)
+    is_reversed: bool = Query(False, description="Is reversed"),
+    aspect: str = Query("general", description="Aspect: general/love/career/finance/health"),
+    position: Optional[int] = Query(None, description="Card position"),
+    db: Session = Depends(get_db),
 ):
-    """
-    获取塔罗牌的含义和关键词
-    - aspect: general, love, career, finance, health
-    """
     card = card_crud.get_card_by_id(db, card_id=card_id)
     if not card:
-        raise HTTPException(status_code=404, detail="塔罗牌不存在")
-    
-    meaning = card_crud.get_card_meaning(db, card_id=card_id, is_reversed=is_reversed, aspect=aspect)
-    keywords = card_crud.get_card_keywords(db, card_id=card_id, is_reversed=is_reversed)
-    
+        raise HTTPException(status_code=404, detail="Tarot card not found")
+
+    meaning = card_crud.get_card_meaning(
+        db,
+        card_id=card_id,
+        is_reversed=is_reversed,
+        aspect=aspect,
+    )
+    keywords = card_crud.get_card_keywords(
+        db,
+        card_id=card_id,
+        is_reversed=is_reversed,
+    )
+
     return TarotCardMeaning(
         id=card.id,
         name_zh=card.name_zh,
@@ -140,89 +129,75 @@ def get_card_meaning(
         meaning=meaning or "",
         keywords=keywords,
         position=position,
-        position_name=f"第{position}位" if position else None,
-        position_meaning=None  # 这个需要结合牌阵信息
+        position_name=f"Position {position}" if position else None,
+        position_meaning=None,
     )
 
-@router.post("/", response_model=TarotCard, summary="创建塔罗牌")
+
+@router.post("/", response_model=TarotCard, summary="Create card")
 def create_card(
     card_create: TarotCardCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
-    """
-    创建新的塔罗牌
-    - 需要超级用户权限
-    """
     if not current_user.is_superuser:
-        raise HTTPException(status_code=403, detail="需要管理员权限")
-    
-    # 检查是否已存在相同的牌
+        raise HTTPException(status_code=403, detail="Admin privileges required")
+
     existing_card = card_crud.get_card_by_number_and_type(
-        db, 
+        db,
         card_number=card_create.card_number,
         card_type=CardType(card_create.card_type.value),
-        suit=Suit(card_create.suit.value) if card_create.suit else None
+        suit=Suit(card_create.suit.value) if card_create.suit else None,
     )
     if existing_card:
-        raise HTTPException(status_code=400, detail="相同的塔罗牌已存在")
-    
+        raise HTTPException(status_code=400, detail="Card with same number/type already exists")
+
     return card_crud.create_card(db=db, card_create=card_create)
 
-@router.put("/{card_id}", response_model=TarotCard, summary="更新塔罗牌")
+
+@router.put("/{card_id}", response_model=TarotCard, summary="Update card")
 def update_card(
     card_id: int,
     card_update: TarotCardUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
-    """
-    更新塔罗牌信息
-    - 需要超级用户权限
-    """
     if not current_user.is_superuser:
-        raise HTTPException(status_code=403, detail="需要管理员权限")
-    
+        raise HTTPException(status_code=403, detail="Admin privileges required")
+
     card = card_crud.get_card_by_id(db, card_id=card_id)
     if not card:
-        raise HTTPException(status_code=404, detail="塔罗牌不存在")
-    
+        raise HTTPException(status_code=404, detail="Tarot card not found")
+
     return card_crud.update_card(db=db, db_card=card, card_update=card_update)
 
-@router.delete("/{card_id}", summary="删除塔罗牌")
+
+@router.delete("/{card_id}", summary="Delete card")
 def delete_card(
     card_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
-    """
-    删除塔罗牌
-    - 需要超级用户权限
-    """
     if not current_user.is_superuser:
-        raise HTTPException(status_code=403, detail="需要管理员权限")
-    
+        raise HTTPException(status_code=403, detail="Admin privileges required")
+
     success = card_crud.delete_card(db, card_id=card_id)
     if not success:
-        raise HTTPException(status_code=404, detail="塔罗牌不存在")
-    
-    return {"message": "塔罗牌删除成功"}
+        raise HTTPException(status_code=404, detail="Tarot card not found")
 
-@router.post("/batch", response_model=List[TarotCard], summary="批量创建塔罗牌")
+    return {"message": "Tarot card deleted"}
+
+
+@router.post("/batch", response_model=List[TarotCard], summary="Batch create cards")
 def batch_create_cards(
     cards_data: List[TarotCardCreate],
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
-    """
-    批量创建塔罗牌
-    - 需要超级用户权限
-    - 用于初始化数据
-    """
     if not current_user.is_superuser:
-        raise HTTPException(status_code=403, detail="需要管理员权限")
-    
+        raise HTTPException(status_code=403, detail="Admin privileges required")
+
     if len(cards_data) > 100:
-        raise HTTPException(status_code=400, detail="单次最多创建100张牌")
-    
-    return card_crud.batch_create_cards(db=db, cards_data=cards_data) 
+        raise HTTPException(status_code=400, detail="At most 100 cards per batch")
+
+    return card_crud.batch_create_cards(db=db, cards_data=cards_data)

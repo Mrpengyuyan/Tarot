@@ -1,4 +1,4 @@
-﻿from typing import Optional
+from typing import Optional, Protocol
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -14,9 +14,13 @@ from app.models.user import User
 security = HTTPBearer(auto_error=False)
 
 
+class _CookieCarrier(Protocol):
+    cookies: dict[str, str]
+
+
 def _extract_token(
     credentials: Optional[HTTPAuthorizationCredentials],
-    request: Request,
+    request: Request | _CookieCarrier,
 ) -> Optional[str]:
     if credentials and credentials.credentials:
         return credentials.credentials

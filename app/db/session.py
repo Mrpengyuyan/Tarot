@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import StaticPool
+from typing import Generator
 from app.core.config import settings
 
 # 数据库配置使用settings中的配置
@@ -39,7 +40,7 @@ else:
 # 创建SessionLocal类
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-def get_db() -> Session:
+def get_db() -> Generator[Session, None, None]:
     """获取数据库会话"""
     db = SessionLocal()
     try:

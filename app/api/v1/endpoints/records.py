@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import random
-from typing import List, Optional
+from typing import List, Optional, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.exc import IntegrityError
@@ -16,6 +16,7 @@ from app.db.session import get_db
 from app.models.record import Prediction as PredictionModel
 from app.models.record import PredictionStatus, QuestionType
 from app.schemas.prediction import (
+    CardDraw as CardDrawSchema,
     CardDrawCreate,
     CardDrawWithMeaning,
     DrawCardsResponse,
@@ -137,8 +138,8 @@ def get_recent_prediction_overview(
             PredictionRecentOverview(
                 id=prediction.id,
                 question=prediction.question,
-                question_type=prediction.question_type,
-                status=prediction.status,
+                question_type=QuestionTypeEnum(prediction.question_type.value),
+                status=PredictionStatusEnum(prediction.status.value),
                 created_at=prediction.created_at,
                 is_favorite=prediction.is_favorite,
                 user_rating=prediction.user_rating,
@@ -287,7 +288,7 @@ def draw_cards_for_prediction(
 
     return DrawCardsResponse(
         prediction_id=prediction_id,
-        card_draws=card_draws,
+        card_draws=cast(List[CardDrawSchema], card_draws),
         status="success",
     )
 
@@ -312,7 +313,7 @@ def get_prediction_cards(
     card_draws = prediction_crud.get_prediction_card_draws(db, prediction_id=prediction_id)
     spread = spread_crud.get_spread_by_id(db, spread_id=prediction.spread_type_id)
 
-    from app.schemas.card import TarotCardMeaning
+    from app.schemas.card import TarotCardMeaning, TarotCardSimple
 
     result: List[CardDrawWithMeaning] = []
     for draw in card_draws:
@@ -350,7 +351,7 @@ def get_prediction_cards(
                 position=draw.position,
                 is_reversed=draw.is_reversed,
                 drawn_at=draw.drawn_at,
-                tarot_card=draw.tarot_card,
+                tarot_card=TarotCardSimple.model_validate(draw.tarot_card),
                 card_meaning=card_meaning,
                 position_name=position_name,
                 position_meaning=position_meaning,
@@ -409,6 +410,12 @@ async def create_ai_interpretation(
                         "position": position_name,
                         "is_reversed": draw.is_reversed,
                     }
+                )
+
+            if len(cards_data) != len(card_draws):
+                raise HTTPException(
+                    status_code=500,
+                    detail="Card data is incomplete; please redraw cards",
                 )
 
             ai_payload = await tarot_interpretation_service.create_interpretation(

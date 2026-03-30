@@ -5,7 +5,7 @@ import asyncio
 from app.crud.prediction import create_prediction_with_stats
 from app.crud.user import create_user
 from app.models.spread import SpreadType
-from app.schemas.prediction import PredictionCreate
+from app.schemas.prediction import PredictionCreate, QuestionTypeEnum
 from app.schemas.user import UserCreate
 from app.services.coze_service import CozeBudgetExceededError, CozeService, CozeTimeoutError
 from app.services.tarot_service import TarotInterpretationService
@@ -39,7 +39,7 @@ def test_create_prediction_with_stats_updates_user_and_spread_counters(db_sessio
         prediction_create=PredictionCreate(
             spread_type_id=spread.id,
             question="Verify counter update behavior",
-            question_type="general",
+            question_type=QuestionTypeEnum.GENERAL,
         ),
     )
 
