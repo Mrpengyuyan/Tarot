@@ -21,7 +21,7 @@ def test_smoke_health_cards_spreads(client, seeded_spread_and_cards):
 
 def test_smoke_health_ai_and_metrics(client):
     ai_resp = client.get("/api/v1/health/ai")
-    assert ai_resp.status_code == 200
+    assert ai_resp.status_code in {200, 503}
     ai_body = ai_resp.json()
     assert "status" in ai_body
     assert "is_healthy" in ai_body
@@ -31,3 +31,15 @@ def test_smoke_health_ai_and_metrics(client):
     metrics_body = metrics_resp.json()
     assert "database" in metrics_body
     assert "ai_service" in metrics_body
+
+
+def test_smoke_health_status_and_admin_deep_contract(client):
+    status_resp = client.get("/api/v1/health/status")
+    assert status_resp.status_code in {200, 503}
+    status_body = status_resp.json()
+    assert "overall_status" in status_body
+    assert "components" in status_body
+    assert "ai_service" in status_body["components"]
+
+    deep_resp = client.get("/api/v1/health/ai/deep")
+    assert deep_resp.status_code == 401

@@ -2,16 +2,39 @@
 
 from datetime import datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
+from app.api.deps import get_current_superuser
 from app.core.config import settings
 from app.crud.card import get_total_cards_count
 from app.crud.spread import get_total_spreads_count
 from app.db.session import get_db
+from app.models.user import User as UserModel
 from app.services.tarot_service import tarot_interpretation_service
 
 router = APIRouter()
+
+
+def _health_http_status(health_status: str) -> int:
+    return status.HTTP_200_OK if health_status == "healthy" else status.HTTP_503_SERVICE_UNAVAILABLE
+
+
+def _sanitize_ai_message(health_status: str, raw_message: str | None) -> str | None:
+    if health_status == "healthy":
+        return raw_message or "AI service is available"
+    if health_status == "not_configured":
+        return "AI service not configured"
+    return "AI service unavailable"
+
+
+async def _call_ai_health_check(*, deep: bool) -> dict:
+    try:
+        return await tarot_interpretation_service.health_check(deep=deep)
+    except TypeError:
+        # Backward-compatible path for tests or legacy monkeypatches without `deep`.
+        return await tarot_interpretation_service.health_check()
 
 
 @router.get("/", summary="Basic health check")
@@ -39,12 +62,13 @@ async def system_status(
             db_error = "database_unavailable"
             total_cards = total_spreads = -1
 
-        ai_status = await tarot_interpretation_service.health_check()
+        ai_status = await _call_ai_health_check(deep=False)
+        ai_health_status = str(ai_status.get("status", "unknown"))
         public_ai_status = {
-            "status": ai_status.get("status", "unknown"),
+            "status": ai_health_status,
             "is_healthy": bool(ai_status.get("is_healthy", False)),
             "provider": ai_status.get("provider", "deepseek"),
-            "message": ai_status.get("message"),
+            "message": _sanitize_ai_message(ai_health_status, ai_status.get("message")),
         }
 
         status_payload = {
@@ -77,23 +101,27 @@ async def system_status(
             status_payload["overall_status"] = "unhealthy"
         elif not ai_status.get("is_healthy", False):
             status_payload["overall_status"] = "degraded"
-            if ai_status.get("status") == "not_configured":
-                status_payload["components"]["ai_service"]["message"] = "AI service not configured"
 
-        return status_payload
+        return JSONResponse(
+            status_code=_health_http_status(status_payload["overall_status"]),
+            content=status_payload,
+        )
     except Exception:
-        return {
-            "timestamp": datetime.now().isoformat(),
-            "service_name": "tarot-game-api",
-            "overall_status": "unhealthy",
-            "error": "health_check_failed",
-        }
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={
+                "timestamp": datetime.now().isoformat(),
+                "service_name": "tarot-game-api",
+                "overall_status": "unhealthy",
+                "error": "health_check_failed",
+            },
+        )
 
 
 @router.get("/ai", summary="AI service status")
 async def ai_service_status():
     try:
-        status_payload = await tarot_interpretation_service.health_check()
+        status_payload = await _call_ai_health_check(deep=False)
         details = status_payload.get("details") or {}
         if isinstance(details, dict):
             details = {
@@ -102,22 +130,63 @@ async def ai_service_status():
             }
         else:
             details = None
-        return {
+
+        health_status = str(status_payload.get("status", "unknown"))
+        response_payload = {
             "timestamp": datetime.now().isoformat(),
             "service_name": status_payload.get("service_name", "tarot-interpretation-service"),
-            "status": status_payload.get("status", "unknown"),
+            "status": health_status,
             "is_healthy": bool(status_payload.get("is_healthy", False)),
             "provider": status_payload.get("provider"),
-            "message": status_payload.get("message"),
+            "message": _sanitize_ai_message(health_status, status_payload.get("message")),
             "details": details,
         }
+        return JSONResponse(
+            status_code=_health_http_status(health_status),
+            content=response_payload,
+        )
     except Exception:
-        return {
-            "timestamp": datetime.now().isoformat(),
-            "service_name": "tarot-interpretation-service",
-            "status": "error",
-            "error": "ai_health_check_failed",
-        }
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={
+                "timestamp": datetime.now().isoformat(),
+                "service_name": "tarot-interpretation-service",
+                "status": "error",
+                "error": "ai_health_check_failed",
+            },
+        )
+
+
+@router.get("/ai/deep", summary="Admin deep AI health probe")
+async def ai_service_status_deep(
+    current_user: UserModel = Depends(get_current_superuser),
+):
+    del current_user
+    try:
+        status_payload = await _call_ai_health_check(deep=True)
+        health_status = str(status_payload.get("status", "unknown"))
+        return JSONResponse(
+            status_code=_health_http_status(health_status),
+            content={
+                "timestamp": datetime.now().isoformat(),
+                "service_name": status_payload.get("service_name", "tarot-interpretation-service"),
+                "status": health_status,
+                "is_healthy": bool(status_payload.get("is_healthy", False)),
+                "provider": status_payload.get("provider"),
+                "message": _sanitize_ai_message(health_status, status_payload.get("message")),
+                "details": status_payload.get("details"),
+            },
+        )
+    except Exception:
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={
+                "timestamp": datetime.now().isoformat(),
+                "service_name": "tarot-interpretation-service",
+                "status": "error",
+                "error": "ai_deep_health_check_failed",
+            },
+        )
 
 
 @router.get("/metrics", summary="System metrics")
@@ -167,8 +236,11 @@ async def system_metrics(
         }
         return metrics
     except Exception:
-        return {
-            "timestamp": datetime.now().isoformat(),
-            "error": "metrics_generation_failed",
-            "status": "failed",
-        }
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={
+                "timestamp": datetime.now().isoformat(),
+                "error": "metrics_generation_failed",
+                "status": "failed",
+            },
+        )

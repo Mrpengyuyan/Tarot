@@ -706,7 +706,7 @@ class CozeService:
         )
         return str(response.get("text", "")).strip()
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self, *, deep: bool = False) -> Dict[str, Any]:
         budget = self.budget_status()
         if not self.is_configured():
             return {
@@ -714,6 +714,25 @@ class CozeService:
                 "message": "DEEPSEEK_API_KEY is missing.",
                 "is_healthy": False,
                 "provider": self.provider_name,
+                "details": {
+                    "probe": "config_only",
+                    "model_used": self.chat_model,
+                    "fallback_used": False,
+                },
+                "budget": budget,
+            }
+
+        if not deep:
+            return {
+                "status": "healthy",
+                "message": "DeepSeek credentials configured.",
+                "is_healthy": True,
+                "provider": self.provider_name,
+                "details": {
+                    "probe": "config_only",
+                    "model_used": self.chat_model,
+                    "fallback_used": False,
+                },
                 "budget": budget,
             }
 
@@ -743,9 +762,13 @@ class CozeService:
         except Exception as exc:
             return {
                 "status": "unhealthy",
-                "message": str(exc),
+                "message": "Provider probe failed",
                 "is_healthy": False,
                 "provider": self.provider_name,
+                "details": {
+                    "probe": "live",
+                    "error_type": type(exc).__name__,
+                },
                 "budget": self.budget_status(),
             }
 

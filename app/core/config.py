@@ -46,6 +46,9 @@ class Settings(BaseSettings):
     AUTH_COOKIE_SECURE: bool = False
     AUTH_COOKIE_SAMESITE: Literal["lax", "strict", "none"] = "lax"
     AUTH_COOKIE_PATH: str = "/"
+    CSRF_PROTECTION_ENABLED: bool = True
+    CSRF_COOKIE_NAME: str = "csrf_token"
+    CSRF_HEADER_NAME: str = "X-CSRF-Token"
 
     # CORS
     CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
@@ -107,6 +110,8 @@ class Settings(BaseSettings):
     LOG_ENCODING: str = "utf-8"
     METRICS_EXPECTED_TAROT_CARDS: int = 0
     METRICS_EXPECTED_SPREADS: int = 0
+    AUTO_CREATE_TABLES_ON_STARTUP: bool = False
+    AUTO_BOOTSTRAP_REFERENCE_DATA_ON_STARTUP: bool = False
     AUTO_REPAIR_PREDICTION_QUESTIONS_ON_STARTUP: bool = False
 
     model_config = {
@@ -120,6 +125,7 @@ class Settings(BaseSettings):
         "REQUIRE_STRONG_SECRET",
         "CORS_ALLOW_CREDENTIALS",
         "AUTH_COOKIE_SECURE",
+        "CSRF_PROTECTION_ENABLED",
         "ALLOW_MOCK_AI_FALLBACK",
         "DEEPSEEK_ENABLE_REASONER_FALLBACK",
         "DEEPSEEK_TRUST_ENV_PROXY",
@@ -130,6 +136,8 @@ class Settings(BaseSettings):
         "AI_BUDGET_GUARD_ENABLED",
         "AI_DISABLE_REASONER_WHEN_BUDGET_HIGH",
         "AI_REPRODUCIBLE_MODE",
+        "AUTO_CREATE_TABLES_ON_STARTUP",
+        "AUTO_BOOTSTRAP_REFERENCE_DATA_ON_STARTUP",
         "AUTO_REPAIR_PREDICTION_QUESTIONS_ON_STARTUP",
         mode="before",
     )

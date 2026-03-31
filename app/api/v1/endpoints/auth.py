@@ -1,10 +1,11 @@
+import secrets
 from datetime import timedelta
+from typing import Optional, cast
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from typing import cast
 
 from app.api.deps import get_current_active_user
 from app.core.config import settings
@@ -30,7 +31,11 @@ def _issue_access_token(username: str) -> str:
     )
 
 
-def _set_auth_cookie(response: Response, token: str) -> None:
+def _set_auth_cookie(
+    response: Response,
+    token: str,
+    csrf_token: Optional[str] = None,
+) -> None:
     max_age = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     response.set_cookie(
         key=settings.AUTH_COOKIE_NAME,
@@ -43,10 +48,26 @@ def _set_auth_cookie(response: Response, token: str) -> None:
         path=settings.AUTH_COOKIE_PATH,
     )
 
+    csrf_value = csrf_token or secrets.token_urlsafe(32)
+    response.set_cookie(
+        key=settings.CSRF_COOKIE_NAME,
+        value=csrf_value,
+        max_age=max_age,
+        expires=max_age,
+        httponly=False,
+        secure=settings.AUTH_COOKIE_SECURE,
+        samesite=settings.AUTH_COOKIE_SAMESITE,
+        path=settings.AUTH_COOKIE_PATH,
+    )
+
 
 def _clear_auth_cookie(response: Response) -> None:
     response.delete_cookie(
         key=settings.AUTH_COOKIE_NAME,
+        path=settings.AUTH_COOKIE_PATH,
+    )
+    response.delete_cookie(
+        key=settings.CSRF_COOKIE_NAME,
         path=settings.AUTH_COOKIE_PATH,
     )
 
@@ -93,11 +114,13 @@ def login(
 
 @router.post("/refresh", response_model=Token, summary="Refresh access token")
 def refresh_token(
+    request: Request,
     response: Response,
     current_user: UserModel = Depends(get_current_active_user),
 ):
     access_token = _issue_access_token(cast(str, current_user.username))
-    _set_auth_cookie(response, access_token)
+    existing_csrf = request.cookies.get(settings.CSRF_COOKIE_NAME)
+    _set_auth_cookie(response, access_token, csrf_token=existing_csrf)
     return {"token_type": "bearer"}
 
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from app.api.v1.endpoints import health as health_endpoint
+from app.core.config import settings
 from app.crud.prediction import increment_user_prediction_count
 from app.crud.spread import increment_spread_usage
 from app.crud.user import create_user
@@ -22,6 +23,9 @@ def _register_and_login(client, username: str):
         data={"username": username, "password": "password123"},
     )
     assert login_resp.status_code == 200
+    csrf_token = login_resp.cookies.get(settings.CSRF_COOKIE_NAME) or client.cookies.get(settings.CSRF_COOKIE_NAME)
+    if csrf_token:
+        client.headers.update({settings.CSRF_HEADER_NAME: csrf_token})
 
 
 def test_ai_health_endpoint_redacts_internal_details(client, monkeypatch):
@@ -81,7 +85,7 @@ def test_system_status_exposes_public_ai_fields_only(client, monkeypatch):
     )
 
     resp = client.get("/api/v1/health/status")
-    assert resp.status_code == 200
+    assert resp.status_code == 503
     ai_component = resp.json()["components"]["ai_service"]
 
     assert set(ai_component.keys()) == {"status", "is_healthy", "provider", "message"}

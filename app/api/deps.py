@@ -1,4 +1,5 @@
 from typing import Optional, Protocol
+from urllib.parse import urlparse
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -12,28 +13,76 @@ from app.models.user import User
 
 # Support Authorization header and cookie-based auth.
 security = HTTPBearer(auto_error=False)
+_SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 
 
 class _CookieCarrier(Protocol):
     cookies: dict[str, str]
 
 
+def _extract_token_with_source(
+    credentials: Optional[HTTPAuthorizationCredentials],
+    request: Request | _CookieCarrier,
+) -> tuple[Optional[str], bool]:
+    if credentials and credentials.credentials:
+        return credentials.credentials, False
+
+    cookie_token = request.cookies.get(settings.AUTH_COOKIE_NAME)
+    if not cookie_token:
+        return None, False
+
+    # Accept either raw token or "Bearer <token>".
+    if cookie_token.lower().startswith("bearer "):
+        return cookie_token.split(" ", 1)[1].strip(), True
+
+    return cookie_token, True
+
+
 def _extract_token(
     credentials: Optional[HTTPAuthorizationCredentials],
     request: Request | _CookieCarrier,
 ) -> Optional[str]:
-    if credentials and credentials.credentials:
-        return credentials.credentials
+    token, _ = _extract_token_with_source(credentials, request)
+    return token
 
-    cookie_token = request.cookies.get(settings.AUTH_COOKIE_NAME)
-    if not cookie_token:
+
+def _request_origin(request: Request) -> Optional[str]:
+    origin = request.headers.get("origin")
+    if origin:
+        return origin.strip()
+
+    referer = request.headers.get("referer")
+    if not referer:
         return None
 
-    # Accept either raw token or "Bearer <token>".
-    if cookie_token.lower().startswith("bearer "):
-        return cookie_token.split(" ", 1)[1].strip()
+    parsed = urlparse(referer)
+    if not parsed.scheme or not parsed.netloc:
+        return None
+    return f"{parsed.scheme}://{parsed.netloc}"
 
-    return cookie_token
+
+def _ensure_cookie_csrf_protection(request: Request) -> None:
+    if not settings.CSRF_PROTECTION_ENABLED:
+        return
+    if request.method.upper() in _SAFE_METHODS:
+        return
+
+    csrf_cookie = request.cookies.get(settings.CSRF_COOKIE_NAME)
+    csrf_header = request.headers.get(settings.CSRF_HEADER_NAME)
+    if not csrf_cookie or not csrf_header or csrf_cookie != csrf_header:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="CSRF validation failed",
+        )
+
+    origin = _request_origin(request)
+    if origin:
+        allowed_origins = set(settings.cors_origins_list)
+        if origin not in allowed_origins:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Origin not allowed",
+            )
 
 
 def get_current_user(
@@ -48,9 +97,12 @@ def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    token = _extract_token(credentials, request)
+    token, from_cookie = _extract_token_with_source(credentials, request)
     if not token:
         raise credentials_exception
+
+    if from_cookie:
+        _ensure_cookie_csrf_protection(request)
 
     username = verify_token(token)
     if username is None:

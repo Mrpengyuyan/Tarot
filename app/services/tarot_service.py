@@ -342,7 +342,7 @@ class TarotInterpretationService:
             "confidence_score": 0.45,
         }
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self, *, deep: bool = False) -> Dict[str, Any]:
         status: Dict[str, Any] = {
             "service_name": "tarot_interpretation_service",
             "provider": "deepseek",
@@ -365,7 +365,7 @@ class TarotInterpretationService:
             return status
 
         try:
-            provider_health = await self.ai_service.health_check()
+            provider_health = await self.ai_service.health_check(deep=deep)
             provider_ok = bool(provider_health.get("is_healthy"))
             status["provider_healthy"] = provider_ok
             status["coze_healthy"] = provider_ok
@@ -384,4 +384,3 @@ class TarotInterpretationService:
 
 
 tarot_interpretation_service = TarotInterpretationService()
-

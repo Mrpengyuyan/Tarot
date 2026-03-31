@@ -26,6 +26,21 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
+Startup defaults are conservative:
+- `AUTO_CREATE_TABLES_ON_STARTUP=false`
+- `AUTO_BOOTSTRAP_REFERENCE_DATA_ON_STARTUP=false`
+
+If you want one-shot local bootstrap on startup, explicitly enable them in `.env`.
+
+## CSRF (Cookie Auth)
+
+This project uses cookie-based auth and enables CSRF protection by default:
+- `CSRF_PROTECTION_ENABLED=true`
+- `CSRF_COOKIE_NAME=csrf_token`
+- `CSRF_HEADER_NAME=X-CSRF-Token`
+
+Frontend requests with unsafe methods (`POST/PUT/PATCH/DELETE`) automatically send `X-CSRF-Token` from cookie.
+
 ## Reusable UI Smoke Test
 
 This project includes a browser-driven smoke script that validates the full user path:
@@ -113,3 +128,7 @@ Notes:
 - In Docker Compose, backend `DATABASE_URL` is overridden to Postgres automatically.
 - OpenAPI docs at `/docs` are available only when `DEBUG=true`.
 - Production builds disable source map generation via `.env.production` to avoid third-party source map warnings from `@mediapipe/tasks-vision`.
+
+## Scope Boundary
+
+This repository is an application project (frontend + backend service). It does not contain model training/checkpoint pipelines or paper-style offline evaluation workflows.

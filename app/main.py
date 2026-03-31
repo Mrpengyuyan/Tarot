@@ -35,20 +35,26 @@ def create_tables():
 
 def create_start_app_handler(app: FastAPI):
     async def start_app() -> None:
-        create_tables()
-        logger.info("Database tables created successfully")
+        if settings.AUTO_CREATE_TABLES_ON_STARTUP:
+            create_tables()
+            logger.info("Database tables created successfully")
+        else:
+            logger.info("Skipping auto table creation (AUTO_CREATE_TABLES_ON_STARTUP=false)")
 
-        with SessionLocal() as db:
-            reference_data = ensure_reference_data(db)
+        if settings.AUTO_BOOTSTRAP_REFERENCE_DATA_ON_STARTUP:
+            with SessionLocal() as db:
+                reference_data = ensure_reference_data(db)
 
-        logger.info(
-            "Reference data ready. cards=%s spreads=%s imported_cards=%s imported_spreads=%s repaired_questions=%s",
-            reference_data["cards_after"],
-            reference_data["spreads_after"],
-            reference_data["cards_imported"],
-            reference_data["spreads_imported"],
-            reference_data["questions_repaired"],
-        )
+            logger.info(
+                "Reference data ready. cards=%s spreads=%s imported_cards=%s imported_spreads=%s repaired_questions=%s",
+                reference_data["cards_after"],
+                reference_data["spreads_after"],
+                reference_data["cards_imported"],
+                reference_data["spreads_imported"],
+                reference_data["questions_repaired"],
+            )
+        else:
+            logger.info("Skipping reference-data bootstrap (AUTO_BOOTSTRAP_REFERENCE_DATA_ON_STARTUP=false)")
         logger.info("Tip: Run 'python -m app.scripts.init_demo_data' to initialize demo users")
 
     return start_app

@@ -57,8 +57,32 @@ export const api = axios.create({
   },
 });
 
+const readCookie = (name: string): string | null => {
+  if (typeof document === 'undefined') {
+    return null;
+  }
+  const prefix = `${name}=`;
+  const entry = document.cookie
+    .split(';')
+    .map((item) => item.trim())
+    .find((item) => item.startsWith(prefix));
+  if (!entry) {
+    return null;
+  }
+  return decodeURIComponent(entry.slice(prefix.length));
+};
+
 api.interceptors.request.use(
   (requestConfig) => {
+    const method = String(requestConfig.method || 'GET').toUpperCase();
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+      const csrfToken = readCookie('csrf_token');
+      if (csrfToken) {
+        requestConfig.headers = requestConfig.headers || {};
+        requestConfig.headers['X-CSRF-Token'] = csrfToken;
+      }
+    }
+
     debugLog('API request:', requestConfig.method?.toUpperCase(), requestConfig.url);
     return requestConfig;
   },
@@ -66,12 +90,7 @@ api.interceptors.request.use(
 );
 
 api.interceptors.response.use(
-  (response) => {
-    if (response.data && typeof response.data === 'object' && 'data' in response.data) {
-      return response.data.data;
-    }
-    return response.data;
-  },
+  (response) => response.data,
   async (error) => {
     if (error.response?.status === 401) {
       try {

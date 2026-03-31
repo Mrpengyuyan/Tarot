@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from app.api.v1.endpoints import records as records_endpoint
+from app.core.config import settings
 
 
 def _register_and_login(client, username: str):
@@ -17,6 +18,9 @@ def _register_and_login(client, username: str):
         data={"username": username, "password": "password123"},
     )
     assert login_resp.status_code == 200
+    csrf_token = login_resp.cookies.get(settings.CSRF_COOKIE_NAME) or client.cookies.get(settings.CSRF_COOKIE_NAME)
+    if csrf_token:
+        client.headers.update({settings.CSRF_HEADER_NAME: csrf_token})
 
 
 def _create_prediction(client, spread_id: int, question: str, question_type: str) -> int:
