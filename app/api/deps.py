@@ -115,6 +115,29 @@ def get_current_user(
     return user
 
 
+def get_current_user_optional(
+    request: Request,
+    db: Session = Depends(get_db),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+) -> Optional[User]:
+    """Get current user when token is present; otherwise return None."""
+    token, from_cookie = _extract_token_with_source(credentials, request)
+    if not token:
+        return None
+
+    if from_cookie:
+        try:
+            _ensure_cookie_csrf_protection(request)
+        except HTTPException:
+            return None
+
+    username = verify_token(token)
+    if username is None:
+        return None
+
+    return get_user_by_username(db, username=username)
+
+
 def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
     """Get current active user."""
     if not is_active(current_user):

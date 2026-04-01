@@ -257,9 +257,10 @@ def draw_cards_for_prediction(
     if not spread:
         raise HTTPException(status_code=400, detail="Spread not found")
 
-    cards = card_crud.draw_random_cards(db, count=spread.card_count, seed=seed)
-    if len(cards) < spread.card_count:
-        raise HTTPException(status_code=500, detail="Not enough tarot cards in database")
+    try:
+        cards = card_crud.draw_random_cards(db, count=spread.card_count, seed=seed)
+    except ValueError as exc:
+        raise HTTPException(status_code=500, detail="Not enough tarot cards in database") from exc
 
     rng = random.Random(seed) if seed is not None else random
     card_draws_data = [

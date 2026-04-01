@@ -103,9 +103,15 @@ export class AIService {
   async checkHealth(): Promise<AIHealthCheck> {
     try {
       const response: any = await api.get('/health/ai');
-      const isConfigured = Boolean(
-        response?.coze_configured ?? response?.is_configured ?? response?.configured
-      );
+      const configuredFlag =
+        response?.is_configured ??
+        response?.provider_configured ??
+        response?.coze_configured ??
+        response?.configured;
+      const isConfigured =
+        typeof configuredFlag === 'boolean'
+          ? configuredFlag
+          : response?.status !== 'not_configured';
       const isHealthy = Boolean(
         response?.coze_healthy ?? response?.is_healthy ?? response?.status === 'healthy'
       );

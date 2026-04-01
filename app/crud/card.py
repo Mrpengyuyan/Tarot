@@ -166,10 +166,17 @@ def draw_random_cards(
         query = query.filter(~TarotCard.id.in_(exclude_ids))
 
     all_cards = query.all()
-    if count >= len(all_cards):
-        return all_cards
+    if count > len(all_cards):
+        raise ValueError(
+            f"Not enough available cards to draw: requested={count}, available={len(all_cards)}"
+        )
 
     rng = random.Random(seed) if seed is not None else random
+    if count == len(all_cards):
+        shuffled_cards = list(all_cards)
+        rng.shuffle(shuffled_cards)
+        return shuffled_cards
+
     return rng.sample(all_cards, count)
 
 

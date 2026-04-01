@@ -76,6 +76,16 @@ def test_system_status_sanitizes_unhealthy_ai_message(client, monkeypatch):
     assert ai_component["message"] == "AI service unavailable"
 
 
+def test_status_and_metrics_require_admin_in_production_like_environment(client, monkeypatch):
+    monkeypatch.setattr(settings, "ENVIRONMENT", "production")
+
+    status_resp = client.get("/api/v1/health/status")
+    metrics_resp = client.get("/api/v1/health/metrics")
+
+    assert status_resp.status_code == 403
+    assert metrics_resp.status_code == 403
+
+
 def test_coze_health_check_light_probe_skips_live_call(monkeypatch):
     service = CozeService()
     service.api_key = "test-key"

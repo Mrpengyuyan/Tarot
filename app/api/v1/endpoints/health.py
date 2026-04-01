@@ -2,11 +2,11 @@
 
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_superuser
+from app.api.deps import get_current_superuser, get_current_user_optional
 from app.core.config import settings
 from app.crud.card import get_total_cards_count
 from app.crud.spread import get_total_spreads_count
@@ -15,6 +15,19 @@ from app.models.user import User as UserModel
 from app.services.tarot_service import tarot_interpretation_service
 
 router = APIRouter()
+
+
+def _is_production_like_environment() -> bool:
+    environment = str(settings.ENVIRONMENT).strip().lower()
+    return environment in {"prod", "production", "staging"}
+
+
+def _resolve_is_configured(status_payload: dict) -> bool:
+    return bool(
+        status_payload.get("provider_configured")
+        if status_payload.get("provider_configured") is not None
+        else status_payload.get("coze_configured", False)
+    )
 
 
 def _health_http_status(health_status: str) -> int:
@@ -50,7 +63,11 @@ async def health_check():
 @router.get("/status", summary="Detailed system status")
 async def system_status(
     db: Session = Depends(get_db),
+    current_user: UserModel | None = Depends(get_current_user_optional),
 ):
+    if _is_production_like_environment() and not (current_user and current_user.is_superuser):
+        raise HTTPException(status_code=403, detail="Admin privileges required")
+
     try:
         db_status = True
         db_error = None
@@ -67,6 +84,7 @@ async def system_status(
         public_ai_status = {
             "status": ai_health_status,
             "is_healthy": bool(ai_status.get("is_healthy", False)),
+            "is_configured": _resolve_is_configured(ai_status),
             "provider": ai_status.get("provider", "deepseek"),
             "message": _sanitize_ai_message(ai_health_status, ai_status.get("message")),
         }
@@ -137,6 +155,7 @@ async def ai_service_status():
             "service_name": status_payload.get("service_name", "tarot-interpretation-service"),
             "status": health_status,
             "is_healthy": bool(status_payload.get("is_healthy", False)),
+            "is_configured": _resolve_is_configured(status_payload),
             "provider": status_payload.get("provider"),
             "message": _sanitize_ai_message(health_status, status_payload.get("message")),
             "details": details,
@@ -172,6 +191,7 @@ async def ai_service_status_deep(
                 "service_name": status_payload.get("service_name", "tarot-interpretation-service"),
                 "status": health_status,
                 "is_healthy": bool(status_payload.get("is_healthy", False)),
+                "is_configured": _resolve_is_configured(status_payload),
                 "provider": status_payload.get("provider"),
                 "message": _sanitize_ai_message(health_status, status_payload.get("message")),
                 "details": status_payload.get("details"),
@@ -192,7 +212,11 @@ async def ai_service_status_deep(
 @router.get("/metrics", summary="System metrics")
 async def system_metrics(
     db: Session = Depends(get_db),
+    current_user: UserModel | None = Depends(get_current_user_optional),
 ):
+    if _is_production_like_environment() and not (current_user and current_user.is_superuser):
+        raise HTTPException(status_code=403, detail="Admin privileges required")
+
     try:
         metrics = {
             "timestamp": datetime.now().isoformat(),

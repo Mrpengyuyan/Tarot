@@ -1,15 +1,14 @@
 import React, { Suspense } from 'react';
 import {
-  createBrowserRouter,
-  RouterProvider,
   Navigate,
-  Outlet
+  Outlet,
+  RouterProvider,
+  createBrowserRouter,
 } from 'react-router-dom';
 import { Box, CircularProgress } from '@mui/material';
 import { useAuthStore } from '../stores/authStore';
 import { ROUTES } from './routeConfig';
 
-// 懒加载页面组件
 const AppLayout = React.lazy(() => import('../components/Layout/AppLayout'));
 const HomePage = React.lazy(() => import('../pages/Dashboard/HomePage'));
 const LoginPage = React.lazy(() => import('../pages/Auth/LoginPage'));
@@ -26,7 +25,6 @@ const DemoPage = React.lazy(() => import('../pages/Demo/DemoPage'));
 const TarotCardDemo = React.lazy(() => import('../pages/Demo/TarotCardDemo'));
 const SystemStatus = React.lazy(() => import('../pages/Debug/SystemStatus'));
 
-// 加载组件
 const LoadingFallback: React.FC = () => (
   <Box
     display="flex"
@@ -42,7 +40,7 @@ const LoadingFallback: React.FC = () => (
         color: 'primary.main',
         '& .MuiCircularProgress-circle': {
           strokeLinecap: 'round',
-        }
+        },
       }}
     />
     <Box
@@ -50,7 +48,7 @@ const LoadingFallback: React.FC = () => (
       sx={{
         color: 'text.secondary',
         fontSize: '0.875rem',
-        fontFamily: 'Cinzel, serif'
+        fontFamily: 'Cinzel, serif',
       }}
     >
       神秘力量正在汇聚...
@@ -58,29 +56,22 @@ const LoadingFallback: React.FC = () => (
   </Box>
 );
 
-// 路由保护组件
 const ProtectedRoute: React.FC = () => {
   const { isLoggedIn } = useAuthStore();
-
   if (!isLoggedIn) {
     return <Navigate to={ROUTES.LOGIN} replace />;
   }
-
   return <Outlet />;
 };
 
-// 公共路由组件 (已登录用户重定向到主页)
 const PublicRoute: React.FC = () => {
   const { isLoggedIn } = useAuthStore();
-
   if (isLoggedIn) {
     return <Navigate to={ROUTES.DASHBOARD} replace />;
   }
-
   return <Outlet />;
 };
 
-// 根布局组件
 const RootLayout: React.FC = () => (
   <Suspense fallback={<LoadingFallback />}>
     <AppLayout>
@@ -89,19 +80,15 @@ const RootLayout: React.FC = () => (
   </Suspense>
 );
 
-// 路由配置
 const router = createBrowserRouter([
   {
     path: '/',
     element: <RootLayout />,
     children: [
-      // 首页重定向
       {
         index: true,
         element: <Navigate to={ROUTES.DASHBOARD} replace />,
       },
-
-      // 公共路由
       {
         path: 'auth',
         element: <PublicRoute />,
@@ -124,8 +111,6 @@ const router = createBrowserRouter([
           },
         ],
       },
-
-      // 受保护的路由
       {
         element: <ProtectedRoute />,
         children: [
@@ -156,7 +141,7 @@ const router = createBrowserRouter([
                   </Suspense>
                 ),
               },
-                {
+              {
                 path: ':id',
                 element: (
                   <Suspense fallback={<LoadingFallback />}>
@@ -206,10 +191,16 @@ const router = createBrowserRouter([
               </Suspense>
             ),
           },
+          {
+            path: 'system-status',
+            element: (
+              <Suspense fallback={<LoadingFallback />}>
+                <SystemStatus />
+              </Suspense>
+            ),
+          },
         ],
       },
-
-      // 公共演示页面
       {
         path: 'demo',
         element: (
@@ -226,16 +217,6 @@ const router = createBrowserRouter([
           </Suspense>
         ),
       },
-      {
-        path: 'system-status',
-        element: (
-          <Suspense fallback={<LoadingFallback />}>
-            <SystemStatus />
-          </Suspense>
-        ),
-      },
-
-      // 404 页面
       {
         path: '*',
         element: (
@@ -280,7 +261,7 @@ const router = createBrowserRouter([
                 mb: 3,
               }}
             >
-              您寻找的页面似乎不存在，或许是宇宙的安排
+              您寻找的页面似乎不存在，或许是宇宙的安排。
             </Box>
             <Box
               component="button"
@@ -311,9 +292,6 @@ const router = createBrowserRouter([
   },
 ]);
 
-// 主路由组件
-const AppRouter: React.FC = () => {
-  return <RouterProvider router={router} />;
-};
+const AppRouter: React.FC = () => <RouterProvider router={router} />;
 
 export default AppRouter;

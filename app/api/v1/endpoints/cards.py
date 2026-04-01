@@ -73,7 +73,10 @@ def draw_random_cards(
     current_user: User = Depends(get_current_active_user),
 ):
     del current_user
-    return card_crud.draw_random_cards(db, count=count, exclude_ids=exclude_ids, seed=seed)
+    try:
+        return card_crud.draw_random_cards(db, count=count, exclude_ids=exclude_ids, seed=seed)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.get("/search", response_model=List[TarotCardSimple], summary="Search cards")

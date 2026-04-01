@@ -56,6 +56,7 @@ def test_ai_health_endpoint_redacts_internal_details(client, monkeypatch):
 
     assert body["status"] == "healthy"
     assert body["is_healthy"] is True
+    assert body["is_configured"] is False
     assert body["provider"] == "deepseek"
     assert body["details"] == {
         "model_used": "deepseek-chat",
@@ -88,8 +89,9 @@ def test_system_status_exposes_public_ai_fields_only(client, monkeypatch):
     assert resp.status_code == 503
     ai_component = resp.json()["components"]["ai_service"]
 
-    assert set(ai_component.keys()) == {"status", "is_healthy", "provider", "message"}
+    assert set(ai_component.keys()) == {"status", "is_healthy", "is_configured", "provider", "message"}
     assert ai_component["status"] == "degraded"
+    assert ai_component["is_configured"] is True
     assert ai_component["provider"] == "deepseek"
 
 

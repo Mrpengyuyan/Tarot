@@ -148,3 +148,29 @@ def test_cards_draw_endpoint_seed_is_reproducible(client, seeded_spread_and_card
     ids_a = [item["id"] for item in draw_a.json()]
     ids_b = [item["id"] for item in draw_b.json()]
     assert ids_a == ids_b
+
+
+def test_cards_draw_endpoint_returns_400_when_count_exceeds_available(client, seeded_spread_and_cards):
+    _register_and_login(client, username="cards_overflow_user")
+    available_cards = len(seeded_spread_and_cards["card_ids"])
+
+    draw_resp = client.get(f"/api/v1/cards/draw?count={available_cards + 1}")
+    assert draw_resp.status_code == 400
+    assert "not enough available cards" in draw_resp.json()["detail"].lower()
+
+
+def test_cards_draw_endpoint_shuffles_full_deck_with_seed(client, seeded_spread_and_cards):
+    _register_and_login(client, username="cards_full_deck_user")
+    expected_order = seeded_spread_and_cards["card_ids"]
+    count = len(expected_order)
+
+    draw_a = client.get(f"/api/v1/cards/draw?count={count}&seed=42")
+    draw_b = client.get(f"/api/v1/cards/draw?count={count}&seed=42")
+    assert draw_a.status_code == 200
+    assert draw_b.status_code == 200
+
+    ids_a = [item["id"] for item in draw_a.json()]
+    ids_b = [item["id"] for item in draw_b.json()]
+    assert ids_a == ids_b
+    assert sorted(ids_a) == sorted(expected_order)
+    assert ids_a != expected_order

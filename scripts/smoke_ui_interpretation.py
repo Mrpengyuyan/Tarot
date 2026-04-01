@@ -34,7 +34,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--browser-path",
         default=os.environ.get("SMOKE_BROWSER_PATH", "").strip() or None,
-        help="Optional browser executable path. Defaults to a detected Edge install.",
+        help="Optional browser executable path. Defaults to a detected Chromium-compatible browser.",
     )
     parser.add_argument("--headed", action="store_true", help="Run with a visible browser window.")
     parser.add_argument(
@@ -49,19 +49,52 @@ def parse_args() -> argparse.Namespace:
 def resolve_browser_path(explicit_path: Optional[str]) -> Optional[str]:
     discovered_browser = (
         shutil.which("msedge")
+        or shutil.which("edge")
         or shutil.which("microsoft-edge")
+        or shutil.which("google-chrome-stable")
         or shutil.which("google-chrome")
         or shutil.which("chrome")
         or shutil.which("chromium")
         or shutil.which("chromium-browser")
+        or shutil.which("brave-browser")
     )
+    platform_candidates: List[str] = []
+    if sys.platform.startswith("win"):
+        user_profile = os.environ.get("USERPROFILE", "")
+        platform_candidates.extend(
+            [
+                r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+                r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+                r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+                r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+                str(Path(user_profile) / "AppData/Local/Microsoft/Edge/Application/msedge.exe")
+                if user_profile
+                else "",
+            ]
+        )
+    elif sys.platform == "darwin":
+        platform_candidates.extend(
+            [
+                "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+                "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+                "/Applications/Chromium.app/Contents/MacOS/Chromium",
+            ]
+        )
+    else:
+        platform_candidates.extend(
+            [
+                "/usr/bin/microsoft-edge",
+                "/usr/bin/google-chrome",
+                "/usr/bin/chromium-browser",
+                "/usr/bin/chromium",
+            ]
+        )
+
     candidates = [
         explicit_path,
         os.environ.get("PLAYWRIGHT_EXECUTABLE_PATH"),
         discovered_browser,
-        r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-        r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
-        r"C:\Users\%USERNAME%\AppData\Local\Microsoft\Edge\Application\msedge.exe",
+        *platform_candidates,
     ]
 
     for candidate in candidates:

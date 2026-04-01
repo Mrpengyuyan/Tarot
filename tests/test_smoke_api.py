@@ -25,6 +25,7 @@ def test_smoke_health_ai_and_metrics(client):
     ai_body = ai_resp.json()
     assert "status" in ai_body
     assert "is_healthy" in ai_body
+    assert "is_configured" in ai_body
 
     metrics_resp = client.get("/api/v1/health/metrics")
     assert metrics_resp.status_code == 200
