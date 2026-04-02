@@ -86,6 +86,28 @@ def test_status_and_metrics_require_admin_in_production_like_environment(client,
     assert metrics_resp.status_code == 403
 
 
+def test_status_and_metrics_require_admin_when_explicit_health_admin_only_enabled(client, monkeypatch):
+    monkeypatch.setattr(settings, "ENVIRONMENT", "development")
+    monkeypatch.setattr(settings, "HEALTH_ADMIN_ONLY", True)
+
+    status_resp = client.get("/api/v1/health/status")
+    metrics_resp = client.get("/api/v1/health/metrics")
+
+    assert status_resp.status_code == 403
+    assert metrics_resp.status_code == 403
+
+
+def test_status_and_metrics_allow_non_admin_when_not_protected(client, monkeypatch):
+    monkeypatch.setattr(settings, "ENVIRONMENT", "development")
+    monkeypatch.setattr(settings, "HEALTH_ADMIN_ONLY", False)
+
+    status_resp = client.get("/api/v1/health/status")
+    metrics_resp = client.get("/api/v1/health/metrics")
+
+    assert status_resp.status_code in {200, 503}
+    assert metrics_resp.status_code in {200, 503}
+
+
 def test_coze_health_check_light_probe_skips_live_call(monkeypatch):
     service = CozeService()
     service.api_key = "test-key"

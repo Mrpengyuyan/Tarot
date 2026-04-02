@@ -64,6 +64,17 @@ const ProtectedRoute: React.FC = () => {
   return <Outlet />;
 };
 
+const AdminRoute: React.FC = () => {
+  const { isLoggedIn, user } = useAuthStore();
+  if (!isLoggedIn) {
+    return <Navigate to={ROUTES.LOGIN} replace />;
+  }
+  if (!user?.is_superuser) {
+    return <Navigate to={ROUTES.DASHBOARD} replace />;
+  }
+  return <Outlet />;
+};
+
 const PublicRoute: React.FC = () => {
   const { isLoggedIn } = useAuthStore();
   if (isLoggedIn) {
@@ -192,12 +203,17 @@ const router = createBrowserRouter([
             ),
           },
           {
-            path: 'system-status',
-            element: (
-              <Suspense fallback={<LoadingFallback />}>
-                <SystemStatus />
-              </Suspense>
-            ),
+            element: <AdminRoute />,
+            children: [
+              {
+                path: 'system-status',
+                element: (
+                  <Suspense fallback={<LoadingFallback />}>
+                    <SystemStatus />
+                  </Suspense>
+                ),
+              },
+            ],
           },
         ],
       },

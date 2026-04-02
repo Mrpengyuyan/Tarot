@@ -63,4 +63,27 @@ describe('aiService health contract handling', () => {
     expect(health.is_healthy).toBe(false);
     expect(await aiService.isAIAvailable()).toBe(false);
   });
+
+  it('requests /health/ai with non-2xx-pass-through validateStatus', async () => {
+    mockApiGet.mockResolvedValue({
+      status: 'degraded',
+      is_healthy: false,
+      is_configured: true,
+      message: 'upstream timeout',
+    });
+
+    await aiService.checkHealth();
+
+    expect(mockApiGet).toHaveBeenCalledWith(
+      '/health/ai',
+      expect.objectContaining({
+        validateStatus: expect.any(Function),
+      }),
+    );
+
+    const validateStatus = mockApiGet.mock.calls[0][1].validateStatus as (status: number) => boolean;
+    expect(validateStatus(200)).toBe(true);
+    expect(validateStatus(503)).toBe(true);
+    expect(validateStatus(600)).toBe(false);
+  });
 });

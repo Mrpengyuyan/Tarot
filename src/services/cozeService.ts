@@ -4,6 +4,8 @@
  */
 
 // Coze配置类型
+import { buildApiUrl } from '../config/env';
+
 export interface CozeConfig {
   // Browser clients must not carry provider credentials.
   apiKey?: string;
@@ -134,19 +136,24 @@ export class CozeService {
   }> {
     // 这里实际上是调用我们自己的后端接口
     try {
-      const response = await fetch('/api/v1/health/ai', {
+      const response = await fetch(buildApiUrl('/health/ai'), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       });
 
+      const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        return {
+          status: payload?.status || 'error',
+          message: payload?.message || `HTTP ${response.status}`,
+          is_healthy: Boolean(payload?.is_healthy),
+          details: payload?.details,
+        };
       }
 
-      const result = await response.json();
-      return result;
+      return payload;
     } catch (error) {
       console.error('Coze健康检查失败:', error);
       return {

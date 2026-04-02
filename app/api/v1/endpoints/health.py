@@ -22,6 +22,10 @@ def _is_production_like_environment() -> bool:
     return environment in {"prod", "production", "staging"}
 
 
+def _requires_admin_for_detailed_health() -> bool:
+    return bool(settings.HEALTH_ADMIN_ONLY or _is_production_like_environment())
+
+
 def _resolve_is_configured(status_payload: dict) -> bool:
     return bool(
         status_payload.get("provider_configured")
@@ -65,7 +69,7 @@ async def system_status(
     db: Session = Depends(get_db),
     current_user: UserModel | None = Depends(get_current_user_optional),
 ):
-    if _is_production_like_environment() and not (current_user and current_user.is_superuser):
+    if _requires_admin_for_detailed_health() and not (current_user and current_user.is_superuser):
         raise HTTPException(status_code=403, detail="Admin privileges required")
 
     try:
@@ -214,7 +218,7 @@ async def system_metrics(
     db: Session = Depends(get_db),
     current_user: UserModel | None = Depends(get_current_user_optional),
 ):
-    if _is_production_like_environment() and not (current_user and current_user.is_superuser):
+    if _requires_admin_for_detailed_health() and not (current_user and current_user.is_superuser):
         raise HTTPException(status_code=403, detail="Admin privileges required")
 
     try:

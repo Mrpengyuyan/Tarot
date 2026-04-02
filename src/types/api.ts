@@ -10,6 +10,8 @@ export interface ApiResponse<T> {
     id: number;
     username: string;
     email: string;
+    is_active?: boolean;
+    is_superuser?: boolean;
     nickname?: string;
     avatar_url?: string;
     created_at?: string;

@@ -2,7 +2,7 @@
  * Test helpers for API / AI / data connectivity checks.
  */
 
-import { config, debugLog } from '../config/env';
+import { config, debugLog, isDevelopment } from '../config/env';
 import { api } from '../services/api';
 import { aiService } from '../services/aiService';
 import { spreadService } from '../services/spreadService';
@@ -133,21 +133,25 @@ export const validateEnvironment = (): {
   return { isValid: errors.length === 0, errors, warnings };
 };
 
-export const getDebugInfo = () => ({
-  environment: process.env.NODE_ENV,
-  config: {
-    apiBaseUrl: config.apiBaseUrl,
-    legacyCozeConfigured: !!config.coze.botId,
-    featuresEnabled: config.features,
-  },
-  browser: {
-    userAgent: navigator.userAgent,
-    language: navigator.language,
-    cookieEnabled: navigator.cookieEnabled,
-  },
-  localStorage: {
-    hasUserCache: !!localStorage.getItem('user'),
-    available: typeof Storage !== 'undefined',
-  },
-  timestamp: new Date().toISOString(),
-});
+export const getDebugInfo = () => {
+  const includeSensitiveInfo = config.features.debugMode || isDevelopment;
+
+  return {
+    environment: process.env.NODE_ENV,
+    config: {
+      apiBaseUrl: config.apiBaseUrl,
+      legacyCozeConfigured: !!config.coze.botId,
+      featuresEnabled: config.features,
+    },
+    browser: {
+      userAgent: includeSensitiveInfo ? navigator.userAgent : 'redacted',
+      language: navigator.language,
+      cookieEnabled: navigator.cookieEnabled,
+    },
+    localStorage: {
+      hasUserCache: includeSensitiveInfo ? !!localStorage.getItem('user') : 'redacted',
+      available: typeof Storage !== 'undefined',
+    },
+    timestamp: new Date().toISOString(),
+  };
+};

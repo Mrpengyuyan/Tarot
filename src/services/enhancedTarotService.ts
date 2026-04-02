@@ -134,7 +134,9 @@ export const enhancedTarotService = {
     details?: any;
   }> => {
     try {
-      const response: any = await api.get('/health/ai');
+      const response: any = await api.get('/health/ai', {
+        validateStatus: (status) => status >= 200 && status < 600,
+      });
       const configuredFlag =
         response?.is_configured ??
         response?.provider_configured ??
