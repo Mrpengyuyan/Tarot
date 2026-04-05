@@ -54,11 +54,12 @@ def get_db_session() -> Session:
 
 
 def check_db_connection() -> bool:
+    db = SessionLocal()
     try:
-        db = SessionLocal()
         db.execute(text("SELECT 1"))
-        db.close()
         return True
     except Exception as exc:
         logger.error("Database connectivity check failed: %s", exc)
         return False
+    finally:
+        db.close()

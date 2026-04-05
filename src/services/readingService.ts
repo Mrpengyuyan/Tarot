@@ -169,10 +169,13 @@ export class ReadingService {
   }
 
   async shareReading(readingId: number, _options?: { is_public?: boolean; expires_in_days?: number }) {
+    // Validate the reading exists and is accessible before generating a share link.
+    await api.get(`/records/${readingId}`);
     return {
       reading_id: readingId,
       share_url: `${window.location.origin}/reading/${readingId}`,
       created_at: new Date().toISOString(),
+      requires_auth: true,
     };
   }
 }

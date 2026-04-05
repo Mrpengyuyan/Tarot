@@ -35,7 +35,7 @@ def test_auth_cookie_refresh_logout_flow(client):
     login_resp = _register_and_login(client, username="cookie_user")
     assert "set-cookie" in login_resp.headers
     assert login_resp.json()["token_type"] == "bearer"
-    assert "access_token" not in login_resp.json() or not login_resp.json()["access_token"]
+    assert login_resp.json().get("access_token")
 
     me_resp = client.get("/api/v1/users/me")
     assert me_resp.status_code == 200
@@ -44,7 +44,7 @@ def test_auth_cookie_refresh_logout_flow(client):
     refresh_resp = client.post("/api/v1/refresh")
     assert refresh_resp.status_code == 200
     assert refresh_resp.json()["token_type"] == "bearer"
-    assert "access_token" not in refresh_resp.json() or not refresh_resp.json()["access_token"]
+    assert refresh_resp.json().get("access_token")
 
     logout_resp = client.post("/api/v1/logout")
     assert logout_resp.status_code == 200

@@ -1,5 +1,5 @@
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, or_, desc, asc, func, update
 from app.models.record import Prediction, CardDraw, Interpretation, QuestionType, PredictionStatus
@@ -8,7 +8,7 @@ from app.models.tarot_card import TarotCard
 from app.models.spread import SpreadType
 from app.schemas.prediction import (
     PredictionCreate, PredictionUpdate,
-    CardDrawCreate, InterpretationCreate,
+    CardDrawCreate, InterpretationCreate, InterpretationUpdate,
     PredictionStats
 )
 
@@ -145,9 +145,11 @@ def get_recent_prediction_overview(db: Session, user_id: int, limit: int = 4) ->
 
 def create_prediction(db: Session, user_id: int, prediction_create: PredictionCreate) -> Prediction:
     """创建预测记录"""
+    prediction_data = prediction_create.model_dump()
+    prediction_data["question_type"] = QuestionType(prediction_create.question_type.value)
     db_prediction = Prediction(
         user_id=user_id,
-        **prediction_create.model_dump()
+        **prediction_data
     )
     db.add(db_prediction)
     db.commit()
@@ -157,9 +159,11 @@ def create_prediction(db: Session, user_id: int, prediction_create: PredictionCr
 
 def create_prediction_with_stats(db: Session, user_id: int, prediction_create: PredictionCreate) -> Prediction:
     """Create prediction and update related counters in one transaction."""
+    prediction_data = prediction_create.model_dump()
+    prediction_data["question_type"] = QuestionType(prediction_create.question_type.value)
     db_prediction = Prediction(
         user_id=user_id,
-        **prediction_create.model_dump()
+        **prediction_data
     )
     db.add(db_prediction)
     db.flush()
@@ -196,7 +200,7 @@ def update_prediction_status(db: Session, prediction_id: int, status: Prediction
     if db_prediction:
         db_prediction.status = status
         if status == PredictionStatus.COMPLETED:
-            db_prediction.completed_at = datetime.utcnow()
+            db_prediction.completed_at = datetime.now(timezone.utc)
         db.commit()
         return True
     return False
@@ -289,7 +293,7 @@ def create_interpretation(db: Session, prediction_id: int, interpretation_create
     db.refresh(db_interpretation)
     return db_interpretation
 
-def update_interpretation(db: Session, db_interpretation: Interpretation, interpretation_update: InterpretationCreate) -> Interpretation:
+def update_interpretation(db: Session, db_interpretation: Interpretation, interpretation_update: InterpretationUpdate) -> Interpretation:
     """更新解读结果"""
     update_data = interpretation_update.model_dump(exclude_unset=True)
     for field, value in update_data.items():
@@ -373,8 +377,7 @@ def search_user_predictions(db: Session, user_id: int, search_term: str, skip: i
 
 def get_recent_predictions(db: Session, user_id: int, days: int = 7, limit: int = 10) -> List[Prediction]:
     """获取用户最近的预测记录"""
-    from datetime import datetime, timedelta
-    start_date = datetime.utcnow() - timedelta(days=days)
+    start_date = datetime.now(timezone.utc) - timedelta(days=days)
     
     return db.query(Prediction).filter(
         and_(

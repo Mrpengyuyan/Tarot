@@ -121,6 +121,22 @@ class InterpretationCreate(InterpretationBase):
     model_version: Optional[str] = None
     confidence_score: Optional[float] = None
 
+class InterpretationUpdate(BaseModel):
+    """Partial update model for interpretation fields."""
+    model_config = ConfigDict(protected_namespaces=())
+
+    overall_interpretation: Optional[str] = None
+    card_analysis: Optional[str] = None
+    relationship_analysis: Optional[str] = None
+    advice: Optional[str] = None
+    warning: Optional[str] = None
+    summary: Optional[str] = None
+    key_themes: Optional[str] = None
+    model_used: Optional[str] = None
+    model_version: Optional[str] = None
+    confidence_score: Optional[float] = None
+
+
 class Interpretation(InterpretationBase):
     """解读结果响应数据模型"""
     id: int

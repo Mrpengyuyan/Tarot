@@ -114,7 +114,8 @@ class EnhancedTarotInterpretationService:
             cards_info.append(card_info)
 
         # 获取牌阵特定的解读模板
-        template = self.spread_templates.get(spread_name, self._get_generic_template)
+        template_builder = self.spread_templates.get(spread_name, self._get_generic_template)
+        template = template_builder() if callable(template_builder) else str(template_builder)
 
         # 构建完整的提示词
         message = f"""你是一位专业的塔罗占卜师，请根据以下信息提供深度解读：
@@ -248,7 +249,7 @@ class EnhancedTarotInterpretationService:
                 ai_response, question, question_type, spread, cards_drawn
             )
 
-    def _extract_json_from_response(self, response: str) -> Optional[Dict[str, Any]]:
+    def _extract_json_from_response_legacy(self, response: str) -> Optional[Dict[str, Any]]:
         """从AI回复中提取JSON内��"""
         try:
             # 方法1: 查找JSON代码块
@@ -273,6 +274,68 @@ class EnhancedTarotInterpretationService:
             return None
         except Exception:
             return None
+
+    def _extract_json_from_response(self, response: str) -> Optional[Dict[str, Any]]:
+        """Extract the first valid JSON object from model output."""
+
+        def extract_balanced_object(text: str) -> Optional[str]:
+            depth = 0
+            start = -1
+            in_string = False
+            escaped = False
+
+            for idx, ch in enumerate(text):
+                if in_string:
+                    if escaped:
+                        escaped = False
+                        continue
+                    if ch == "\\":
+                        escaped = True
+                        continue
+                    if ch == '"':
+                        in_string = False
+                    continue
+
+                if ch == '"':
+                    in_string = True
+                    continue
+                if ch == "{":
+                    if depth == 0:
+                        start = idx
+                    depth += 1
+                    continue
+                if ch == "}":
+                    if depth == 0:
+                        continue
+                    depth -= 1
+                    if depth == 0 and start >= 0:
+                        return text[start : idx + 1]
+            return None
+
+        candidates: List[str] = []
+
+        if "```json" in response:
+            start = response.find("```json") + 7
+            end = response.find("```", start)
+            if end != -1:
+                candidates.append(response[start:end].strip())
+
+        balanced = extract_balanced_object(response)
+        if balanced:
+            candidates.append(balanced)
+
+        candidates.append(response.strip())
+
+        for candidate in candidates:
+            if not candidate:
+                continue
+            try:
+                parsed = json.loads(candidate)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(parsed, dict):
+                return parsed
+        return None
 
     def _validate_and_enhance_response(
         self,

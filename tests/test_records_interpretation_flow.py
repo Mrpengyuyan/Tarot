@@ -130,6 +130,39 @@ def test_interpretation_failure_sets_prediction_failed(client, seeded_spread_and
     assert detail_resp.json()["status"] == "failed"
 
 
+def test_interpretation_update_accepts_partial_payload(client, seeded_spread_and_cards, monkeypatch):
+    _register_and_login(client, username="partial_update_user")
+    prediction_id = _create_prediction(client, seeded_spread_and_cards["spread_id"])
+
+    draw_resp = client.post(f"/api/v1/records/{prediction_id}/draw")
+    assert draw_resp.status_code == 200
+
+    async def fake_create_interpretation(db, prediction, cards_data, user_context=None):  # noqa: ANN001
+        return {
+            "overall_interpretation": "Original interpretation",
+            "summary": "Original summary",
+        }
+
+    monkeypatch.setattr(
+        records_endpoint.tarot_interpretation_service,
+        "create_interpretation",
+        fake_create_interpretation,
+    )
+
+    first_interpret = client.post(f"/api/v1/records/{prediction_id}/interpret?force_ai=true")
+    assert first_interpret.status_code == 200
+    assert first_interpret.json()["overall_interpretation"] == "Original interpretation"
+
+    update_resp = client.put(
+        f"/api/v1/records/{prediction_id}/interpretation",
+        json={"summary": "Patched summary"},
+    )
+    assert update_resp.status_code == 200
+    body = update_resp.json()
+    assert body["overall_interpretation"] == "Original interpretation"
+    assert body["summary"] == "Patched summary"
+
+
 def test_draw_cards_with_seed_is_reproducible(client, seeded_spread_and_cards):
     _register_and_login(client, username="seed_user")
     spread_id = seeded_spread_and_cards["spread_id"]

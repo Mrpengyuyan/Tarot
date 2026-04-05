@@ -2,10 +2,8 @@
 新版数据库初始化脚本
 仅负责创建表结构，数据初始化请使用 app/scripts/init_demo_data.py
 """
-from sqlalchemy import create_engine
 from app.models import Base
 from app.db.session import engine
-from app.core.config import settings
 import logging
 
 # 配置日志

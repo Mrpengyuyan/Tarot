@@ -179,8 +179,14 @@ def create_spread(db: Session, spread_create: SpreadTypeCreate) -> SpreadType:
 def update_spread(db: Session, db_spread: SpreadType, spread_update: SpreadTypeUpdate) -> SpreadType:
     update_data = spread_update.model_dump(exclude_unset=True)
 
-    if "positions" in update_data and update_data["positions"]:
-        update_data["positions"] = [pos.model_dump() for pos in update_data["positions"]]
+    if "positions" in update_data and update_data["positions"] is not None:
+        normalized_positions = []
+        for pos in update_data["positions"]:
+            if hasattr(pos, "model_dump"):
+                normalized_positions.append(pos.model_dump())
+            elif isinstance(pos, dict):
+                normalized_positions.append(pos)
+        update_data["positions"] = normalized_positions
 
     for field, value in update_data.items():
         setattr(db_spread, field, value)

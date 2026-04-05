@@ -573,14 +573,21 @@ class CozeService:
                 expect_json=expect_json,
             )
             chat_text = str(chat_result.get("text", ""))
-            self._register_usage_and_cost(
-                model=self.chat_model,
-                usage=chat_result.get("usage") or {},
-                cost_usd=float(chat_result.get("cost_usd") or 0.0),
-            )
         except Exception as exc:
             chat_error = exc
             logger.warning("DeepSeek primary model '%s' failed: %s", self.chat_model, exc)
+        else:
+            try:
+                self._register_usage_and_cost(
+                    model=self.chat_model,
+                    usage=chat_result.get("usage") or {},
+                    cost_usd=float(chat_result.get("cost_usd") or 0.0),
+                )
+            except CozeBudgetExceededError as exc:
+                logger.warning(
+                    "Budget threshold exceeded after primary response; returning response anyway: %s",
+                    exc,
+                )
 
         reasoner_allowed, reasoner_block_reason = self._reasoner_allowed()
 
@@ -647,11 +654,17 @@ class CozeService:
             )
             reasoner_text = str(reasoner_result.get("text", "")).strip()
             if reasoner_text:
-                self._register_usage_and_cost(
-                    model=self.reasoner_model,
-                    usage=reasoner_result.get("usage") or {},
-                    cost_usd=float(reasoner_result.get("cost_usd") or 0.0),
-                )
+                try:
+                    self._register_usage_and_cost(
+                        model=self.reasoner_model,
+                        usage=reasoner_result.get("usage") or {},
+                        cost_usd=float(reasoner_result.get("cost_usd") or 0.0),
+                    )
+                except CozeBudgetExceededError as exc:
+                    logger.warning(
+                        "Budget threshold exceeded after reasoner response; returning response anyway: %s",
+                        exc,
+                    )
                 return {
                     "text": reasoner_text,
                     "model_used": self.reasoner_model,
@@ -661,6 +674,7 @@ class CozeService:
                     "cost_usd": float(reasoner_result.get("cost_usd") or 0.0),
                     "budget": self.budget_status(),
                 }
+            logger.warning("DeepSeek reasoner fallback returned empty content; falling back to primary output.")
         except Exception as exc:
             logger.warning("DeepSeek reasoner fallback '%s' failed: %s", self.reasoner_model, exc)
             if chat_text:

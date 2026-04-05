@@ -127,12 +127,9 @@ def repair_prediction_questions(
         )
         repaired += 1
 
-    if commit:
-        if repaired:
-            db.commit()
-        else:
-            db.rollback()
-    elif repaired:
+    if commit and repaired:
+        db.commit()
+    elif not commit and repaired:
         db.rollback()
 
     return {

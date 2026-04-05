@@ -22,6 +22,7 @@ from app.schemas.prediction import (
     DrawCardsResponse,
     Interpretation,
     InterpretationCreate,
+    InterpretationUpdate,
     Prediction,
     PredictionCreate,
     PredictionDetail,
@@ -251,7 +252,7 @@ def draw_cards_for_prediction(
 
     existing_draws = prediction_crud.get_prediction_card_draws(db, prediction_id=prediction_id)
     if existing_draws:
-        raise HTTPException(status_code=400, detail="Cards already drawn for this record")
+        raise HTTPException(status_code=409, detail="Cards already drawn for this record")
 
     spread = spread_crud.get_spread_by_id(db, spread_id=prediction.spread_type_id)
     if not spread:
@@ -525,7 +526,7 @@ def get_prediction_interpretation(
 @router.put("/{prediction_id:int}/interpretation", response_model=Interpretation, summary="Update interpretation")
 def update_interpretation(
     prediction_id: int,
-    interpretation_update: InterpretationCreate,
+    interpretation_update: InterpretationUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):

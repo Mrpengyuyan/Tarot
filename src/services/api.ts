@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { config, debugLog } from '../config/env';
 
 const normalizeApiErrorMessage = (payload: unknown): string | null => {
@@ -48,7 +48,21 @@ const normalizeApiErrorMessage = (payload: unknown): string | null => {
   return String(payload);
 };
 
-export const api = axios.create({
+type DataApiClient = Omit<
+  AxiosInstance,
+  'request' | 'get' | 'delete' | 'head' | 'options' | 'post' | 'put' | 'patch'
+> & {
+  request<T = any, D = any>(config: AxiosRequestConfig<D>): Promise<T>;
+  get<T = any, D = any>(url: string, config?: AxiosRequestConfig<D>): Promise<T>;
+  delete<T = any, D = any>(url: string, config?: AxiosRequestConfig<D>): Promise<T>;
+  head<T = any, D = any>(url: string, config?: AxiosRequestConfig<D>): Promise<T>;
+  options<T = any, D = any>(url: string, config?: AxiosRequestConfig<D>): Promise<T>;
+  post<T = any, D = any>(url: string, data?: D, config?: AxiosRequestConfig<D>): Promise<T>;
+  put<T = any, D = any>(url: string, data?: D, config?: AxiosRequestConfig<D>): Promise<T>;
+  patch<T = any, D = any>(url: string, data?: D, config?: AxiosRequestConfig<D>): Promise<T>;
+};
+
+const rawApi = axios.create({
   baseURL: config.apiBaseUrl,
   timeout: 10000,
   withCredentials: true,
@@ -56,6 +70,11 @@ export const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+export const api = rawApi as DataApiClient;
+
+const AUTH_COOKIE_NAME = process.env.REACT_APP_AUTH_COOKIE_NAME || 'access_token';
+const CSRF_COOKIE_NAME = process.env.REACT_APP_CSRF_COOKIE_NAME || 'csrf_token';
+const CSRF_HEADER_NAME = process.env.REACT_APP_CSRF_HEADER_NAME || 'X-CSRF-Token';
 
 const readCookie = (name: string): string | null => {
   if (typeof document === 'undefined') {
@@ -72,14 +91,16 @@ const readCookie = (name: string): string | null => {
   return decodeURIComponent(entry.slice(prefix.length));
 };
 
-api.interceptors.request.use(
+rawApi.interceptors.request.use(
   (requestConfig) => {
     const method = String(requestConfig.method || 'GET').toUpperCase();
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
-      const csrfToken = readCookie('csrf_token');
+      const csrfToken = readCookie(CSRF_COOKIE_NAME);
       if (csrfToken) {
         requestConfig.headers = requestConfig.headers || {};
-        requestConfig.headers['X-CSRF-Token'] = csrfToken;
+        requestConfig.headers[CSRF_HEADER_NAME] = csrfToken;
+      } else if (readCookie(AUTH_COOKIE_NAME)) {
+        return Promise.reject(new Error('CSRF token is missing. Please refresh the page and sign in again.'));
       }
     }
 
@@ -89,7 +110,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-api.interceptors.response.use(
+rawApi.interceptors.response.use(
   (response) => response.data,
   async (error) => {
     if (error.response?.status === 401) {

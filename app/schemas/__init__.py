@@ -19,7 +19,7 @@ from .prediction import (
     QuestionTypeEnum, PredictionStatusEnum,
     PredictionBase, PredictionCreate, PredictionUpdate, Prediction, PredictionSimple,
     CardDrawBase, CardDrawCreate, CardDraw, CardDrawWithMeaning,
-    InterpretationBase, InterpretationCreate, Interpretation, InterpretationWithThemes,
+    InterpretationBase, InterpretationCreate, InterpretationUpdate, Interpretation, InterpretationWithThemes,
     PredictionDetail, PredictionStats,
     DrawCardsRequest, DrawCardsResponse
 )
@@ -41,7 +41,7 @@ __all__ = [
     "QuestionTypeEnum", "PredictionStatusEnum",
     "PredictionBase", "PredictionCreate", "PredictionUpdate", "Prediction", "PredictionSimple",
     "CardDrawBase", "CardDrawCreate", "CardDraw", "CardDrawWithMeaning",
-    "InterpretationBase", "InterpretationCreate", "Interpretation", "InterpretationWithThemes",
+    "InterpretationBase", "InterpretationCreate", "InterpretationUpdate", "Interpretation", "InterpretationWithThemes",
     "PredictionDetail", "PredictionStats",
     "DrawCardsRequest", "DrawCardsResponse"
 ] 

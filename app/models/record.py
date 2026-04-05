@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import enum
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, Enum as SAEnum, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.sql import func
 
 from app.db.base_class import Base
 
@@ -60,8 +59,13 @@ class Prediction(Base):
         nullable=False,
         comment="预测状态",
     )
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False, comment="创建时间")
-    completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, comment="完成时间")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        comment="创建时间",
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, comment="完成时间")
 
     is_favorite: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, comment="是否收藏")
     user_rating: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="用户评分（1-5）")
@@ -82,7 +86,8 @@ class Prediction(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<Prediction(id={self.id}, user_id={self.user_id}, question='{self.question[:50]}...')>"
+        question_preview = self.question if len(self.question) <= 50 else f"{self.question[:50]}..."
+        return f"<Prediction(id={self.id}, user_id={self.user_id}, question='{question_preview}')>"
 
 
 class CardDraw(Base):
@@ -106,7 +111,12 @@ class CardDraw(Base):
     )
     position: Mapped[int] = mapped_column(Integer, nullable=False, comment="牌位位置")
     is_reversed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, comment="是否逆位")
-    drawn_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False, comment="抽牌时间")
+    drawn_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        comment="抽牌时间",
+    )
 
     prediction: Mapped["Prediction"] = relationship("Prediction", back_populates="card_draws")
     tarot_card: Mapped["TarotCard"] = relationship("TarotCard")
@@ -122,7 +132,9 @@ class CardDraw(Base):
 
     def __repr__(self) -> str:
         reversed_text = "逆位" if self.is_reversed else "正位"
-        return f"<CardDraw(id={self.id}, card='{self.tarot_card.name_zh}', position={self.position}, {reversed_text})>"
+        loaded_card = self.__dict__.get("tarot_card")
+        card_label = loaded_card.name_zh if loaded_card is not None else f"tarot_card_id={self.tarot_card_id}"
+        return f"<CardDraw(id={self.id}, card='{card_label}', position={self.position}, {reversed_text})>"
 
 
 class Interpretation(Base):
@@ -150,7 +162,12 @@ class Interpretation(Base):
     model_used: Mapped[str | None] = mapped_column(String(100), nullable=True, comment="使用的AI模型")
     model_version: Mapped[str | None] = mapped_column(String(50), nullable=True, comment="模型版本")
     confidence_score: Mapped[float | None] = mapped_column(Float, nullable=True, comment="置信度分数")
-    generated_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False, comment="生成时间")
+    generated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        comment="生成时间",
+    )
 
     prediction: Mapped["Prediction"] = relationship("Prediction", back_populates="interpretation")
 

@@ -109,7 +109,7 @@ def login(
 
     access_token = _issue_access_token(cast(str, user.username))
     _set_auth_cookie(response, access_token)
-    return {"token_type": "bearer"}
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
 @router.post("/refresh", response_model=Token, summary="Refresh access token")
@@ -121,7 +121,7 @@ def refresh_token(
     access_token = _issue_access_token(cast(str, current_user.username))
     existing_csrf = request.cookies.get(settings.CSRF_COOKIE_NAME)
     _set_auth_cookie(response, access_token, csrf_token=existing_csrf)
-    return {"token_type": "bearer"}
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
 @router.post("/logout", summary="Logout")

@@ -2,10 +2,17 @@ from __future__ import annotations
 
 import asyncio
 
-from app.crud.prediction import create_prediction_with_stats
+from app.crud.prediction import create_interpretation, create_prediction_with_stats, update_interpretation
+from app.crud.spread import update_spread
 from app.crud.user import create_user
 from app.models.spread import SpreadType
-from app.schemas.prediction import PredictionCreate, QuestionTypeEnum
+from app.schemas.prediction import (
+    InterpretationCreate,
+    InterpretationUpdate,
+    PredictionCreate,
+    QuestionTypeEnum,
+)
+from app.schemas.spread import SpreadTypeUpdate
 from app.schemas.user import UserCreate
 from app.services.coze_service import CozeBudgetExceededError, CozeService, CozeTimeoutError
 from app.services.tarot_service import TarotInterpretationService
@@ -203,3 +210,106 @@ def test_budget_guard_allows_reasoner_during_warmup_window():
     service._budget_state["reasoner_calls"] = 0
 
     service._ensure_budget_allows_request(service.reasoner_model)
+
+
+def test_budget_register_soft_cap_does_not_drop_successful_response():
+    service = CozeService()
+    service.api_key = "test-key"
+    service.budget_guard_enabled = True
+    service.request_soft_cap_usd = 0.0001
+
+    async def fake_chat_once(*, model, messages, max_wait_time, expect_json):  # noqa: ANN001
+        del model, messages, max_wait_time, expect_json
+        return {
+            "text": "ok",
+            "usage": {"prompt_tokens": 10, "completion_tokens": 10, "total_tokens": 20},
+            "cost_usd": 0.001,
+        }
+
+    service._chat_once = fake_chat_once  # type: ignore[method-assign]
+
+    result = asyncio.run(
+        service.send_messages_and_wait(
+            messages=[{"role": "user", "content": "ping"}],
+            question="ping",
+            expect_json=False,
+        )
+    )
+
+    status = service.budget_status()
+    assert result["text"] == "ok"
+    assert result["model_used"] == service.chat_model
+    assert status["total_calls"] >= 1
+    assert status["last_request_cost_usd"] == 0.001
+
+
+def test_update_interpretation_supports_partial_payload(db_session):
+    user = create_user(
+        db_session,
+        UserCreate(
+            username="interpret_patch_user",
+            email="interpret_patch_user@example.com",
+            password="password123",
+        ),
+    )
+    spread = SpreadType(
+        name="Interpret Patch Spread",
+        name_en="Interpret Patch Spread",
+        description="Interpretation partial update test",
+        card_count=1,
+        positions=[{"position": 1, "name": "Now", "meaning": "Current state"}],
+        is_active=True,
+    )
+    db_session.add(spread)
+    db_session.commit()
+    db_session.refresh(spread)
+
+    prediction = create_prediction_with_stats(
+        db_session,
+        user_id=user.id,
+        prediction_create=PredictionCreate(
+            spread_type_id=spread.id,
+            question="Need a quick reading summary update",
+            question_type=QuestionTypeEnum.GENERAL,
+        ),
+    )
+
+    interpretation = create_interpretation(
+        db_session,
+        prediction_id=prediction.id,
+        interpretation_create=InterpretationCreate(
+            overall_interpretation="Original interpretation body",
+            summary="Original summary",
+        ),
+    )
+
+    updated = update_interpretation(
+        db_session,
+        db_interpretation=interpretation,
+        interpretation_update=InterpretationUpdate(summary="Updated summary only"),
+    )
+
+    assert updated.overall_interpretation == "Original interpretation body"
+    assert updated.summary == "Updated summary only"
+
+
+def test_update_spread_accepts_pydantic_dumped_positions(db_session):
+    spread = SpreadType(
+        name="Spread Update Target",
+        name_en="Spread Update Target",
+        description="Spread update test",
+        card_count=1,
+        positions=[{"position": 1, "name": "Old", "meaning": "Old meaning"}],
+        is_active=True,
+    )
+    db_session.add(spread)
+    db_session.commit()
+    db_session.refresh(spread)
+
+    update_payload = SpreadTypeUpdate(
+        positions=[{"position": 1, "name": "New", "meaning": "New meaning"}]
+    )
+    updated = update_spread(db_session, spread, update_payload)
+
+    assert isinstance(updated.positions, list)
+    assert updated.positions[0]["name"] == "New"
