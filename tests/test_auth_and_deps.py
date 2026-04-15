@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+from datetime import timedelta
+
 from fastapi.security import HTTPAuthorizationCredentials
 
 from app.api.deps import _extract_token
 from app.core.config import settings
+from app.core.security import create_access_token
 
 
 class _CookieRequest:
@@ -36,6 +39,9 @@ def test_auth_cookie_refresh_logout_flow(client):
     assert "set-cookie" in login_resp.headers
     assert login_resp.json()["token_type"] == "bearer"
     assert login_resp.json().get("access_token")
+    assert client.cookies.get(settings.AUTH_COOKIE_NAME)
+    assert client.cookies.get(settings.REFRESH_COOKIE_NAME)
+    assert client.cookies.get(settings.CSRF_COOKIE_NAME)
 
     me_resp = client.get("/api/v1/users/me")
     assert me_resp.status_code == 200
@@ -48,6 +54,9 @@ def test_auth_cookie_refresh_logout_flow(client):
 
     logout_resp = client.post("/api/v1/logout")
     assert logout_resp.status_code == 200
+    assert client.cookies.get(settings.AUTH_COOKIE_NAME) is None
+    assert client.cookies.get(settings.REFRESH_COOKIE_NAME) is None
+    assert client.cookies.get(settings.CSRF_COOKIE_NAME) is None
 
     unauthenticated_resp = client.get("/api/v1/users/me")
     assert unauthenticated_resp.status_code == 401
@@ -97,6 +106,38 @@ def test_refresh_keeps_existing_csrf_cookie_value(client):
 
     csrf_after = client.cookies.get(settings.CSRF_COOKIE_NAME)
     assert csrf_after == csrf_before
+
+
+def test_refresh_works_with_expired_access_cookie(client):
+    _register_and_login(client, username="expired_access_user")
+    csrf_token = client.cookies.get(settings.CSRF_COOKIE_NAME)
+    refresh_cookie = client.cookies.get(settings.REFRESH_COOKIE_NAME)
+
+    assert csrf_token
+    assert refresh_cookie
+
+    expired_access_token = create_access_token(
+        {"sub": "expired_access_user"},
+        expires_delta=timedelta(seconds=-1),
+    )
+    client.cookies.set(settings.AUTH_COOKIE_NAME, expired_access_token)
+    client.headers.update({settings.CSRF_HEADER_NAME: csrf_token})
+
+    refresh_resp = client.post("/api/v1/refresh")
+
+    assert refresh_resp.status_code == 200
+    assert refresh_resp.json()["token_type"] == "bearer"
+    refreshed_access_token = refresh_resp.json().get("access_token")
+    assert refreshed_access_token
+    refreshed_access_cookie = refresh_resp.cookies.get(settings.AUTH_COOKIE_NAME)
+    assert refreshed_access_cookie
+
+    me_resp = client.get(
+        "/api/v1/users/me",
+        headers={"Authorization": f"Bearer {refreshed_access_token}"},
+    )
+    assert me_resp.status_code == 200
+    assert me_resp.json()["username"] == "expired_access_user"
 
 
 def test_cookie_auth_blocks_disallowed_origin_for_unsafe_methods(client):

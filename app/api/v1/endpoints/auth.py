@@ -7,17 +7,17 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_active_user
+from app.api.deps import _ensure_cookie_csrf_protection
 from app.core.config import settings
-from app.core.security import create_access_token
+from app.core.security import create_access_token, create_refresh_token, verify_token
 from app.crud.user import (
     authenticate_user,
     create_user,
     get_user_by_email,
     get_user_by_username,
+    is_active,
 )
 from app.db.session import get_db
-from app.models.user import User as UserModel
 from app.schemas.user import Token, User, UserCreate
 
 router = APIRouter()
@@ -31,17 +31,39 @@ def _issue_access_token(username: str) -> str:
     )
 
 
+def _issue_refresh_token(username: str) -> str:
+    refresh_token_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    return create_refresh_token(
+        data={"sub": username},
+        expires_delta=refresh_token_expires,
+    )
+
+
 def _set_auth_cookie(
     response: Response,
-    token: str,
+    access_token: str,
+    refresh_token: str,
     csrf_token: Optional[str] = None,
 ) -> None:
-    max_age = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    access_max_age = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    refresh_max_age = settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
+
     response.set_cookie(
         key=settings.AUTH_COOKIE_NAME,
-        value=token,
-        max_age=max_age,
-        expires=max_age,
+        value=access_token,
+        max_age=access_max_age,
+        expires=access_max_age,
+        httponly=True,
+        secure=settings.AUTH_COOKIE_SECURE,
+        samesite=settings.AUTH_COOKIE_SAMESITE,
+        path=settings.AUTH_COOKIE_PATH,
+    )
+
+    response.set_cookie(
+        key=settings.REFRESH_COOKIE_NAME,
+        value=refresh_token,
+        max_age=refresh_max_age,
+        expires=refresh_max_age,
         httponly=True,
         secure=settings.AUTH_COOKIE_SECURE,
         samesite=settings.AUTH_COOKIE_SAMESITE,
@@ -52,8 +74,8 @@ def _set_auth_cookie(
     response.set_cookie(
         key=settings.CSRF_COOKIE_NAME,
         value=csrf_value,
-        max_age=max_age,
-        expires=max_age,
+        max_age=refresh_max_age,
+        expires=refresh_max_age,
         httponly=False,
         secure=settings.AUTH_COOKIE_SECURE,
         samesite=settings.AUTH_COOKIE_SAMESITE,
@@ -64,6 +86,10 @@ def _set_auth_cookie(
 def _clear_auth_cookie(response: Response) -> None:
     response.delete_cookie(
         key=settings.AUTH_COOKIE_NAME,
+        path=settings.AUTH_COOKIE_PATH,
+    )
+    response.delete_cookie(
+        key=settings.REFRESH_COOKIE_NAME,
         path=settings.AUTH_COOKIE_PATH,
     )
     response.delete_cookie(
@@ -108,7 +134,8 @@ def login(
         )
 
     access_token = _issue_access_token(cast(str, user.username))
-    _set_auth_cookie(response, access_token)
+    refresh_token = _issue_refresh_token(cast(str, user.username))
+    _set_auth_cookie(response, access_token, refresh_token)
     return {"access_token": access_token, "token_type": "bearer"}
 
 
@@ -116,11 +143,38 @@ def login(
 def refresh_token(
     request: Request,
     response: Response,
-    current_user: UserModel = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
 ):
-    access_token = _issue_access_token(cast(str, current_user.username))
+    _ensure_cookie_csrf_protection(request)
+
+    refresh_cookie = request.cookies.get(settings.REFRESH_COOKIE_NAME)
+    username = verify_token(refresh_cookie, expected_type="refresh") if refresh_cookie else None
+    if username is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not refresh session",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user = get_user_by_username(db, username=username)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not refresh session",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    if not is_active(user):
+        raise HTTPException(status_code=400, detail="Inactive user")
+
+    access_token = _issue_access_token(cast(str, user.username))
+    new_refresh_token = _issue_refresh_token(cast(str, user.username))
     existing_csrf = request.cookies.get(settings.CSRF_COOKIE_NAME)
-    _set_auth_cookie(response, access_token, csrf_token=existing_csrf)
+    _set_auth_cookie(
+        response,
+        access_token,
+        new_refresh_token,
+        csrf_token=existing_csrf,
+    )
     return {"access_token": access_token, "token_type": "bearer"}
 
 

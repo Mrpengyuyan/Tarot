@@ -75,6 +75,11 @@ export const api = rawApi as DataApiClient;
 const AUTH_COOKIE_NAME = process.env.REACT_APP_AUTH_COOKIE_NAME || 'access_token';
 const CSRF_COOKIE_NAME = process.env.REACT_APP_CSRF_COOKIE_NAME || 'csrf_token';
 const CSRF_HEADER_NAME = process.env.REACT_APP_CSRF_HEADER_NAME || 'X-CSRF-Token';
+const AUTH_ROUTE_SEGMENTS = ['/login', '/refresh', '/logout', '/register'];
+
+type RetriableRequestConfig<D = any> = AxiosRequestConfig<D> & {
+  _retry?: boolean;
+};
 
 const readCookie = (name: string): string | null => {
   if (typeof document === 'undefined') {
@@ -110,19 +115,51 @@ rawApi.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+let refreshRequest: Promise<void> | null = null;
+
+const isAuthRoute = (url: string | undefined): boolean =>
+  AUTH_ROUTE_SEGMENTS.some((segment) => (url || '').includes(segment));
+
+const performClientLogout = async (): Promise<void> => {
+  try {
+    const { useAuthStore } = await import('../stores/authStore');
+    useAuthStore.getState().logout();
+  } catch {
+    // best-effort state cleanup
+  }
+
+  if (typeof window !== 'undefined' && window.location.pathname !== '/auth/login') {
+    window.location.href = '/auth/login';
+  }
+};
+
 rawApi.interceptors.response.use(
   (response) => response.data,
   async (error) => {
-    if (error.response?.status === 401) {
+    const requestConfig = error.config as RetriableRequestConfig | undefined;
+
+    if (error.response?.status === 401 && requestConfig) {
+      if (!requestConfig._retry && !isAuthRoute(requestConfig.url)) {
+        requestConfig._retry = true;
+
+        try {
+          refreshRequest ||= rawApi.post('/refresh').then(() => undefined).finally(() => {
+            refreshRequest = null;
+          });
+
+          await refreshRequest;
+          return rawApi.request(requestConfig);
+        } catch {
+          await performClientLogout();
+        }
+      } else {
+        await performClientLogout();
+      }
+    } else if (error.response?.status === 401) {
       try {
-        const { useAuthStore } = await import('../stores/authStore');
-        useAuthStore.getState().logout();
+        await performClientLogout();
       } catch {
         // best-effort state cleanup
-      }
-
-      if (window.location.pathname !== '/auth/login') {
-        window.location.href = '/auth/login';
       }
     }
 

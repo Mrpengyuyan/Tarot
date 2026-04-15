@@ -21,6 +21,7 @@ import {
   AutoAwesome,
 } from 'icons';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { authService } from '../../services/authService';
 import { useAuthStore } from '../../stores/authStore';
 import { useUiStore } from '../../stores/uiStore';
 import { ROUTES, getRouteTitle } from '../../routes/routeConfig';
@@ -46,10 +47,16 @@ const Header: React.FC = () => {
     setAnchorEl(null);
   };
 
-  const handleLogout = () => {
-    logout();
-    handleProfileMenuClose();
-    navigate(ROUTES.LOGIN);
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+    } catch {
+      // 保持本地登出兜底，避免菜单点击后卡在半登录状态
+    } finally {
+      logout();
+      handleProfileMenuClose();
+      navigate(ROUTES.LOGIN);
+    }
   };
 
   const handleNavigate = (path: string) => {
