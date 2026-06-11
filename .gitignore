@@ -1,0 +1,29 @@
+# Unity generated folders (per-project, under UnityClient/TarotUnity)
+**/[Ll]ibrary/
+**/[Tt]emp/
+**/[Oo]bj/
+**/[Ll]ogs/
+**/[Uu]ser[Ss]ettings/
+**/[Mm]emoryCaptures/
+**/[Rr]ecordings/
+
+# Build outputs
+**/[Bb]uilds/
+**/[Bb]uild/
+
+# IDE caches
+**/.vscode/
+**/.idea/
+*.csproj
+*.slnx
+*.sln
+*.user
+
+# Unity test artifacts
+**/TestResults/
+
+# Superpowers brainstorm server state (local tooling cache)
+**/.superpowers/
+
+# macOS
+.DS_Store

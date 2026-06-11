@@ -1,0 +1,71 @@
+# Tarot Unity Client
+
+Unity frontend workspace for the Tarot vertical slice.
+
+## Editor
+
+- Unity: `6000.3.16f1`
+- Template: URP
+- First target platforms: macOS and Windows desktop
+
+## Current Package Baseline
+
+Already present in `Packages/manifest.json`:
+
+- Universal Render Pipeline `17.3.0`
+- Input System `1.19.0`
+- Unity Test Framework `1.6.0`
+- UGUI `2.0.0`
+
+Package Manager follow-up for later phases:
+
+- Cinemachine for reveal and result camera choreography
+- TextMeshPro essential resources before final UI work
+- Addressables only after card art and audio assets grow
+
+## V1 Flow
+
+The first playable slice stays focused on:
+
+`MainMenu -> Spread Select -> Question Input -> Shuffle/Draw -> Flip Cards -> Result`
+
+Do not build history, settings, profile, admin, or packaging workflows in this phase.
+
+## Bootstrap Notes
+
+Phase 1 conventions and the first scene, prefab, script, and backend API map live in:
+
+- `Docs/PHASE1_BOOTSTRAP.md`
+
+Phase 2 graybox flow notes live in:
+
+- `Docs/PHASE2_GRAYBOX.md`
+
+Pre-Phase-6 readiness and desktop build notes live in:
+
+- `Docs/PRE_PHASE6_READINESS.md`
+- `Docs/PHASE6_DESKTOP_BUILD.md`
+- `Docs/PHASE7_IMMERSIVE_UI_DESIGN.md`
+- `Docs/UI_COMPLETION_MAINLINE.md`
+- `Docs/PHASE8_VISUAL_IDENTITY.md`
+- `Docs/PHASE9_MOTION_AUDIO_RHYTHM.md`
+- `Docs/PHASE10_RELEASE_UX_HARDENING.md`
+- `Docs/PHASE11_VISUAL_REVIEW.md`
+- `Docs/PHASE12_CARD_FIRST_REVEAL.md`
+- `Docs/PHASE13_TAROT_ARTWORK_PIPELINE.md`
+- `Docs/PHASE14_DIMENSIONAL_CARD_REVEAL.md`
+- `Docs/PHASE15_3D_TABLE_FOUNDATION.md`
+- `Docs/PHASE16_RITUAL_AURA_VFX.md`
+- `Docs/PHASE17_RITUAL_AURA_RUNTIME_MOTION.md`
+- `Docs/PHASE18_RITUAL_PARTICLE_SYSTEMS.md`
+- `Docs/PHASE19_CARD_ACTION_VFX_INTEGRATION.md`
+
+## Current Playable Slice
+
+Open `Assets/Scenes/Boot.unity` and press Play.
+
+Expected local flow:
+
+`Start Reading -> choose spread -> enter question -> Draw -> click cards to flip -> Reveal Result`
+
+The current slice can run with local placeholder data or the Phase 4 backend integration mode. Phase 6 adds desktop runtime config plus generated macOS and Windows prototype build paths. Phase 7 upgrades the vertical slice UI toward an immersive ritual desktop prototype. Phase 8 adds the first visual identity pass for the table, cards, result frame, and theme palette. Phase 9 adds card-game rhythm scaffolding for shuffle, deal, flip, and result reveal. Phase 10 adds release package readme/config files and player-readable offline/backend status copy. Phase 11 adds screenshot-based visual review artifacts and a first layout adjustment pass. Phase 12 adds card-first reveal anchors and a durable card face-art slot. Phase 13 adds the RWS1909 tarot artwork pipeline, default card artwork catalog, and ReadingRoom/Result scene wiring for real card-face sprites. Phase 14 adds a 2.5D dimensional card reveal layer, card edge/shadow/glow anchors, and stage polish around the existing real card art. Phase 15 adds the first 3D table foundation with card mesh-shell anchors, ritual table depth, warm/cool lighting, and Result card-stage support. Phase 16 adds a controlled ritual aura VFX layer with glow pools, rune-ring anchors, particle anchor markers, and Result aura support. Phase 17 adds lightweight runtime aura motion for rune-ring rotation, glow pulsing, and particle-anchor drift. Phase 18 adds the first true ParticleSystem layer for ambient dust, deck focus, flip sparkle, and Result card motes while preserving the vertical slice. Phase 19 connects shuffle, deal, flip, and result cues to that particle layer through action-triggered VFX integration. The Windows release zip is generated at `Builds/Desktop/Release/TarotUnity-Windows-x64.zip`.

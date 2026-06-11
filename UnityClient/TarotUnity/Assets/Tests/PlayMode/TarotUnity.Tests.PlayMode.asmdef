@@ -1,0 +1,19 @@
+{
+  "name": "TarotUnity.Tests.PlayMode",
+  "rootNamespace": "TarotUnity.Tests.PlayMode",
+  "references": [
+    "TarotUnity.Runtime"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false,
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}
