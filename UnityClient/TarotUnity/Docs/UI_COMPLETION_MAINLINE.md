@@ -301,6 +301,29 @@ Remaining limitation:
 
 - Phase19 is action-triggered VFX integration, not final high-end VFX. Later phases can add card trails, Shader Graph rune animation, camera choreography, post-processing, and screenshot-driven final polish.
 
+### Phase 20: Cinematic Rendering
+
+Status: implemented on 2026-06-11.
+
+Purpose:
+
+- Turn on the cinematic rendering pipeline that all prior visual layers were missing.
+- Add a shared post-processing volume profile with Bloom, ACES Tonemapping, Color Adjustments, White Balance, and Vignette.
+- Enable HDR color grading, MSAA, SMAA, and camera post-processing across MainMenu, ReadingRoom, and Result.
+- Boost glow materials into HDR range and add candle/moon/edge emission so bloom responds to the existing ritual layers.
+- Keep the real RWS1909 card artwork, Phase14 dimensional reveal, Phase15 3D table foundation, Phase16 aura anchors, Phase17 motion, Phase18 particles, and Phase19 action VFX intact.
+
+Exit criteria:
+
+- `Assets/Settings/Phase20_CinematicVolumeProfile.asset` exists with the five cinematic components.
+- Each gameplay scene contains `Phase20_CinematicVolume` and a post-processing camera.
+- PC and Mobile pipeline assets use HDR color grading.
+- EditMode and PlayMode tests pass.
+
+Remaining limitation:
+
+- Phase20 is the rendering-pipeline pass, not final high-end VFX. Later phases can add Cinemachine camera choreography, Shader Graph card materials, card trails, depth-of-field result staging, and screenshot-driven final polish.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:
