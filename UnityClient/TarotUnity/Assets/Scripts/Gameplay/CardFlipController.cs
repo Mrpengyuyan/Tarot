@@ -10,12 +10,14 @@ namespace TarotUnity.Gameplay
         [SerializeField] private float flipDuration = 0.45f;
         [SerializeField] private float anticipationPause = 0.1f;
         [SerializeField] private float faceRevealPause = 0.06f;
-        [SerializeField] private float liftDuringFlip = 0.12f;
+        [SerializeField] private float liftDuringFlip = 0.16f;
         [SerializeField] private PresentationCueId flipCue = PresentationCueId.CardFlipped;
         [SerializeField] private AnimationCurve flipCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
         [SerializeField] private bool cameraPunchEnabled = true;
 
         private bool isFlipping;
+
+        public bool IsFlipping => isFlipping;
 
         public void Flip(CardView card)
         {
@@ -36,6 +38,7 @@ namespace TarotUnity.Gameplay
 
             isFlipping = true;
             card.SetHighlighted(true);
+            card.GetComponent<CardHoverTiltController>()?.Suspend();
 
             if (cameraPunchEnabled)
             {

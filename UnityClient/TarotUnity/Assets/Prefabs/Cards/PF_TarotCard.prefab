@@ -1799,6 +1799,7 @@ GameObject:
   - component: {fileID: 8000414949420825627}
   - component: {fileID: 1003688776285027844}
   - component: {fileID: 2755402472212387640}
+  - component: {fileID: 971855515301785908}
   m_Layer: 0
   m_Name: PF_TarotCard
   m_TagString: Untagged
@@ -1864,7 +1865,7 @@ MonoBehaviour:
   flipDuration: 0.66
   anticipationPause: 0.16
   faceRevealPause: 0.12
-  liftDuringFlip: 0.14
+  liftDuringFlip: 0.16
   flipCue: 5
   flipCurve:
     serializedVersion: 2
@@ -1998,6 +1999,23 @@ MonoBehaviour:
   cardFaceRenderer: {fileID: 7003361530057631434}
   cardBackRenderer: {fileID: 1786209549729709679}
   cardDropShadowRenderer: {fileID: 5267776062600497599}
+--- !u!114 &971855515301785908
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5163916026790923043}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab6624bc795194c16ac1972b09cba2db, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TarotUnity.Runtime::TarotUnity.Gameplay.CardHoverTiltController
+  hoverLift: 0.045
+  maxTiltDegrees: 7
+  responseSeconds: 0.06
+  cardHalfWidth: 0.35
+  cardHalfLength: 0.49
 --- !u!1 &5250238523369421289
 GameObject:
   m_ObjectHideFlags: 0

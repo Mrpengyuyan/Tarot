@@ -368,6 +368,27 @@ Remaining limitation:
 
 - Phase22 is a layout pass, not final high-end VFX or typography. Later phases can add TextMeshPro CJK type, styled tray art, card hover tilt, and Shader Graph card materials.
 
+### Phase 23: Card Feel
+
+Status: implemented on 2026-06-12.
+
+Purpose:
+
+- Add Hearthstone-style card physicality: face-down cards lift and tilt toward the pointer with near-100ms response via `CardHoverTiltController` on the existing EventSystem pointer pipeline.
+- Guarantee the hover layer and the flip animation never fight: flip suspends hover and restores the rest pose synchronously.
+- Apply research-backed rhythm tuning: punch aftermath 0.32/0.4, flip lift 0.16, deal interval 0.15.
+
+Exit criteria:
+
+- `PF_TarotCard` carries the tuned hover controller.
+- PlayMode tests cover lift, tilt, settle-back, and suspend.
+- Tuned rhythm values are test-enforced in ReadingRoom.
+- EditMode and PlayMode tests pass.
+
+Remaining limitation:
+
+- Phase23 is the interaction-feel pass, not final high-end VFX. Later phases can add Shader Graph card materials, card trails, TextMeshPro CJK typography, and screenshot-driven final polish.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:

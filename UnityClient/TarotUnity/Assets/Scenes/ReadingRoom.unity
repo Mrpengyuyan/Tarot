@@ -21926,6 +21926,10 @@ PrefabInstance:
       value: 0.56
       objectReference: {fileID: 0}
     - target: {fileID: 5608379182673463491, guid: feaa6e1ee19d74cf78649b6aa15c2013, type: 3}
+      propertyPath: dealInterval
+      value: 0.18
+      objectReference: {fileID: 0}
+    - target: {fileID: 5608379182673463491, guid: feaa6e1ee19d74cf78649b6aa15c2013, type: 3}
       propertyPath: dealArcHeight
       value: 0.72
       objectReference: {fileID: 0}
@@ -33826,8 +33830,8 @@ MonoBehaviour:
   punchTravelDistance: 0.55
   punchFovDelta: -4
   punchInSeconds: 0.26
-  punchHoldSeconds: 0.5
-  punchReturnSeconds: 0.5
+  punchHoldSeconds: 0.32
+  punchReturnSeconds: 0.4
   punchShakeAmplitude: 0.035
   shakeDecayPerSecond: 0.12
 --- !u!4 &1499204521
