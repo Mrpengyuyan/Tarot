@@ -16294,6 +16294,22 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  defaultFov: 60
+  deckFov: 60
+  oneCardFov: 60
+  threeCardFov: 60
+  resultFov: 60
+  breathingEnabled: 1
+  breathPositionAmplitude: 0.015
+  breathRotationAmplitude: 0.15
+  breathFrequency: 0.12
+  punchTravelDistance: 0.55
+  punchFovDelta: -4
+  punchInSeconds: 0.26
+  punchHoldSeconds: 0.5
+  punchReturnSeconds: 0.5
+  punchShakeAmplitude: 0.035
+  shakeDecayPerSecond: 0.12
 --- !u!4 &955622108
 Transform:
   m_ObjectHideFlags: 0

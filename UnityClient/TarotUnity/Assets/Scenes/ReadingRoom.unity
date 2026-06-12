@@ -143,8 +143,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 19287500}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.38842595, y: -0, z: -0, w: 0.92148}
-  m_LocalPosition: {x: 0, y: 6.1, z: -5.8}
+  m_LocalRotation: {x: 0.2773147, y: 0, z: 0, w: 0.9607792}
+  m_LocalPosition: {x: 0, y: 2.45, z: -3.55}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10414,8 +10414,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 219229176}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.3756658, y: -0, z: -0, w: 0.92675525}
-  m_LocalPosition: {x: 0, y: 4.3, z: -4.2}
+  m_LocalRotation: {x: 0.2773147, y: 0, z: 0, w: 0.9607792}
+  m_LocalPosition: {x: 0, y: 1.85, z: -2.6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10698,8 +10698,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 364858374}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.37167156, y: -0, z: -0, w: 0.92836434}
-  m_LocalPosition: {x: 0, y: 4.8, z: -4.8}
+  m_LocalRotation: {x: 0.2739592, y: 0, z: 0, w: 0.9617413}
+  m_LocalPosition: {x: 0, y: 2.2, z: -3.2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -11252,8 +11252,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 502602222}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.38268343, y: -0, z: -0, w: 0.92387956}
-  m_LocalPosition: {x: 0, y: 5.2, z: -4.9}
+  m_LocalRotation: {x: 0.29654157, y: 0, z: 0, w: 0.95501995}
+  m_LocalPosition: {x: 0, y: 2.9, z: -3.9}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -11336,7 +11336,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60
+  field of view: 40
   orthographic: 0
   orthographic size: 5
   m_Depth: 0
@@ -11362,8 +11362,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 521728998}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.38449425, y: 0, z: 0, w: 0.9231274}
-  m_LocalPosition: {x: 0, y: 6.4, z: -6.2}
+  m_LocalRotation: {x: 0.27899116, y: 0, z: 0, w: 0.9602937}
+  m_LocalPosition: {x: 0, y: 2.85, z: -4.15}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -21981,8 +21981,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 875104462}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.3818303, y: -0.097724386, z: 0.04064045, w: 0.91815245}
-  m_LocalPosition: {x: -1.7, y: 4.4, z: -4.1}
+  m_LocalRotation: {x: 0.30052817, y: -0.19947186, z: 0.06442766, w: 0.93045306}
+  m_LocalPosition: {x: -2, y: 1.7, z: -1.9}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -33789,7 +33789,7 @@ MonoBehaviour:
   oneCardPose: {fileID: 219229177}
   threeCardPose: {fileID: 364858375}
   resultPose: {fileID: 502602223}
-  transitionDuration: 0.72
+  transitionDuration: 0.9
   transitionCurve:
     serializedVersion: 2
     m_Curve:
@@ -33814,6 +33814,22 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  defaultFov: 36
+  deckFov: 30
+  oneCardFov: 32
+  threeCardFov: 36
+  resultFov: 38
+  breathingEnabled: 1
+  breathPositionAmplitude: 0.03
+  breathRotationAmplitude: 0.3
+  breathFrequency: 0.16
+  punchTravelDistance: 0.55
+  punchFovDelta: -4
+  punchInSeconds: 0.26
+  punchHoldSeconds: 0.5
+  punchReturnSeconds: 0.5
+  punchShakeAmplitude: 0.035
+  shakeDecayPerSecond: 0.12
 --- !u!4 &1499204521
 Transform:
   m_ObjectHideFlags: 0

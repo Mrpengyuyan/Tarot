@@ -789,7 +789,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &3902436859228724756
 Transform:
   m_ObjectHideFlags: 0
@@ -1890,6 +1890,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  cameraPunchEnabled: 1
 --- !u!114 &7144273312875959409
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2779,7 +2780,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &543035146365270553
 Transform:
   m_ObjectHideFlags: 0

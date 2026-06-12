@@ -14,9 +14,42 @@ namespace TarotUnity.Presentation
         [SerializeField] private float transitionDuration = 0.75f;
         [SerializeField] private AnimationCurve transitionCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
+        [Header("Phase21 Pose Framing")]
+        [SerializeField] private float defaultFov = 60f;
+        [SerializeField] private float deckFov = 60f;
+        [SerializeField] private float oneCardFov = 60f;
+        [SerializeField] private float threeCardFov = 60f;
+        [SerializeField] private float resultFov = 60f;
+
+        [Header("Phase21 Idle Breathing")]
+        [SerializeField] private bool breathingEnabled;
+        [SerializeField] private float breathPositionAmplitude = 0.03f;
+        [SerializeField] private float breathRotationAmplitude = 0.3f;
+        [SerializeField] private float breathFrequency = 0.16f;
+
+        [Header("Phase21 Flip Punch-In")]
+        [SerializeField] private float punchTravelDistance = 0.55f;
+        [SerializeField] private float punchFovDelta = -4f;
+        [SerializeField] private float punchInSeconds = 0.26f;
+        [SerializeField] private float punchHoldSeconds = 0.5f;
+        [SerializeField] private float punchReturnSeconds = 0.5f;
+        [SerializeField] private float punchShakeAmplitude = 0.035f;
+        [SerializeField] private float shakeDecayPerSecond = 0.12f;
+
         private Coroutine activeMove;
+        private Coroutine activePunch;
+        private Vector3 basePosition;
+        private Quaternion baseRotation = Quaternion.identity;
+        private float baseFov = 60f;
+        private bool baseInitialized;
+        private float punchWeight;
+        private Vector3 punchDirection;
+        private float shakeEnergy;
+        private float breathSeed;
 
         public bool IsMoving { get; private set; }
+        public bool IsPunching => activePunch != null;
+        public float CurrentBaseFov => baseFov;
 
         private void Awake()
         {
@@ -24,34 +57,80 @@ namespace TarotUnity.Presentation
             {
                 targetCamera = Camera.main;
             }
+
+            breathSeed = Random.Range(0f, 100f);
+            CaptureBaseFromCamera();
+        }
+
+        private void LateUpdate()
+        {
+            if (targetCamera == null || !baseInitialized)
+            {
+                return;
+            }
+
+            if (shakeEnergy > 0.0001f)
+            {
+                shakeEnergy = Mathf.MoveTowards(shakeEnergy, 0f, shakeDecayPerSecond * Time.deltaTime);
+            }
+
+            ComposeCameraFrame();
         }
 
         public void PlayOpening()
         {
-            MoveTo(defaultPose);
+            MoveTo(defaultPose, defaultFov);
         }
 
         public void FocusDeck()
         {
-            MoveTo(deckPose);
+            MoveTo(deckPose, deckFov);
         }
 
         public void FocusSpread(int cardCount)
         {
-            MoveTo(cardCount == 1 ? oneCardPose : threeCardPose);
+            if (cardCount == 1)
+            {
+                MoveTo(oneCardPose, oneCardFov);
+            }
+            else
+            {
+                MoveTo(threeCardPose, threeCardFov);
+            }
         }
 
         public void FocusResult()
         {
-            MoveTo(resultPose);
+            MoveTo(resultPose, resultFov);
         }
 
         public void SnapToDefault()
         {
-            ApplyPose(defaultPose);
+            ApplyPose(defaultPose, defaultFov);
         }
 
-        private void MoveTo(Transform pose)
+        public void PunchToward(Transform focus)
+        {
+            if (focus == null || targetCamera == null || !baseInitialized || !gameObject.activeInHierarchy)
+            {
+                return;
+            }
+
+            if (activePunch != null)
+            {
+                StopCoroutine(activePunch);
+            }
+
+            punchDirection = (focus.position - basePosition).normalized;
+            activePunch = StartCoroutine(PunchRoutine());
+        }
+
+        public void Kick(float amplitude)
+        {
+            shakeEnergy = Mathf.Max(shakeEnergy, Mathf.Abs(amplitude));
+        }
+
+        private void MoveTo(Transform pose, float fov)
         {
             if (pose == null)
             {
@@ -68,9 +147,11 @@ namespace TarotUnity.Presentation
                 return;
             }
 
+            CancelPunch();
+
             if (!gameObject.activeInHierarchy)
             {
-                ApplyPose(pose);
+                ApplyPose(pose, fov);
                 return;
             }
 
@@ -79,38 +160,145 @@ namespace TarotUnity.Presentation
                 StopCoroutine(activeMove);
             }
 
-            activeMove = StartCoroutine(MoveRoutine(pose));
+            activeMove = StartCoroutine(MoveRoutine(pose, fov));
         }
 
-        private IEnumerator MoveRoutine(Transform pose)
+        private IEnumerator MoveRoutine(Transform pose, float fov)
         {
             IsMoving = true;
-            var cameraTransform = targetCamera.transform;
-            var startPosition = cameraTransform.position;
-            var startRotation = cameraTransform.rotation;
+            if (!baseInitialized)
+            {
+                CaptureBaseFromCamera();
+            }
+
+            var startPosition = basePosition;
+            var startRotation = baseRotation;
+            var startFov = baseFov;
             var duration = Mathf.Max(0.01f, transitionDuration);
 
             for (var elapsed = 0f; elapsed < duration; elapsed += Time.deltaTime)
             {
                 var t = transitionCurve.Evaluate(elapsed / duration);
-                cameraTransform.position = Vector3.Lerp(startPosition, pose.position, t);
-                cameraTransform.rotation = Quaternion.Slerp(startRotation, pose.rotation, t);
+                basePosition = Vector3.Lerp(startPosition, pose.position, t);
+                baseRotation = Quaternion.Slerp(startRotation, pose.rotation, t);
+                baseFov = Mathf.Lerp(startFov, fov, t);
                 yield return null;
             }
 
-            ApplyPose(pose);
+            ApplyPose(pose, fov);
             IsMoving = false;
             activeMove = null;
         }
 
-        private void ApplyPose(Transform pose)
+        private IEnumerator PunchRoutine()
+        {
+            var inDuration = Mathf.Max(0.01f, punchInSeconds);
+            for (var elapsed = 0f; elapsed < inDuration; elapsed += Time.deltaTime)
+            {
+                var t = elapsed / inDuration;
+                punchWeight = 1f - (1f - t) * (1f - t);
+                yield return null;
+            }
+
+            punchWeight = 1f;
+            Kick(punchShakeAmplitude);
+
+            for (var elapsed = 0f; elapsed < punchHoldSeconds; elapsed += Time.deltaTime)
+            {
+                yield return null;
+            }
+
+            var returnDuration = Mathf.Max(0.01f, punchReturnSeconds);
+            for (var elapsed = 0f; elapsed < returnDuration; elapsed += Time.deltaTime)
+            {
+                var t = elapsed / returnDuration;
+                punchWeight = 1f - (t * t * (3f - 2f * t));
+                yield return null;
+            }
+
+            punchWeight = 0f;
+            activePunch = null;
+        }
+
+        private void CancelPunch()
+        {
+            if (activePunch != null)
+            {
+                StopCoroutine(activePunch);
+                activePunch = null;
+            }
+
+            punchWeight = 0f;
+        }
+
+        private void ApplyPose(Transform pose, float fov)
         {
             if (targetCamera == null || pose == null)
             {
                 return;
             }
 
-            targetCamera.transform.SetPositionAndRotation(pose.position, pose.rotation);
+            basePosition = pose.position;
+            baseRotation = pose.rotation;
+            baseFov = fov;
+            baseInitialized = true;
+            ComposeCameraFrame();
+        }
+
+        private void CaptureBaseFromCamera()
+        {
+            if (targetCamera == null)
+            {
+                return;
+            }
+
+            basePosition = targetCamera.transform.position;
+            baseRotation = targetCamera.transform.rotation;
+            baseFov = targetCamera.fieldOfView;
+            baseInitialized = true;
+        }
+
+        private void ComposeCameraFrame()
+        {
+            var position = basePosition;
+            var rotation = baseRotation;
+            var fov = baseFov;
+
+            if (breathingEnabled && Application.isPlaying)
+            {
+                var t = Time.time * breathFrequency;
+                position += new Vector3(
+                    SampleNoise(t, 0.13f) * breathPositionAmplitude,
+                    SampleNoise(t, 0.47f) * breathPositionAmplitude * 0.6f,
+                    SampleNoise(t, 0.71f) * breathPositionAmplitude * 0.4f);
+                rotation *= Quaternion.Euler(
+                    SampleNoise(t, 0.29f) * breathRotationAmplitude,
+                    SampleNoise(t, 0.83f) * breathRotationAmplitude,
+                    0f);
+            }
+
+            if (punchWeight > 0f)
+            {
+                position += punchDirection * (punchTravelDistance * punchWeight);
+                fov += punchFovDelta * punchWeight;
+            }
+
+            if (shakeEnergy > 0.0001f)
+            {
+                var shakeTime = Time.time * 23f;
+                position += new Vector3(
+                    SampleNoise(shakeTime, 0.31f),
+                    SampleNoise(shakeTime, 0.67f),
+                    0f) * shakeEnergy;
+            }
+
+            targetCamera.transform.SetPositionAndRotation(position, rotation);
+            targetCamera.fieldOfView = fov;
+        }
+
+        private float SampleNoise(float t, float seedOffset)
+        {
+            return (Mathf.PerlinNoise(t, breathSeed + seedOffset * 37f) - 0.5f) * 2f;
         }
     }
 }

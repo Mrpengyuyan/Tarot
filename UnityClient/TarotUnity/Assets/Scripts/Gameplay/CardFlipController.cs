@@ -13,6 +13,7 @@ namespace TarotUnity.Gameplay
         [SerializeField] private float liftDuringFlip = 0.12f;
         [SerializeField] private PresentationCueId flipCue = PresentationCueId.CardFlipped;
         [SerializeField] private AnimationCurve flipCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+        [SerializeField] private bool cameraPunchEnabled = true;
 
         private bool isFlipping;
 
@@ -35,6 +36,11 @@ namespace TarotUnity.Gameplay
 
             isFlipping = true;
             card.SetHighlighted(true);
+
+            if (cameraPunchEnabled)
+            {
+                FindFirstObjectByType<CameraChoreographyController>()?.PunchToward(card.transform);
+            }
 
             if (anticipationPause > 0f)
             {

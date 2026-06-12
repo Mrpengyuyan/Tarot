@@ -324,6 +324,27 @@ Remaining limitation:
 
 - Phase20 is the rendering-pipeline pass, not final high-end VFX. Later phases can add Cinemachine camera choreography, Shader Graph card materials, card trails, depth-of-field result staging, and screenshot-driven final polish.
 
+### Phase 21: Cinematic Camera
+
+Status: implemented on 2026-06-11.
+
+Purpose:
+
+- Replace the wide-angle surveillance framing (vertical FOV 60, 45-degree top-down) with seated, intimate framing computed from measured scene geometry, following Hearthstone physicality and Inscryption seated-table research.
+- Add per-pose FOV blending, idle Perlin breathing, an opening settle-in shot, and a flip punch-in with micro-shake.
+- Keep Result framing untouched (UI/card-stage alignment) and add only subtle breathing there and in MainMenu.
+
+Exit criteria:
+
+- ReadingRoom poses aim at their subjects (geometry-verified by tests) with FOV in the 28-40 range.
+- Flip triggers `PunchToward` and the camera settles back cleanly.
+- Prior visual wiring (Phase 16 aura, Phase 20 volume) remains intact.
+- EditMode and PlayMode tests pass.
+
+Remaining limitation:
+
+- Phase21 is the camera-feel pass, not final high-end VFX. Later phases can add Shader Graph card materials, card trails, depth-of-field staging, and screenshot-driven final polish.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:

@@ -1,0 +1,21 @@
+{
+  "generatedAtUtc": "2026-06-12T02:39:43.7415790Z",
+  "resolution": "1280x720",
+  "screenshots": [
+    {
+      "scene": "Main Menu",
+      "scenePath": "Assets/Scenes/MainMenu.unity",
+      "file": "MainMenu.png"
+    },
+    {
+      "scene": "Reading Room",
+      "scenePath": "Assets/Scenes/ReadingRoom.unity",
+      "file": "ReadingRoom.png"
+    },
+    {
+      "scene": "Result",
+      "scenePath": "Assets/Scenes/Result.unity",
+      "file": "Result.png"
+    }
+  ]
+}
