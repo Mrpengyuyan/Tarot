@@ -345,6 +345,29 @@ Remaining limitation:
 
 - Phase21 is the camera-feel pass, not final high-end VFX. Later phases can add Shader Graph card materials, card trails, depth-of-field staging, and screenshot-driven final polish.
 
+### Phase 22: UI Composition For The Seated Camera
+
+Status: implemented on 2026-06-12.
+
+Purpose:
+
+- Re-compose the ReadingRoom UI around the Phase 21 seated framing using researched zone rules (Hearthstone "information far, actions near"; HUD zone theory).
+- Keep the card stage band (y +95..-115) completely free of UI.
+- Move every clickable control into a bottom action tray; move the flip instruction to the top info zone.
+- Deactivate flat-era fake-table overlays superseded by the real 3D table and Phase 20 vignette.
+- Move the deck stack into the default framing and re-aim DeckPose.
+
+Exit criteria:
+
+- Tray controls do not overlap and stay below the card band (test-enforced).
+- Flat-era overlays remain deactivated but not deleted.
+- Deck visibility and DeckPose aim are geometry-verified.
+- EditMode and PlayMode tests pass.
+
+Remaining limitation:
+
+- Phase22 is a layout pass, not final high-end VFX or typography. Later phases can add TextMeshPro CJK type, styled tray art, card hover tilt, and Shader Graph card materials.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:
