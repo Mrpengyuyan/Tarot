@@ -389,6 +389,31 @@ Remaining limitation:
 
 - Phase23 is the interaction-feel pass, not final high-end VFX. Later phases can add Shader Graph card materials, card trails, TextMeshPro CJK typography, and screenshot-driven final polish.
 
+### Phase 24: Typography
+
+Status: implemented on 2026-06-14.
+
+Purpose:
+
+- Replace the built-in `LegacyRuntime` font (no CJK glyphs; silent OS fallback to PingFang or YaHei or tofu) with a bundled, designed Chinese typeface so the all-Chinese UI reads as a game and ships identically on every machine.
+- Chosen face: LXGW WenKai (SIL OFL), an elegant calligraphic Kai that fits the quiet reading-table mood; bundled as a body cut (Regular) and a display cut (Medium).
+
+What changed:
+
+- `Assets/Fonts/` bundles `LXGWWenKai-Regular.ttf`, `LXGWWenKai-Medium.ttf`, and `OFL.txt`, imported as Dynamic fonts with embedded data so arbitrary runtime glyphs (AI interpretation text) rasterize on demand.
+- `TarotUiTheme` gained body/display font slots, a shared `ClassifyRole` rule (Display >= size 30, Emphasis = button labels, Body = the rest), and runtime font application; it stays the runtime source of truth.
+- `Phase24TypographyBootstrapper` bakes the fonts into every active scene/prefab Text by role and adds a legibility outline to display titles, skipping inactive text so the deactivated fontless card labels are never revived.
+
+Exit criteria:
+
+- The two LXGW WenKai TTFs and the OFL license ship under `Assets/Fonts/`.
+- Each UI scene theme references both fonts; every active scene text uses the bundled font for its role; display titles carry an outline.
+- Earlier-phase size invariants are preserved; EditMode and PlayMode tests pass.
+
+Remaining limitation:
+
+- Phase24 is the typography pass, not final high-end VFX. A heavier Song serif (Source Han Serif SC) can be swapped in via the two font path references, and a later TextMeshPro/SDF upgrade can add gradient and outlined glyph effects.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:
