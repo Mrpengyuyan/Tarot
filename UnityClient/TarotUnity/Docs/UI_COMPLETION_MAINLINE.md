@@ -414,6 +414,32 @@ Remaining limitation:
 
 - Phase24 is the typography pass, not final high-end VFX. A heavier Song serif (Source Han Serif SC) can be swapped in via the two font path references, and a later TextMeshPro/SDF upgrade can add gradient and outlined glyph effects.
 
+### Phase 25: Result Composition
+
+Status: implemented on 2026-06-14.
+
+Purpose:
+
+- Re-compose the Result payoff screen, the weakest screen after Phase 24: gold labels overlapped the card showcase, body text drifted into dead space, and a decorative crest floated over the reading band.
+- Apply game-UI composition rules (focal point, rule of thirds, aligned lines, card meaning beside the card, no dead space).
+
+What changed:
+
+- Layout follows the data flow (ResultPanelPresenter shows the drawn card's real artwork left, AI interpretation right): full-width gold question header, card hero in the left third, reading column of aligned gold-header/ivory-body pairs on a backing panel in the right two-thirds, centered footer.
+- New `TarotUiAccentText` marker keeps section headers gold through TarotUiTheme's Awake repaint, so runtime matches the screenshot.
+- Redundant flat-era overlays (`Phase8_ResultCrest`, `Phase7_ResultOracleFrame`, early Phase 11 columns, Phase 14 text bridge) are deactivated, not deleted; presenter references are untouched.
+- Representative placeholder copy makes the static capture show a real reading; the body size stays >= 19.
+
+Exit criteria:
+
+- Each section header stacks above its body without overlap and carries the gold accent marker.
+- The card hero sits in the left third, clear of the reading column; redundant overlays are deactivated.
+- Presenter text references stay intact; EditMode and PlayMode tests pass.
+
+Remaining limitation:
+
+- Phase25 is a composition pass, not final high-end VFX. Later phases can add Shader Graph foil card materials, view-dependent card sheen, a richer panel background, and result-reveal motion.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:

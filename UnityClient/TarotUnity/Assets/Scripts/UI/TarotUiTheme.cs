@@ -117,7 +117,15 @@ namespace TarotUnity.UI
                 text.font = font;
             }
 
-            text.color = text.fontSize <= 16 ? mutedTextColor : textColor;
+            if (text.GetComponent<TarotUiAccentText>() != null)
+            {
+                text.color = accentGoldColor;
+            }
+            else
+            {
+                text.color = text.fontSize <= 16 ? mutedTextColor : textColor;
+            }
+
             text.lineSpacing = Mathf.Max(text.lineSpacing, bodyLineSpacing);
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
         }
