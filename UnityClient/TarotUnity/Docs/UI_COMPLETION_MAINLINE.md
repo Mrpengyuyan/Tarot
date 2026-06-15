@@ -440,6 +440,27 @@ Remaining limitation:
 
 - Phase25 is a composition pass, not final high-end VFX. Later phases can add Shader Graph foil card materials, view-dependent card sheen, a richer panel background, and result-reveal motion.
 
+### Phase 26: Result Text Robustness
+
+Status: implemented on 2026-06-15.
+
+Purpose:
+
+- Harden the Result reading for variable-length backend AI interpretation. Phase 25 used fixed-height boxes sized for short local placeholder copy; long real copy would overflow and overlap the next section - an invisible production risk, since local-mode text is short.
+
+What changed:
+
+- The four reading body texts use Unity Text best-fit (max 19, min 13): short copy renders at full size, long copy shrinks to fit its box so sections never overlap. fontSize stays at the design size, preserving the OverallText >= 19 invariant.
+- A materials-only "moonlit glow" on the card back and deck was attempted first and reverted: screenshot verification showed the card-back emission had no visible effect and the deck blew out into a garish red under ACES tonemapping. Lesson: emissive on flat back planes does not make a tasteful arcane back; that needs pattern geometry, a feedback-gated hero-element change.
+
+Exit criteria:
+
+- The four reading body texts use best-fit within safe bounds; OverallText keeps its size floor; EditMode tests pass.
+
+Remaining limitation:
+
+- Phase26 is a robustness floor, not final high-end VFX. A scrollable reading panel is the eventual ideal for very long readings, and card/back visual "wow" remains for a feedback-tuned pass.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:
