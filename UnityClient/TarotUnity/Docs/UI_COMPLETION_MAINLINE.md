@@ -527,6 +527,28 @@ Remaining limitation:
 
 - Phase 29 is the layout/robustness completion for long readings, not final high-end VFX. A styled scrollbar handle, scroll-edge fades, and a richer card-back reveal remain for a feedback-tuned pass.
 
+### Phase 30: Cross-Screen Secondary Spacing/Alignment
+
+Status: implemented on 2026-06-15.
+
+Purpose:
+
+- Unify the secondary spacing/alignment shared by MainMenu, ReadingRoom, and Result. Composed independently across many phases, they needed an objective audit before any change.
+
+What changed:
+
+- A read-only layout audit (`Phase30LayoutAuditBuilder`) showed the screens are already strongly unified: identical CanvasScaler (1280x720, match 0.5), symmetric centering of every centered heading/footer, and cleanly abutting heading/sub-label pairs. So this phase codifies and guards that consistency instead of moving visually-fine layouts (which would risk the build-blind visual-collapse failure mode).
+- New `TarotUiSpacing` source-of-truth constants (reference resolution, match factor, centering tolerance, max heading/sub-label overlap) and new `Phase30CrossScreenConsistencyTests` regression guards. No scene assets were modified.
+- The one notable difference - primary-button heights (~32/31/28) - is left for a feedback-tuned visual pass because unifying it risks detaching gold trim / colliding with the reading scroll.
+
+Exit criteria:
+
+- All three core canvases share the 1280x720 / match-0.5 CanvasScaler; centered headings/footers are horizontally symmetric; heading/sub-label pairs do not overlap; EditMode tests pass.
+
+Remaining limitation:
+
+- Phase 30 is an objective consistency guard, not final high-end VFX. The primary-button height unification and any deliberate spacing refresh remain for a feedback-tuned visual pass.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:
