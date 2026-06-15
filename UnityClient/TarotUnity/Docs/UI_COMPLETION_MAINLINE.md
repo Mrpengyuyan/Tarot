@@ -483,6 +483,28 @@ Remaining limitation:
 
 - Phase27 swaps in HD source art, not final high-end VFX. Foil/sheen, view-dependent shimmer, or an animated card reveal remain for a feedback-tuned pass.
 
+### Phase 28: Holographic Card Face
+
+Status: implemented on 2026-06-15.
+
+Purpose:
+
+- Make the flipped card face read as a glossy, dimensional object. The cards were already a tilting 3D mesh (Phase 15/23); this adds a holographic foil sheen that sweeps as the card tilts, like a premium foil trading card.
+
+What changed:
+
+- New URP sprite shader `TarotUnity/HolographicCard`: samples the card art and adds a diagonal glare band plus subtle iridescence, positioned by the object-space view direction so it sweeps automatically on tilt (Phase 23) and camera breathing (Phase 21). Sheen is masked by the card alpha. Declares `Fallback "Sprites/Default"` so art never breaks.
+- `MAT_HolographicCardFace` built from it with a tuned, tasteful glare (intensity 0.5, narrow band) that shines without washing out the art.
+- `Phase28HolographicCardBootstrapper` assigns the material to the card prefab's face SpriteRenderer - a single reversible swap. The sheen shows only on a face-up card.
+
+Exit criteria:
+
+- The shader compiles and is supported; the material uses it with a tuned glare; the card face renderer uses the material; EditMode tests pass.
+
+Remaining limitation:
+
+- The sweep is a view-angle effect best judged live (hover to tilt). Intensity/width/iridescence are single material properties, easy to tune from feedback. The Result hero card (a UI image) is not yet holographic.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:
