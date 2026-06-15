@@ -1,0 +1,1022 @@
+{
+  "deck": "Rider-Waite-Smith 1909 (public domain)",
+  "source": "Wikimedia Commons",
+  "license": "Public Domain",
+  "targetHeight": 1280,
+  "cards": [
+    {
+      "file": "cups_01_ace_of_cups.jpg",
+      "source": "Cups01.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cups01.jpg",
+      "original": [
+        1112,
+        1920
+      ],
+      "saved": [
+        741,
+        1280
+      ]
+    },
+    {
+      "file": "cups_02_02_of_cups.jpg",
+      "source": "Cups02.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cups02.jpg",
+      "original": [
+        1109,
+        1920
+      ],
+      "saved": [
+        739,
+        1280
+      ]
+    },
+    {
+      "file": "cups_03_03_of_cups.jpg",
+      "source": "Cups03.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cups03.jpg",
+      "original": [
+        1117,
+        1919
+      ],
+      "saved": [
+        745,
+        1280
+      ]
+    },
+    {
+      "file": "cups_04_04_of_cups.jpg",
+      "source": "Cups04.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cups04.jpg",
+      "original": [
+        1118,
+        1920
+      ],
+      "saved": [
+        745,
+        1280
+      ]
+    },
+    {
+      "file": "cups_05_05_of_cups.jpg",
+      "source": "Cups05.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cups05.jpg",
+      "original": [
+        1121,
+        1920
+      ],
+      "saved": [
+        747,
+        1280
+      ]
+    },
+    {
+      "file": "cups_06_06_of_cups.jpg",
+      "source": "Cups06.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cups06.jpg",
+      "original": [
+        1115,
+        1920
+      ],
+      "saved": [
+        743,
+        1280
+      ]
+    },
+    {
+      "file": "cups_07_07_of_cups.jpg",
+      "source": "Cups07.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cups07.jpg",
+      "original": [
+        1109,
+        1920
+      ],
+      "saved": [
+        739,
+        1280
+      ]
+    },
+    {
+      "file": "cups_08_08_of_cups.jpg",
+      "source": "Cups08.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cups08.jpg",
+      "original": [
+        1114,
+        1919
+      ],
+      "saved": [
+        743,
+        1280
+      ]
+    },
+    {
+      "file": "cups_09_09_of_cups.jpg",
+      "source": "Cups09.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cups09.jpg",
+      "original": [
+        1114,
+        1919
+      ],
+      "saved": [
+        743,
+        1280
+      ]
+    },
+    {
+      "file": "cups_10_10_of_cups.jpg",
+      "source": "Cups10.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cups10.jpg",
+      "original": [
+        1109,
+        1920
+      ],
+      "saved": [
+        739,
+        1280
+      ]
+    },
+    {
+      "file": "cups_11_page_of_cups.jpg",
+      "source": "Cups11.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cups11.jpg",
+      "original": [
+        1115,
+        1920
+      ],
+      "saved": [
+        743,
+        1280
+      ]
+    },
+    {
+      "file": "cups_12_knight_of_cups.jpg",
+      "source": "Cups12.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cups12.jpg",
+      "original": [
+        1109,
+        1920
+      ],
+      "saved": [
+        739,
+        1280
+      ]
+    },
+    {
+      "file": "cups_13_queen_of_cups.jpg",
+      "source": "Cups13.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cups13.jpg",
+      "original": [
+        1114,
+        1919
+      ],
+      "saved": [
+        743,
+        1280
+      ]
+    },
+    {
+      "file": "cups_14_king_of_cups.jpg",
+      "source": "Cups14.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Cups14.jpg",
+      "original": [
+        1121,
+        1920
+      ],
+      "saved": [
+        747,
+        1280
+      ]
+    },
+    {
+      "file": "major_00_fool.jpg",
+      "source": "RWS_Tarot_00_Fool.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_00_Fool.jpg",
+      "original": [
+        1144,
+        1919
+      ],
+      "saved": [
+        763,
+        1280
+      ]
+    },
+    {
+      "file": "major_01_magician.jpg",
+      "source": "RWS_Tarot_01_Magician.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_01_Magician.jpg",
+      "original": [
+        1108,
+        1920
+      ],
+      "saved": [
+        739,
+        1280
+      ]
+    },
+    {
+      "file": "major_02_high_priestess.jpg",
+      "source": "RWS_Tarot_02_High_Priestess.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_02_High_Priestess.jpg",
+      "original": [
+        1117,
+        1919
+      ],
+      "saved": [
+        745,
+        1280
+      ]
+    },
+    {
+      "file": "major_03_empress.jpg",
+      "source": "RWS_Tarot_03_Empress.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_03_Empress.jpg",
+      "original": [
+        1123,
+        1920
+      ],
+      "saved": [
+        749,
+        1280
+      ]
+    },
+    {
+      "file": "major_04_emperor.jpg",
+      "source": "RWS_Tarot_04_Emperor.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_04_Emperor.jpg",
+      "original": [
+        1117,
+        1919
+      ],
+      "saved": [
+        745,
+        1280
+      ]
+    },
+    {
+      "file": "major_05_hierophant.jpg",
+      "source": "RWS_Tarot_05_Hierophant.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_05_Hierophant.jpg",
+      "original": [
+        1114,
+        1919
+      ],
+      "saved": [
+        743,
+        1280
+      ]
+    },
+    {
+      "file": "major_06_lovers.jpg",
+      "source": "RWS_Tarot_06_Lovers.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_06_Lovers.jpg",
+      "original": [
+        1122,
+        1920
+      ],
+      "saved": [
+        748,
+        1280
+      ]
+    },
+    {
+      "file": "major_07_chariot.jpg",
+      "source": "RWS_Tarot_07_Chariot.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_07_Chariot.jpg",
+      "original": [
+        1111,
+        1919
+      ],
+      "saved": [
+        741,
+        1280
+      ]
+    },
+    {
+      "file": "major_08_strength.jpg",
+      "source": "RWS_Tarot_08_Strength.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_08_Strength.jpg",
+      "original": [
+        1114,
+        1919
+      ],
+      "saved": [
+        743,
+        1280
+      ]
+    },
+    {
+      "file": "major_09_hermit.jpg",
+      "source": "RWS_Tarot_09_Hermit.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_09_Hermit.jpg",
+      "original": [
+        1123,
+        1920
+      ],
+      "saved": [
+        749,
+        1280
+      ]
+    },
+    {
+      "file": "major_10_wheel_of_fortune.jpg",
+      "source": "RWS_Tarot_10_Wheel_of_Fortune.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_10_Wheel_of_Fortune.jpg",
+      "original": [
+        1104,
+        1920
+      ],
+      "saved": [
+        736,
+        1280
+      ]
+    },
+    {
+      "file": "major_11_justice.jpg",
+      "source": "RWS_Tarot_11_Justice.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_11_Justice.jpg",
+      "original": [
+        1114,
+        1919
+      ],
+      "saved": [
+        743,
+        1280
+      ]
+    },
+    {
+      "file": "major_12_hanged_man.jpg",
+      "source": "RWS_Tarot_12_Hanged_Man.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_12_Hanged_Man.jpg",
+      "original": [
+        1092,
+        1920
+      ],
+      "saved": [
+        728,
+        1280
+      ]
+    },
+    {
+      "file": "major_13_death.jpg",
+      "source": "RWS_Tarot_13_Death.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_13_Death.jpg",
+      "original": [
+        1111,
+        1919
+      ],
+      "saved": [
+        741,
+        1280
+      ]
+    },
+    {
+      "file": "major_14_temperance.jpg",
+      "source": "RWS_Tarot_14_Temperance.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_14_Temperance.jpg",
+      "original": [
+        1106,
+        1920
+      ],
+      "saved": [
+        737,
+        1280
+      ]
+    },
+    {
+      "file": "major_15_devil.jpg",
+      "source": "RWS_Tarot_15_Devil.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_15_Devil.jpg",
+      "original": [
+        1090,
+        1920
+      ],
+      "saved": [
+        727,
+        1280
+      ]
+    },
+    {
+      "file": "major_16_tower.jpg",
+      "source": "RWS_Tarot_16_Tower.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_16_Tower.jpg",
+      "original": [
+        1109,
+        1920
+      ],
+      "saved": [
+        739,
+        1280
+      ]
+    },
+    {
+      "file": "major_17_star.jpg",
+      "source": "RWS_Tarot_17_Star.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_17_Star.jpg",
+      "original": [
+        1114,
+        1919
+      ],
+      "saved": [
+        743,
+        1280
+      ]
+    },
+    {
+      "file": "major_18_moon.jpg",
+      "source": "RWS_Tarot_18_Moon.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_18_Moon.jpg",
+      "original": [
+        1111,
+        1919
+      ],
+      "saved": [
+        741,
+        1280
+      ]
+    },
+    {
+      "file": "major_19_sun.jpg",
+      "source": "RWS_Tarot_19_Sun.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_19_Sun.jpg",
+      "original": [
+        1114,
+        1919
+      ],
+      "saved": [
+        743,
+        1280
+      ]
+    },
+    {
+      "file": "major_20_judgement.jpg",
+      "source": "RWS_Tarot_20_Judgement.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_20_Judgement.jpg",
+      "original": [
+        1115,
+        1920
+      ],
+      "saved": [
+        743,
+        1280
+      ]
+    },
+    {
+      "file": "major_21_world.jpg",
+      "source": "RWS_Tarot_21_World.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:RWS_Tarot_21_World.jpg",
+      "original": [
+        1112,
+        1920
+      ],
+      "saved": [
+        741,
+        1280
+      ]
+    },
+    {
+      "file": "pentacles_01_ace_of_pentacles.jpg",
+      "source": "Pents01.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pents01.jpg",
+      "original": [
+        1109,
+        1920
+      ],
+      "saved": [
+        739,
+        1280
+      ]
+    },
+    {
+      "file": "pentacles_02_02_of_pentacles.jpg",
+      "source": "Pents02.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pents02.jpg",
+      "original": [
+        1112,
+        1920
+      ],
+      "saved": [
+        741,
+        1280
+      ]
+    },
+    {
+      "file": "pentacles_03_03_of_pentacles.jpg",
+      "source": "Pents03.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pents03.jpg",
+      "original": [
+        1117,
+        1919
+      ],
+      "saved": [
+        745,
+        1280
+      ]
+    },
+    {
+      "file": "pentacles_04_04_of_pentacles.jpg",
+      "source": "Pents04.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pents04.jpg",
+      "original": [
+        1110,
+        1920
+      ],
+      "saved": [
+        740,
+        1280
+      ]
+    },
+    {
+      "file": "pentacles_05_05_of_pentacles.jpg",
+      "source": "Pents05.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pents05.jpg",
+      "original": [
+        1112,
+        1920
+      ],
+      "saved": [
+        741,
+        1280
+      ]
+    },
+    {
+      "file": "pentacles_06_06_of_pentacles.jpg",
+      "source": "Pents06.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pents06.jpg",
+      "original": [
+        1109,
+        1920
+      ],
+      "saved": [
+        739,
+        1280
+      ]
+    },
+    {
+      "file": "pentacles_07_07_of_pentacles.jpg",
+      "source": "Pents07.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pents07.jpg",
+      "original": [
+        1114,
+        1919
+      ],
+      "saved": [
+        743,
+        1280
+      ]
+    },
+    {
+      "file": "pentacles_08_08_of_pentacles.jpg",
+      "source": "Pents08.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pents08.jpg",
+      "original": [
+        1117,
+        1920
+      ],
+      "saved": [
+        745,
+        1280
+      ]
+    },
+    {
+      "file": "pentacles_09_09_of_pentacles.jpg",
+      "source": "Pents09.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pents09.jpg",
+      "original": [
+        1108,
+        1920
+      ],
+      "saved": [
+        739,
+        1280
+      ]
+    },
+    {
+      "file": "pentacles_10_10_of_pentacles.jpg",
+      "source": "Pents10.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pents10.jpg",
+      "original": [
+        1115,
+        1920
+      ],
+      "saved": [
+        743,
+        1280
+      ]
+    },
+    {
+      "file": "pentacles_11_page_of_pentacles.jpg",
+      "source": "Pents11.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pents11.jpg",
+      "original": [
+        1112,
+        1920
+      ],
+      "saved": [
+        741,
+        1280
+      ]
+    },
+    {
+      "file": "pentacles_12_knight_of_pentacles.jpg",
+      "source": "Pents12.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pents12.jpg",
+      "original": [
+        1111,
+        1919
+      ],
+      "saved": [
+        741,
+        1280
+      ]
+    },
+    {
+      "file": "pentacles_13_queen_of_pentacles.jpg",
+      "source": "Pents13.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pents13.jpg",
+      "original": [
+        1109,
+        1920
+      ],
+      "saved": [
+        739,
+        1280
+      ]
+    },
+    {
+      "file": "pentacles_14_king_of_pentacles.jpg",
+      "source": "Pents14.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Pents14.jpg",
+      "original": [
+        1107,
+        1920
+      ],
+      "saved": [
+        738,
+        1280
+      ]
+    },
+    {
+      "file": "swords_01_ace_of_swords.jpg",
+      "source": "Swords01.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Swords01.jpg",
+      "original": [
+        1109,
+        1920
+      ],
+      "saved": [
+        739,
+        1280
+      ]
+    },
+    {
+      "file": "swords_02_02_of_swords.jpg",
+      "source": "Swords02.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Swords02.jpg",
+      "original": [
+        1121,
+        1920
+      ],
+      "saved": [
+        747,
+        1280
+      ]
+    },
+    {
+      "file": "swords_03_03_of_swords.jpg",
+      "source": "Swords03.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Swords03.jpg",
+      "original": [
+        1103,
+        1920
+      ],
+      "saved": [
+        735,
+        1280
+      ]
+    },
+    {
+      "file": "swords_04_04_of_swords.jpg",
+      "source": "Swords04.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Swords04.jpg",
+      "original": [
+        1117,
+        1919
+      ],
+      "saved": [
+        745,
+        1280
+      ]
+    },
+    {
+      "file": "swords_05_05_of_swords.jpg",
+      "source": "Swords05.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Swords05.jpg",
+      "original": [
+        1109,
+        1920
+      ],
+      "saved": [
+        739,
+        1280
+      ]
+    },
+    {
+      "file": "swords_06_06_of_swords.jpg",
+      "source": "Swords06.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Swords06.jpg",
+      "original": [
+        1111,
+        1919
+      ],
+      "saved": [
+        741,
+        1280
+      ]
+    },
+    {
+      "file": "swords_07_07_of_swords.jpg",
+      "source": "Swords07.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Swords07.jpg",
+      "original": [
+        1114,
+        1919
+      ],
+      "saved": [
+        743,
+        1280
+      ]
+    },
+    {
+      "file": "swords_08_08_of_swords.jpg",
+      "source": "Swords08.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Swords08.jpg",
+      "original": [
+        1114,
+        1919
+      ],
+      "saved": [
+        743,
+        1280
+      ]
+    },
+    {
+      "file": "swords_09_09_of_swords.jpg",
+      "source": "Swords09.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Swords09.jpg",
+      "original": [
+        1114,
+        1919
+      ],
+      "saved": [
+        743,
+        1280
+      ]
+    },
+    {
+      "file": "swords_10_10_of_swords.jpg",
+      "source": "Swords10.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Swords10.jpg",
+      "original": [
+        1107,
+        1920
+      ],
+      "saved": [
+        738,
+        1280
+      ]
+    },
+    {
+      "file": "swords_11_page_of_swords.jpg",
+      "source": "Swords11.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Swords11.jpg",
+      "original": [
+        1108,
+        1920
+      ],
+      "saved": [
+        739,
+        1280
+      ]
+    },
+    {
+      "file": "swords_12_knight_of_swords.jpg",
+      "source": "Swords12.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Swords12.jpg",
+      "original": [
+        1112,
+        1920
+      ],
+      "saved": [
+        741,
+        1280
+      ]
+    },
+    {
+      "file": "swords_13_queen_of_swords.jpg",
+      "source": "Swords13.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Swords13.jpg",
+      "original": [
+        1104,
+        1920
+      ],
+      "saved": [
+        736,
+        1280
+      ]
+    },
+    {
+      "file": "swords_14_king_of_swords.jpg",
+      "source": "Swords14.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Swords14.jpg",
+      "original": [
+        1117,
+        1919
+      ],
+      "saved": [
+        745,
+        1280
+      ]
+    },
+    {
+      "file": "wands_01_ace_of_wands.jpg",
+      "source": "Wands01.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Wands01.jpg",
+      "original": [
+        1106,
+        1920
+      ],
+      "saved": [
+        737,
+        1280
+      ]
+    },
+    {
+      "file": "wands_02_02_of_wands.jpg",
+      "source": "Wands02.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Wands02.jpg",
+      "original": [
+        1115,
+        1920
+      ],
+      "saved": [
+        743,
+        1280
+      ]
+    },
+    {
+      "file": "wands_03_03_of_wands.jpg",
+      "source": "Wands03.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Wands03.jpg",
+      "original": [
+        1103,
+        1920
+      ],
+      "saved": [
+        735,
+        1280
+      ]
+    },
+    {
+      "file": "wands_04_04_of_wands.jpg",
+      "source": "Wands04.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Wands04.jpg",
+      "original": [
+        1108,
+        1920
+      ],
+      "saved": [
+        739,
+        1280
+      ]
+    },
+    {
+      "file": "wands_05_05_of_wands.jpg",
+      "source": "Wands05.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Wands05.jpg",
+      "original": [
+        1108,
+        1920
+      ],
+      "saved": [
+        739,
+        1280
+      ]
+    },
+    {
+      "file": "wands_06_06_of_wands.jpg",
+      "source": "Wands06.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Wands06.jpg",
+      "original": [
+        1118,
+        1920
+      ],
+      "saved": [
+        745,
+        1280
+      ]
+    },
+    {
+      "file": "wands_07_07_of_wands.jpg",
+      "source": "Wands07.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Wands07.jpg",
+      "original": [
+        1109,
+        1920
+      ],
+      "saved": [
+        739,
+        1280
+      ]
+    },
+    {
+      "file": "wands_08_08_of_wands.jpg",
+      "source": "Wands08.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Wands08.jpg",
+      "original": [
+        1115,
+        1920
+      ],
+      "saved": [
+        743,
+        1280
+      ]
+    },
+    {
+      "file": "wands_09_09_of_wands.jpg",
+      "source": "Wands09.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Wands09.jpg",
+      "original": [
+        1114,
+        1919
+      ],
+      "saved": [
+        743,
+        1280
+      ]
+    },
+    {
+      "file": "wands_10_10_of_wands.jpg",
+      "source": "Wands10.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Wands10.jpg",
+      "original": [
+        1101,
+        1920
+      ],
+      "saved": [
+        734,
+        1280
+      ]
+    },
+    {
+      "file": "wands_11_page_of_wands.jpg",
+      "source": "Wands11.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Wands11.jpg",
+      "original": [
+        1109,
+        1920
+      ],
+      "saved": [
+        739,
+        1280
+      ]
+    },
+    {
+      "file": "wands_12_knight_of_wands.jpg",
+      "source": "Wands12.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Wands12.jpg",
+      "original": [
+        1115,
+        1920
+      ],
+      "saved": [
+        743,
+        1280
+      ]
+    },
+    {
+      "file": "wands_13_queen_of_wands.jpg",
+      "source": "Wands13.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Wands13.jpg",
+      "original": [
+        1118,
+        1920
+      ],
+      "saved": [
+        745,
+        1280
+      ]
+    },
+    {
+      "file": "wands_14_king_of_wands.jpg",
+      "source": "Wands14.jpg",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Wands14.jpg",
+      "original": [
+        1104,
+        1920
+      ],
+      "saved": [
+        736,
+        1280
+      ]
+    }
+  ]
+}

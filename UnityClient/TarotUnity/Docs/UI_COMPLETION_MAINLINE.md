@@ -461,6 +461,28 @@ Remaining limitation:
 
 - Phase26 is a robustness floor, not final high-end VFX. A scrollable reading panel is the eventual ideal for very long readings, and card/back visual "wow" remains for a feedback-tuned pass.
 
+### Phase 27: HD Card Artwork
+
+Status: implemented on 2026-06-15.
+
+Purpose:
+
+- Phase 13 wired authentic public-domain RWS1909 card faces, but only low-resolution scans (400x666) imported because Wikimedia rate-limited the batch, so faces looked soft. Re-source the full deck in HD and wire it in so a flipped card and the result hero render crisply.
+
+What changed:
+
+- All 78 faces were re-downloaded from Wikimedia Commons (public domain RWS1909, ~1100x1920 full-card), downscaled to a consistent HD height of 1280, and saved under the existing filenames in a new folder `Assets/Art/Tarot/RWS1909_HD/` with a sources manifest.
+- `Phase27HdArtworkBootstrapper` imports the folder as Sprites at maxTextureSize 2048 and rebuilds the catalog to point at the HD sprites, re-assigning it to the ReadingRoom DeckController and the Result ResultPanelPresenter. Card-key matching is unchanged.
+- The old low-res folder is left untouched for the user to delete (no overwrite/remove).
+
+Exit criteria:
+
+- The catalog resolves all 78 cards, each to an HD sprite (height >= 1000) from the HD folder; HD textures import as Sprites; EditMode tests pass.
+
+Remaining limitation:
+
+- Phase27 swaps in HD source art, not final high-end VFX. Foil/sheen, view-dependent shimmer, or an animated card reveal remain for a feedback-tuned pass.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:

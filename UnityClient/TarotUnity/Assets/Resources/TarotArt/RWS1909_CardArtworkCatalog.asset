@@ -18,622 +18,622 @@ MonoBehaviour:
     arcana: minor
     suit: cups
     number: 1
-    artwork: {fileID: 21300000, guid: a68ce040a4c7e40e99d290e5c7ffeb9c, type: 3}
-    sourceTitle: RWS1909 - Cups 01
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: a882a2a04a9f24e51a5e05f901ac0646, type: 3}
+    sourceTitle: RWS1909 HD - Ace of Cups
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: cups_02
     cardNameEn: 02 of Cups
     arcana: minor
     suit: cups
     number: 2
-    artwork: {fileID: 21300000, guid: 53deda1e8470e4e239a0ae2b137a0caf, type: 3}
-    sourceTitle: RWS1909 - Cups 02
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 748c9fae586d44b528300d8dc6d68994, type: 3}
+    sourceTitle: RWS1909 HD - 02 of Cups
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: cups_03
     cardNameEn: 03 of Cups
     arcana: minor
     suit: cups
     number: 3
-    artwork: {fileID: 21300000, guid: b213bbeb0727944639403312827cf852, type: 3}
-    sourceTitle: RWS1909 - Cups 03
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 65f4e311d8cc14500b79321884f8f941, type: 3}
+    sourceTitle: RWS1909 HD - 03 of Cups
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: cups_04
     cardNameEn: 04 of Cups
     arcana: minor
     suit: cups
     number: 4
-    artwork: {fileID: 21300000, guid: 48146cf127c8149119943e33b9a1eae1, type: 3}
-    sourceTitle: RWS1909 - Cups 04
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 90c7c72c5a04a412b81aa78184b21405, type: 3}
+    sourceTitle: RWS1909 HD - 04 of Cups
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: cups_05
     cardNameEn: 05 of Cups
     arcana: minor
     suit: cups
     number: 5
-    artwork: {fileID: 21300000, guid: 5e217b63fe9b542a4b56d24d4e6f0286, type: 3}
-    sourceTitle: RWS1909 - Cups 05
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 02ff7b3dfc5114f42b6e289a7891c168, type: 3}
+    sourceTitle: RWS1909 HD - 05 of Cups
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: cups_06
     cardNameEn: 06 of Cups
     arcana: minor
     suit: cups
     number: 6
-    artwork: {fileID: 21300000, guid: be6d47944d84b4698ae3fd0325aba9d0, type: 3}
-    sourceTitle: RWS1909 - Cups 06
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 6d5593b2a9f16425e89b38b42c2b0bf3, type: 3}
+    sourceTitle: RWS1909 HD - 06 of Cups
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: cups_07
     cardNameEn: 07 of Cups
     arcana: minor
     suit: cups
     number: 7
-    artwork: {fileID: 21300000, guid: 0fc97db07d6d54937bf6e7ff883d86f8, type: 3}
-    sourceTitle: RWS1909 - Cups 07
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 2abc5d83ce86e4c57afaa9ddc8c673b4, type: 3}
+    sourceTitle: RWS1909 HD - 07 of Cups
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: cups_08
     cardNameEn: 08 of Cups
     arcana: minor
     suit: cups
     number: 8
-    artwork: {fileID: 21300000, guid: 65df85bbbe0f8441f94ef80c60f73bf2, type: 3}
-    sourceTitle: RWS1909 - Cups 08
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: c4d0fc3d2cc9a42b290887a79573715e, type: 3}
+    sourceTitle: RWS1909 HD - 08 of Cups
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: cups_09
     cardNameEn: 09 of Cups
     arcana: minor
     suit: cups
     number: 9
-    artwork: {fileID: 21300000, guid: cc70c33324274477dad9c3647c9e315b, type: 3}
-    sourceTitle: RWS1909 - Cups 09
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 3ec6727d8e8ba434e8adcc73179b0f43, type: 3}
+    sourceTitle: RWS1909 HD - 09 of Cups
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: cups_10
     cardNameEn: 10 of Cups
     arcana: minor
     suit: cups
     number: 10
-    artwork: {fileID: 21300000, guid: bebf234d1d9ea43879799db61ba0ed32, type: 3}
-    sourceTitle: RWS1909 - Cups 10
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 621f04eb64a8d4822b52f458d17f2ee1, type: 3}
+    sourceTitle: RWS1909 HD - 10 of Cups
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: cups_11
     cardNameEn: Page of Cups
     arcana: minor
     suit: cups
     number: 11
-    artwork: {fileID: 21300000, guid: 147e667040ee5411cbea386e455235c3, type: 3}
-    sourceTitle: RWS1909 - Cups 11
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 6687928dfe8454655b6eec22c55406fc, type: 3}
+    sourceTitle: RWS1909 HD - Page of Cups
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: cups_12
     cardNameEn: Knight of Cups
     arcana: minor
     suit: cups
     number: 12
-    artwork: {fileID: 21300000, guid: f56ef0a9183c84892a3a05adb981a52f, type: 3}
-    sourceTitle: RWS1909 - Cups 12
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 49dc1aef3fb064b319bdaca3e4f20c2f, type: 3}
+    sourceTitle: RWS1909 HD - Knight of Cups
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: cups_13
     cardNameEn: Queen of Cups
     arcana: minor
     suit: cups
     number: 13
-    artwork: {fileID: 21300000, guid: 62e39ddd11c444062b2c46eb443c1a4b, type: 3}
-    sourceTitle: RWS1909 - Cups 13
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 3932a680cae784042bcedf1ec751ff31, type: 3}
+    sourceTitle: RWS1909 HD - Queen of Cups
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: cups_14
     cardNameEn: King of Cups
     arcana: minor
     suit: cups
     number: 14
-    artwork: {fileID: 21300000, guid: 3afb41d5521fd4b19a392fb2b69530ae, type: 3}
-    sourceTitle: RWS1909 - Cups 14
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: f4ceb9e1efc714aee86f330aa9653a80, type: 3}
+    sourceTitle: RWS1909 HD - King of Cups
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: major_00
     cardNameEn: The Fool
     arcana: major
     suit: 
     number: 0
-    artwork: {fileID: 21300000, guid: b7fa9a3da252d43f391591eee70270d7, type: 3}
-    sourceTitle: RWS1909 - 00 Fool
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 3ed0ed3ddd67b40b2a9252abde1d786a, type: 3}
+    sourceTitle: RWS1909 HD - The Fool
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: major_01
     cardNameEn: The Magician
     arcana: major
     suit: 
     number: 1
-    artwork: {fileID: 21300000, guid: 00ca6f7c3dc4d4f7a8e352fed0d2f768, type: 3}
-    sourceTitle: RWS1909 - 01 Magician
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: bd1747f5afe8b4f6786b76a714c40eb5, type: 3}
+    sourceTitle: RWS1909 HD - The Magician
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: major_02
     cardNameEn: The High Priestess
     arcana: major
     suit: 
     number: 2
-    artwork: {fileID: 21300000, guid: 8dcf05f56f1de42e89ff9c1f2efcc704, type: 3}
-    sourceTitle: RWS1909 - 02 High Priestess
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: ced633e3a127c4956ac8a85e2ac9b819, type: 3}
+    sourceTitle: RWS1909 HD - The High Priestess
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: major_03
     cardNameEn: The Empress
     arcana: major
     suit: 
     number: 3
-    artwork: {fileID: 21300000, guid: 40074795daac54f1f96a7a5eef868d36, type: 3}
-    sourceTitle: RWS1909 - 03 Empress
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 16d20ec11d24e416abb57cec2aa065ff, type: 3}
+    sourceTitle: RWS1909 HD - The Empress
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: major_04
     cardNameEn: The Emperor
     arcana: major
     suit: 
     number: 4
-    artwork: {fileID: 21300000, guid: a9e58e3ad4afb4396aaf07d261037e9a, type: 3}
-    sourceTitle: RWS1909 - 04 Emperor
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: d8ced141fe7514e2085e90812ae97fb3, type: 3}
+    sourceTitle: RWS1909 HD - The Emperor
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: major_05
     cardNameEn: The Hierophant
     arcana: major
     suit: 
     number: 5
-    artwork: {fileID: 21300000, guid: 531ce6e01ff22494ca06756b65f9136b, type: 3}
-    sourceTitle: RWS1909 - 05 Hierophant
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 6f43988c4dea14e499cd1a1143b89ecc, type: 3}
+    sourceTitle: RWS1909 HD - The Hierophant
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: major_06
     cardNameEn: The Lovers
     arcana: major
     suit: 
     number: 6
-    artwork: {fileID: 21300000, guid: 2b5a61b84c1644ddd9227e027b813dd2, type: 3}
-    sourceTitle: RWS1909 - 06 Lovers
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 7210790841efe44418451dee9c271d32, type: 3}
+    sourceTitle: RWS1909 HD - The Lovers
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: major_07
     cardNameEn: The Chariot
     arcana: major
     suit: 
     number: 7
-    artwork: {fileID: 21300000, guid: 4b96debcad87a4d94b3bad3eeb9beaf1, type: 3}
-    sourceTitle: RWS1909 - 07 Chariot
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: d42fbdeaa57554001a8fed4baceccdc8, type: 3}
+    sourceTitle: RWS1909 HD - The Chariot
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: major_08
     cardNameEn: Strength
     arcana: major
     suit: 
     number: 8
-    artwork: {fileID: 21300000, guid: 3a9e337e6d1d649ca89708defbb7f62b, type: 3}
-    sourceTitle: RWS1909 - 08 Strength
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 49b224d6f4e934d61800bd52e547fb8c, type: 3}
+    sourceTitle: RWS1909 HD - Strength
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: major_09
     cardNameEn: The Hermit
     arcana: major
     suit: 
     number: 9
-    artwork: {fileID: 21300000, guid: d830887212b884cf395cca4a5c1cc88f, type: 3}
-    sourceTitle: RWS1909 - 09 Hermit
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 6fb24e47bc4e145a58e91b2fd3b79f0a, type: 3}
+    sourceTitle: RWS1909 HD - The Hermit
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: major_10
     cardNameEn: Wheel of Fortune
     arcana: major
     suit: 
     number: 10
-    artwork: {fileID: 21300000, guid: cbcacc2f8fce04b92ac8946b519b0352, type: 3}
-    sourceTitle: RWS1909 - 10 Wheel of Fortune
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 2469d1a05726f48df93340ea5813e42b, type: 3}
+    sourceTitle: RWS1909 HD - Wheel of Fortune
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: major_11
     cardNameEn: Justice
     arcana: major
     suit: 
     number: 11
-    artwork: {fileID: 21300000, guid: 298f0af86456d4ea68f30def02fe4ae4, type: 3}
-    sourceTitle: RWS1909 - 11 Justice
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 9b89ee51df49e4caa9c6e23f54a40e6c, type: 3}
+    sourceTitle: RWS1909 HD - Justice
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: major_12
     cardNameEn: The Hanged Man
     arcana: major
     suit: 
     number: 12
-    artwork: {fileID: 21300000, guid: d830d97d7914e4a0f8697e751fc791c6, type: 3}
-    sourceTitle: RWS1909 - 12 Hanged Man
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 85113869f6a5c42d392ed6cb9205d60d, type: 3}
+    sourceTitle: RWS1909 HD - The Hanged Man
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: major_13
     cardNameEn: Death
     arcana: major
     suit: 
     number: 13
-    artwork: {fileID: 21300000, guid: d3e85584e552d4bcf8d09ee32f1e7e21, type: 3}
-    sourceTitle: RWS1909 - 13 Death
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 98557448137e54f6992a5f3d97fd6eed, type: 3}
+    sourceTitle: RWS1909 HD - Death
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: major_14
     cardNameEn: Temperance
     arcana: major
     suit: 
     number: 14
-    artwork: {fileID: 21300000, guid: ade9d42025a1946089924d59d214e4a1, type: 3}
-    sourceTitle: RWS1909 - 14 Temperance
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: c016eb4ad00a644c682be62641ba168d, type: 3}
+    sourceTitle: RWS1909 HD - Temperance
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: major_15
     cardNameEn: The Devil
     arcana: major
     suit: 
     number: 15
-    artwork: {fileID: 21300000, guid: 11b0a5913272747a4bbc3f9ec2ce5b8f, type: 3}
-    sourceTitle: RWS1909 - 15 Devil
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 7ff5ba7187c1c4c2184d2ca3210d21f6, type: 3}
+    sourceTitle: RWS1909 HD - The Devil
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: major_16
     cardNameEn: The Tower
     arcana: major
     suit: 
     number: 16
-    artwork: {fileID: 21300000, guid: 34b613bcd800b47988e300528e4f6870, type: 3}
-    sourceTitle: RWS1909 - 16 Tower
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 430ae86d625aa427891d7136700880b7, type: 3}
+    sourceTitle: RWS1909 HD - The Tower
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: major_17
     cardNameEn: The Star
     arcana: major
     suit: 
     number: 17
-    artwork: {fileID: 21300000, guid: 3a62d76dd38c747678407cf36024ff1a, type: 3}
-    sourceTitle: RWS1909 - 17 Star
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: d37ffae740ca64aac9ebb62f694ad391, type: 3}
+    sourceTitle: RWS1909 HD - The Star
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: major_18
     cardNameEn: The Moon
     arcana: major
     suit: 
     number: 18
-    artwork: {fileID: 21300000, guid: c2efba5c715844fc689ce83beb807bd0, type: 3}
-    sourceTitle: RWS1909 - 18 Moon
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 487cf7cb9dc9d4610a9f358f26c63013, type: 3}
+    sourceTitle: RWS1909 HD - The Moon
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: major_19
     cardNameEn: The Sun
     arcana: major
     suit: 
     number: 19
-    artwork: {fileID: 21300000, guid: 9184848508cc842b886c4d9eb145a5b1, type: 3}
-    sourceTitle: RWS1909 - 19 Sun
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 128facf9edb534de59c493694613a3b8, type: 3}
+    sourceTitle: RWS1909 HD - The Sun
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: major_20
     cardNameEn: Judgement
     arcana: major
     suit: 
     number: 20
-    artwork: {fileID: 21300000, guid: 690e9d36bcd314997a4efea7011905b9, type: 3}
-    sourceTitle: RWS1909 - 20 Judgement
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 53e80558f3ead484eb5a4a619d471fd5, type: 3}
+    sourceTitle: RWS1909 HD - Judgement
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: major_21
     cardNameEn: The World
     arcana: major
     suit: 
     number: 21
-    artwork: {fileID: 21300000, guid: 52c4bcf8c740341f8a0d16ba9d18a842, type: 3}
-    sourceTitle: RWS1909 - 21 World
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 0cb3206e8ad414f1c897a55b5847edf3, type: 3}
+    sourceTitle: RWS1909 HD - The World
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: pentacles_01
     cardNameEn: Ace of Pentacles
     arcana: minor
     suit: pentacles
     number: 1
-    artwork: {fileID: 21300000, guid: c8af7b318f9654977b499fc0954a6911, type: 3}
-    sourceTitle: RWS1909 - Pentacles 01
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: e0d20080c84764ae5bf4b2f8f55c2bb8, type: 3}
+    sourceTitle: RWS1909 HD - Ace of Pentacles
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: pentacles_02
     cardNameEn: 02 of Pentacles
     arcana: minor
     suit: pentacles
     number: 2
-    artwork: {fileID: 21300000, guid: 108230ca11fe94fe3af331ae402ef25e, type: 3}
-    sourceTitle: RWS1909 - Pentacles 02
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 09e29e8f97af94ba3a5eabe9d354a675, type: 3}
+    sourceTitle: RWS1909 HD - 02 of Pentacles
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: pentacles_03
     cardNameEn: 03 of Pentacles
     arcana: minor
     suit: pentacles
     number: 3
-    artwork: {fileID: 21300000, guid: e3e2e4eb7a6c841ff84bd4076a15ac03, type: 3}
-    sourceTitle: RWS1909 - Pentacles 03
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: f434dad8b945741d888d984a5c74a077, type: 3}
+    sourceTitle: RWS1909 HD - 03 of Pentacles
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: pentacles_04
     cardNameEn: 04 of Pentacles
     arcana: minor
     suit: pentacles
     number: 4
-    artwork: {fileID: 21300000, guid: 7d1b9fe2082144113adeb854faeb7602, type: 3}
-    sourceTitle: RWS1909 - Pentacles 04
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: eb0e2bd2e56344331bc644b5b1ea668f, type: 3}
+    sourceTitle: RWS1909 HD - 04 of Pentacles
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: pentacles_05
     cardNameEn: 05 of Pentacles
     arcana: minor
     suit: pentacles
     number: 5
-    artwork: {fileID: 21300000, guid: 71c431995103548dda0997556374c251, type: 3}
-    sourceTitle: RWS1909 - Pentacles 05
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: a899aa2b3d0634ac0a7de2b1672b468d, type: 3}
+    sourceTitle: RWS1909 HD - 05 of Pentacles
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: pentacles_06
     cardNameEn: 06 of Pentacles
     arcana: minor
     suit: pentacles
     number: 6
-    artwork: {fileID: 21300000, guid: c7aa73887d0ac409a944c48c6228c270, type: 3}
-    sourceTitle: RWS1909 - Pentacles 06
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: d3aafd2c89e4e40f4bf62ef4ee27a36b, type: 3}
+    sourceTitle: RWS1909 HD - 06 of Pentacles
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: pentacles_07
     cardNameEn: 07 of Pentacles
     arcana: minor
     suit: pentacles
     number: 7
-    artwork: {fileID: 21300000, guid: 7dba4a252c43349419419dcd03ce961a, type: 3}
-    sourceTitle: RWS1909 - Pentacles 07
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 27499927aab694b81b0af4df265a39fa, type: 3}
+    sourceTitle: RWS1909 HD - 07 of Pentacles
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: pentacles_08
     cardNameEn: 08 of Pentacles
     arcana: minor
     suit: pentacles
     number: 8
-    artwork: {fileID: 21300000, guid: 2244db4c328684977a9dc2f5c5a87339, type: 3}
-    sourceTitle: RWS1909 - Pentacles 08
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: c32922a7ebf444957a77a3218288da6f, type: 3}
+    sourceTitle: RWS1909 HD - 08 of Pentacles
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: pentacles_09
     cardNameEn: 09 of Pentacles
     arcana: minor
     suit: pentacles
     number: 9
-    artwork: {fileID: 21300000, guid: c76c95564a4db45fe9759d37cfb52dd8, type: 3}
-    sourceTitle: RWS1909 - Pentacles 09
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: aaf66011cf9194addb9ee23d8150beed, type: 3}
+    sourceTitle: RWS1909 HD - 09 of Pentacles
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: pentacles_10
     cardNameEn: 10 of Pentacles
     arcana: minor
     suit: pentacles
     number: 10
-    artwork: {fileID: 21300000, guid: 06b14add1869e42f1b463918320327e9, type: 3}
-    sourceTitle: RWS1909 - Pentacles 10
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: bf1664bbca517474580779c119c436c6, type: 3}
+    sourceTitle: RWS1909 HD - 10 of Pentacles
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: pentacles_11
     cardNameEn: Page of Pentacles
     arcana: minor
     suit: pentacles
     number: 11
-    artwork: {fileID: 21300000, guid: cd06ff7037e0848afb433ecab15f887f, type: 3}
-    sourceTitle: RWS1909 - Pentacles 11
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: f35143556f79b4b7f8d9d60321c6484b, type: 3}
+    sourceTitle: RWS1909 HD - Page of Pentacles
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: pentacles_12
     cardNameEn: Knight of Pentacles
     arcana: minor
     suit: pentacles
     number: 12
-    artwork: {fileID: 21300000, guid: 125241a49d98d43a69699720fc1646ed, type: 3}
-    sourceTitle: RWS1909 - Pentacles 12
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: e4c489611c0b64ef6bc2157b1ced22d6, type: 3}
+    sourceTitle: RWS1909 HD - Knight of Pentacles
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: pentacles_13
     cardNameEn: Queen of Pentacles
     arcana: minor
     suit: pentacles
     number: 13
-    artwork: {fileID: 21300000, guid: a893e52c4ad7e4f348e3fb42fbe14845, type: 3}
-    sourceTitle: RWS1909 - Pentacles 13
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: e06f10994af514b1cb2ee553614f544b, type: 3}
+    sourceTitle: RWS1909 HD - Queen of Pentacles
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: pentacles_14
     cardNameEn: King of Pentacles
     arcana: minor
     suit: pentacles
     number: 14
-    artwork: {fileID: 21300000, guid: ce8b6a3e3e9d54cc4b62dfba90deddee, type: 3}
-    sourceTitle: RWS1909 - Pentacles 14
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: cc65fe6299f3c440c8a48535ae8902d0, type: 3}
+    sourceTitle: RWS1909 HD - King of Pentacles
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: swords_01
     cardNameEn: Ace of Swords
     arcana: minor
     suit: swords
     number: 1
-    artwork: {fileID: 21300000, guid: 7c3949a0d22f1447aa323209c776e41c, type: 3}
-    sourceTitle: RWS1909 - Swords 01
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 691354c10337e45a9888e0e65ed091e5, type: 3}
+    sourceTitle: RWS1909 HD - Ace of Swords
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: swords_02
     cardNameEn: 02 of Swords
     arcana: minor
     suit: swords
     number: 2
-    artwork: {fileID: 21300000, guid: 9e13149bd809c4c3baca3c441216ecaa, type: 3}
-    sourceTitle: RWS1909 - Swords 02
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 8542d162cf6644d61ba5d85a4d9047bd, type: 3}
+    sourceTitle: RWS1909 HD - 02 of Swords
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: swords_03
     cardNameEn: 03 of Swords
     arcana: minor
     suit: swords
     number: 3
-    artwork: {fileID: 21300000, guid: 1a7cb352a2b46450d92fdf25e2ba2cc0, type: 3}
-    sourceTitle: RWS1909 - Swords 03
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 4f0e62a48acb14925ba532e3639cb9ba, type: 3}
+    sourceTitle: RWS1909 HD - 03 of Swords
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: swords_04
     cardNameEn: 04 of Swords
     arcana: minor
     suit: swords
     number: 4
-    artwork: {fileID: 21300000, guid: 3846f6f5f13f14e1e8449b95ce1d7536, type: 3}
-    sourceTitle: RWS1909 - Swords 04
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 2911336f579324dca804124b2e2a7e70, type: 3}
+    sourceTitle: RWS1909 HD - 04 of Swords
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: swords_05
     cardNameEn: 05 of Swords
     arcana: minor
     suit: swords
     number: 5
-    artwork: {fileID: 21300000, guid: cfa28795a0f104362b204f99939dd1ee, type: 3}
-    sourceTitle: RWS1909 - Swords 05
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: f87d676982b074d008f5a32bfe6aa930, type: 3}
+    sourceTitle: RWS1909 HD - 05 of Swords
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: swords_06
     cardNameEn: 06 of Swords
     arcana: minor
     suit: swords
     number: 6
-    artwork: {fileID: 21300000, guid: b1ca81ec02b104e3db0d74f04039219f, type: 3}
-    sourceTitle: RWS1909 - Swords 06
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: c6a1d367c847b44dba6df8cd5fcda379, type: 3}
+    sourceTitle: RWS1909 HD - 06 of Swords
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: swords_07
     cardNameEn: 07 of Swords
     arcana: minor
     suit: swords
     number: 7
-    artwork: {fileID: 21300000, guid: 8c5c8fcca092c4ffd9e0769e6b1298e3, type: 3}
-    sourceTitle: RWS1909 - Swords 07
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 9eb0abe71992f4ec7a0436c0dd6393d0, type: 3}
+    sourceTitle: RWS1909 HD - 07 of Swords
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: swords_08
     cardNameEn: 08 of Swords
     arcana: minor
     suit: swords
     number: 8
-    artwork: {fileID: 21300000, guid: 40a602b1065a14b98ac9703a677cbaf5, type: 3}
-    sourceTitle: RWS1909 - Swords 08
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 5cfbff1ae3bf3470589cd5e0da9064a9, type: 3}
+    sourceTitle: RWS1909 HD - 08 of Swords
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: swords_09
     cardNameEn: 09 of Swords
     arcana: minor
     suit: swords
     number: 9
-    artwork: {fileID: 21300000, guid: f12a7c3d9943a456aae21c5aed9cdc52, type: 3}
-    sourceTitle: RWS1909 - Swords 09
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 3ca53ddbaa7ea49758a377931bf71567, type: 3}
+    sourceTitle: RWS1909 HD - 09 of Swords
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: swords_10
     cardNameEn: 10 of Swords
     arcana: minor
     suit: swords
     number: 10
-    artwork: {fileID: 21300000, guid: fdb51966db6a04b72b043bcd264921bc, type: 3}
-    sourceTitle: RWS1909 - Swords 10
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 4085abf5aa48643c9939a5f25bd87515, type: 3}
+    sourceTitle: RWS1909 HD - 10 of Swords
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: swords_11
     cardNameEn: Page of Swords
     arcana: minor
     suit: swords
     number: 11
-    artwork: {fileID: 21300000, guid: e6467559dd74b423da4726cee4277ef3, type: 3}
-    sourceTitle: RWS1909 - Swords 11
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 4f9f3a04db2e44c3691e182188649420, type: 3}
+    sourceTitle: RWS1909 HD - Page of Swords
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: swords_12
     cardNameEn: Knight of Swords
     arcana: minor
     suit: swords
     number: 12
-    artwork: {fileID: 21300000, guid: 1412c00c297e643a1aec812d5d042790, type: 3}
-    sourceTitle: RWS1909 - Swords 12
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 5ddd1944eaeac4180b58234ff40d46e3, type: 3}
+    sourceTitle: RWS1909 HD - Knight of Swords
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: swords_13
     cardNameEn: Queen of Swords
     arcana: minor
     suit: swords
     number: 13
-    artwork: {fileID: 21300000, guid: 1c220b1ead14645238905227a4ae9068, type: 3}
-    sourceTitle: RWS1909 - Swords 13
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: f5b5b37737f7e4802b288baa3063c9ca, type: 3}
+    sourceTitle: RWS1909 HD - Queen of Swords
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: swords_14
     cardNameEn: King of Swords
     arcana: minor
     suit: swords
     number: 14
-    artwork: {fileID: 21300000, guid: 92145ec6aed5242558793dcd82e14263, type: 3}
-    sourceTitle: RWS1909 - Swords 14
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 4140cf55c1bff4ba3bc0b46c6f125050, type: 3}
+    sourceTitle: RWS1909 HD - King of Swords
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: wands_01
     cardNameEn: Ace of Wands
     arcana: minor
     suit: wands
     number: 1
-    artwork: {fileID: 21300000, guid: 5c06c34e86aeb4320b0895cb254e4de9, type: 3}
-    sourceTitle: RWS1909 - Wands 01
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 65e2f296f5d0a451180ad6b14266073e, type: 3}
+    sourceTitle: RWS1909 HD - Ace of Wands
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: wands_02
     cardNameEn: 02 of Wands
     arcana: minor
     suit: wands
     number: 2
-    artwork: {fileID: 21300000, guid: 6cd6613dcf7ca4a48b59f0f2e998719f, type: 3}
-    sourceTitle: RWS1909 - Wands 02
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 0976cecdcc9c34dd2b993bbdc1bd2614, type: 3}
+    sourceTitle: RWS1909 HD - 02 of Wands
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: wands_03
     cardNameEn: 03 of Wands
     arcana: minor
     suit: wands
     number: 3
-    artwork: {fileID: 21300000, guid: e63d4098c6159469fa33e459581019e5, type: 3}
-    sourceTitle: RWS1909 - Wands 03
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: b0214e71a89ca4cf993c158cdf0a8439, type: 3}
+    sourceTitle: RWS1909 HD - 03 of Wands
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: wands_04
     cardNameEn: 04 of Wands
     arcana: minor
     suit: wands
     number: 4
-    artwork: {fileID: 21300000, guid: e1f850391cd0648de958c36dff001ce7, type: 3}
-    sourceTitle: RWS1909 - Wands 04
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: c3d7df1f631014626bd4ccd4b7bcf50d, type: 3}
+    sourceTitle: RWS1909 HD - 04 of Wands
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: wands_05
     cardNameEn: 05 of Wands
     arcana: minor
     suit: wands
     number: 5
-    artwork: {fileID: 21300000, guid: bcf9644637b9943d4af2f395d04fdbf0, type: 3}
-    sourceTitle: RWS1909 - Wands 05
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 90e6c637d668b4b158e050c801caa7ab, type: 3}
+    sourceTitle: RWS1909 HD - 05 of Wands
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: wands_06
     cardNameEn: 06 of Wands
     arcana: minor
     suit: wands
     number: 6
-    artwork: {fileID: 21300000, guid: 185ddccce8f894168b9171aeb63c70e0, type: 3}
-    sourceTitle: RWS1909 - Wands 06
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 9a93d6c2d3d7c4b3686af78ef71c4df8, type: 3}
+    sourceTitle: RWS1909 HD - 06 of Wands
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: wands_07
     cardNameEn: 07 of Wands
     arcana: minor
     suit: wands
     number: 7
-    artwork: {fileID: 21300000, guid: dbbeecd64d2aa4bf2955f733be2b860e, type: 3}
-    sourceTitle: RWS1909 - Wands 07
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 31c248dd78416469c843fce96d8a74fa, type: 3}
+    sourceTitle: RWS1909 HD - 07 of Wands
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: wands_08
     cardNameEn: 08 of Wands
     arcana: minor
     suit: wands
     number: 8
-    artwork: {fileID: 21300000, guid: f7d9384c01aa44dd59b6373e249ee0e3, type: 3}
-    sourceTitle: RWS1909 - Wands 08
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 8f8a4619711a3445c940965a4199fdd3, type: 3}
+    sourceTitle: RWS1909 HD - 08 of Wands
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: wands_09
     cardNameEn: 09 of Wands
     arcana: minor
     suit: wands
     number: 9
-    artwork: {fileID: 21300000, guid: 8e89fe647c7ff4b50b0cf282707f10c4, type: 3}
-    sourceTitle: RWS1909 - Wands 09
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 64896247c8cc04157b7e5a350df2fc9b, type: 3}
+    sourceTitle: RWS1909 HD - 09 of Wands
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: wands_10
     cardNameEn: 10 of Wands
     arcana: minor
     suit: wands
     number: 10
-    artwork: {fileID: 21300000, guid: eaf19e3a01e1a4fce9f7f9611e23f1cd, type: 3}
-    sourceTitle: RWS1909 - Wands 10
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 46dc021249f6b46ee9ebf6a0e035db5b, type: 3}
+    sourceTitle: RWS1909 HD - 10 of Wands
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: wands_11
     cardNameEn: Page of Wands
     arcana: minor
     suit: wands
     number: 11
-    artwork: {fileID: 21300000, guid: a26791f5ec3534b788261607c807b4b0, type: 3}
-    sourceTitle: RWS1909 - Wands 11
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 17d0ccaae70dc4c099fcc03eaf993195, type: 3}
+    sourceTitle: RWS1909 HD - Page of Wands
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: wands_12
     cardNameEn: Knight of Wands
     arcana: minor
     suit: wands
     number: 12
-    artwork: {fileID: 21300000, guid: a17710d0d9c3f442b9cee7a09c8b99de, type: 3}
-    sourceTitle: RWS1909 - Wands 12
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 268456ac832034b9d9f712e655e94f36, type: 3}
+    sourceTitle: RWS1909 HD - Knight of Wands
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: wands_13
     cardNameEn: Queen of Wands
     arcana: minor
     suit: wands
     number: 13
-    artwork: {fileID: 21300000, guid: 8b0433f93503540489bd13b1c173e3ac, type: 3}
-    sourceTitle: RWS1909 - Wands 13
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 92085db622425463680285687f59c0bb, type: 3}
+    sourceTitle: RWS1909 HD - Queen of Wands
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
   - key: wands_14
     cardNameEn: King of Wands
     arcana: minor
     suit: wands
     number: 14
-    artwork: {fileID: 21300000, guid: 0a4f7613ff86e42beb75485d5b4eed33, type: 3}
-    sourceTitle: RWS1909 - Wands 14
-    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck_(Roses_%26_Lilies)
+    artwork: {fileID: 21300000, guid: 1bf08f803e8e54a0e9df62822ed25b46, type: 3}
+    sourceTitle: RWS1909 HD - King of Wands
+    sourceUrl: https://commons.wikimedia.org/wiki/Category:Rider-Waite_tarot_deck
