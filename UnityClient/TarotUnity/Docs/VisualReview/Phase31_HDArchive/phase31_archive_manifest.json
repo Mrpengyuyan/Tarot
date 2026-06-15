@@ -1,0 +1,9 @@
+{
+  "resolution": "2560x1440",
+  "shots": [
+    { "file": "01_MainMenu.png", "description": "Main menu - title, tagline, start ritual button" },
+    { "file": "02_ReadingRoom.png", "description": "Reading room - progress rail, spread select, deck and empty slots on the 3D table" },
+    { "file": "03_Result_default.png", "description": "Result - question header, card hero, scrollable reading (short copy)" },
+    { "file": "04_Result_long.png", "description": "Result - long backend-style reading filling the scroll panel" }
+  ]
+}

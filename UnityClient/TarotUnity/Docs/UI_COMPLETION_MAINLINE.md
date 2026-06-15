@@ -549,6 +549,27 @@ Remaining limitation:
 
 - Phase 30 is an objective consistency guard, not final high-end VFX. The primary-button height unification and any deliberate spacing refresh remain for a feedback-tuned visual pass.
 
+### Phase 31: HD Visual Archive
+
+Status: implemented on 2026-06-15.
+
+Purpose:
+
+- Produce a complete high-resolution archive of the current game UI so the whole look can be reviewed in one place.
+
+What changed:
+
+- `Phase31VisualArchiveBuilder` (read-only editor tool) renders the faithful screens at 2560x1440 into `Docs/VisualReview/Phase31_HDArchive/`: MainMenu, ReadingRoom (spread select), and the Result default and long-reading states, plus a manifest. `Phase31VisualArchiveTests` guards that the artifacts exist.
+- The face-up card reveal is intentionally excluded: staging cards in edit mode surfaced a card-face sizing issue (Phase 27 HD sprites import at PPU 100, larger than the face slot was tuned for, so faces overflow the card). That is the hero prefab and should be judged/fixed live with feedback, not approximated blind. Flagged in the Phase 31 doc and below.
+
+Exit criteria:
+
+- The four archive PNGs and manifest are written at 2560x1440; EditMode tests confirm the artifacts exist.
+
+Remaining limitation:
+
+- Phase 31 is a review archive, not final high-end VFX. The card-face sizing fix (normalize HD sprite PPU to the card footprint, or fit in SetFaceArtwork) and the face-up reveal capture remain for a feedback-tuned follow-up.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:
