@@ -24,20 +24,20 @@ namespace TarotUnity.Tests.EditMode
         }
 
         [Test]
-        public void ReadingBodiesUseBestFitWithinSafeBounds()
+        public void ReadingBodiesStayContainedAtFullSize()
         {
+            // Phase 26 contained long copy by shrinking it (best-fit). Phase 29 supersedes
+            // that mechanism with a scroll panel: bodies render at full size and any
+            // overflow is clipped by the viewport RectMask2D instead of bleeding into the
+            // next section. The Phase 26 guarantee (no overflow) still holds, the better way.
             foreach (var name in BodyTextNames)
             {
                 var text = FindText(name);
                 Assert.That(text, Is.Not.Null, $"{name} should exist in the Result scene");
-                Assert.That(text.resizeTextForBestFit, Is.True,
-                    $"{name} should best-fit so long interpretation never overflows its box");
-                Assert.That(text.resizeTextMaxSize, Is.GreaterThanOrEqualTo(19),
-                    $"{name} should still render short copy at full size");
-                Assert.That(text.resizeTextMinSize, Is.InRange(10, 15),
-                    $"{name} should keep a readable floor when copy is long");
-                Assert.That(text.resizeTextMinSize, Is.LessThan(text.resizeTextMaxSize),
-                    $"{name} best-fit bounds must be a valid range");
+                Assert.That(text.resizeTextForBestFit, Is.False,
+                    $"{name} no longer best-fits; Phase 29 renders it full size inside the scroll panel");
+                Assert.That(text.GetComponentInParent<RectMask2D>(), Is.Not.Null,
+                    $"{name} must live under the scroll viewport mask so long copy is clipped, not overflowed");
             }
         }
 

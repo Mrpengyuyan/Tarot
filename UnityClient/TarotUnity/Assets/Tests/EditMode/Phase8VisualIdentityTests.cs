@@ -62,10 +62,32 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(canvas.transform.Find("Phase8_ResultGoldDividerTop"), Is.Not.Null);
             Assert.That(canvas.transform.Find("Phase8_ResultGoldDividerBottom"), Is.Not.Null);
 
-            var overall = canvas.transform.Find("OverallText")?.GetComponent<Text>();
+            // Phase 29 moved OverallText into the scroll Content, so it is no longer a
+            // direct child of the canvas and its width is layout-driven (not sizeDelta).
+            // Find it recursively and assert the resolved width keeps the premium column.
+            var overall = FindDescendantText(canvas.transform, "OverallText");
             Assert.That(overall, Is.Not.Null);
             Assert.That(overall.alignment, Is.EqualTo(TextAnchor.UpperLeft));
-            Assert.That(overall.GetComponent<RectTransform>().sizeDelta.x, Is.GreaterThanOrEqualTo(700f));
+
+            var overallRect = overall.GetComponent<RectTransform>();
+            // Width is driven by the parent VerticalLayoutGroup, so rebuild the Content
+            // (OverallText's parent), not the leaf, before reading the resolved width.
+            LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)overallRect.parent);
+            Assert.That(overallRect.rect.width, Is.GreaterThanOrEqualTo(700f),
+                "Result reading body must keep the premium-width column even inside the scroll panel");
+        }
+
+        private static Text FindDescendantText(Transform root, string name)
+        {
+            foreach (var t in root.GetComponentsInChildren<Text>(true))
+            {
+                if (t.name == name)
+                {
+                    return t;
+                }
+            }
+
+            return null;
         }
 
         [Test]

@@ -13,7 +13,9 @@ namespace TarotUnity.Tests.EditMode
 {
     public sealed class Phase13TarotArtworkPipelineTests
     {
-        private const string ArtworkFolder = "Assets/Art/Tarot/RWS1909";
+        // Phase 27 re-sourced the deck at HD and the old low-res RWS1909 folder was
+        // removed, so the canonical artwork folder is now RWS1909_HD (same filename keys).
+        private const string ArtworkFolder = "Assets/Art/Tarot/RWS1909_HD";
         private const string CatalogPath = "Assets/Resources/TarotArt/RWS1909_CardArtworkCatalog.asset";
         private const string ReadingRoomScenePath = "Assets/Scenes/ReadingRoom.unity";
         private const string ResultScenePath = "Assets/Scenes/Result.unity";

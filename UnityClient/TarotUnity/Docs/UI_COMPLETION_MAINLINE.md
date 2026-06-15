@@ -505,6 +505,28 @@ Remaining limitation:
 
 - The sweep is a view-angle effect best judged live (hover to tilt). Intensity/width/iridescence are single material properties, easy to tune from feedback. The Result hero card (a UI image) is not yet holographic.
 
+### Phase 29: Result Reading Scroll Panel
+
+Status: implemented on 2026-06-15.
+
+Purpose:
+
+- Deliver the scrollable reading panel Phase 26 named as the eventual ideal. Phase 26 contained variable-length backend AI text by shrinking it (best-fit); Phase 29 instead renders every section at full size and scrolls when the reading exceeds the viewport, so long copy stays readable instead of shrinking.
+
+What changed:
+
+- The four header/body pairs are reparented, in reading order, into a new `ResultReadingScroll` (vertical `ScrollRect`, `Clamped`, 736x448, centered on the Phase 25 column). A `Viewport` with a `RectMask2D` clips overflow; a `Content` with `VerticalLayoutGroup` + `ContentSizeFitter` (vertical = PreferredSize) grows with the text. The 708px body column keeps the Phase 8/12 reading-width invariants.
+- Best-fit is turned off on the four bodies (Phase 26's mechanism is superseded); the redundant `Phase8_ResultScrollPanel` is deactivated, not deleted.
+- A few older Result tests (Phase 8/12/25/26) were updated to match the new nested, layout-driven structure while preserving their original intent (recursive find + resolved `rect.width`, world-space geometry, and a scroll-clipping guarantee in place of the best-fit assertion).
+
+Exit criteria:
+
+- `ResultReadingScroll` has a vertical `ScrollRect` wired to a `RectMask2D` viewport and a `VerticalLayoutGroup` + `ContentSizeFitter` Content; all eight sections are children of Content in reading order; bodies render full size; long copy makes Content taller than the viewport; the reading width still clears >= 700 / >= 660; EditMode tests pass.
+
+Remaining limitation:
+
+- Phase 29 is the layout/robustness completion for long readings, not final high-end VFX. A styled scrollbar handle, scroll-edge fades, and a richer card-back reveal remain for a feedback-tuned pass.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:

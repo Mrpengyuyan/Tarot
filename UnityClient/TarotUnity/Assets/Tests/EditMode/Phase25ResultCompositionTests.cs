@@ -25,6 +25,14 @@ namespace TarotUnity.Tests.EditMode
         public void OpenScene()
         {
             EditorSceneManager.OpenScene(ResultScenePath);
+
+            // Phase 29 drives the reading sections through a VerticalLayoutGroup inside
+            // the scroll Content. Rebuild it so world-space geometry reflects the layout.
+            var content = FindAny("Content") as RectTransform;
+            if (content != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(content);
+            }
         }
 
         [Test]
@@ -119,10 +127,34 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(text, Does.Contain("not final high-end VFX"));
         }
 
-        private static float TopEdge(RectTransform r) => r.anchoredPosition.y + (1f - r.pivot.y) * r.sizeDelta.y;
-        private static float BottomEdge(RectTransform r) => TopEdge(r) - r.sizeDelta.y;
-        private static float LeftEdge(RectTransform r) => r.anchoredPosition.x - r.pivot.x * r.sizeDelta.x;
-        private static float RightEdge(RectTransform r) => LeftEdge(r) + r.sizeDelta.x;
+        // World-space edges so comparisons stay valid no matter how deeply a rect is
+        // nested (Phase 29 moved the reading sections into the scroll Content). Corner
+        // order from GetWorldCorners is bottom-left, top-left, top-right, bottom-right.
+        private static readonly Vector3[] CornerBuffer = new Vector3[4];
+
+        private static float TopEdge(RectTransform r)
+        {
+            r.GetWorldCorners(CornerBuffer);
+            return CornerBuffer[1].y;
+        }
+
+        private static float BottomEdge(RectTransform r)
+        {
+            r.GetWorldCorners(CornerBuffer);
+            return CornerBuffer[0].y;
+        }
+
+        private static float LeftEdge(RectTransform r)
+        {
+            r.GetWorldCorners(CornerBuffer);
+            return CornerBuffer[0].x;
+        }
+
+        private static float RightEdge(RectTransform r)
+        {
+            r.GetWorldCorners(CornerBuffer);
+            return CornerBuffer[3].x;
+        }
 
         private static RectTransform FindRect(string name) => FindAny(name) as RectTransform;
 

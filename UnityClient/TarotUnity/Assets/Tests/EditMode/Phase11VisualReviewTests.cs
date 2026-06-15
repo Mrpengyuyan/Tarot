@@ -81,9 +81,29 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(resultCanvas.transform.Find("Phase11_ResultReadingColumns"), Is.Not.Null);
             Assert.That(resultCanvas.transform.Find("Phase11_ResultCardPresence"), Is.Not.Null);
 
-            var overall = resultCanvas.transform.Find("OverallText")?.GetComponent<Text>();
+            // Phase 29 moved OverallText into the scroll Content, so it is no longer a
+            // direct child of the canvas and its position is layout-driven. Find it
+            // recursively, and assert the reading column container (the scroll panel that
+            // now carries it) still sits in the right column.
+            var overall = FindDescendant(resultCanvas.transform, "OverallText");
             Assert.That(overall, Is.Not.Null);
-            Assert.That(overall.GetComponent<RectTransform>().anchoredPosition.x, Is.GreaterThanOrEqualTo(140f));
+
+            var readingColumn = FindDescendant(resultCanvas.transform, "ResultReadingScroll");
+            Assert.That(readingColumn, Is.Not.Null, "Phase 29 reading scroll column should exist");
+            Assert.That(readingColumn.GetComponent<RectTransform>().anchoredPosition.x, Is.GreaterThanOrEqualTo(140f));
+        }
+
+        private static Transform FindDescendant(Transform root, string name)
+        {
+            foreach (var t in root.GetComponentsInChildren<Transform>(true))
+            {
+                if (t.name == name)
+                {
+                    return t;
+                }
+            }
+
+            return null;
         }
 
         private static void AssertScreenshot(string fileName)

@@ -76,9 +76,28 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(canvas.transform.Find("Phase12_ResultCardPlaceholder"), Is.Not.Null);
             Assert.That(canvas.transform.Find("Phase12_ResultCardArtworkSlot"), Is.Not.Null);
 
-            var overall = canvas.transform.Find("OverallText")?.GetComponent<Text>();
+            // Phase 29 reparents OverallText into the scroll Content; resolve it
+            // recursively and assert layout-driven width instead of sizeDelta.
+            var overall = FindDescendantText(canvas.transform, "OverallText");
             Assert.That(overall, Is.Not.Null);
-            Assert.That(overall.GetComponent<RectTransform>().sizeDelta.x, Is.GreaterThanOrEqualTo(660f));
+
+            var overallRect = overall.GetComponent<RectTransform>();
+            // Width is layout-driven by the parent VerticalLayoutGroup; rebuild Content.
+            LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)overallRect.parent);
+            Assert.That(overallRect.rect.width, Is.GreaterThanOrEqualTo(660f));
+        }
+
+        private static Text FindDescendantText(Transform root, string name)
+        {
+            foreach (var t in root.GetComponentsInChildren<Text>(true))
+            {
+                if (t.name == name)
+                {
+                    return t;
+                }
+            }
+
+            return null;
         }
 
         [Test]
