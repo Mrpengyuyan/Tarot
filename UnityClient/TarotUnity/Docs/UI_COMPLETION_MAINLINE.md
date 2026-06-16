@@ -570,6 +570,27 @@ Remaining limitation:
 
 - Phase 31 is a review archive, not final high-end VFX. The card-face sizing fix (normalize HD sprite PPU to the card footprint, or fit in SetFaceArtwork) and the face-up reveal capture remain for a feedback-tuned follow-up.
 
+### Phase 32: Card Face Fit (Oversized Flip Art Bugfix)
+
+Status: implemented on 2026-06-15.
+
+Purpose:
+
+- Fix the bug Phase 31 flagged: after the Phase 27 HD swap, flipping a card showed the face art wildly oversized and overlapping.
+
+What changed:
+
+- Root cause (diagnosed, not guessed): SetFaceArtwork assigned the sprite without sizing it, and HD sprites import at PPU 100, so the face rendered ~3.4x too wide / 7.7x too long vs the card body. Once correctly sized, a second issue showed: the face sat ~0.003 above the opaque cream front planes and was occluded at grazing angles.
+- `CardView.FitFaceArtwork` scales the face renderer (preserving aspect) to a target world footprint regardless of sprite resolution/PPU; invoked from SetFaceArtwork and SetFaceUp to cover both deal-then-flip and flip-then-art orders. `Phase32CardFaceFitBootstrapper` sets the prefab footprint and lifts the face renderer clear of the front planes. The Phase 28 holographic sheen is preserved.
+
+Exit criteria:
+
+- `Phase32CardFaceFitTests` confirms the face fits the card footprint (was 2.65 vs 0.78), fills a reasonable portion, and clears the front plane; the Phase 32 capture shows correctly sized, crisp art on the card; EditMode 182/182 and PlayMode 29/29 green.
+
+Remaining limitation:
+
+- Phase 32 fixes correctness (size + visibility), not final high-end VFX. The footprint/lift are tunable, and a richer reveal (animated flip-in, stronger foil) remains for a feedback-tuned pass.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:

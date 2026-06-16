@@ -1850,6 +1850,7 @@ MonoBehaviour:
   highlightRoot: {fileID: 2178459329437542849}
   titleLabel: {fileID: 4313202027331281845}
   positionLabel: {fileID: 4783587273525000864}
+  faceArtworkWorldSize: {x: 0.64, y: 1}
 --- !u!114 &6333404738987148040
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2312,7 +2313,7 @@ Transform:
   m_GameObject: {fileID: 5773106229947122120}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0.083, z: -0.035}
+  m_LocalPosition: {x: 0, y: 0.85, z: -0.035}
   m_LocalScale: {x: 0.46, y: 0.6, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
