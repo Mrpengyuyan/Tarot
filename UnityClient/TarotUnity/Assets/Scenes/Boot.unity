@@ -263,9 +263,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: TarotUnity.Runtime::TarotUnity.Core.AudioManager
   musicSource: {fileID: 0}
   sfxSource: {fileID: 0}
-  cueMap: []
+  cueMap:
+  - cue: 1
+    clip: {fileID: 8300000, guid: 9962157fb6fbd450ca4fed407deabcb1, type: 3}
+    volume: 0.55
+  - cue: 2
+    clip: {fileID: 8300000, guid: 775544253c02e4893b65689f52a38688, type: 3}
+    volume: 0.6
+  - cue: 3
+    clip: {fileID: 8300000, guid: 539cfb0eb7b08455d8ba8a044b5b483f, type: 3}
+    volume: 0.85
+  - cue: 4
+    clip: {fileID: 8300000, guid: 7143de5de9d2648ad97d7d1405f3980f, type: 3}
+    volume: 0.6
+  - cue: 5
+    clip: {fileID: 8300000, guid: 5459b30ea8d6147b0a1b64137a366599, type: 3}
+    volume: 0.6
+  - cue: 6
+    clip: {fileID: 8300000, guid: 934d208653ec647dea822ec3ca677031, type: 3}
+    volume: 0.6
+  - cue: 7
+    clip: {fileID: 8300000, guid: 38c577c53a9804759a95cd75ae0106c0, type: 3}
+    volume: 0.7
   proceduralSfxEnabled: 1
   proceduralCueDuration: 0.18
+  ambientMusic: {fileID: 8300000, guid: 9b544a4b8a2b1437083a921d3cf3dfc5, type: 3}
+  musicVolume: 0.4
 --- !u!114 &2040104085
 MonoBehaviour:
   m_ObjectHideFlags: 0

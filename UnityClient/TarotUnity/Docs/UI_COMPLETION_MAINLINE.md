@@ -591,6 +591,27 @@ Remaining limitation:
 
 - Phase 32 fixes correctness (size + visibility), not final high-end VFX. The footprint/lift are tunable, and a richer reveal (animated flip-in, stronger foil) remains for a feedback-tuned pass.
 
+### Phase 33: Ambient Audio
+
+Status: implemented on 2026-06-16.
+
+Purpose:
+
+- The audio system was fully wired (AudioManager + seven presentation cues triggered during play) but silent: cueMap was empty, so cues fell back to single-sine beeps and there was no music. Give the game a real warm "Moonlit Tarot" sound.
+
+What changed:
+
+- Seven original royalty-free synthesized SFX (`Assets/Audio/SFX/`, one per cue) plus a 24s loopable ambient music bed (`Assets/Audio/Music/`), generated from scratch (pure-Python synthesis) so there is no third-party license to track. AudioManager gained an `ambientMusic` clip + `musicVolume` and auto-plays the bed on Awake.
+- `Phase33AudioBootstrapper` imports the WAVs (SFX decompress-on-load PCM, music streamed Vorbis) and assigns the seven cue clips (balanced volumes) + ambient bed on the persistent Boot AudioManager. The procedural beep fallback stays enabled as a safety net.
+
+Exit criteria:
+
+- The eight WAVs import as valid AudioClips; the Boot AudioManager binds all seven cues to non-null clips with sane volumes and an ambient music bed; EditMode and PlayMode tests pass.
+
+Remaining limitation:
+
+- Phase 33 is a cohesive baseline sound, not final high-end VFX or a composed soundtrack. Timbres, mix balance, and per-scene music behaviour are taste calls best tuned from a live listen; all volumes and synthesis parameters are easy to adjust (`Docs/Audio/gen_tarot_audio.py`).
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:

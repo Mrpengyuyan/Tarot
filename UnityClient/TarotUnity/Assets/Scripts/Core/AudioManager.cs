@@ -20,6 +20,8 @@ namespace TarotUnity.Core
         [SerializeField] private AudioCueBinding[] cueMap = Array.Empty<AudioCueBinding>();
         [SerializeField] private bool proceduralSfxEnabled = true;
         [SerializeField] private float proceduralCueDuration = 0.18f;
+        [SerializeField] private AudioClip ambientMusic;
+        [Range(0f, 1f)] [SerializeField] private float musicVolume = 0.45f;
 
         public PresentationCueId LastCue { get; private set; }
         public int PlayedCueCount { get; private set; }
@@ -38,6 +40,11 @@ namespace TarotUnity.Core
             Instance = this;
             DontDestroyOnLoad(gameObject);
             EnsureSources();
+
+            if (ambientMusic != null)
+            {
+                PlayMusic(ambientMusic, musicVolume);
+            }
         }
 
         public void PlayMusic(AudioClip clip, float volume = 0.75f)
