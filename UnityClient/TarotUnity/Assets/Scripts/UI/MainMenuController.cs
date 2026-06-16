@@ -8,6 +8,7 @@ namespace TarotUnity.UI
     public sealed class MainMenuController : MonoBehaviour
     {
         [SerializeField] private Button startReadingButton;
+        [SerializeField] private Button quitButton;
         [SerializeField] private Text statusText;
 
         private void Awake()
@@ -15,6 +16,11 @@ namespace TarotUnity.UI
             if (startReadingButton != null)
             {
                 startReadingButton.onClick.AddListener(StartReading);
+            }
+
+            if (quitButton != null)
+            {
+                quitButton.onClick.AddListener(QuitGame);
             }
         }
 
@@ -32,6 +38,20 @@ namespace TarotUnity.UI
             {
                 startReadingButton.onClick.RemoveListener(StartReading);
             }
+
+            if (quitButton != null)
+            {
+                quitButton.onClick.RemoveListener(QuitGame);
+            }
+        }
+
+        private void QuitGame()
+        {
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#else
+            Application.Quit();
+#endif
         }
 
         private void StartReading()

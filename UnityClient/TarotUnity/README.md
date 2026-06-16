@@ -73,6 +73,7 @@ Pre-Phase-6 readiness and desktop build notes live in:
 - `Docs/PHASE31_HD_VISUAL_ARCHIVE.md`
 - `Docs/PHASE32_CARD_FACE_FIT.md`
 - `Docs/PHASE33_AMBIENT_AUDIO.md`
+- `Docs/PHASE34_QUIT_BUTTON.md`
 
 ## Current Playable Slice
 

@@ -612,6 +612,27 @@ Remaining limitation:
 
 - Phase 33 is a cohesive baseline sound, not final high-end VFX or a composed soundtrack. Timbres, mix balance, and per-scene music behaviour are taste calls best tuned from a live listen; all volumes and synthesis parameters are easy to adjust (`Docs/Audio/gen_tarot_audio.py`).
 
+### Phase 34: Main-Menu Quit Button
+
+Status: implemented on 2026-06-16.
+
+Purpose:
+
+- Desktop builds had no in-game exit (only OS Cmd+Q / Alt+F4). Add a quit affordance to the main menu - a small objective UX gap fix.
+
+What changed:
+
+- MainMenuController gained a `quitButton` (wired like the start button: runtime AddListener) and a `QuitGame` handler (`Application.Quit`, or stop play mode in editor).
+- `Phase34QuitButtonBootstrapper` clones StartReadingButton for identical styling (Phase 30 consistency), relabels it `退出占卜`, places it centered below the start plate + status line, and wires it to the controller. Idempotent.
+
+Exit criteria:
+
+- `Phase34QuitButtonTests`: QuitButton exists, centered, below the start plate without overlap, labeled 退出, wired to the controller which has QuitGame; EditMode/PlayMode green.
+
+Remaining limitation:
+
+- Functional UX fix, not final high-end VFX. The quit button mirrors the primary button's prominence for consistency; de-emphasizing it or adding a confirm step are easy taste tweaks.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:
