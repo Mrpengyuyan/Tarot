@@ -51,6 +51,12 @@ card there too, the fix is to normalize the face artwork to the card footprint
 (consistent sprite PPU on import, or a fit step in `SetFaceArtwork`) - a focused,
 feedback-tuned follow-up.
 
+**Update (Phase 32):** confirmed a real bug and fixed it. `CardView.FitFaceArtwork`
+now sizes the face artwork to the card footprint regardless of sprite PPU, and the
+prefab lifts the face renderer clear of the cream front planes so it is no longer
+occluded. See `Docs/PHASE32_CARD_FACE_FIT.md` and the verification render
+`Docs/VisualReview/Phase32/ReadingRoom_cards_faceup.png`.
+
 ## How To Run
 
 Editor menu: `Tools/Tarot Unity/Run Phase 31 HD Visual Archive`.

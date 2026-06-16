@@ -31,6 +31,18 @@ namespace TarotUnity.Editor
                 return;
             }
 
+            // Phase 13 is superseded by Phase 27, which re-sourced the deck at HD into
+            // RWS1909_HD and removed this low-res folder. Without this guard the bootstrap
+            // would throw DirectoryNotFoundException; degrade gracefully and point the user
+            // at the current pipeline instead.
+            if (!AssetDatabase.IsValidFolder(ArtworkFolder))
+            {
+                Debug.LogWarning(
+                    $"Phase 13 artwork folder '{ArtworkFolder}' no longer exists. This phase is " +
+                    "superseded by Phase 27 (HD pipeline, RWS1909_HD); run 'Run Phase 27 HD Artwork Bootstrap' instead.");
+                return;
+            }
+
             ConfigureTextureImporters();
             AssetDatabase.Refresh();
 

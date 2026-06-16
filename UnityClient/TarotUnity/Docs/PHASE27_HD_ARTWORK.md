@@ -23,8 +23,10 @@ it in, so a flipped card and the result hero render crisply.
   `ResultPanelPresenter`. The card-key matching is unchanged, so every draw
   resolves to its HD face.
 
-The old low-resolution folder (`Assets/Art/Tarot/RWS1909/`) is left in place,
-untouched, for the user to delete - this phase does not overwrite or remove it.
+The old low-resolution folder (`Assets/Art/Tarot/RWS1909/`) was left in place,
+untouched, for the user to delete - this phase did not overwrite or remove it.
+(Update: the user has since deleted that folder; the catalog points only at
+`RWS1909_HD`, and the superseded Phase 13 bootstrap now no-ops gracefully if run.)
 
 ## How To Run
 
