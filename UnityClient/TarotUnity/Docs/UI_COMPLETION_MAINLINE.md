@@ -655,6 +655,27 @@ Remaining limitation:
 
 - Defect repair, not final high-end VFX. A faint plate or hover glow on the quit link, and repositioning the hidden stage as a live aura behind the hero card, are feedback-gated follow-ups.
 
+### Phase 36: Performance Pass
+
+Status: implemented on 2026-07-10.
+
+Purpose:
+
+- The framework review surfaced two objective performance items: the card-flip path ran whole-scene scans on every click, and the project had never been measured.
+
+What changed:
+
+- CardFlipController caches the camera choreography and ritual feedback references in lazy self-healing accessors instead of calling FindFirstObjectByType per flip.
+- Phase36PerformanceProbeTests (PlayMode) drives the real three-card slice and logs frame times plus per-frame managed allocations per scene state; static audit confirmed all three per-frame loops are allocation-free.
+
+Exit criteria:
+
+- Probe baseline recorded in the Phase 36 doc (steady state 0 B/frame allocations, ~0.1 ms main-thread frames in batch; one 120 ms Result scene-load first frame); Phase36PerformancePassTests guard the caching; EditMode/PlayMode green; macOS player build succeeds.
+
+Remaining limitation:
+
+- CPU/GC only - real GPU frame time needs a played round with the Metal HUD (macOS) or an FPS overlay (Windows); workflow documented in the Phase 36 doc.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:

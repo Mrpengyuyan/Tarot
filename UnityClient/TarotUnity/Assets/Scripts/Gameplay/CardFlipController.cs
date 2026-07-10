@@ -16,8 +16,38 @@ namespace TarotUnity.Gameplay
         [SerializeField] private bool cameraPunchEnabled = true;
 
         private bool isFlipping;
+        private CameraChoreographyController cameraChoreography;
+        private RitualFeedbackController ritualFeedback;
 
         public bool IsFlipping => isFlipping;
+
+        // Cached lazily instead of in Awake so scene-load order never matters; Unity's
+        // destroyed-object == null lets the cache self-heal across scene reloads.
+        private CameraChoreographyController CameraChoreography
+        {
+            get
+            {
+                if (cameraChoreography == null)
+                {
+                    cameraChoreography = FindFirstObjectByType<CameraChoreographyController>();
+                }
+
+                return cameraChoreography;
+            }
+        }
+
+        private RitualFeedbackController RitualFeedback
+        {
+            get
+            {
+                if (ritualFeedback == null)
+                {
+                    ritualFeedback = FindFirstObjectByType<RitualFeedbackController>();
+                }
+
+                return ritualFeedback;
+            }
+        }
 
         public void Flip(CardView card)
         {
@@ -42,7 +72,7 @@ namespace TarotUnity.Gameplay
 
             if (cameraPunchEnabled)
             {
-                FindFirstObjectByType<CameraChoreographyController>()?.PunchToward(card.transform);
+                CameraChoreography?.PunchToward(card.transform);
             }
 
             if (anticipationPause > 0f)
@@ -65,7 +95,7 @@ namespace TarotUnity.Gameplay
             }
 
             card.SetFaceUp(faceUp);
-            FindFirstObjectByType<RitualFeedbackController>()?.PlayCue(flipCue, card.transform);
+            RitualFeedback?.PlayCue(flipCue, card.transform);
 
             if (faceRevealPause > 0f)
             {
