@@ -633,6 +633,28 @@ Remaining limitation:
 
 - Functional UX fix, not final high-end VFX. The quit button mirrors the primary button's prominence for consistency; de-emphasizing it or adding a confirm step are easy taste tweaks.
 
+### Phase 35: Result Overlay and Menu Polish
+
+Status: implemented on 2026-07-10.
+
+Purpose:
+
+- A fresh visual review of the HD archive surfaced three objective defects: the pre-Phase-25 3D result card stage peeking out from behind the reading panel, the flat-era ResultReadingFrame darkening the hero card slot with a visible seam, and the main-menu status line sitting on the start plate while the quit button competed with the primary action.
+
+What changed:
+
+- The five result stage visuals (pedestal, glow pool, rune ring, two anchor markers) have their MeshRenderers disabled while the GameObjects stay active for the Phase 15-21 Find-based tests and live particle anchors.
+- ResultReadingFrame is deactivated (not deleted), matching the Phase 25 convention for redundant flat-era overlays.
+- StatusText moved below the start plate; QuitButton became a quiet secondary action (trim clone off, 200x40 plate, 16pt muted label matching the runtime TarotUiTheme rule).
+
+Exit criteria:
+
+- `Phase35UiPolishTests`: stage renderers disabled with objects active, ResultReadingFrame off with the scroll on, status line clears the plate, quit strictly smaller/quieter with start's trim untouched; regenerated HD archive confirms the artifact and seam are gone; EditMode/PlayMode green.
+
+Remaining limitation:
+
+- Defect repair, not final high-end VFX. A faint plate or hover glow on the quit link, and repositioning the hidden stage as a live aura behind the hero card, are feedback-gated follow-ups.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:
