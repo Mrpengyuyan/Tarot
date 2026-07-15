@@ -102,7 +102,10 @@ namespace TarotUnity.Tests.EditMode
 
             var startTrim = start.Find("Phase8_StartButtonGoldTrim");
             Assert.That(startTrim, Is.Not.Null);
-            Assert.That(startTrim.gameObject.activeSelf, Is.True, "the primary button keeps its Phase 8 gold look");
+            // Phase 40: the gold plaque sprite supersedes the Phase 8 trim on the
+            // primary button too; both trims stay in the scene, deactivated.
+            Assert.That(startTrim.gameObject.activeSelf, Is.False,
+                "the Phase 40 plaque replaces the flat trim on the primary button");
 
             var startLabel = start.GetComponentInChildren<Text>(true);
             var quitLabel = quit.GetComponentInChildren<Text>(true);

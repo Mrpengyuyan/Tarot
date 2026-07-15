@@ -708,6 +708,16 @@ Remaining limitation:
   regenerated with a heavier frame after capture review;
   Phase39UiReskinTests guard the skin.
 
+### Phase 40: MainMenu + Result Recomposition
+
+- MainMenu: Midnight Parlor stage with a candlelit tabletop vignette (deck
+  stack, scattered cards, candle glow quads); the brown disc and green slab
+  deleted; start button wears the plaque, quit stays a quiet gold-line link;
+  Phase 11 depth fakes deactivated and washes lightened so the velvet reads.
+- Result: velvet + backdrop behind the reading (no rim - it striped the UI);
+  hero showcase and reading scroll in gold frames, diamond dividers, radial
+  candle glow replacing the amber slab. Phase40MenuResultTests guard it all.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:

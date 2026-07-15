@@ -21,14 +21,22 @@ namespace TarotUnity.Editor
         private static readonly string[] FramingSlotNames = { "PastSlot", "PresentSlot", "AdviceSlot" };
 
         [MenuItem("Tools/Tarot Unity/Run Phase 38 Capture (ReadingRoom)")]
-        public static void Run()
+        public static void Run() => Capture("Assets/Scenes/ReadingRoom.unity", "ReadingRoom.png", true);
+
+        [MenuItem("Tools/Tarot Unity/Run Phase 38 Capture (MainMenu)")]
+        public static void RunMainMenu() => Capture("Assets/Scenes/MainMenu.unity", "MainMenu.png", false);
+
+        [MenuItem("Tools/Tarot Unity/Run Phase 38 Capture (Result)")]
+        public static void RunResult() => Capture("Assets/Scenes/Result.unity", "Result.png", false);
+
+        private static void Capture(string scenePath, string fileName, bool placeCards)
         {
-            EditorSceneManager.OpenScene("Assets/Scenes/ReadingRoom.unity", OpenSceneMode.Single);
+            EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
             var camera = Camera.main ?? Object.FindFirstObjectByType<Camera>();
 
             var proxies = new List<GameObject>();
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
-            foreach (var slotName in FramingSlotNames)
+            foreach (var slotName in placeCards ? FramingSlotNames : System.Array.Empty<string>())
             {
                 var slot = GameObject.Find(slotName);
                 if (slot != null && prefab != null)
@@ -67,7 +75,7 @@ namespace TarotUnity.Editor
                 tex.ReadPixels(new Rect(0f, 0f, Width, Height), 0, 0);
                 tex.Apply();
                 Directory.CreateDirectory(ReviewFolder);
-                File.WriteAllBytes($"{ReviewFolder}/ReadingRoom.png", tex.EncodeToPNG());
+                File.WriteAllBytes($"{ReviewFolder}/{fileName}", tex.EncodeToPNG());
             }
             finally
             {
@@ -85,7 +93,7 @@ namespace TarotUnity.Editor
                 }
             }
 
-            Debug.Log($"Phase 38 capture written to {ReviewFolder}/ReadingRoom.png");
+            Debug.Log($"Phase 38 capture written to {ReviewFolder}/{fileName}");
         }
     }
 }

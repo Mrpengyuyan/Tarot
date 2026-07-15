@@ -16,7 +16,9 @@ namespace TarotUnity.Tests.EditMode
             EditorSceneManager.OpenScene("Assets/Scenes/MainMenu.unity");
 
             Assert.That(GameObject.Find("Phase8_VisualIdentityRoot"), Is.Not.Null);
-            Assert.That(GameObject.Find("Phase8_MenuTableSurface"), Is.Not.Null);
+            // Phase 40 deleted the green slab; the velvet menu stage replaced it.
+            Assert.That(GameObject.Find("Phase8_MenuTableSurface"), Is.Null);
+            Assert.That(GameObject.Find("MP_MenuStage"), Is.Not.Null);
             Assert.That(GameObject.Find("Phase8_LeftCandle"), Is.Not.Null);
             Assert.That(GameObject.Find("Phase8_RightCandle"), Is.Not.Null);
 

@@ -16,8 +16,11 @@ namespace TarotUnity.Tests.EditMode
         {
             EditorSceneManager.OpenScene("Assets/Scenes/MainMenu.unity");
 
-            Assert.That(GameObject.Find("Phase7_ImmersiveMenuRoot"), Is.Not.Null);
-            Assert.That(GameObject.Find("Phase7_MenuCardHalo"), Is.Not.Null);
+            // Phase 40 deleted the brown disc "table" halo and its root; the
+            // Midnight Parlor menu stage took their place.
+            Assert.That(GameObject.Find("Phase7_ImmersiveMenuRoot"), Is.Null);
+            Assert.That(GameObject.Find("Phase7_MenuCardHalo"), Is.Null);
+            Assert.That(GameObject.Find("MP_MenuStage"), Is.Not.Null);
 
             var canvas = GameObject.Find("MainMenuCanvas");
             Assert.That(canvas, Is.Not.Null);
