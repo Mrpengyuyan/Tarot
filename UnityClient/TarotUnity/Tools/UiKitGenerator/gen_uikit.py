@@ -7,7 +7,7 @@ GOLD = (201, 162, 39)
 GOLD_HI = (232, 206, 121)
 GOLD_DIM = (140, 110, 30)
 FIELD = (30, 15, 26)
-FIELD_LIGHT = (48, 25, 42)
+FIELD_LIGHT = (62, 34, 54)
 IVORY = (238, 226, 198)
 IVORY_DARK = (196, 178, 142)
 
@@ -98,7 +98,7 @@ def make_button(size_w=512, size_h=192, s=2, name="TarotButton.png"):
     gd = ImageDraw.Draw(gold)
     g = GOLD + (255,)
     b1 = 12 * s
-    gd.rounded_rectangle([b1, b1, W - b1, H - b1], radius=rad - 4 * s, outline=g, width=5 * s)
+    gd.rounded_rectangle([b1, b1, W - b1, H - b1], radius=rad - 4 * s, outline=g, width=8 * s)
     b2 = 24 * s
     gd.rounded_rectangle([b2, b2, W - b2, H - b2], radius=rad - 10 * s, outline=g, width=2 * s)
     # side diamonds

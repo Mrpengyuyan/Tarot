@@ -698,6 +698,16 @@ Remaining limitation:
   and the era tests now guard the deletion; five capture iterations reviewed at
   2560x1440 via Phase38CaptureBuilder; Phase38TableRebuildTests guard the stage.
 
+### Phase 39: ReadingRoom UI Reskin
+
+- HUD plate, progress plates, action dock, question input, and the four flow
+  buttons wear the Phase 37 nine-slice gold plaques; button ColorBlocks reset
+  to white/gold-hover/dark-press so the sprite tint survives runtime.
+- Redundant flat-era frames (Phase8 spread/question frames, Phase11 question
+  glow) deactivated per the Phase 22/25 convention; `TarotButton.png`
+  regenerated with a heavier frame after capture review;
+  Phase39UiReskinTests guard the skin.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:
