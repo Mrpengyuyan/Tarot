@@ -109,7 +109,8 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(card.transform.Find("Back/MP_CardBackFace"), Is.Not.Null);
 
             Assert.That(AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/MAT_Phase8_CardIvory.mat"), Is.Not.Null);
-            Assert.That(AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/MAT_Phase8_TableGreen.mat"), Is.Not.Null);
+            // MAT_Phase8_TableGreen was deleted with its cloth surface (Phase 41).
+            Assert.That(AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/MAT_Phase8_TableGreen.mat"), Is.Null);
             Assert.That(AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/UI/TX_Phase8_TableWeave.png"), Is.Not.Null);
         }
 

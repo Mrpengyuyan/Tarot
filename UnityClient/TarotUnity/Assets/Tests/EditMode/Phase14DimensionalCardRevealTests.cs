@@ -16,15 +16,11 @@ namespace TarotUnity.Tests.EditMode
         private const string ResultScenePath = "Assets/Scenes/Result.unity";
         private const string CatalogPath = "Assets/Resources/TarotArt/RWS1909_CardArtworkCatalog.asset";
         private const string Phase14DocPath = "Docs/PHASE14_DIMENSIONAL_CARD_REVEAL.md";
+        // Phase 38/41 deleted the always-on dressing quads and their materials;
+        // only the animated reveal glow survives from the Phase 14 material set.
         private static readonly string[] Phase14MaterialPaths =
         {
-            "Assets/Materials/MAT_Phase14_ArtworkGlass.mat",
-            "Assets/Materials/MAT_Phase14_CardEdge.mat",
-            "Assets/Materials/MAT_Phase14_CardRevealPool.mat",
-            "Assets/Materials/MAT_Phase14_CastShadow.mat",
-            "Assets/Materials/MAT_Phase14_FaceRimLight.mat",
             "Assets/Materials/MAT_Phase14_RevealGlow.mat",
-            "Assets/Materials/MAT_Phase14_TableDepthPlane.mat",
         };
 
         [Test]

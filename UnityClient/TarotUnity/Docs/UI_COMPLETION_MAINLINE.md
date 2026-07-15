@@ -718,6 +718,14 @@ Remaining limitation:
   hero showcase and reading scroll in gold frames, diamond dividers, radial
   candle glow replacing the amber slab. Phase40MenuResultTests guard it all.
 
+### Phase 41: Redesign Close-Out
+
+- HD archive regenerated on the Midnight Parlor look (all four states); 14
+  orphaned legacy materials deleted after GUID reference verification, with
+  survivors (MoonGold/DeckStack/SpreadSlot/RevealGlow) asserted; era tests
+  updated; Phase41FinalPolishTests guard the sweep; fresh macOS build for the
+  user playthrough.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:

@@ -25,14 +25,14 @@ namespace TarotUnity.Tests.EditMode
             "Assets/Materials/MAT_Phase15_CardFacePlane.mat",
             "Assets/Materials/MAT_Phase15_CardBackPlane.mat",
             "Assets/Materials/MAT_Phase15_CardSideEdge.mat",
-            "Assets/Materials/MAT_Phase15_RitualTableSurface.mat",
+            // MAT_Phase15_RitualTableSurface was deleted with its plane (Phase 41).
             "Assets/Materials/MAT_Phase15_ResultPedestal.mat",
         };
 
         private static readonly string[] TransparentMaterialPaths =
         {
             "Assets/Materials/MAT_Phase15_CardDropShadow.mat",
-            "Assets/Materials/MAT_Phase15_TableDepthRing.mat",
+            // MAT_Phase15_TableDepthRing was deleted with its ring (Phase 41).
         };
 
         [Test]
