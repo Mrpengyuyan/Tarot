@@ -171,8 +171,11 @@ namespace TarotUnity.Tests.EditMode
 
             var root = GameObject.Find("Phase15_ThreeDTableRoot");
             Assert.That(root, Is.Not.Null);
-            Assert.That(root.transform.Find("Phase15_RitualTableSurface"), Is.Not.Null);
-            Assert.That(root.transform.Find("Phase15_TableDepthRing"), Is.Not.Null);
+            // Phase 38 retired the flat table planes in favor of the Midnight
+            // Parlor velvet stage; they must stay gone.
+            Assert.That(root.transform.Find("Phase15_RitualTableSurface"), Is.Null);
+            Assert.That(root.transform.Find("Phase15_TableDepthRing"), Is.Null);
+            Assert.That(GameObject.Find("MP_TableStage"), Is.Not.Null);
             Assert.That(root.transform.Find("Phase15_DeckFocusAnchor"), Is.Not.Null);
             Assert.That(root.transform.Find("Phase15_SpreadFocusAnchor"), Is.Not.Null);
             Assert.That(root.transform.Find("Phase15_FlipFocusAnchor"), Is.Not.Null);

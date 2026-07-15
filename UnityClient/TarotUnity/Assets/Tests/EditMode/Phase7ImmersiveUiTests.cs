@@ -90,7 +90,9 @@ namespace TarotUnity.Tests.EditMode
             var card = AssetDatabase.LoadAssetAtPath<CardView>("Assets/Prefabs/Cards/PF_TarotCard.prefab");
             Assert.That(card, Is.Not.Null);
             Assert.That(card.transform.Find("Front/Phase7_TitleBand"), Is.Not.Null);
-            Assert.That(card.transform.Find("Back/Phase7_MoonSigil"), Is.Not.Null);
+            // Phase 38: the moon sigil block became part of the composed back.
+            Assert.That(card.transform.Find("Back/Phase7_MoonSigil"), Is.Null);
+            Assert.That(card.transform.Find("Back/MP_CardBackFace"), Is.Not.Null);
         }
 
         private static void AssertText(Transform root, string path, string expected)

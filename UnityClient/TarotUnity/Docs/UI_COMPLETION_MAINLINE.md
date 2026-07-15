@@ -676,6 +676,28 @@ Remaining limitation:
 
 - CPU/GC only - real GPU frame time needs a played round with the Metal HUD (macOS) or an FPS overlay (Windows); workflow documented in the Phase 36 doc.
 
+### Phase 37: Midnight Parlor Blueprint + Asset Foundation
+
+- Research pass against the Hearthstone benchmark (GDC immersive-UI method: one
+  physical seed, skeuomorphic tactility, juice everywhere, the card as hero)
+  produced `Docs/PHASE37_VISUAL_REDESIGN_BLUEPRINT.md` - the approved teardown
+  of the visual composition layer while flow/tests/audio/camera stay.
+- CC0 PBR surfaces (ambientCG felt + espresso wood) and a locally composed gold
+  UI kit (celestial card back, nine-slice panels/button, medallion, parchment,
+  divider, socket, glow; generators in `Tools/UiKitGenerator/`) imported with
+  baked importer settings and URP materials. Provenance in
+  `Docs/THIRD_PARTY_ASSETS.md`; Phase37AssetFoundationTests guard it.
+
+### Phase 38: ReadingRoom Table Rebuild
+
+- One Midnight Parlor stage (velvet cloth, walnut rim, parlor backdrop, four
+  gold card sockets, staggered deck stack) replaces the Graybox/Phase8/12/14/15
+  flat-plane palimpsest; the card prefab wears the composed celestial back and
+  drops the primitive ornaments and always-on 2.5D dressing.
+- Superseded objects were deleted (listed in `Docs/PHASE38_TABLE_REBUILD.md`)
+  and the era tests now guard the deletion; five capture iterations reviewed at
+  2560x1440 via Phase38CaptureBuilder; Phase38TableRebuildTests guard the stage.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:

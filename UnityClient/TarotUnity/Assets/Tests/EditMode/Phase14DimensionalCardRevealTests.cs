@@ -44,10 +44,12 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(prefab, Is.Not.Null);
 
             Assert.That(prefab.transform.Find("Phase14_DimensionalRoot"), Is.Not.Null);
-            Assert.That(prefab.transform.Find("Phase14_DimensionalRoot/Phase14_CardEdge"), Is.Not.Null);
-            Assert.That(prefab.transform.Find("Phase14_DimensionalRoot/Phase14_CastShadow"), Is.Not.Null);
-            Assert.That(prefab.transform.Find("Phase14_DimensionalRoot/Phase14_FaceRimLight"), Is.Not.Null);
-            Assert.That(prefab.transform.Find("Phase14_DimensionalRoot/Phase14_ArtworkGlass"), Is.Not.Null);
+            // Phase 38 deleted the always-on 2.5D dressing quads; only the animated
+            // reveal glow survives on the dimensional root.
+            Assert.That(prefab.transform.Find("Phase14_DimensionalRoot/Phase14_CardEdge"), Is.Null);
+            Assert.That(prefab.transform.Find("Phase14_DimensionalRoot/Phase14_CastShadow"), Is.Null);
+            Assert.That(prefab.transform.Find("Phase14_DimensionalRoot/Phase14_FaceRimLight"), Is.Null);
+            Assert.That(prefab.transform.Find("Phase14_DimensionalRoot/Phase14_ArtworkGlass"), Is.Null);
             Assert.That(prefab.transform.Find("Phase14_DimensionalRoot/Phase14_RevealGlow"), Is.Not.Null);
 
             var card = prefab.GetComponent<CardView>();
@@ -123,8 +125,9 @@ namespace TarotUnity.Tests.EditMode
         {
             EditorSceneManager.OpenScene(ReadingRoomScenePath);
 
-            Assert.That(GameObject.Find("Phase14_TableDepthPlane"), Is.Not.Null);
-            Assert.That(GameObject.Find("Phase14_CardRevealPool"), Is.Not.Null);
+            // Phase 38 deleted the flat depth/pool planes; the warm light stays.
+            Assert.That(GameObject.Find("Phase14_TableDepthPlane"), Is.Null);
+            Assert.That(GameObject.Find("Phase14_CardRevealPool"), Is.Null);
             Assert.That(GameObject.Find("Phase14_RevealLightWarm"), Is.Not.Null);
         }
 

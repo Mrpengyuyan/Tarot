@@ -48,12 +48,14 @@ namespace TarotUnity.Tests.EditMode
             var polish = card.GetComponent<CardPresentationPolish>();
             Assert.That(polish, Is.Not.Null);
             Assert.That(GetObjectReference(polish, "frontFrame"), Is.Not.Null);
-            Assert.That(GetObjectReference(polish, "backSigil"), Is.Not.Null);
             Assert.That(GetObjectReference(polish, "innerGlow"), Is.Not.Null);
 
             Assert.That(card.transform.Find("Front/FrontFrame"), Is.Not.Null);
-            Assert.That(card.transform.Find("Back/BackSigil"), Is.Not.Null);
-            Assert.That(card.transform.Find("Back/BackConstellation"), Is.Not.Null);
+            // Phase 38 deleted the primitive back sigil/constellation blocks (and
+            // cleared the polish component's stale sigil references).
+            Assert.That(GetObjectReference(polish, "backSigil"), Is.Null);
+            Assert.That(card.transform.Find("Back/BackSigil"), Is.Null);
+            Assert.That(card.transform.Find("Back/BackConstellation"), Is.Null);
         }
 
         [Test]

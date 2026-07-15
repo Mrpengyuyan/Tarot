@@ -155,7 +155,11 @@ namespace TarotUnity.Editor
             var back = EnsureMaterial("MP_CardBack", lit);
             back.SetTexture("_BaseMap", LoadSpriteTexture("TarotCardBack.png"));
             back.SetColor("_BaseColor", Color.white);
-            back.SetFloat("_Smoothness", 0.5f);
+            back.SetFloat("_Smoothness", 0.34f);
+            // Point-light specular put a hard cool glare across the back texture;
+            // the foil sheen belongs to the face's holographic shader, not the back.
+            back.SetFloat("_SpecularHighlights", 0f);
+            back.EnableKeyword("_SPECULARHIGHLIGHTS_OFF");
             EditorUtility.SetDirty(back);
 
             var socket = EnsureTransparent(EnsureMaterial("MP_CardSocket", unlit));

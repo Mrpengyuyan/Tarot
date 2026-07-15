@@ -55,8 +55,10 @@ namespace TarotUnity.Tests.EditMode
         {
             EditorSceneManager.OpenScene(ReadingRoomScenePath);
 
-            Assert.That(GameObject.Find("Phase12_CardRevealStage"), Is.Not.Null);
-            Assert.That(GameObject.Find("Phase12_RevealBackdrop"), Is.Not.Null);
+            // Phase 38 deleted the flat reveal stage planes; the focused light
+            // remains part of the reveal rhythm.
+            Assert.That(GameObject.Find("Phase12_CardRevealStage"), Is.Null);
+            Assert.That(GameObject.Find("Phase12_RevealBackdrop"), Is.Null);
             Assert.That(GameObject.Find("Phase12_FocusedCardLight"), Is.Not.Null);
 
             var canvas = GameObject.Find("ReadingRoomCanvas");

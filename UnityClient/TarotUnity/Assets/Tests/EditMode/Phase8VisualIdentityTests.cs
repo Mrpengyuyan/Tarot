@@ -36,8 +36,11 @@ namespace TarotUnity.Tests.EditMode
         {
             EditorSceneManager.OpenScene("Assets/Scenes/ReadingRoom.unity");
 
-            Assert.That(GameObject.Find("Phase8_TableClothSurface"), Is.Not.Null);
-            Assert.That(GameObject.Find("Phase8_DeckFocusRing"), Is.Not.Null);
+            // Phase 38 deleted the Phase 8 flat cloth and ring; the velvet stage
+            // took their place.
+            Assert.That(GameObject.Find("Phase8_TableClothSurface"), Is.Null);
+            Assert.That(GameObject.Find("Phase8_DeckFocusRing"), Is.Null);
+            Assert.That(GameObject.Find("MP_TableStage"), Is.Not.Null);
 
             var canvas = GameObject.Find("ReadingRoomCanvas");
             Assert.That(canvas, Is.Not.Null);
@@ -96,9 +99,12 @@ namespace TarotUnity.Tests.EditMode
             var card = AssetDatabase.LoadAssetAtPath<CardView>("Assets/Prefabs/Cards/PF_TarotCard.prefab");
             Assert.That(card, Is.Not.Null);
             Assert.That(card.transform.Find("Front/Phase8_ArcanaFrame"), Is.Not.Null);
-            Assert.That(card.transform.Find("Back/Phase8_BackPatternTop"), Is.Not.Null);
-            Assert.That(card.transform.Find("Back/Phase8_BackPatternBottom"), Is.Not.Null);
-            Assert.That(card.transform.Find("Back/Phase8_CenterGem"), Is.Not.Null);
+            // Phase 38 replaced the primitive back ornaments with the composed
+            // celestial back texture.
+            Assert.That(card.transform.Find("Back/Phase8_BackPatternTop"), Is.Null);
+            Assert.That(card.transform.Find("Back/Phase8_BackPatternBottom"), Is.Null);
+            Assert.That(card.transform.Find("Back/Phase8_CenterGem"), Is.Null);
+            Assert.That(card.transform.Find("Back/MP_CardBackFace"), Is.Not.Null);
 
             Assert.That(AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/MAT_Phase8_CardIvory.mat"), Is.Not.Null);
             Assert.That(AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/MAT_Phase8_TableGreen.mat"), Is.Not.Null);
