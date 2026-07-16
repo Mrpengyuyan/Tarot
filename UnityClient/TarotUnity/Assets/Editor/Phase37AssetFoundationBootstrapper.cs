@@ -136,7 +136,11 @@ namespace TarotUnity.Editor
 
             var cloth = EnsureMaterial("MP_TableCloth", lit);
             cloth.SetTexture("_BaseMap", LoadTexture("Fabric034_1K-JPG_Color.jpg"));
-            cloth.SetColor("_BaseColor", new Color(0.45f, 0.17f, 0.22f, 1f));
+            // Deep oxblood, not scarlet. The felt albedo is near-white, so under the
+            // candle key + ACES + bloom a mid-red tint blew out into pool-table red;
+            // the velvet has to sit dark enough that the gold and the cards stay the
+            // brightest things on the table.
+            cloth.SetColor("_BaseColor", new Color(0.27f, 0.095f, 0.125f, 1f));
             cloth.SetTexture("_BumpMap", LoadTexture("Fabric034_1K-JPG_NormalGL.jpg"));
             cloth.EnableKeyword("_NORMALMAP");
             cloth.SetFloat("_Smoothness", 0.12f);
@@ -145,7 +149,10 @@ namespace TarotUnity.Editor
 
             var wood = EnsureMaterial("MP_TableWood", lit);
             wood.SetTexture("_BaseMap", LoadTexture("Wood051_1K-JPG_Color.jpg"));
-            wood.SetColor("_BaseColor", new Color(0.85f, 0.78f, 0.70f, 1f));
+            // Dark walnut. At near-white (0.85) this multiplier let the already-brown
+            // wood texture pick up every stray bounce, which is how the far table rim
+            // ended up reading as a lit bar across the menu.
+            wood.SetColor("_BaseColor", new Color(0.38f, 0.31f, 0.26f, 1f));
             wood.SetTexture("_BumpMap", LoadTexture("Wood051_1K-JPG_NormalGL.jpg"));
             wood.EnableKeyword("_NORMALMAP");
             wood.SetFloat("_Smoothness", 0.34f);

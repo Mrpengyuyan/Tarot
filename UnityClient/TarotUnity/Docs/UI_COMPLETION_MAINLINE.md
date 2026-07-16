@@ -726,6 +726,19 @@ Remaining limitation:
   updated; Phase41FinalPolishTests guard the sweep; fresh macOS build for the
   user playthrough.
 
+### Phase 42: Sharpness + Menu Elevation
+
+- Blurry built text traced (by elimination - two wrong hypotheses recorded in
+  the doc) to presentation resolution: a fixed 1280x720 non-resizable window
+  stretched to fullscreen. Player now opens FullScreenWindow at native res.
+- Menu restaged as a lit room: skybox ambient (a daylight sky over a midnight
+  parlor) replaced by a near-black flat floor + one unseen warm fill, candles
+  rebuilt with emissive wax at intensity 4.2, camera seated at 27deg/FOV 36
+  (was 10.8deg/FOV 60), parlor haze backdrop, deep-oxblood velvet and dark
+  walnut. Shared-material change verified to improve ReadingRoom, not regress it.
+- Phase42MenuElevationTests guard display settings, lighting contract, camera,
+  fill, retired washes, and palette floors.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:
