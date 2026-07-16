@@ -774,6 +774,17 @@ Remaining limitation:
   root shares its Transform, and writing light.transform.localPosition dragged
   props to the origin twice (Phase 42's candles, Phase 45's orb/censer).
 
+### Phase 46: Candle Craft
+
+- Candles were perfect cylinders in one flat cream with one flat emission over
+  the whole body = plastic tubing. Now: WaxColor (poured grain, drips with
+  contact shadow, soot at the rim, grubby base) + WaxEmission (translucency,
+  brightest at the flame). The translucency map needs a floor (0.24) - falling
+  to black left the bodies unlit, since a candle's flame grazes its own sides.
+- CandleFlickerController: two layered Perlin bands drive intensity + flame
+  stretch, seeded per candle (unison flicker is its own kind of wrong),
+  allocation-free per frame. Only visible in Play/build, not in stills.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:

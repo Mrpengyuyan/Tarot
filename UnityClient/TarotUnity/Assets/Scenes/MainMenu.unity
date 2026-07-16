@@ -1107,6 +1107,7 @@ GameObject:
   m_Component:
   - component: {fileID: 309633043}
   - component: {fileID: 309633044}
+  - component: {fileID: 309633045}
   m_Layer: 0
   m_Name: Phase8_LeftCandle
   m_TagString: Untagged
@@ -1199,6 +1200,24 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!114 &309633045
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 309633042}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a78ddcf9648b46c195862228af944b3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TarotUnity.Runtime::TarotUnity.Presentation.CandleFlickerController
+  flameLight: {fileID: 309633044}
+  flameBillboard: {fileID: 1554203352}
+  baseIntensity: 4.2
+  intensityFlicker: 0.15
+  flameScaleFlicker: 0.12
+  flickerSpeed: 4.3
 --- !u!1 &314766984
 GameObject:
   m_ObjectHideFlags: 0
@@ -13577,6 +13596,7 @@ GameObject:
   m_Component:
   - component: {fileID: 936247205}
   - component: {fileID: 936247206}
+  - component: {fileID: 936247207}
   m_Layer: 0
   m_Name: Phase8_RightCandle
   m_TagString: Untagged
@@ -13669,6 +13689,24 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!114 &936247207
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 936247204}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a78ddcf9648b46c195862228af944b3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TarotUnity.Runtime::TarotUnity.Presentation.CandleFlickerController
+  flameLight: {fileID: 936247206}
+  flameBillboard: {fileID: 438005633}
+  baseIntensity: 4.2
+  intensityFlicker: 0.15
+  flameScaleFlicker: 0.12
+  flickerSpeed: 4.3
 --- !u!1 &937294316
 GameObject:
   m_ObjectHideFlags: 0
@@ -16620,6 +16658,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1575497879}
   - component: {fileID: 1575497880}
+  - component: {fileID: 1575497881}
   m_Layer: 0
   m_Name: MP_BackCandle_L
   m_TagString: Untagged
@@ -16711,6 +16750,24 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!114 &1575497881
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1575497878}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a78ddcf9648b46c195862228af944b3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TarotUnity.Runtime::TarotUnity.Presentation.CandleFlickerController
+  flameLight: {fileID: 1575497880}
+  flameBillboard: {fileID: 877158164}
+  baseIntensity: 1.5
+  intensityFlicker: 0.2
+  flameScaleFlicker: 0.08
+  flickerSpeed: 5.2
 --- !u!1 &1677751893
 GameObject:
   m_ObjectHideFlags: 0
@@ -17361,6 +17418,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1829476229}
   - component: {fileID: 1829476230}
+  - component: {fileID: 1829476231}
   m_Layer: 0
   m_Name: MP_BackCandle_R
   m_TagString: Untagged
@@ -17452,6 +17510,24 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!114 &1829476231
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1829476228}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a78ddcf9648b46c195862228af944b3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TarotUnity.Runtime::TarotUnity.Presentation.CandleFlickerController
+  flameLight: {fileID: 1829476230}
+  flameBillboard: {fileID: 729517322}
+  baseIntensity: 1.5
+  intensityFlicker: 0.2
+  flameScaleFlicker: 0.08
+  flickerSpeed: 5.2
 --- !u!1 &1835340307
 GameObject:
   m_ObjectHideFlags: 0
