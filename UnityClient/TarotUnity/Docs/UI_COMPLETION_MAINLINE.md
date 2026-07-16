@@ -763,6 +763,17 @@ Remaining limitation:
   the cards), dust motes, coins and a ring. Phase 7/34/40 tests updated to guard
   the new intent.
 
+### Phase 45: Menu Depth
+
+- Mid-ground band (z 1.5-2.6) filled: drapery folds in the backdrop, scrying orb
+  lit from within in cool violet, censer with coals + smoke, two back candles at
+  a second depth. All kept dimmer than the cards.
+- Type bound into a block: gold rule between title and subtitle, tracked display
+  cut, status line receded to a footnote.
+- Prop lights now live on children and the rule is asserted: a Light on a prop
+  root shares its Transform, and writing light.transform.localPosition dragged
+  props to the origin twice (Phase 42's candles, Phase 45's orb/censer).
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:

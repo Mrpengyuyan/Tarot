@@ -7,6 +7,7 @@ centered, falling off to near-black at the top and corners, plus faint vertical
 wall banding so the darkness has structure instead of being a flat fill.
 """
 import math
+import random
 from PIL import Image, ImageDraw, ImageFilter
 
 W, H = 1024, 512
@@ -47,14 +48,34 @@ def main():
     haze = haze.filter(ImageFilter.GaussianBlur(34))
     img = Image.composite(Image.new("RGB", (W, H), HAZE), img, haze)
 
-    # Faint wall banding so the dark has structure, not a flat fill.
-    band = Image.new("L", (W, H), 0)
-    bd = ImageDraw.Draw(band)
-    for i in range(7):
-        x = int(W * (i + 0.5) / 7)
-        bd.line([(x, 0), (x, H)], fill=16, width=3)
-    band = band.filter(ImageFilter.GaussianBlur(9))
-    img = Image.composite(Image.new("RGB", (W, H), (26, 16, 24)), img, band)
+    # Heavy velvet drapery behind the table. The upper third of the menu was the
+    # emptiest part of the frame; folds give that darkness structure to catch the
+    # candlelight on, without adding a single lit polygon.
+    fold = Image.new("L", (W, H), 0)
+    fd = ImageDraw.Draw(fold)
+    rng2 = random.Random(41)
+    x = 0
+    while x < W:
+        width = rng2.randint(46, 96)
+        # Each fold is a soft highlight on its lit flank and a dark gather beside.
+        for k in range(width):
+            t = k / width
+            # Bright ridge just off-centre, falling to black in the gather.
+            v = int(150 * math.sin(t * math.pi) ** 3)
+            fd.line([(x + k, 0), (x + k, H)], fill=v)
+        x += width
+    fold = fold.filter(ImageFilter.GaussianBlur(7))
+
+    # Drapery hangs from the ceiling and is swallowed by the table's shadow, so
+    # the folds fade out before they reach the cloth.
+    curtain_mask = Image.new("L", (W, H), 0)
+    cm = ImageDraw.Draw(curtain_mask)
+    for y in range(H):
+        t = y / (H - 1)
+        cm.line([(0, y), (W, y)], fill=int(255 * max(0.0, 1.0 - (t / 0.72) ** 1.4)))
+    fold = Image.composite(fold, Image.new("L", (W, H), 0), curtain_mask)
+
+    img = Image.composite(Image.new("RGB", (W, H), (58, 26, 34)), img, fold)
 
     # Corner falloff keeps the eye centered on the table.
     vig = Image.new("L", (W, H), 0)
