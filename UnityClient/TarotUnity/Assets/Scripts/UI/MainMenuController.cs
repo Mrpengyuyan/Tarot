@@ -29,7 +29,7 @@ namespace TarotUnity.UI
         {
             if (statusText != null)
             {
-                statusText.text = "准备开始一场安静的占卜。";
+                statusText.text = "烛火已燃，牌已洗过。";
             }
         }
 

@@ -51,9 +51,12 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(start.sprite?.name, Is.EqualTo("TarotButton"));
             Assert.That(start.type, Is.EqualTo(Image.Type.Sliced));
 
+            // Phase 44: quit became a bare corner link - a plaque there still read
+            // as a button competing with the invitation. The graphic stays (Button
+            // needs a raycast target) but is fully transparent.
             var quit = root.Find("QuitButton").GetComponent<Image>();
-            Assert.That(quit.sprite?.name, Is.EqualTo("TarotPanelSubtle"));
-            Assert.That(quit.color.a, Is.LessThan(0.8f), "quit keeps its quiet weight");
+            Assert.That(quit.color.a, Is.EqualTo(0f).Within(0.01f),
+                "quit is a link, not a plaque");
 
             foreach (var wash in new[] { "Phase11_MenuDepthFrame", "Phase11_TableDepthShadow", "Phase11_ActionRail" })
             {

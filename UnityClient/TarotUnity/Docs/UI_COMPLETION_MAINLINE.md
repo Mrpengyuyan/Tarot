@@ -751,6 +751,18 @@ Remaining limitation:
 - Found: Phase 6's build setup hardcoded 1280x720/Windowed and reverted Phase
   42's sharpness fix on every build - the shipped build never had it.
 
+### Phase 44: Menu Atmosphere
+
+- Fixed the loose-card clipping (both cards were coplanar at localY 0.01).
+- Copy rewritten as ritual: 你尚未开口，牌已听见 / 入席问牌 / 离席. Status copy
+  must be set in the scene as well as the runtime string.
+- One way in: invitation owns the centre, status drops to the foot, quit becomes
+  a bare bottom-right link (the Phase 34 function stays - only its place was
+  wrong for a main menu).
+- Table dressed: arcane circle decal (kept faint - at full strength it out-shouted
+  the cards), dust motes, coins and a ring. Phase 7/34/40 tests updated to guard
+  the new intent.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:

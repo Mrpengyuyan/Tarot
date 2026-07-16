@@ -27,15 +27,15 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(canvas, Is.Not.Null);
 
             AssertText(canvas.transform, "TitleText", "塔罗仪式");
-            AssertText(canvas.transform, "SubtitleText", "在安静的牌桌前，把问题交给牌面。");
-            AssertText(canvas.transform, "StartReadingButton/Label", "开始占卜");
+            AssertText(canvas.transform, "SubtitleText", "你尚未开口，牌已听见。");
+            AssertText(canvas.transform, "StartReadingButton/Label", "入席问牌");
             AssertTextDoesNotContain(canvas.transform, "StatusText", "graybox");
             AssertTextDoesNotContain(canvas.transform, "SubtitleText", "Graybox");
 
             var controller = Object.FindFirstObjectByType<MainMenuController>();
             Assert.That(controller, Is.Not.Null);
             InvokePrivate(controller, "Start");
-            AssertText(canvas.transform, "StatusText", "准备开始一场安静的占卜。");
+            AssertText(canvas.transform, "StatusText", "烛火已燃，牌已洗过。");
         }
 
         [Test]

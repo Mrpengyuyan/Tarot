@@ -32,31 +32,25 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(start, Is.Not.Null);
             Assert.That(quit.GetComponent<Button>(), Is.Not.Null, "QuitButton needs a Button");
 
-            // Horizontally centered like the primary button.
-            Assert.That(quit.anchoredPosition.x, Is.EqualTo(start.anchoredPosition.x).Within(1.5f),
-                "QuitButton should share the start button's horizontal centering");
+            // Phase 44 moved quit out of the centre column: stacked under the
+            // invitation it made the menu read as a form. It is now anchored to the
+            // bottom-right corner as a quiet link. The reason Phase 34 added it -
+            // desktop players otherwise have no way out but Cmd+Q - is unchanged,
+            // so what this guards is that it still exists, reads as an exit, and
+            // stays clear of the primary action.
+            Assert.That(quit.anchorMin, Is.EqualTo(new Vector2(1f, 0f)),
+                "QuitButton should be pinned to the bottom-right corner");
 
-            // Stacked below the start plate.
-            Assert.That(quit.anchoredPosition.y, Is.LessThan(start.anchoredPosition.y),
+            var quitWorld = quit.TransformPoint(Vector3.zero);
+            var startWorld = start.TransformPoint(Vector3.zero);
+            Assert.That(quitWorld.y, Is.LessThan(startWorld.y),
                 "QuitButton should sit below the start button");
-
-            // No overlap with the start plate or the status line beneath it.
-            var quitTop = quit.anchoredPosition.y + quit.sizeDelta.y * 0.5f;
-            var startBottom = start.anchoredPosition.y - start.sizeDelta.y * 0.5f;
-            Assert.That(quitTop, Is.LessThanOrEqualTo(startBottom),
-                "QuitButton must not overlap the start button");
-
-            var status = canvas.transform.Find("StatusText") as RectTransform;
-            if (status != null)
-            {
-                var statusBottom = status.anchoredPosition.y - status.sizeDelta.y * 0.5f;
-                Assert.That(quitTop, Is.LessThanOrEqualTo(statusBottom + 1f),
-                    "QuitButton must not overlap the status line under the start plate");
-            }
+            Assert.That(quitWorld.x, Is.GreaterThan(startWorld.x),
+                "QuitButton should sit out of the centre column");
 
             var label = quit.GetComponentInChildren<TMP_Text>(true);
             Assert.That(label, Is.Not.Null, "QuitButton needs a label");
-            Assert.That(label.text, Does.Contain("退出"), "QuitButton label should read as a quit action");
+            Assert.That(label.text, Does.Contain("离席"), "QuitButton label should read as leaving the table");
         }
 
         [Test]
