@@ -798,6 +798,19 @@ Remaining limitation:
   stood inside the front-left candle and repeated the deck; the spills doubled
   the existing WaxPool). The table is full - further elements go in the backdrop.
 
+### Phase 48: The Backdrop's Ceiling
+
+- Measured, not guessed: at y=2.7 / 27deg pitch / 36 FOV, the top of frame is 9deg
+  below horizontal, so the highest visible world Y at the backdrop's depth (z=11)
+  is 0.34. There is no wall in this shot - the "upper third" is far tabletop plus
+  the bottom ~29% of the backdrop. Lamp/window/picture cannot exist here.
+- Exposed that Phase 45's drapery was never on screen (folds faded out above the
+  ceiling). Backdrop regenerated with folds in the visible band.
+- The moonlight cookie rig was attempted and dropped: A/B capture proved it
+  rendered but contributed ~3% brightness, and its intensity response stopped
+  being explicable. Not shipped rather than shipped unverified.
+- Phase48BackdropDiagnostic kept: measure that band before staging in it.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:
