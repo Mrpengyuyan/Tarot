@@ -1,5 +1,6 @@
 using System.IO;
 using NUnit.Framework;
+using TMPro;
 using TarotUnity.UI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -12,6 +13,8 @@ namespace TarotUnity.Tests.EditMode
     {
         private const string BodyFontPath = "Assets/Fonts/LXGWWenKai-Regular.ttf";
         private const string DisplayFontPath = "Assets/Fonts/LXGWWenKai-Medium.ttf";
+        private const string TmpBodyFontPath = "Assets/Fonts/LXGWWenKai-Regular SDF.asset";
+        private const string TmpDisplayFontPath = "Assets/Fonts/LXGWWenKai-Medium SDF.asset";
         private const string OflPath = "Assets/Fonts/OFL.txt";
         private const string Phase24DocPath = "Docs/PHASE24_TYPOGRAPHY.md";
         private const int DisplaySizeThreshold = 30;
@@ -74,7 +77,23 @@ namespace TarotUnity.Tests.EditMode
             {
                 EditorSceneManager.OpenScene(scenePath);
                 var texts = Object.FindObjectsByType<Text>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-                Assert.That(texts.Length, Is.GreaterThan(0), $"{scenePath} has no active Text");
+                var tmpTexts = Object.FindObjectsByType<TMP_Text>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+
+                // Phase 43 migrates screens to TMP SDF one at a time, so a scene is
+                // valid on either system - it just may not be on neither.
+                Assert.That(texts.Length + tmpTexts.Length, Is.GreaterThan(0),
+                    $"{scenePath} has no active text of either kind");
+
+                var tmpBody = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(TmpBodyFontPath);
+                var tmpDisplay = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(TmpDisplayFontPath);
+                foreach (var tmp in tmpTexts)
+                {
+                    var tmpRole = TarotUiTheme.ClassifyRole(tmp, DisplaySizeThreshold);
+                    var expectedTmp = tmpRole == TarotUiTheme.TextRole.Body ? tmpBody : tmpDisplay;
+                    Assert.That(tmp.font, Is.EqualTo(expectedTmp),
+                        $"{scenePath}:{tmp.name} should use the bundled SDF font for role {tmpRole}");
+                }
+
                 foreach (var text in texts)
                 {
                     var role = TarotUiTheme.ClassifyRole(text, DisplaySizeThreshold);
@@ -153,13 +172,19 @@ namespace TarotUnity.Tests.EditMode
             // The typography pass changes fonts, not the size hierarchy other
             // phases assert (display title >= 60, overall body >= 19).
             EditorSceneManager.OpenScene("Assets/Scenes/MainMenu.unity");
-            var maxMenu = 0;
+            var maxMenu = 0f;
             foreach (var t in Object.FindObjectsByType<Text>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
             {
                 maxMenu = Mathf.Max(maxMenu, t.fontSize);
             }
 
-            Assert.That(maxMenu, Is.GreaterThanOrEqualTo(60), "Main menu lost its display title size");
+            // The menu is on TMP since Phase 43; its sizes live on TMP_Text now.
+            foreach (var t in Object.FindObjectsByType<TMP_Text>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+            {
+                maxMenu = Mathf.Max(maxMenu, t.fontSize);
+            }
+
+            Assert.That(maxMenu, Is.GreaterThanOrEqualTo(60f), "Main menu lost its display title size");
 
             EditorSceneManager.OpenScene("Assets/Scenes/Result.unity");
             var overall = FindDeepByName("OverallText");

@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -37,12 +38,23 @@ namespace TarotUnity.UI
         [SerializeField] private Font displayFont;
         [SerializeField] private int displaySizeThreshold = 30;
 
+        // Phase 43 typography. The same two cuts as SDF font assets. Legacy Text
+        // rasterises glyphs into a bitmap atlas at one size, so it softens the
+        // moment it is scaled and its outline is four offset copies of the mesh;
+        // the SDF assets stay sharp at any resolution and get a real shader
+        // outline. Screens migrate one at a time, so both paths live here until
+        // the last legacy Text is gone.
+        [SerializeField] private TMP_FontAsset tmpBodyFont;
+        [SerializeField] private TMP_FontAsset tmpDisplayFont;
+
         public string ThemeName => themeName;
         public Color AccentGoldColor => accentGoldColor;
         public Color TableGreenColor => tableGreenColor;
         public Color PanelIvoryColor => panelIvoryColor;
         public Font BodyFont => bodyFont;
         public Font DisplayFont => displayFont;
+        public TMP_FontAsset TmpBodyFont => tmpBodyFont;
+        public TMP_FontAsset TmpDisplayFont => tmpDisplayFont;
         public int DisplaySizeThreshold => displaySizeThreshold;
 
         private void Awake()
@@ -55,6 +67,11 @@ namespace TarotUnity.UI
             foreach (var text in GetComponentsInChildren<Text>(true))
             {
                 ApplyTextStyle(text);
+            }
+
+            foreach (var text in GetComponentsInChildren<TMP_Text>(true))
+            {
+                ApplyTmpTextStyle(text);
             }
 
             foreach (var button in GetComponentsInChildren<Button>(true))
@@ -102,6 +119,69 @@ namespace TarotUnity.UI
             }
 
             return displayFont != null ? displayFont : bodyFont;
+        }
+
+        /// <summary>
+        /// Classifies a TMP element into a typographic role. Mirrors the legacy
+        /// overload so both text systems share one rule during the migration.
+        /// </summary>
+        public static TextRole ClassifyRole(TMP_Text text, int displaySizeThreshold)
+        {
+            if (text == null)
+            {
+                return TextRole.Body;
+            }
+
+            if (text.fontSize >= displaySizeThreshold)
+            {
+                return TextRole.Display;
+            }
+
+            return text.GetComponentInParent<Button>(true) != null
+                ? TextRole.Emphasis
+                : TextRole.Body;
+        }
+
+        /// <summary>Returns the bundled SDF font for a role, falling back gracefully.</summary>
+        public TMP_FontAsset TmpFontForRole(TextRole role)
+        {
+            if (role == TextRole.Body)
+            {
+                return tmpBodyFont != null ? tmpBodyFont : tmpDisplayFont;
+            }
+
+            return tmpDisplayFont != null ? tmpDisplayFont : tmpBodyFont;
+        }
+
+        private void ApplyTmpTextStyle(TMP_Text text)
+        {
+            if (text == null)
+            {
+                return;
+            }
+
+            var font = TmpFontForRole(ClassifyRole(text, displaySizeThreshold));
+            if (font != null)
+            {
+                text.font = font;
+            }
+
+            // An authored vertex gradient (the gilded title) is a deliberate
+            // treatment; flattening it to a single colour here would undo it the
+            // moment the scene wakes.
+            if (!text.enableVertexGradient)
+            {
+                if (text.GetComponent<TarotUiAccentText>() != null)
+                {
+                    text.color = accentGoldColor;
+                }
+                else
+                {
+                    text.color = text.fontSize <= 16f ? mutedTextColor : textColor;
+                }
+            }
+
+            text.enableWordWrapping = true;
         }
 
         private void ApplyTextStyle(Text text)

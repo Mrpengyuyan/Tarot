@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using TMPro;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
@@ -107,8 +108,8 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(startTrim.gameObject.activeSelf, Is.False,
                 "the Phase 40 plaque replaces the flat trim on the primary button");
 
-            var startLabel = start.GetComponentInChildren<Text>(true);
-            var quitLabel = quit.GetComponentInChildren<Text>(true);
+            var startLabel = start.GetComponentInChildren<TMP_Text>(true);
+            var quitLabel = quit.GetComponentInChildren<TMP_Text>(true);
             Assert.That(quitLabel.fontSize, Is.LessThan(startLabel.fontSize),
                 "quit label should read quieter than the primary label");
         }

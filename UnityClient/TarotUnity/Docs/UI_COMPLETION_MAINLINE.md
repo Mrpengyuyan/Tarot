@@ -739,6 +739,18 @@ Remaining limitation:
 - Phase42MenuElevationTests guard display settings, lighting contract, camera,
   fill, retired washes, and palette floors.
 
+### Phase 43: TMP SDF Text
+
+- Text rendering method replaced: legacy bitmap Text + 4-copy Outline -> TMP SDF
+  with dynamic atlas population (Phase 24's "static atlas can't hold runtime AI
+  Chinese" objection is obsolete). Fallback chain added - LXGW has no dingbats
+  and the title's stars tofu'd once the OS fallback went away.
+- MainMenu migrated (no InputField = clean bridgehead); ReadingRoom/Result stay
+  on legacy Text until the TMP_InputField swap. TarotUiTheme drives both.
+- Title gilded with a shader gradient + stroke.
+- Found: Phase 6's build setup hardcoded 1280x720/Windowed and reverted Phase
+  42's sharpness fix on every build - the shipped build never had it.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:

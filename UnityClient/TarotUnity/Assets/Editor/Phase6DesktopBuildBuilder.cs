@@ -87,9 +87,17 @@ namespace TarotUnity.Editor
             PlayerSettings.bundleVersion = BundleVersion;
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Standalone, "com.maochuandou.tarotunity");
             PlayerSettings.SetScriptingBackend(NamedBuildTarget.Standalone, ScriptingImplementation.Mono2x);
-            PlayerSettings.defaultScreenWidth = 1280;
-            PlayerSettings.defaultScreenHeight = 720;
-            PlayerSettings.fullScreenMode = FullScreenMode.Windowed;
+            // Presentation resolution, and the reason built text was blurry: a
+            // fixed 720p window stretched across a 1440p display softens every
+            // glyph. FullScreenWindow presents at the display's native resolution
+            // with no upscale. BuildMacOS/BuildWindows call RunSetup first, so this
+            // is the value that actually ships - Phase 42 set the same fields via
+            // PlayerSettings and this method silently reverted them on every build.
+            PlayerSettings.defaultScreenWidth = 1920;
+            PlayerSettings.defaultScreenHeight = 1080;
+            PlayerSettings.fullScreenMode = FullScreenMode.FullScreenWindow;
+            PlayerSettings.resizableWindow = true;
+            PlayerSettings.macRetinaSupport = true;
         }
 
         private static void DisableCloudDiagnosticsForLocalPrototypeBuilds()

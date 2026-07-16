@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using TMPro;
 using TarotUnity.Gameplay;
 using TarotUnity.UI;
 using UnityEditor;
@@ -28,9 +29,10 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(canvas.transform.Find("Phase8_MenuCrest"), Is.Not.Null);
             Assert.That(canvas.transform.Find("StartReadingButton/Phase8_StartButtonGoldTrim"), Is.Not.Null);
 
-            var title = canvas.transform.Find("TitleText")?.GetComponent<Text>();
+            // Phase 43 migrated the menu to TMP SDF.
+            var title = canvas.transform.Find("TitleText")?.GetComponent<TMP_Text>();
             Assert.That(title, Is.Not.Null);
-            Assert.That(title.fontSize, Is.GreaterThanOrEqualTo(60));
+            Assert.That(title.fontSize, Is.GreaterThanOrEqualTo(60f));
         }
 
         [Test]

@@ -1,5 +1,6 @@
 using System.Reflection;
 using NUnit.Framework;
+using TMPro;
 using TarotUnity.UI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -53,7 +54,7 @@ namespace TarotUnity.Tests.EditMode
                     "QuitButton must not overlap the status line under the start plate");
             }
 
-            var label = quit.GetComponentInChildren<Text>(true);
+            var label = quit.GetComponentInChildren<TMP_Text>(true);
             Assert.That(label, Is.Not.Null, "QuitButton needs a label");
             Assert.That(label.text, Does.Contain("退出"), "QuitButton label should read as a quit action");
         }

@@ -1,5 +1,6 @@
 using System.Reflection;
 using NUnit.Framework;
+using TMPro;
 using TarotUnity.Gameplay;
 using TarotUnity.UI;
 using UnityEditor;
@@ -98,18 +99,41 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(card.transform.Find("Back/MP_CardBackFace"), Is.Not.Null);
         }
 
+        /// <summary>
+        /// Reads either text system. Screens migrate from legacy Text to TMP one at
+        /// a time (Phase 43), so shared assertions must not care which one a given
+        /// screen is on yet.
+        /// </summary>
+        private static string ReadAnyText(Transform root, string path)
+        {
+            var target = root.Find(path);
+            if (target == null)
+            {
+                return null;
+            }
+
+            var tmp = target.GetComponent<TMP_Text>();
+            if (tmp != null)
+            {
+                return tmp.text;
+            }
+
+            var legacy = target.GetComponent<Text>();
+            return legacy != null ? legacy.text : null;
+        }
+
         private static void AssertText(Transform root, string path, string expected)
         {
-            var text = root.Find(path)?.GetComponent<Text>();
-            Assert.That(text, Is.Not.Null, $"Missing text at {path}");
-            Assert.That(text.text, Is.EqualTo(expected));
+            var content = ReadAnyText(root, path);
+            Assert.That(content, Is.Not.Null, $"Missing text at {path}");
+            Assert.That(content, Is.EqualTo(expected));
         }
 
         private static void AssertTextDoesNotContain(Transform root, string path, string unexpected)
         {
-            var text = root.Find(path)?.GetComponent<Text>();
-            Assert.That(text, Is.Not.Null, $"Missing text at {path}");
-            Assert.That(text.text, Does.Not.Contain(unexpected).IgnoreCase);
+            var content = ReadAnyText(root, path);
+            Assert.That(content, Is.Not.Null, $"Missing text at {path}");
+            Assert.That(content, Does.Not.Contain(unexpected).IgnoreCase);
         }
 
         private static Text GetTextReference(Object target, string propertyName)

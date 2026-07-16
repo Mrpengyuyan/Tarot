@@ -2,7 +2,8 @@
   "name": "TarotUnity.Tests.PlayMode",
   "rootNamespace": "TarotUnity.Tests.PlayMode",
   "references": [
-    "TarotUnity.Runtime"
+    "TarotUnity.Runtime",
+    "Unity.TextMeshPro"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

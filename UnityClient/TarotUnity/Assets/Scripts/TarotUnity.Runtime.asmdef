@@ -1,7 +1,9 @@
 {
   "name": "TarotUnity.Runtime",
   "rootNamespace": "TarotUnity",
-  "references": [],
+  "references": [
+    "Unity.TextMeshPro"
+  ],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
@@ -12,4 +14,3 @@
   "versionDefines": [],
   "noEngineReferences": false
 }
-

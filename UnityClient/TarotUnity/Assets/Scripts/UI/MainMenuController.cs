@@ -1,4 +1,5 @@
 using TarotUnity.Core;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -9,7 +10,7 @@ namespace TarotUnity.UI
     {
         [SerializeField] private Button startReadingButton;
         [SerializeField] private Button quitButton;
-        [SerializeField] private Text statusText;
+        [SerializeField] private TMP_Text statusText;
 
         private void Awake()
         {
