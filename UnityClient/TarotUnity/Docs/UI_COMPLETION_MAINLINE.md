@@ -785,6 +785,19 @@ Remaining limitation:
   stretch, seeded per candle (unison flicker is its own kind of wrong),
   allocation-free per frame. Only visible in Play/build, not in stills.
 
+### Phase 47: Orb, Button, Deck
+
+- The orb was a matte Lit sphere = a plastic marble. Sourcing a crystal-ball
+  asset would not have fixed it: the geometry is just a sphere, the problem was
+  shading. TarotScryingOrb.shader adds Fresnel rim (the tell of glass), a
+  parallax-sampled equirect interior (nebula behind the surface, not on it), and
+  tight per-light speculars. The halo quad that was faking an edge is retired.
+- TarotButton regenerated with an inner shadow and a lit/shadowed bevel.
+- MP_DeckBody lifted from near-black to aged paper so the stack can be counted.
+- A card fan and wax spills were added and removed in the same phase (the fan
+  stood inside the front-left candle and repeated the deck; the spills doubled
+  the existing WaxPool). The table is full - further elements go in the backdrop.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:

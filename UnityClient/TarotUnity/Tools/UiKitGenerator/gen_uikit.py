@@ -94,6 +94,18 @@ def make_button(size_w=512, size_h=192, s=2, name="TarotButton.png"):
     ImageDraw.Draw(mask).rounded_rectangle([m, m, W - m, H - m], radius=rad, fill=255)
     img.paste(fill, (0, 0), mask)
 
+    # Inner shadow under the top edge: the plaque is recessed into its frame,
+    # which is what a flat fill can never say.
+    inner = Image.new("L", (W, H), 0)
+    ind = ImageDraw.Draw(inner)
+    for i in range(18):
+        v = int(120 * (1 - i / 18) ** 1.5)
+        ind.rounded_rectangle([m + i, m + i, W - m - i, H - m - i], radius=rad, outline=v, width=2)
+    inner = inner.filter(ImageFilter.GaussianBlur(5 * s))
+    shade = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    shade.paste(Image.new("RGBA", (W, H), (6, 2, 8, 170)), (0, 0), inner)
+    img.alpha_composite(shade)
+
     gold = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     gd = ImageDraw.Draw(gold)
     g = GOLD + (255,)
@@ -107,6 +119,21 @@ def make_button(size_w=512, size_h=192, s=2, name="TarotButton.png"):
         r = 10 * s
         gd.polygon([(cx, cy - r), (cx + r, cy), (cx, cy + r), (cx - r, cy)], fill=g)
     img.alpha_composite(sheen(gold))
+
+    # Bevel: the frame is a physical moulding, so it catches light on its upper
+    # face and falls into shadow on its lower one. Drawn after the sheen so it
+    # rides on top of the metal rather than being averaged into it.
+    bevel_hi = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    bh = ImageDraw.Draw(bevel_hi)
+    bh.rounded_rectangle([b1, b1 - 1 * s, W - b1, H - b1], radius=rad - 4 * s,
+                         outline=GOLD_HI + (150,), width=2 * s)
+    img.alpha_composite(bevel_hi)
+
+    bevel_lo = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    bl = ImageDraw.Draw(bevel_lo)
+    bl.rounded_rectangle([b1, b1 + 6 * s, W - b1, H - b1 + 3 * s], radius=rad - 4 * s,
+                         outline=(70, 44, 8, 130), width=2 * s)
+    img.alpha_composite(bevel_lo)
     img.resize((size_w, size_h), Image.LANCZOS).save(name)
 
 
