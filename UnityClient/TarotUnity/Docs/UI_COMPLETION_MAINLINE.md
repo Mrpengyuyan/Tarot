@@ -811,6 +811,19 @@ Remaining limitation:
   being explicable. Not shipped rather than shipped unverified.
 - Phase48BackdropDiagnostic kept: measure that band before staging in it.
 
+### Phase 49: ReadingRoom Light
+
+- Same defect as the menu pre-Phase-42: skybox ambient (daylight sky over a
+  midnight room) = flat, no pools, grey rim bar. Fixed with the same contract.
+- Worse defect the menu never had: nothing in the room emitted light - seven
+  point lights lit the table from nowhere. Four candles now stand in it (menu
+  rig, wax, seeded flicker) plus the unseen warm fill. Phase 12-15 lights
+  dimmed, not deleted: later phases reference them by name.
+- Candle placement is measured against the live camera: the first pass stood the
+  front pair exactly on the frame's cut (x=+-3.34 at the card row's depth) and
+  the back pair inside the step tracker. Phase49ReadingRoomLightTests projects
+  every candle so it cannot regress.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:
