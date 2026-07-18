@@ -83,6 +83,11 @@ namespace TarotUnity.UI
             {
                 ApplyInputStyle(input);
             }
+
+            foreach (var input in GetComponentsInChildren<TMP_InputField>(true))
+            {
+                ApplyTmpInputStyle(input);
+            }
         }
 
         /// <summary>
@@ -228,6 +233,48 @@ namespace TarotUnity.UI
             if (button.targetGraphic != null)
             {
                 button.targetGraphic.color = buttonColor;
+            }
+        }
+
+        /// <summary>
+        /// The TMP counterpart of <see cref="ApplyInputStyle"/>. The menu never
+        /// needed this - it holds no input - so the path arrives with Phase 50,
+        /// when the ReadingRoom's question field becomes a TMP_InputField. Same
+        /// intent: tint the field ground, put the body cut on the typed text, and
+        /// mute the placeholder so it reads as a prompt, not an answer.
+        /// </summary>
+        private void ApplyTmpInputStyle(TMP_InputField input)
+        {
+            if (input == null)
+            {
+                return;
+            }
+
+            if (input.targetGraphic != null)
+            {
+                input.targetGraphic.color = inputColor;
+            }
+
+            var body = tmpBodyFont != null ? tmpBodyFont : tmpDisplayFont;
+
+            if (input.textComponent != null)
+            {
+                if (body != null)
+                {
+                    input.textComponent.font = body;
+                }
+
+                input.textComponent.color = textColor;
+            }
+
+            if (input.placeholder is TMP_Text placeholder)
+            {
+                if (body != null)
+                {
+                    placeholder.font = body;
+                }
+
+                placeholder.color = new Color(mutedTextColor.r, mutedTextColor.g, mutedTextColor.b, 0.72f);
             }
         }
 

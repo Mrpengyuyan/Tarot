@@ -824,6 +824,26 @@ Remaining limitation:
   the back pair inside the step tracker. Phase49ReadingRoomLightTests projects
   every candle so it cannot regress.
 
+### Phase 50: ReadingRoom Text -> TMP SDF
+
+- Finishes the migration Phase 43 started on the menu. 15 legacy UI.Text (bitmap
+  atlas at one size, softens when the canvas scales; outline = four offset mesh
+  copies) all convert to TextMeshPro SDF in place, sharp at any resolution.
+- The piece the menu never had: the question field. A legacy InputField and a
+  TMP_InputField are different components with different child layouts, so the
+  field is rebuilt from TMP_DefaultControls (correct masked Text Area) and
+  reseated into the old field's RectTransform/background; the old GO is deleted.
+  Caret switched from near-black (invisible on the dark ground) to ivory; the
+  placeholder reads as an italic muted prompt.
+- Source, not just scene: ReadingRoomController's four fields change type
+  (InputField -> TMP_InputField, three Text -> TMP_Text; same .text API), and
+  TarotUiTheme gains ApplyTmpInputStyle. Four EditMode tests plus two flipped
+  legacy tests (Phase7/Phase10 now assert the TMP path) and two PlayMode slice
+  tests re-typed to TMP_InputField. EditMode 254/254, PlayMode 30/30. Verified by
+  scene capture (dynamic SDF resolves the CJK glyphs).
+- Result is the last legacy holdout: 13 legacy Text + the same skybox ambient
+  defect - the natural next cut.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:

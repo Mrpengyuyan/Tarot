@@ -59,7 +59,12 @@ namespace TarotUnity.Tests.EditMode
             AssertText(canvas.transform, "DrawButton/Label", "洗牌抽取");
             AssertText(canvas.transform, "RevealResultButton/Label", "揭示结果");
 
-            var placeholder = canvas.transform.Find("QuestionInput/Placeholder")?.GetComponent<Text>();
+            // Phase 50 rebuilt the question field as a TMP_InputField, so its
+            // placeholder moved into the masked Text Area and became TMP_Text.
+            // Read it off the input's own reference rather than a fixed path.
+            var input = canvas.GetComponentInChildren<TMP_InputField>(true);
+            Assert.That(input, Is.Not.Null, "QuestionInput is a TMP_InputField now (Phase 50)");
+            var placeholder = input.placeholder as TMP_Text;
             Assert.That(placeholder, Is.Not.Null);
             Assert.That(placeholder.text, Does.Contain("此刻"));
         }

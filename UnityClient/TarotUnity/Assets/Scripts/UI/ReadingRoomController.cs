@@ -5,6 +5,7 @@ using TarotUnity.Data;
 using TarotUnity.Gameplay;
 using TarotUnity.Network;
 using TarotUnity.Presentation;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -19,10 +20,14 @@ namespace TarotUnity.UI
         [SerializeField] private Button threeCardButton;
         [SerializeField] private Button drawButton;
         [SerializeField] private Button revealResultButton;
-        [SerializeField] private InputField questionInput;
-        [SerializeField] private Text spreadStatusText;
-        [SerializeField] private Text flowStatusText;
-        [SerializeField] private Text releaseStatusText;
+        // Phase 50: the ReadingRoom migrates to TMP SDF like the menu did. The
+        // question field needed the TMP_InputField swap the menu never had, and
+        // the three status readouts become TMP_Text. Both expose the same .text
+        // API the controller already used, so only the field types change here.
+        [SerializeField] private TMP_InputField questionInput;
+        [SerializeField] private TMP_Text spreadStatusText;
+        [SerializeField] private TMP_Text flowStatusText;
+        [SerializeField] private TMP_Text releaseStatusText;
         [SerializeField] private CameraChoreographyController cameraChoreography;
         [SerializeField] private RitualFeedbackController ritualFeedback;
         [SerializeField] private RitualRhythmDirector rhythmDirector;

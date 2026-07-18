@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using TarotUnity.UI;
+using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -49,7 +50,9 @@ namespace TarotUnity.Tests.EditMode
             var status = GameObject.Find("Phase10_ReleaseStatusText");
             Assert.That(status, Is.Not.Null);
 
-            var text = status.GetComponent<Text>();
+            // Phase 50 migrated the ReadingRoom to TMP SDF; the release status
+            // readout is TMP_Text now (the .text contract is unchanged).
+            var text = status.GetComponent<TMP_Text>();
             Assert.That(text, Is.Not.Null);
             Assert.That(text.text, Does.Contain("本地模式"));
 

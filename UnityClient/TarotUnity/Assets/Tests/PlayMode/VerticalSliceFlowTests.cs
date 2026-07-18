@@ -9,6 +9,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using TMPro;
 using UnityEngine.UI;
 
 namespace TarotUnity.Tests.PlayMode
@@ -41,7 +42,8 @@ namespace TarotUnity.Tests.PlayMode
             Assert.That(Object.FindFirstObjectByType<RitualFeedbackController>(), Is.Not.Null);
 
             GetField<Button>(room, "oneCardButton").onClick.Invoke();
-            GetField<InputField>(room, "questionInput").text = SmokeQuestion;
+            // Phase 50: the question field is a TMP_InputField now (same .text API).
+            GetField<TMP_InputField>(room, "questionInput").text = SmokeQuestion;
             GetField<Button>(room, "drawButton").onClick.Invoke();
 
             yield return WaitUntil(() => deck.ActiveCards.Count == 1, "Expected one dealt card.");

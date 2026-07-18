@@ -6,6 +6,7 @@ using System.Reflection;
 using NUnit.Framework;
 using TarotUnity.Data;
 using TarotUnity.Gameplay;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
@@ -46,7 +47,8 @@ namespace TarotUnity.Tests.PlayMode
             Assert.That(deck, Is.Not.Null);
 
             GetField<Button>(room, "threeCardButton").onClick.Invoke();
-            GetField<InputField>(room, "questionInput").text = "Phase 36 performance probe";
+            // Phase 50: the question field is a TMP_InputField now (same .text API).
+            GetField<TMP_InputField>(room, "questionInput").text = "Phase 36 performance probe";
             GetField<Button>(room, "drawButton").onClick.Invoke();
 
             var dealSamples = new List<float>();
