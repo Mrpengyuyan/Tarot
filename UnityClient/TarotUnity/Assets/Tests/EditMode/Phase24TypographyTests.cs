@@ -189,7 +189,7 @@ namespace TarotUnity.Tests.EditMode
             EditorSceneManager.OpenScene("Assets/Scenes/Result.unity");
             var overall = FindDeepByName("OverallText");
             Assert.That(overall, Is.Not.Null, "Result scene should keep OverallText");
-            Assert.That(overall.GetComponent<Text>().fontSize, Is.GreaterThanOrEqualTo(19));
+            Assert.That(overall.GetComponent<TMP_Text>().fontSize, Is.GreaterThanOrEqualTo(19f));
         }
 
         [Test]

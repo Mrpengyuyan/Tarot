@@ -1,5 +1,6 @@
 using System.IO;
 using NUnit.Framework;
+using TMPro;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.UI;
@@ -87,7 +88,8 @@ namespace TarotUnity.Tests.EditMode
             {
                 var text = FindText(name);
                 Assert.That(text, Is.Not.Null, name);
-                Assert.That(text.resizeTextForBestFit, Is.False,
+                // Phase 51: TMP autosizing is the equivalent of legacy best-fit.
+                Assert.That(text.enableAutoSizing, Is.False,
                     $"{name} should render full size; the scroll panel handles overflow now");
             }
         }
@@ -148,9 +150,9 @@ namespace TarotUnity.Tests.EditMode
             return null;
         }
 
-        private static Text FindText(string name)
+        private static TMP_Text FindText(string name)
         {
-            foreach (var t in Object.FindObjectsByType<Text>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (var t in Object.FindObjectsByType<TMP_Text>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             {
                 if (t.name == name)
                 {

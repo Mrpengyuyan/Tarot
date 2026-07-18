@@ -844,6 +844,30 @@ Remaining limitation:
 - Result is the last legacy holdout: 13 legacy Text + the same skybox ambient
   defect - the natural next cut.
 
+### Phase 51: Result Text -> TMP SDF (the migration completes)
+
+- The last screen on legacy UI.Text. 13 components convert with the shared
+  Text -> TMP routine; the authored colour carries over, so gold section headers
+  stay gold and ivory bodies stay ivory. ResultPanelPresenter's seven readout
+  fields (four carrying arbitrary-length backend AI copy) retype Text -> TMP_Text;
+  the dynamic SDF atlas resolves whatever Chinese the backend returns. The Phase 29
+  scroll still works - TMP_Text is a layout element.
+- Ambient: adopts the Flat contract like the other two, but **stated honestly as
+  correctness, not a visible change**. This canvas is Screen-Space Overlay over a
+  solid near-black camera clear, so the daylight-skybox ambient it shipped with lit
+  only off-frame 3D dressing. Before/after captures are byte-identical outside the
+  text; the value is that all three scenes' render settings finally match and a
+  midnight product no longer carries daylight ambient in its data. The four tuned
+  lights are left alone.
+- Ten legacy Result tests flipped to guard the TMP state (helpers return TMP_Text;
+  alignment reads TextAnchor -> TextAlignmentOptions; best-fit -> enableAutoSizing;
+  vertical/horizontal overflow -> overflowMode; the legacy line-spacing floors,
+  which have no faithful TMP value and are not guarded on the other screens, become
+  the size-floor + no-truncation reading-comfort guarantees). EditMode 259/259,
+  PlayMode 30/30.
+- **All three screens are TMP SDF now. No legacy UI.Text or InputField remains in
+  any shipping screen.**
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:

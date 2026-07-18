@@ -1,5 +1,6 @@
 using System.IO;
 using NUnit.Framework;
+using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -34,7 +35,9 @@ namespace TarotUnity.Tests.EditMode
             {
                 var text = FindText(name);
                 Assert.That(text, Is.Not.Null, $"{name} should exist in the Result scene");
-                Assert.That(text.resizeTextForBestFit, Is.False,
+                // Phase 51: TMP's autosizing is the equivalent of legacy best-fit; it
+                // must stay off so bodies render full size inside the scroll panel.
+                Assert.That(text.enableAutoSizing, Is.False,
                     $"{name} no longer best-fits; Phase 29 renders it full size inside the scroll panel");
                 Assert.That(text.GetComponentInParent<RectMask2D>(), Is.Not.Null,
                     $"{name} must live under the scroll viewport mask so long copy is clipped, not overflowed");
@@ -46,7 +49,7 @@ namespace TarotUnity.Tests.EditMode
         {
             var overall = FindText("OverallText");
             Assert.That(overall, Is.Not.Null);
-            Assert.That(overall.fontSize, Is.GreaterThanOrEqualTo(19),
+            Assert.That(overall.fontSize, Is.GreaterThanOrEqualTo(19f),
                 "OverallText must keep the size floor earlier phases assert");
         }
 
@@ -60,9 +63,9 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(text, Does.Contain("not final high-end VFX"));
         }
 
-        private static Text FindText(string name)
+        private static TMP_Text FindText(string name)
         {
-            foreach (var t in Object.FindObjectsByType<Text>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (var t in Object.FindObjectsByType<TMP_Text>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             {
                 if (t.name == name)
                 {

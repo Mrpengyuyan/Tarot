@@ -74,7 +74,7 @@ namespace TarotUnity.Tests.EditMode
             // Find it recursively and assert the resolved width keeps the premium column.
             var overall = FindDescendantText(canvas.transform, "OverallText");
             Assert.That(overall, Is.Not.Null);
-            Assert.That(overall.alignment, Is.EqualTo(TextAnchor.UpperLeft));
+            Assert.That(overall.alignment, Is.EqualTo(TextAlignmentOptions.TopLeft));
 
             var overallRect = overall.GetComponent<RectTransform>();
             // Width is driven by the parent VerticalLayoutGroup, so rebuild the Content
@@ -84,9 +84,9 @@ namespace TarotUnity.Tests.EditMode
                 "Result reading body must keep the premium-width column even inside the scroll panel");
         }
 
-        private static Text FindDescendantText(Transform root, string name)
+        private static TMP_Text FindDescendantText(Transform root, string name)
         {
-            foreach (var t in root.GetComponentsInChildren<Text>(true))
+            foreach (var t in root.GetComponentsInChildren<TMP_Text>(true))
             {
                 if (t.name == name)
                 {

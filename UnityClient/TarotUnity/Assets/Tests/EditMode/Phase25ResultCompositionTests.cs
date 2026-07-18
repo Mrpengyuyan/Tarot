@@ -1,6 +1,7 @@
 using System.IO;
 using NUnit.Framework;
 using TarotUnity.UI;
+using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -98,8 +99,8 @@ namespace TarotUnity.Tests.EditMode
         [Test]
         public void OverallTextMeetsSizeFloor()
         {
-            var overall = FindRect("OverallText").GetComponent<Text>();
-            Assert.That(overall.fontSize, Is.GreaterThanOrEqualTo(19),
+            var overall = FindRect("OverallText").GetComponent<TMP_Text>();
+            Assert.That(overall.fontSize, Is.GreaterThanOrEqualTo(19f),
                 "OverallText must keep the body size floor other phases assert");
         }
 

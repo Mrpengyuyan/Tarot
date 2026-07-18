@@ -1,6 +1,7 @@
 using System.IO;
 using NUnit.Framework;
 using TarotUnity.Gameplay;
+using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -89,9 +90,9 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(overallRect.rect.width, Is.GreaterThanOrEqualTo(660f));
         }
 
-        private static Text FindDescendantText(Transform root, string name)
+        private static TMP_Text FindDescendantText(Transform root, string name)
         {
-            foreach (var t in root.GetComponentsInChildren<Text>(true))
+            foreach (var t in root.GetComponentsInChildren<TMP_Text>(true))
             {
                 if (t.name == name)
                 {

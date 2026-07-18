@@ -5,6 +5,7 @@ using TarotUnity.Gameplay;
 using TarotUnity.Network;
 using TarotUnity.Presentation;
 using TarotUnity.UI;
+using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -90,11 +91,16 @@ namespace TarotUnity.Tests.EditMode
             var cardAnalysisText = GetTextReference(presenter, "cardAnalysisText");
             var adviceText = GetTextReference(presenter, "adviceText");
 
-            Assert.That(overallText.fontSize, Is.GreaterThanOrEqualTo(19));
-            Assert.That(overallText.lineSpacing, Is.GreaterThanOrEqualTo(1.12f));
-            Assert.That(cardAnalysisText.lineSpacing, Is.GreaterThanOrEqualTo(1.16f));
-            Assert.That(cardAnalysisText.verticalOverflow, Is.EqualTo(VerticalWrapMode.Overflow));
-            Assert.That(adviceText.horizontalOverflow, Is.EqualTo(HorizontalWrapMode.Wrap));
+            // Phase 51: these bodies are TMP_Text now. The legacy line-spacing and
+            // wrap-mode values do not map one-to-one to TMP (its natural CJK line
+            // height is already comfortable, like the other two migrated screens),
+            // so the reading-comfort guarantees that translate are the readable size
+            // floor and no truncation: TMP overflows and the Phase 29 scroll absorbs
+            // it, rather than clipping copy mid-reading.
+            Assert.That(overallText.fontSize, Is.GreaterThanOrEqualTo(19f));
+            Assert.That(overallText.overflowMode, Is.EqualTo(TextOverflowModes.Overflow));
+            Assert.That(cardAnalysisText.overflowMode, Is.EqualTo(TextOverflowModes.Overflow));
+            Assert.That(adviceText.overflowMode, Is.EqualTo(TextOverflowModes.Overflow));
         }
 
         [Test]
@@ -147,11 +153,11 @@ namespace TarotUnity.Tests.EditMode
             return property.objectReferenceValue;
         }
 
-        private static Text GetTextReference(Object target, string propertyName)
+        private static TMP_Text GetTextReference(Object target, string propertyName)
         {
             var property = new SerializedObject(target).FindProperty(propertyName);
             Assert.That(property, Is.Not.Null, $"Missing serialized field {propertyName} on {target.GetType().Name}");
-            return property.objectReferenceValue as Text;
+            return property.objectReferenceValue as TMP_Text;
         }
 
         private static float GetFloat(Object target, string propertyName)

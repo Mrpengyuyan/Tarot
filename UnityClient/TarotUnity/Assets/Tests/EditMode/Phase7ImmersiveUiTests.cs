@@ -87,10 +87,12 @@ namespace TarotUnity.Tests.EditMode
             var presenter = Object.FindFirstObjectByType<ResultPanelPresenter>();
             Assert.That(presenter, Is.Not.Null);
 
-            Assert.That(GetTextReference(presenter, "summaryText").alignment, Is.EqualTo(TextAnchor.UpperLeft));
-            Assert.That(GetTextReference(presenter, "overallText").alignment, Is.EqualTo(TextAnchor.UpperLeft));
-            Assert.That(GetTextReference(presenter, "cardAnalysisText").alignment, Is.EqualTo(TextAnchor.UpperLeft));
-            Assert.That(GetTextReference(presenter, "adviceText").alignment, Is.EqualTo(TextAnchor.UpperLeft));
+            // Phase 51: the Result readouts are TMP_Text; top-left alignment is
+            // TextAlignmentOptions.TopLeft now.
+            Assert.That(GetTextReference(presenter, "summaryText").alignment, Is.EqualTo(TextAlignmentOptions.TopLeft));
+            Assert.That(GetTextReference(presenter, "overallText").alignment, Is.EqualTo(TextAlignmentOptions.TopLeft));
+            Assert.That(GetTextReference(presenter, "cardAnalysisText").alignment, Is.EqualTo(TextAlignmentOptions.TopLeft));
+            Assert.That(GetTextReference(presenter, "adviceText").alignment, Is.EqualTo(TextAlignmentOptions.TopLeft));
         }
 
         [Test]
@@ -141,11 +143,11 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(content, Does.Not.Contain(unexpected).IgnoreCase);
         }
 
-        private static Text GetTextReference(Object target, string propertyName)
+        private static TMP_Text GetTextReference(Object target, string propertyName)
         {
             var property = new SerializedObject(target).FindProperty(propertyName);
             Assert.That(property, Is.Not.Null, $"Missing serialized field {propertyName} on {target.GetType().Name}");
-            return property.objectReferenceValue as Text;
+            return property.objectReferenceValue as TMP_Text;
         }
 
         private static void InvokePrivate(object target, string methodName)

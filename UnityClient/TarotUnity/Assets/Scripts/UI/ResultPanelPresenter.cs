@@ -1,5 +1,6 @@
 using TarotUnity.Data;
 using TarotUnity.Gameplay;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,13 +8,18 @@ namespace TarotUnity.UI
 {
     public sealed class ResultPanelPresenter : MonoBehaviour
     {
-        [SerializeField] private Text questionText;
-        [SerializeField] private Text spreadNameText;
-        [SerializeField] private Text summaryText;
-        [SerializeField] private Text overallText;
-        [SerializeField] private Text cardAnalysisText;
-        [SerializeField] private Text adviceText;
-        [SerializeField] private Text warningText;
+        // Phase 51: the Result screen migrates to TMP SDF like the other two.
+        // These seven readouts - including the four that carry arbitrary-length
+        // backend AI copy - become TMP_Text. The dynamic SDF atlas resolves any
+        // Chinese the backend returns, and TMP_Text exposes the same .text the
+        // presenter already set, so only the field types change.
+        [SerializeField] private TMP_Text questionText;
+        [SerializeField] private TMP_Text spreadNameText;
+        [SerializeField] private TMP_Text summaryText;
+        [SerializeField] private TMP_Text overallText;
+        [SerializeField] private TMP_Text cardAnalysisText;
+        [SerializeField] private TMP_Text adviceText;
+        [SerializeField] private TMP_Text warningText;
         [SerializeField] private Image resultCardArtworkSlot;
         [SerializeField] private CardArtworkCatalog cardArtworkCatalog;
 
@@ -67,7 +73,7 @@ namespace TarotUnity.UI
             SetArtwork(null);
         }
 
-        private static void SetText(Text target, string value)
+        private static void SetText(TMP_Text target, string value)
         {
             if (target != null)
             {
