@@ -19235,6 +19235,7 @@ GameObject:
   - component: {fileID: 1798434156}
   - component: {fileID: 1798434158}
   - component: {fileID: 1798434157}
+  - component: {fileID: 1798434159}
   m_Layer: 0
   m_Name: Phase12_ResultCardArtworkSlot
   m_TagString: Untagged
@@ -19273,9 +19274,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 2100000, guid: 3257b39dc83d24f62bda3bf4f265e68f, type: 2}
   m_Color: {r: 0.8, g: 0.74, b: 0.6, a: 1}
-  m_RaycastTarget: 0
+  m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -19299,6 +19300,26 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1798434155}
   m_CullTransparentMesh: 1
+--- !u!114 &1798434159
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1798434155}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f33024ef4381447e9721cf9538d25bc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TarotUnity.Runtime::TarotUnity.Presentation.HolographicHeroCard
+  heroImage: {fileID: 1798434157}
+  holographicMaterial: {fileID: 2100000, guid: 3257b39dc83d24f62bda3bf4f265e68f, type: 2}
+  idleDriftSpeed: 0.35
+  idleDriftAmount: 0.55
+  pointerSheen: 1.5
+  maxTiltDegrees: 6
+  followLerp: 12
+  returnLerp: 5
 --- !u!1 &1835340307
 GameObject:
   m_ObjectHideFlags: 0

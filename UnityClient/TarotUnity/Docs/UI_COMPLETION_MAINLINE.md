@@ -894,6 +894,30 @@ Remaining limitation:
   player's to judge with the card under the cursor. The values are a principled
   starting point, one edit away from preference.
 
+### Phase 53: Holographic foil on the Result hero card
+
+- Phase 28 gave the flipped 3D face a foil driven by its real view angle. The
+  Result hero card - the drawn card the player admires - never got it because it
+  is a UI Image on a Screen-Space Overlay canvas with no view angle for that
+  shader to read.
+- New UI shader TarotUnity/HolographicCardUI: the same diagonal glare + iridescence
+  as Phase 28, but on the standard UI template (honours clip rect + stencil) and
+  positioned by a fed-in _Sheen uniform - _Sheen.x sweeps the band, _Sheen.y shifts
+  the hue. Both cards shimmer in one material language.
+- HolographicHeroCard drives it: a slow figure-of-eight idle drift so the foil is
+  always subtly alive, and on hover the band follows the pointer while the card
+  tilts a few degrees toward it (X/Y RectTransform rotation reads as a lean on an
+  Overlay canvas). Material is instanced at runtime so the per-frame sheen never
+  dirties the asset; the hero Image's raycastTarget is turned on for hovers.
+- Tuning lesson: the first pass reused Phase 28's (sheen.x - sheen.y) view maths and
+  a GlareShift of 2.2, which pushed the band clean off the card at most driver
+  values (the capture proved it). Decoupled to _Sheen.x = sweep with GlareShift 0.85
+  so a full sweep travels right across the face.
+- Verified: Phase53HeroHolographicTests guards the wiring; a read-only capture loads
+  a card into the empty hero and renders the foil at two sheen positions
+  (Docs/VisualReview/Phase53/) - the band is on the face and travels. EditMode
+  266/266, PlayMode 31/31. The idle/hover feel is the player's to judge.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:
