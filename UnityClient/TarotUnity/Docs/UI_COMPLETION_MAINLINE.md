@@ -868,6 +868,32 @@ Remaining limitation:
 - **All three screens are TMP SDF now. No legacy UI.Text or InputField remains in
   any shipping screen.**
 
+### Phase 52: Flip weight + a reveal-synced camera
+
+- Game-feel pass on the card flip and the camera's reaction. No new mechanics, no
+  change to the pacing floors Phase 9/23 own (duration, lift, the beats) - this is
+  the curves and the secondary motion between them.
+- The flip was linear to 90 and back with a static "anticipation" pause and an
+  ease that crawled at the edge-on seam - so the reveal, the moment that should
+  snap, was the slowest part, and the card arrived weightlessly. It now has five
+  beats: wind-up (dip + wind-back so it launches cocked), whip to edge-on
+  (accelerate through the reveal), reveal (face swap + cue), swing-in with a scale
+  pop (+6%, fading) and a small rotational overshoot, then a damped settle to an
+  *exact* rest.
+- Camera: the lean-in shake fired at the lean-in peak (~0.26 s), before the face
+  actually turned over (~0.49 s). The flip now fires the impact Kick on the exact
+  reveal frame, so the punctuation lands with the face. Breathing and the
+  lean-in/return curves were already right and are left alone.
+- Every new motion is a serialized knob on CardFlipController; the old flipCurve
+  (now superseded by the two-phase accelerate/decelerate model) was removed.
+  Phase52FlipFeelTests keeps the knobs in a tasteful envelope; a PlayMode test
+  drives a real flip and proves the dip/lift/pop are present and that it settles
+  to a sub-millimetre exact rest (a flipped card never drifts from where it was
+  dealt). EditMode 261/261, PlayMode 31/31.
+- Honest note: a test can prove the motion, not that it *feels* good - that is the
+  player's to judge with the card under the cursor. The values are a principled
+  starting point, one edit away from preference.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:
