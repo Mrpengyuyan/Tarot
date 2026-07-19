@@ -397,6 +397,7 @@ MonoBehaviour:
   releaseStatusText: {fileID: 625057419}
   cameraChoreography: {fileID: 1499204520}
   ritualFeedback: {fileID: 653053129}
+  deckShuffle: {fileID: 471381469}
   rhythmDirector: {fileID: 1209002095}
   apiClient: {fileID: 1615814164}
   backendReadingService: {fileID: 1615814163}
@@ -12344,6 +12345,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 471381468}
+  - component: {fileID: 471381469}
   m_Layer: 0
   m_Name: MP_DeckStack
   m_TagString: Untagged
@@ -12375,6 +12377,27 @@ Transform:
   - {fileID: 1509055838}
   m_Father: {fileID: 863742158}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &471381469
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 471381467}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b840e743bcb39413e83ba0b2c5f52722, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TarotUnity.Runtime::TarotUnity.Presentation.DeckShuffleChoreographer
+  anticipationDip: 0.015
+  anticipationSeconds: 0.12
+  riffleLift: 0.055
+  riffleCardSeconds: 0.16
+  riffleStagger: 0.025
+  riffleYawDegrees: 4
+  contactSquash: 0.06
+  settleSeconds: 0.15
+  contactCameraKick: 0.03
 --- !u!1 &472250669
 GameObject:
   m_ObjectHideFlags: 0

@@ -938,6 +938,28 @@ Remaining limitation:
   the exact rest scale, and the card rests on its slot. The feel itself is the
   player's to judge at the table.
 
+### Phase 55: The shuffle moves - riffle choreography on the deck stack
+
+- The card's motion chain had one silent beat left: flip weight came in Phase
+  52, the deal landing in Phase 54, but the shuffle was still sound and dust
+  over a perfectly still Midnight Parlor stack.
+- DeckShuffleChoreographer (on MP_DeckStack) plays the established language as
+  a hand shuffling a deck: press-down anticipation (0.015), a riffle ripple
+  bottom-to-top (each card pops 0.055 with a 4-degree yaw shiver, rising
+  ease-out and dropping ease-in, neighbours 0.025 s apart), a square-up contact
+  with camera Kick 0.03 and a -6% squash, and an ease-out settle to the exact
+  authored stagger. Total ~0.65 s, matching the Phase 9 shuffle breath (floor
+  untouched).
+- ReadingRoomController gains a deckShuffle field and fires Play() on the same
+  line as the ShuffleStarted cue, so motion, dust, and sound land together.
+  Nine serialized knobs; lazy self-healing camera lookup; re-entrant Play()
+  calls are ignored while a shuffle runs.
+- Verified: EditMode guards the tuning envelope and the scene wiring; PlayMode
+  plays a real shuffle via the production StartCoroutine path (the Phase 54
+  sampling lesson) and proves cards pop, the stack squashes on contact, and
+  every card restores to its rest pose to sub-millimetre precision. EditMode
+  271/271, PlayMode 33/33. The riffle's feel is the player's to judge.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:

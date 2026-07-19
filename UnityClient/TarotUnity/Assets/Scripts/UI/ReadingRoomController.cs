@@ -30,6 +30,7 @@ namespace TarotUnity.UI
         [SerializeField] private TMP_Text releaseStatusText;
         [SerializeField] private CameraChoreographyController cameraChoreography;
         [SerializeField] private RitualFeedbackController ritualFeedback;
+        [SerializeField] private DeckShuffleChoreographer deckShuffle;
         [SerializeField] private RitualRhythmDirector rhythmDirector;
         [SerializeField] private ApiClient apiClient;
         [SerializeField] private BackendReadingService backendReadingService;
@@ -158,6 +159,7 @@ namespace TarotUnity.UI
             flowController?.BeginShuffle();
             cameraChoreography?.FocusDeck();
             ritualFeedback?.PlayCue(PresentationCueId.ShuffleStarted, deckController != null ? deckController.transform : null);
+            deckShuffle?.Play();
             SetStatus("Shuffling...");
 
             var session = default(ReadingSessionSnapshot);
