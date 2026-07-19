@@ -918,6 +918,26 @@ Remaining limitation:
   (Docs/VisualReview/Phase53/) - the band is on the face and travels. EditMode
   266/266, PlayMode 31/31. The idle/hover feel is the player's to judge.
 
+### Phase 54: The deal lands - touchdown weight for dealt cards
+
+- Phase 52 gave the flip weight; the deal still ended by snapping dead onto the
+  slot after its arc - all energy vanishing in one frame, the exact flaw the
+  flip used to have. Dust and sound already marked the touchdown; the card's own
+  body did not.
+- Now the card lands: on contact it squashes (−10% height, +6% width) and
+  springs back ease-out to its exact base scale over 0.14 s, and the camera
+  takes a small Kick (0.03) on the impact frame - subtler than the flip's reveal
+  shake because three deals land in quick succession and the reveal stays the
+  loudest beat.
+- Three serialized knobs on DeckController (landingSquash / landingSeconds /
+  landingCameraKick) under a Phase54 Landing header; camera found by the same
+  lazy self-healing lookup CardFlipController uses. The Phase 9 arc pacing
+  floors (duration, height, tilt, interval) are untouched.
+- Verified: EditMode guards the tuning envelope; a PlayMode test drives a real
+  one-card deal in the ReadingRoom and proves the squash happens, recovers to
+  the exact rest scale, and the card rests on its slot. The feel itself is the
+  player's to judge at the table.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:
