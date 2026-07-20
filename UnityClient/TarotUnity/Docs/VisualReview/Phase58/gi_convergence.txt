@@ -1,0 +1,14 @@
+Front-left menu candle measured after each successive render of one loaded scene.
+If the colour walks and then settles, a single-shot batch capture was never the shipped look.
+
+render #    median wax RGB        sat     B/R
+1           (246,  77,  23)       0.91    0.09
+2           (234, 178,  77)       0.67    0.33
+3           (234, 178,  77)       0.67    0.33
+4           (232, 177,  79)       0.66    0.34
+6           (232, 178,  79)       0.66    0.34
+8           (234, 177,  77)       0.67    0.33
+12          (235, 178,  76)       0.68    0.32
+16          (233, 177,  79)       0.66    0.34
+20          (233, 177,  79)       0.66    0.34
+24          (232, 177,  79)       0.66    0.34

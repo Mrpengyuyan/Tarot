@@ -1,0 +1,15 @@
+Front-left menu candle, measured off the real menu camera.
+Target is the room's read: RGB(213,149,59), saturation 0.72, B/R 0.28.
+
+variant                                       median wax RGB        sat     B/R
+S1 CONTROL candle lights off                  (247,  53,  20)       0.92    0.08
+S2 CONTROL table fill off                     (234, 176,  73)       0.69    0.31
+0 baseline                                    (232, 177,  79)       0.66    0.34
+1 candle colour -> (1, 0.72, 0.42)            (234, 177,  76)       0.68    0.32
+2 candle colour -> (1, 0.78, 0.52)            (229, 174,  79)       0.66    0.34
+3 table fill 1.15 -> 1.45                     (232, 175,  74)       0.68    0.32
+4 candle intensity 4.2 -> 3.2                 (234, 179,  76)       0.68    0.32
+5 wax emission 1.15 -> 0.85                   (221, 158,  64)       0.71    0.29
+6 = 1 + 3                                     (230, 173,  75)       0.67    0.33
+7 = 1 + 3 + 4                                 (230, 175,  79)       0.66    0.34
+8 = 2 + 3 + 4                                 (233, 177,  71)       0.70    0.30

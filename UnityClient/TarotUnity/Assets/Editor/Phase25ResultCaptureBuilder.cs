@@ -51,7 +51,7 @@ namespace TarotUnity.Editor
                 camera.targetTexture = renderTexture;
                 RenderTexture.active = renderTexture;
                 Canvas.ForceUpdateCanvases();
-                camera.Render();
+                CaptureRig.RenderConverged(camera);
                 texture.ReadPixels(new Rect(0f, 0f, ScreenshotWidth, ScreenshotHeight), 0, 0);
                 texture.Apply();
                 File.WriteAllBytes(Path.Combine(ReviewFolder, "Result.png"), texture.EncodeToPNG());

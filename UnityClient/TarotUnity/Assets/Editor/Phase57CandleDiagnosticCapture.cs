@@ -118,7 +118,7 @@ namespace TarotUnity.Editor
 
                 var rt = new RenderTexture(1400, 1400, 24, RenderTextureFormat.ARGB32) { antiAliasing = 8 };
                 camera.targetTexture = rt;
-                camera.Render();
+                CaptureRig.RenderConverged(camera);
 
                 RenderTexture.active = rt;
                 var shot = new Texture2D(rt.width, rt.height, TextureFormat.RGB24, false);

@@ -1010,6 +1010,30 @@ Remaining limitation:
   interior still blows out because the flame light sits 0.085 above it, which
   geometry cannot fix.
 
+### Phase 58: The candles were never red - the capture pipeline was
+
+- Opened to fix the menu's front candles rendering as saturated red plastic
+  (RGB 246,74,25 at saturation 0.90) against the room's cream wax (213,149,59).
+  Ends without touching a light, colour, or material.
+- A read-only probe rendered nine candidate fixes and seven landed on the same
+  number - the signature of a broken instrument, not a result. Two control rows
+  (candle lights off, fill off) were added: killing the candle lights *produced*
+  the red look, inverting the hypothesis, and the plain baseline disagreed with
+  the previous run's baseline. Same scene, two answers.
+- Cause: the wax is RealtimeEmissive and realtime GI does not resolve on the
+  frame a scene loads. Measured on one loaded scene, render 1 gives
+  RGB(246,77,23) saturation 0.91 and render 2 onward gives RGB(233,177,78)
+  saturation 0.66, flat through 24 renders. All fifteen capture builders
+  rendered exactly once after opening a scene - every visual review this
+  project has run was looking at unsettled lighting. The player never saw it.
+- CaptureRig.RenderConverged (4 warm-up renders, twice the measured convergence
+  point) now fronts all fifteen builders; Phase58CaptureConvergenceTests scans
+  Assets/Editor for a direct Camera.Render() and fails on the next one written.
+  HD archive regenerated: the menu candle now reads RGB(233,179,76) at
+  saturation 0.67 - less saturated than the room's, which was the reference.
+- EditMode 278/278, PlayMode 33/33. Lesson kept: when several different changes
+  produce the same result, doubt the instrument before the hypothesis.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:

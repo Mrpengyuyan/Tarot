@@ -1,0 +1,30 @@
+== MP_CandleWax (shared by both scenes) ==
+  baseColor    = (1.000, 1.000, 1.000)
+  emissionColor= (1.150, 1.150, 1.150)   (max channel 1.150)
+  emission keyword: True
+  emission map: WaxEmission
+
+== MainMenu lights ==
+  EmberLight                   Point       i= 0.80 range= 1.90 colour=(1.000, 0.420, 0.140) pos=(-1.32, 0.17, 1.92)
+  MP_BackCandle_L              Point       i= 1.50 range= 4.20 colour=(1.000, 0.640, 0.280) pos=(-2.95, 0.42, 2.55)
+  MP_BackCandle_R              Point       i= 1.50 range= 4.20 colour=(1.000, 0.640, 0.280) pos=(3.05, 0.36, 2.25)
+  MP_TableFill                 Point       i= 1.15 range= 9.50 colour=(1.000, 0.840, 0.660) pos=(0.00, 2.15, 0.15)
+  Menu Key Light               Directional i= 0.04 range=10.00 colour=(0.600, 0.660, 1.000) pos=(0.00, 0.00, 0.00)
+  OrbLight                     Point       i= 0.75 range= 2.20 colour=(0.600, 0.580, 1.000) pos=(1.18, 0.29, 1.78)
+  Phase8_LeftCandle            Point       i= 4.20 range= 7.00 colour=(1.000, 0.660, 0.300) pos=(-2.35, 0.69, 0.70)
+  Phase8_RightCandle           Point       i= 4.20 range= 7.00 colour=(1.000, 0.660, 0.300) pos=(2.45, 0.56, 0.50)
+
+== ReadingRoom lights ==
+  MP_RoomCandle_BackL          Point       i= 1.50 range= 4.20 colour=(1.000, 0.660, 0.300) pos=(-4.15, 0.44, 3.40)
+  MP_RoomCandle_BackR          Point       i= 1.50 range= 4.20 colour=(1.000, 0.660, 0.300) pos=(4.25, 0.38, 3.15)
+  MP_RoomCandle_L              Point       i= 4.20 range= 7.00 colour=(1.000, 0.660, 0.300) pos=(-2.90, 0.69, 0.45)
+  MP_RoomCandle_R              Point       i= 4.20 range= 7.00 colour=(1.000, 0.660, 0.300) pos=(3.00, 0.56, 0.30)
+  MP_RoomFill                  Point       i= 1.50 range= 9.50 colour=(1.000, 0.840, 0.660) pos=(0.00, 2.30, 0.40)
+  Moon Fill Light              Point       i= 0.30 range= 5.20 colour=(0.520, 0.580, 0.950) pos=(2.40, 2.20, -1.20)
+  Phase12_FocusedCardLight     Point       i= 0.30 range= 4.40 colour=(1.000, 0.770, 0.450) pos=(0.00, 1.65, -1.15)
+  Phase14_RevealLightWarm      Point       i= 0.22 range= 4.80 colour=(1.000, 0.720, 0.380) pos=(0.00, 1.92, -1.38)
+  Phase15_CoolRimLight         Point       i= 0.26 range= 4.20 colour=(0.380, 0.580, 1.000) pos=(1.70, 1.32, 0.78)
+  Phase15_WarmKeyLight         Point       i= 0.38 range= 5.40 colour=(1.000, 0.700, 0.360) pos=(-1.25, 1.70, -1.10)
+  Ritual Ember Light           Point       i= 0.55 range= 4.20 colour=(1.000, 0.640, 0.310) pos=(-2.60, 1.30, -0.30)
+  Table Key Light              Directional i= 0.04 range=10.00 colour=(0.600, 0.660, 1.000) pos=(0.00, 0.00, 0.00)
+
