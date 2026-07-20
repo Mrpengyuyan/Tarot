@@ -70,10 +70,16 @@ That alignment exposed a real defect in the Phase 46 generator: its
 contact-shadow pass re-seeds `Random(7)` but does **not** replay the 90 grain
 iterations the drip loop runs after, so it landed on entirely different
 columns — every "contact shadow where each drip meets the body" fell in a gap
-instead of under a drip. The generator is fixed here (verified: the emission
-map is byte-identical, only the colour map's shadow layer moves). **The shipped
-`WaxColor.png` has not been regenerated** — overwriting existing art is yours
-to authorise; one command does it when you want it.
+instead of under a drip. The generator is fixed, and `WaxColor.png` was
+regenerated on the owner's authorisation.
+
+Measured, not asserted: only the colour map changes (49,470 pixels — the shadow
+layer moving); `WaxEmission.png` is pixel-for-pixel identical and was left
+alone rather than rewritten with a no-op diff. In the render the fix moves
+**0.25% of pixels with a peak delta of 19/255** — the candle's front is blown
+out by its own flame, which washes out exactly this kind of soft shading. It is
+a correctness fix that makes the painted drips read as raised on the shadowed
+side, not a dramatic change to the look.
 
 ## What was deliberately not touched
 

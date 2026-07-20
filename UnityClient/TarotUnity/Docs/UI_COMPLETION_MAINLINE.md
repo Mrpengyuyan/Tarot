@@ -996,8 +996,11 @@ Remaining limitation:
   from its seeded sequence. That alignment exposed a Phase 46 defect: the
   contact-shadow pass re-seeds Random(7) without replaying the 90 grain
   iterations, so every shadow fell beside a drip instead of under one. The
-  generator is fixed; the shipped WaxColor.png is deliberately left for the
-  owner to authorise regenerating.
+  generator is fixed and WaxColor.png regenerated on the owner's authorisation;
+  WaxEmission.png is pixel-identical and was left untouched. Measured honestly:
+  the fix moves 0.25% of rendered pixels at a peak delta of 19/255, since the
+  candle's lit face is blown out by its own flame - a correctness fix, not a
+  visible overhaul.
 - Untouched on purpose: candle root positions, Lights, Flame/Halo billboards,
   and the 0.085 wax-rim-to-flame gap - a test asserts the flame did not move.
 - Verified: EditMode 275/275, PlayMode 33/33, before/after close-ups in
