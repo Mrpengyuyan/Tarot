@@ -83,11 +83,13 @@ Build Windows after installing Windows Standalone Build Support:
 
 - Build scenes: `Boot`, `MainMenu`, `ReadingRoom`, `Result`
 - Product name: `Tarot Unity`
-- Bundle version: `0.6.0`
+- Bundle version: `0.9.0` (was `0.6.0`; bumped in Phase 56 - see
+  `PHASE56_RELEASE_0_9_0.md`)
 - Bundle identifier: `com.maochuandou.tarotunity`
 - Standalone scripting backend: `Mono`
-- Default window size: `1280 x 720`
-- Fullscreen mode: windowed
+- Default window size: `1920 x 1080` (was `1280 x 720`; Phase 42/43 - a fixed
+  720p window stretched across a 1440p display was what softened every glyph)
+- Fullscreen mode: `FullScreenWindow`, resizable, Retina support on
 - Local prototype Cloud Diagnostics and Engine Diagnostics: disabled
 - Boot scene: `GameBootstrap`, `ApiClient`, and `DesktopConfigLoader` on `Bootstrapper`
 

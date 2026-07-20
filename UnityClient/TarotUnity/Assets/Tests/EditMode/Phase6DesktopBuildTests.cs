@@ -113,7 +113,7 @@ namespace TarotUnity.Tests.EditMode
         {
             CollectionAssert.AreEqual(RequiredBuildScenes, GetEnabledBuildScenePaths());
             Assert.That(PlayerSettings.productName, Is.EqualTo("Tarot Unity"));
-            Assert.That(PlayerSettings.bundleVersion, Is.EqualTo("0.6.0"));
+            Assert.That(PlayerSettings.bundleVersion, Is.EqualTo("0.9.0"));
             Assert.That(PlayerSettings.GetScriptingBackend(NamedBuildTarget.Standalone), Is.EqualTo(ScriptingImplementation.Mono2x));
             Assert.That(UnityEditor.CrashReporting.CrashReportingSettings.enabled, Is.False);
             Assert.That(UnityEditor.CrashReporting.CrashReportingSettings.captureEditorExceptions, Is.False);

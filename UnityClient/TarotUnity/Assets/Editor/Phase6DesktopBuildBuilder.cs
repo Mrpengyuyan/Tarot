@@ -14,7 +14,12 @@ namespace TarotUnity.Editor
     public static class Phase6DesktopBuildBuilder
     {
         public const string ProductName = "Tarot Unity";
-        public const string BundleVersion = "0.6.0";
+        // Phase 56. 0.6.0 was the first desktop build (Phase 6); everything since -
+        // the visual identity, the 3D table, cinematic rendering, HD artwork, audio,
+        // the Midnight Parlor redesign, the TMP migration, and the full card motion
+        // chain - shipped under that same number. This is the presentation-complete
+        // release, held below 1.0 until the backend path is verified in a playthrough.
+        public const string BundleVersion = "0.9.0";
         public const string BuildRoot = "Builds/Desktop";
         public const string MacBuildPath = BuildRoot + "/macOS/Tarot Unity.app";
         public const string WindowsBuildPath = BuildRoot + "/Windows/TarotUnity.exe";

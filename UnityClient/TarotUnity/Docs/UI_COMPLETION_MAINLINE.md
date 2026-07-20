@@ -960,6 +960,25 @@ Remaining limitation:
   every card restores to its rest pose to sub-millimetre precision. EditMode
   271/271, PlayMode 33/33. The riffle's feel is the player's to judge.
 
+### Phase 56: Release 0.9.0 - the presentation-complete build
+
+- The version had not moved since Phase 6 set it: Phases 7-55 (the whole visual
+  identity, the Midnight Parlor redesign, HD artwork, audio, the TMP migration,
+  and the full card motion chain) all shipped as `0.6.0`, which no longer said
+  anything true about the build.
+- Bumped to `0.9.0` at its single source of truth
+  (`Phase6DesktopBuildBuilder.BundleVersion`, written into PlayerSettings on
+  every build), with the Phase 6 test updated to assert the shipped value.
+  Held below 1.0 deliberately: the backend reading path has not been verified
+  end-to-end in a playthrough, and the Phase 52-55 feel is still unjudged.
+- Corrected a stale line in PHASE6_DESKTOP_BUILD.md that still described the
+  window as 1280x720 windowed - Phase 42/43 changed it to 1920x1080
+  FullScreenWindow, and that exact setting was the blurry-text root cause.
+- Verified: EditMode 271/271, PlayMode 33/33. Fresh macOS build (375.7 MB) and
+  Windows build (358.7 MB) both report 0.9.0; the Windows release zip
+  (203 MB, Builds/Desktop/Release/TarotUnity-Windows-x64.zip) passes an
+  integrity test and excludes Unity's BurstDebugInformation_DoNotShip folder.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:
