@@ -979,6 +979,34 @@ Remaining limitation:
   (203 MB, Builds/Desktop/Release/TarotUnity-Windows-x64.zip) passes an
   integrity test and excludes Unity's BurstDebugInformation_DoNotShip folder.
 
+### Phase 57: The candles, modelled
+
+- Phase 46 gave the candles wax surfaces but never touched the geometry. A
+  read-only close-up diagnosis measured what was under them: four stacked Unity
+  primitives at 20 radial segments (18 degrees per facet), whose `Lip` is a disc
+  *wider* than the body with two hard 90-degree edges - on screen, a cap screwed
+  onto a pill bottle - over a flat lid, a dead-parallel tube, and a base disc
+  butted against the body with a visible seam.
+- CandleMeshBuilder lathes one continuous surface per candle (64 segments front,
+  40 back) along a real profile: pooled base flowing out of the body, tapered
+  body, melted shoulder swell replacing the collar, rolled rim, a burn crater
+  dishing to the wick, an uneven burn line, and the nine drips as geometry. The
+  wick is re-cut tapered and curled.
+- The drips are lathed at the exact angles gen_wax.py paints them, extracted
+  from its seeded sequence. That alignment exposed a Phase 46 defect: the
+  contact-shadow pass re-seeds Random(7) without replaying the 90 grain
+  iterations, so every shadow fell beside a drip instead of under one. The
+  generator is fixed; the shipped WaxColor.png is deliberately left for the
+  owner to authorise regenerating.
+- Untouched on purpose: candle root positions, Lights, Flame/Halo billboards,
+  and the 0.085 wax-rim-to-flame gap - a test asserts the flame did not move.
+- Verified: EditMode 275/275, PlayMode 33/33, before/after close-ups in
+  Docs/VisualReview/Phase57/. Three tuning passes were needed and the captures
+  caught all three (a rim wobble that read as cut open, drips welded into a
+  bulging ring, a wick like a bent blade). Recorded honestly: the crater
+  interior still blows out because the flame light sits 0.085 above it, which
+  geometry cannot fix.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:

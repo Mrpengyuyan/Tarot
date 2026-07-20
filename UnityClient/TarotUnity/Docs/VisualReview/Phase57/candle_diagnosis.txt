@@ -1,0 +1,21 @@
+== Unity built-in Cylinder (what every candle piece is made of) ==
+vertices: 88, triangles: 80
+radial segments: 20  ->  18.0 degrees per facet
+
+== Phase8_LeftCandle (world y 0.685) ==
+  Wick      mesh=Phase8_LeftCandle_Wick localY= -0.110 scale=(1.000, 1.000, 1.000)  worldRadius=1.000
+  Flame     mesh=Quad       localY=  0.000 scale=(0.150, 0.250, 1.000)  worldRadius=0.150
+  Wax       mesh=Phase8_LeftCandle_Wax localY= -0.685 scale=(1.000, 1.000, 1.000)  worldRadius=1.000
+
+== MP_BackCandle_L (world y 0.420) ==
+  Wick      mesh=MP_BackCandle_L_Wick localY= -0.121 scale=(1.000, 1.000, 1.000)  worldRadius=1.000
+  Flame     mesh=Quad       localY=  0.000 scale=(0.115, 0.190, 1.000)  worldRadius=0.115
+  Halo      mesh=Quad       localY=  0.000 scale=(0.460, 0.460, 1.000)  worldRadius=0.460
+  Wax       mesh=MP_BackCandle_L_Wax localY= -0.435 scale=(1.000, 1.000, 1.000)  worldRadius=1.000
+
+== MP_RoomCandle_L (world y 0.685) ==
+  Wick      mesh=MP_RoomCandle_L_Wick localY= -0.110 scale=(1.000, 1.000, 1.000)  worldRadius=1.000
+  Flame     mesh=Quad       localY=  0.000 scale=(0.150, 0.250, 1.000)  worldRadius=0.150
+  Halo      mesh=Quad       localY=  0.000 scale=(0.620, 0.620, 1.000)  worldRadius=0.620
+  Wax       mesh=MP_RoomCandle_L_Wax localY= -0.685 scale=(1.000, 1.000, 1.000)  worldRadius=1.000
+

@@ -49,16 +49,27 @@ def color_map():
                     rng.randint(4, 9), (246, 238, 220))
 
     # Contact shadow where each drip meets the body, so they read as raised.
+    # This pass must replay the *same* sequence the drips were drawn from. Re-seeding
+    # alone is not enough: the drip loop runs after 90 grain iterations, so a fresh
+    # Random(7) that skips them lands on entirely different columns, and every shadow
+    # fell beside a drip instead of under one. Phase 57 lathes the drips as real
+    # geometry at these exact angles, which made the mismatch impossible to miss.
     shade_layer = Image.new("L", (W, H), 0)
     sd = ImageDraw.Draw(shade_layer)
     rng2 = random.Random(7)
+    for _ in range(90):
+        rng2.randint(0, W)
+        rng2.randint(-10, 8)
+        rng2.randint(1, 4)
     for _ in range(9):
         x = rng2.randint(0, W)
         length = rng2.randint(50, 190)
         width = rng2.randint(9, 20)
         sd.rounded_rectangle([x - width / 2 - 3, -6, x + width / 2 + 3, length + 4],
                              radius=width / 2, fill=90)
-        rng2.randint(0, 10)
+        rng2.randint(-3, 3)
+        rng2.randint(30, 150)
+        rng2.randint(4, 9)
     shade_layer = shade_layer.filter(ImageFilter.GaussianBlur(4))
     img = Image.composite(Image.new("RGB", (W, H), CREAM_DEEP), img, shade_layer)
 
