@@ -100,10 +100,18 @@ flame still sits where it sat.
   first rim wobble was strong enough that the candle read as *cut open*; the
   first drips all started at one height and welded into a bulging ring; the
   first wick leaned nearly twice its own width and read as a bent blade.
-- **The crater interior still blows out to white.** Its own flame light sits
-  0.085 above it, so the inverse-square falloff saturates that surface no
-  matter what shape it is. Geometry cannot fix it and moving the light would
-  break the room. Recorded, not papered over.
-- The front menu candles read as saturated red rather than cream wax. That is
-  the emission colour and bloom, not the modelling — it predates this phase and
-  is a material question for a later pass.
+- **On the crater interior (corrected after Phase 58).** This phase first
+  recorded that "the crater interior blows out to white, geometry cannot fix
+  it." A re-check with measurement, not eyeballing, walked that back. The
+  crater floor is bright — its own flame sits 0.085 above it, so that surface
+  is directly lit — but it is not a flat white disc: the floor's luminance
+  standard deviation is 45.5 (min 13, max 255), with the wick casting a
+  distinct dip across it (sampled floor columns read 242 / 182 / 247 left to
+  right). The bowl's 3D shading survives; the earlier "blows out and eats the
+  shape" claim was overstated, written off an unconverged capture before the
+  Phase 58 fix. A bright melt pool directly under a flame is also physically
+  right. About 21% of the deepest-floor pixels do clip to pure white, which is
+  a defensible look rather than a defect; left as is.
+- The front menu candles reading as saturated red was **not real** — see
+  Phase 58. It was the capture pipeline sampling an unconverged frame, not the
+  material. Corrected there; nothing about the modelling caused it.

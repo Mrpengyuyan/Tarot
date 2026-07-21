@@ -1006,9 +1006,12 @@ Remaining limitation:
 - Verified: EditMode 275/275, PlayMode 33/33, before/after close-ups in
   Docs/VisualReview/Phase57/. Three tuning passes were needed and the captures
   caught all three (a rim wobble that read as cut open, drips welded into a
-  bulging ring, a wick like a bent blade). Recorded honestly: the crater
-  interior still blows out because the flame light sits 0.085 above it, which
-  geometry cannot fix.
+  bulging ring, a wick like a bent blade). Phase 57 first recorded the crater
+  interior as blowing out to flat white; a Phase 58 re-check with measurement
+  walked that back - the floor is bright (directly lit) but keeps its 3D
+  shading (luminance stdev 45.5, the wick casting a visible dip), so the "eats
+  the shape" claim was overstated off an unconverged capture. ~21% clips to
+  white, a defensible melt-pool look, left as is.
 
 ### Phase 58: The candles were never red - the capture pipeline was
 
