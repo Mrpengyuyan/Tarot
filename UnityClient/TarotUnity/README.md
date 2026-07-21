@@ -42,6 +42,7 @@ alongside the cross-cutting registries:
 - `Docs/PHASE57_CANDLE_MODELLING.md` — lathed candle geometry.
 - `Docs/PHASE58_CAPTURE_CONVERGENCE.md` — the capture-pipeline (unconverged-GI) fix + methodology lesson.
 - `Docs/PHASE59_FLAME_QUALITY.md` — the flame rebuild (with one open taste item).
+- `Docs/PHASE60_RESULT_SPREAD.md` — the Result screen shows every card of a spread.
 - `Docs/UI_COMPLETION_MAINLINE.md` — completion / next-steps registry.
 - `Docs/THIRD_PARTY_ASSETS.md` — asset + license provenance.
 - `Docs/PRE_PHASE6_READINESS.md` — pre-Phase-6 readiness notes.

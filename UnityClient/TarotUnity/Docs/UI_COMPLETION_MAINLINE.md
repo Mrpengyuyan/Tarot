@@ -2,6 +2,10 @@
 
 Date: 2026-05-26
 
+> Phase 60 (2026-07-21): the Result screen now shows every card of a multi-card
+> spread (past/present/advice band with reversed cards turned), not just the first
+> — see `PHASE60_RESULT_SPREAD.md`.
+>
 > Note (2026-07-21): the individual per-phase narrative docs for Phases 1–56
 > (except 37) were consolidated into `PROJECT_CHRONICLE.md`. This mainline stays
 > as the living completion / next-steps registry; read the chronicle for the
