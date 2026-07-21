@@ -1037,6 +1037,27 @@ Remaining limitation:
 - EditMode 278/278, PlayMode 33/33. Lesson kept: when several different changes
   produce the same result, doubt the instrument before the hypothesis.
 
+### Phase 59: The flame, rebuilt
+
+- A three-screen review on the Phase 58 converged pipeline found the scenes good
+  except the flame - the focal light's brightest, most-looked-at object, and the
+  worst-looking one. Close-up: horizontal banding across the whole flame plus a
+  stepped hard edge down the top centre.
+- Root cause was not the art: the source sprite is a clean 256px gradient, but
+  it imported Compressed (textureCompression 1), and a pure gradient is the
+  worst case for block compression - the 4x4 blocks quantise the ramp into
+  venetian blinds. It was also a 256px mystery asset with no generator.
+- Replaced with Tools/UiKitGenerator/gen_flame.py (reproducible, matching the
+  wax pipeline): a 512px flame with a true candle silhouette (rounded base
+  hugging the wick, belly low, tapering the long way to a point - three earlier
+  shapes rejected against previews), a heat ramp from amber edge to white core,
+  a cool blue root, and a soft outer glow. Imported uncompressed.
+- Verified: before/after A/B at player framing (old banded and hard-edged, new a
+  clean teardrop in its glow); Phase59FlameQualityTests guards 512+/uncompressed/
+  generator-present; HD archive regenerated. Honest note: the new flame is ~30%
+  slimmer (the old blob bled wide) - truer and cleaner, but whether it wants more
+  presence via a larger quad is a taste call left for a play session.
+
 ## Operating Rule
 
 Every phase ends with the established end-check flow:
