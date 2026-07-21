@@ -11,7 +11,7 @@ namespace TarotUnity.Tests.EditMode
     {
         private const string CatalogPath = "Assets/Resources/TarotArt/RWS1909_CardArtworkCatalog.asset";
         private const string HdFolder = "Assets/Art/Tarot/RWS1909_HD";
-        private const string DocPath = "Docs/PHASE27_HD_ARTWORK.md";
+        private const string DocPath = "Docs/PROJECT_CHRONICLE.md";
         private const int HdHeightFloor = 1000; // old scans were 666 tall; HD are ~1280.
 
         private static IEnumerable<string> AllCardKeys()

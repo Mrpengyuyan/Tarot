@@ -21,7 +21,7 @@ namespace TarotUnity.Tests.EditMode
         private const string ShaderName = "TarotUnity/HolographicCardUI";
         private const string MaterialPath = "Assets/Materials/MAT_HolographicHeroCardUI.mat";
         private const string HeroName = "Phase12_ResultCardArtworkSlot";
-        private const string DocPath = "Docs/PHASE53_HERO_HOLOGRAPHIC.md";
+        private const string DocPath = "Docs/PROJECT_CHRONICLE.md";
 
         [Test]
         public void TheUiHolographicShaderExists()

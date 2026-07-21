@@ -15,7 +15,7 @@ namespace TarotUnity.Tests.EditMode
     /// </summary>
     public sealed class Phase30CrossScreenConsistencyTests
     {
-        private const string DocPath = "Docs/PHASE30_CROSS_SCREEN_CONSISTENCY.md";
+        private const string DocPath = "Docs/PROJECT_CHRONICLE.md";
 
         private static readonly (string scene, string canvas)[] Screens =
         {

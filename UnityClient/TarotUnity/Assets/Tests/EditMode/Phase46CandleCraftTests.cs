@@ -80,7 +80,7 @@ namespace TarotUnity.Tests.EditMode
         [Test]
         public void Phase46DocumentationExists()
         {
-            const string doc = "Docs/PHASE46_CANDLE_CRAFT.md";
+            const string doc = "Docs/PROJECT_CHRONICLE.md";
             Assert.That(File.Exists(doc), Is.True);
             Assert.That(File.ReadAllText(doc), Does.Contain("translucen"));
         }

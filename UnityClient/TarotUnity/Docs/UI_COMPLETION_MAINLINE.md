@@ -2,6 +2,11 @@
 
 Date: 2026-05-26
 
+> Note (2026-07-21): the individual per-phase narrative docs for Phases 1–56
+> (except 37) were consolidated into `PROJECT_CHRONICLE.md`. This mainline stays
+> as the living completion / next-steps registry; read the chronicle for the
+> condensed per-phase history, and `PHASE37/57/58/59` for the kept standalone passes.
+
 ## Goal
 
 Take the Unity tarot client from a working desktop prototype to a polished downloadable game interface.

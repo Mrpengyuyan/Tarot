@@ -103,7 +103,7 @@ namespace TarotUnity.Tests.EditMode
         [Test]
         public void Phase45DocumentationExists()
         {
-            const string doc = "Docs/PHASE45_MENU_DEPTH.md";
+            const string doc = "Docs/PROJECT_CHRONICLE.md";
             Assert.That(File.Exists(doc), Is.True);
             Assert.That(File.ReadAllText(doc), Does.Contain("light.transform"));
             Assert.That(File.Exists("Tools/UiKitGenerator/gen_arcane.py"), Is.True);

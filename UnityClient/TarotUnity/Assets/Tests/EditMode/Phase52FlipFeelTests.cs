@@ -15,7 +15,7 @@ namespace TarotUnity.Tests.EditMode
     /// </summary>
     public sealed class Phase52FlipFeelTests
     {
-        private const string DocPath = "Docs/PHASE52_FLIP_CAMERA_FEEL.md";
+        private const string DocPath = "Docs/PROJECT_CHRONICLE.md";
 
         [Test]
         public void WeightAndSnapTuningStaysInATastefulEnvelope()

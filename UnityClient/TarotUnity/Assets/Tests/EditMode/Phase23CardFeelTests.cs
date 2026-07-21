@@ -12,7 +12,7 @@ namespace TarotUnity.Tests.EditMode
     {
         private const string CardPrefabPath = "Assets/Prefabs/Cards/PF_TarotCard.prefab";
         private const string ReadingRoomScenePath = "Assets/Scenes/ReadingRoom.unity";
-        private const string Phase23DocPath = "Docs/PHASE23_CARD_FEEL.md";
+        private const string Phase23DocPath = "Docs/PROJECT_CHRONICLE.md";
 
         [Test]
         public void CardPrefabHasHoverTiltWithResearchBackedTuning()

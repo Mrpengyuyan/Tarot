@@ -114,7 +114,7 @@ namespace TarotUnity.Tests.EditMode
         [Test]
         public void Phase38DocumentationExists()
         {
-            const string doc = "Docs/PHASE38_TABLE_REBUILD.md";
+            const string doc = "Docs/PROJECT_CHRONICLE.md";
             Assert.That(File.Exists(doc), Is.True);
             var text = File.ReadAllText(doc);
             Assert.That(text, Does.Contain("deleted"));

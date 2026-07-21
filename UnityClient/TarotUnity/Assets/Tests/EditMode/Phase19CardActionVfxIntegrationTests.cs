@@ -16,7 +16,7 @@ namespace TarotUnity.Tests.EditMode
         private const string ReadingRoomScenePath = "Assets/Scenes/ReadingRoom.unity";
         private const string ResultScenePath = "Assets/Scenes/Result.unity";
         private const string CatalogPath = "Assets/Resources/TarotArt/RWS1909_CardArtworkCatalog.asset";
-        private const string Phase19DocPath = "Docs/PHASE19_CARD_ACTION_VFX_INTEGRATION.md";
+        private const string Phase19DocPath = "Docs/PROJECT_CHRONICLE.md";
 
         [Test]
         public void RitualActionVfxControllerRuntimeTypeExists()

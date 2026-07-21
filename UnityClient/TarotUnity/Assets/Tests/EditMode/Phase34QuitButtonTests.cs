@@ -17,7 +17,7 @@ namespace TarotUnity.Tests.EditMode
     public sealed class Phase34QuitButtonTests
     {
         private const string MainMenuScenePath = "Assets/Scenes/MainMenu.unity";
-        private const string DocPath = "Docs/PHASE34_QUIT_BUTTON.md";
+        private const string DocPath = "Docs/PROJECT_CHRONICLE.md";
 
         [Test]
         public void QuitButtonExistsCenteredBelowStartWithoutOverlap()

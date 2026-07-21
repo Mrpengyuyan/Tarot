@@ -14,7 +14,7 @@ namespace TarotUnity.Tests.EditMode
     /// </summary>
     public sealed class Phase54DealLandingTests
     {
-        private const string DocPath = "Docs/PHASE54_DEAL_LANDING.md";
+        private const string DocPath = "Docs/PROJECT_CHRONICLE.md";
 
         [Test]
         public void LandingTuningStaysInATastefulEnvelope()

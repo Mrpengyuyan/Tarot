@@ -37,7 +37,10 @@ namespace TarotUnity.Editor
             UpgradeCardPrefab();
             UpgradeReadingRoomScene();
             UpgradeResultScene();
-            WritePhase12Doc();
+            // Phase 12's narrative now lives in Docs/PROJECT_CHRONICLE.md (the doc
+            // consolidation). WritePhase12Doc() is left dormant so re-running this
+            // bootstrapper cannot resurrect the deleted per-phase doc.
+            // WritePhase12Doc();
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();

@@ -11,7 +11,7 @@ namespace TarotUnity.Tests.EditMode
         private const string ShaderName = "TarotUnity/HolographicCard";
         private const string MaterialPath = "Assets/Materials/MAT_HolographicCardFace.mat";
         private const string CardPrefabPath = "Assets/Prefabs/Cards/PF_TarotCard.prefab";
-        private const string DocPath = "Docs/PHASE28_HOLOGRAPHIC_CARD.md";
+        private const string DocPath = "Docs/PROJECT_CHRONICLE.md";
 
         [Test]
         public void HolographicShaderCompilesAndIsSupported()

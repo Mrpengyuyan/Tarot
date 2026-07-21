@@ -15,7 +15,7 @@ namespace TarotUnity.Tests.EditMode
         private const string PcPipelineAssetPath = "Assets/Settings/PC_RPAsset.asset";
         private const string MobilePipelineAssetPath = "Assets/Settings/Mobile_RPAsset.asset";
         private const string CatalogPath = "Assets/Resources/TarotArt/RWS1909_CardArtworkCatalog.asset";
-        private const string Phase20DocPath = "Docs/PHASE20_CINEMATIC_RENDERING.md";
+        private const string Phase20DocPath = "Docs/PROJECT_CHRONICLE.md";
 
         private static readonly string[] ScenePaths =
         {

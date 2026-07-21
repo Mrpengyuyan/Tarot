@@ -93,7 +93,7 @@ namespace TarotUnity.Tests.EditMode
         [Test]
         public void Phase39DocumentationExists()
         {
-            const string doc = "Docs/PHASE39_UI_RESKIN.md";
+            const string doc = "Docs/PROJECT_CHRONICLE.md";
             Assert.That(File.Exists(doc), Is.True);
             Assert.That(File.ReadAllText(doc), Does.Contain("nine-slice"));
         }

@@ -17,7 +17,7 @@ namespace TarotUnity.Tests.EditMode
         private const string ReadingRoomScenePath = "Assets/Scenes/ReadingRoom.unity";
         private const string ResultScenePath = "Assets/Scenes/Result.unity";
         private const string CatalogPath = "Assets/Resources/TarotArt/RWS1909_CardArtworkCatalog.asset";
-        private const string Phase16DocPath = "Docs/PHASE16_RITUAL_AURA_VFX.md";
+        private const string Phase16DocPath = "Docs/PROJECT_CHRONICLE.md";
 
         private static readonly string[] TransparentMaterialPaths =
         {

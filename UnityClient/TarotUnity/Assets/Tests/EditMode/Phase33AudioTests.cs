@@ -16,7 +16,7 @@ namespace TarotUnity.Tests.EditMode
     public sealed class Phase33AudioTests
     {
         private const string BootScenePath = "Assets/Scenes/Boot.unity";
-        private const string DocPath = "Docs/PHASE33_AMBIENT_AUDIO.md";
+        private const string DocPath = "Docs/PROJECT_CHRONICLE.md";
 
         private static readonly string[] AudioAssets =
         {

@@ -8,7 +8,7 @@ namespace TarotUnity.Tests.EditMode
     public sealed class Phase22UiCompositionTests
     {
         private const string ReadingRoomScenePath = "Assets/Scenes/ReadingRoom.unity";
-        private const string Phase22DocPath = "Docs/PHASE22_UI_COMPOSITION.md";
+        private const string Phase22DocPath = "Docs/PROJECT_CHRONICLE.md";
 
         // The projected card band in the seated framing spans roughly
         // y = +86 .. -108 in 1280x720 center-anchored canvas coordinates.

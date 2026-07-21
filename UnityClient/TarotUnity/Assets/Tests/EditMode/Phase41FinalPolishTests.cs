@@ -54,7 +54,7 @@ namespace TarotUnity.Tests.EditMode
         [Test]
         public void Phase41DocumentationExists()
         {
-            const string doc = "Docs/PHASE41_FINAL_POLISH.md";
+            const string doc = "Docs/PROJECT_CHRONICLE.md";
             Assert.That(File.Exists(doc), Is.True);
             Assert.That(File.ReadAllText(doc), Does.Contain("sweep"));
         }

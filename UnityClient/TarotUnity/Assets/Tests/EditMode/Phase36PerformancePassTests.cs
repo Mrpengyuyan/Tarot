@@ -11,7 +11,7 @@ namespace TarotUnity.Tests.EditMode
     /// </summary>
     public sealed class Phase36PerformancePassTests
     {
-        private const string DocPath = "Docs/PHASE36_PERFORMANCE_PASS.md";
+        private const string DocPath = "Docs/PROJECT_CHRONICLE.md";
 
         [Test]
         public void CardFlipControllerCachesSceneReferences()

@@ -15,7 +15,7 @@ namespace TarotUnity.Tests.EditMode
         private const string ReadingRoomScenePath = "Assets/Scenes/ReadingRoom.unity";
         private const string ResultScenePath = "Assets/Scenes/Result.unity";
         private const string CatalogPath = "Assets/Resources/TarotArt/RWS1909_CardArtworkCatalog.asset";
-        private const string Phase17DocPath = "Docs/PHASE17_RITUAL_AURA_RUNTIME_MOTION.md";
+        private const string Phase17DocPath = "Docs/PROJECT_CHRONICLE.md";
 
         [Test]
         public void RitualAuraMotionControllerRuntimeTypeExists()

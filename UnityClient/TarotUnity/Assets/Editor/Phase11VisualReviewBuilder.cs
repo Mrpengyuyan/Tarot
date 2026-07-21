@@ -55,7 +55,11 @@ namespace TarotUnity.Editor
             }
 
             WriteManifest();
-            WriteReviewDoc();
+            // Phase 11's narrative now lives in Docs/PROJECT_CHRONICLE.md (the doc
+            // consolidation). WriteReviewDoc() is left dormant so re-running this
+            // capture cannot resurrect the deleted per-phase doc; the screenshots
+            // above are still regenerated.
+            // WriteReviewDoc();
 
             AssetDatabase.Refresh();
             Debug.Log("Tarot Unity Phase 11 visual review capture complete.");

@@ -82,7 +82,7 @@ namespace TarotUnity.Tests.EditMode
         [Test]
         public void Phase47DocumentationExists()
         {
-            const string doc = "Docs/PHASE47_ORB_AND_CRAFT.md";
+            const string doc = "Docs/PROJECT_CHRONICLE.md";
             Assert.That(File.Exists(doc), Is.True);
             Assert.That(File.ReadAllText(doc), Does.Contain("Fresnel"));
         }

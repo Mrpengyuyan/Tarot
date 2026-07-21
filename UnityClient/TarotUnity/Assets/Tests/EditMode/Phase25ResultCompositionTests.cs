@@ -12,7 +12,7 @@ namespace TarotUnity.Tests.EditMode
     public sealed class Phase25ResultCompositionTests
     {
         private const string ResultScenePath = "Assets/Scenes/Result.unity";
-        private const string DocPath = "Docs/PHASE25_RESULT_COMPOSITION.md";
+        private const string DocPath = "Docs/PROJECT_CHRONICLE.md";
 
         private static readonly (string header, string body)[] Sections =
         {

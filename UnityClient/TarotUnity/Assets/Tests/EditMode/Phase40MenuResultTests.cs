@@ -94,7 +94,7 @@ namespace TarotUnity.Tests.EditMode
         [Test]
         public void Phase40DocumentationExists()
         {
-            const string doc = "Docs/PHASE40_MENU_RESULT_RECOMPOSITION.md";
+            const string doc = "Docs/PROJECT_CHRONICLE.md";
             Assert.That(File.Exists(doc), Is.True);
             var text = File.ReadAllText(doc);
             Assert.That(text, Does.Contain("MP_MenuStage"));

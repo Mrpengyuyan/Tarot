@@ -16,7 +16,7 @@ namespace TarotUnity.Tests.EditMode
     {
         private const string ResultScenePath = "Assets/Scenes/Result.unity";
         private const string MainMenuScenePath = "Assets/Scenes/MainMenu.unity";
-        private const string DocPath = "Docs/PHASE35_RESULT_MENU_POLISH.md";
+        private const string DocPath = "Docs/PROJECT_CHRONICLE.md";
 
         private static readonly string[] StageVisualPaths =
         {

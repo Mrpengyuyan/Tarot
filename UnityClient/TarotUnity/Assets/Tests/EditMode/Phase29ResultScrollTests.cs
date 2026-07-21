@@ -16,7 +16,7 @@ namespace TarotUnity.Tests.EditMode
     public sealed class Phase29ResultScrollTests
     {
         private const string ResultScenePath = "Assets/Scenes/Result.unity";
-        private const string DocPath = "Docs/PHASE29_RESULT_SCROLL.md";
+        private const string DocPath = "Docs/PROJECT_CHRONICLE.md";
 
         private static readonly string[] SectionOrder =
         {

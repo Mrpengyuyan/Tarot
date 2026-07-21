@@ -16,7 +16,7 @@ namespace TarotUnity.Tests.EditMode
         private const string TmpBodyFontPath = "Assets/Fonts/LXGWWenKai-Regular SDF.asset";
         private const string TmpDisplayFontPath = "Assets/Fonts/LXGWWenKai-Medium SDF.asset";
         private const string OflPath = "Assets/Fonts/OFL.txt";
-        private const string Phase24DocPath = "Docs/PHASE24_TYPOGRAPHY.md";
+        private const string Phase24DocPath = "Docs/PROJECT_CHRONICLE.md";
         private const int DisplaySizeThreshold = 30;
 
         private static readonly string[] UiScenePaths =

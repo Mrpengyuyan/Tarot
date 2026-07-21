@@ -13,7 +13,7 @@ namespace TarotUnity.Tests.EditMode
         private const string ReadingRoomScenePath = "Assets/Scenes/ReadingRoom.unity";
         private const string ResultScenePath = "Assets/Scenes/Result.unity";
         private const string MainMenuScenePath = "Assets/Scenes/MainMenu.unity";
-        private const string Phase21DocPath = "Docs/PHASE21_CINEMATIC_CAMERA.md";
+        private const string Phase21DocPath = "Docs/PROJECT_CHRONICLE.md";
 
         private static readonly Vector3 SpreadCenter = new(0f, 0.12f, 0.15f);
 

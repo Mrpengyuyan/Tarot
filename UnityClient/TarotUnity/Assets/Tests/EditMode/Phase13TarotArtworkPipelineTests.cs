@@ -19,7 +19,7 @@ namespace TarotUnity.Tests.EditMode
         private const string CatalogPath = "Assets/Resources/TarotArt/RWS1909_CardArtworkCatalog.asset";
         private const string ReadingRoomScenePath = "Assets/Scenes/ReadingRoom.unity";
         private const string ResultScenePath = "Assets/Scenes/Result.unity";
-        private const string Phase13DocPath = "Docs/PHASE13_TAROT_ARTWORK_PIPELINE.md";
+        private const string Phase13DocPath = "Docs/PROJECT_CHRONICLE.md";
 
         [Test]
         public void Phase13ArtworkCatalogTypeExists()

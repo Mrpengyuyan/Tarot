@@ -8,7 +8,7 @@ namespace TarotUnity.Tests.EditMode
 {
     public sealed class Phase11VisualReviewTests
     {
-        private const string ReviewDocPath = "Docs/PHASE11_VISUAL_REVIEW.md";
+        private const string ReviewDocPath = "Docs/PROJECT_CHRONICLE.md";
         private const string ReviewFolder = "Docs/VisualReview/Phase11";
 
         [Test]

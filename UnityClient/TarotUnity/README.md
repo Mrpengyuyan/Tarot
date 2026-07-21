@@ -33,63 +33,18 @@ Do not build history, settings, profile, admin, or packaging workflows in this p
 
 ## Bootstrap Notes
 
-Phase 1 conventions and the first scene, prefab, script, and backend API map live in:
+The phase-by-phase history (Phases 1–56) is consolidated into one chronicle.
+Four recent/forward-looking phase docs are kept standalone as live task guidance,
+alongside the cross-cutting registries:
 
-- `Docs/PHASE1_BOOTSTRAP.md`
-
-Phase 2 graybox flow notes live in:
-
-- `Docs/PHASE2_GRAYBOX.md`
-
-Pre-Phase-6 readiness and desktop build notes live in:
-
-- `Docs/PRE_PHASE6_READINESS.md`
-- `Docs/PHASE6_DESKTOP_BUILD.md`
-- `Docs/PHASE7_IMMERSIVE_UI_DESIGN.md`
-- `Docs/UI_COMPLETION_MAINLINE.md`
-- `Docs/PHASE8_VISUAL_IDENTITY.md`
-- `Docs/PHASE9_MOTION_AUDIO_RHYTHM.md`
-- `Docs/PHASE10_RELEASE_UX_HARDENING.md`
-- `Docs/PHASE11_VISUAL_REVIEW.md`
-- `Docs/PHASE12_CARD_FIRST_REVEAL.md`
-- `Docs/PHASE13_TAROT_ARTWORK_PIPELINE.md`
-- `Docs/PHASE14_DIMENSIONAL_CARD_REVEAL.md`
-- `Docs/PHASE15_3D_TABLE_FOUNDATION.md`
-- `Docs/PHASE16_RITUAL_AURA_VFX.md`
-- `Docs/PHASE17_RITUAL_AURA_RUNTIME_MOTION.md`
-- `Docs/PHASE18_RITUAL_PARTICLE_SYSTEMS.md`
-- `Docs/PHASE19_CARD_ACTION_VFX_INTEGRATION.md`
-- `Docs/PHASE20_CINEMATIC_RENDERING.md`
-- `Docs/PHASE21_CINEMATIC_CAMERA.md`
-- `Docs/PHASE22_UI_COMPOSITION.md`
-- `Docs/PHASE23_CARD_FEEL.md`
-- `Docs/PHASE24_TYPOGRAPHY.md`
-- `Docs/PHASE25_RESULT_COMPOSITION.md`
-- `Docs/PHASE26_RESULT_ROBUSTNESS.md`
-- `Docs/PHASE27_HD_ARTWORK.md`
-- `Docs/PHASE28_HOLOGRAPHIC_CARD.md`
-- `Docs/PHASE29_RESULT_SCROLL.md`
-- `Docs/PHASE30_CROSS_SCREEN_CONSISTENCY.md`
-- `Docs/PHASE31_HD_VISUAL_ARCHIVE.md`
-- `Docs/PHASE32_CARD_FACE_FIT.md`
-- `Docs/PHASE33_AMBIENT_AUDIO.md`
-- `Docs/PHASE34_QUIT_BUTTON.md`
-- `Docs/PHASE35_RESULT_MENU_POLISH.md`
-- `Docs/PHASE36_PERFORMANCE_PASS.md`
-- `Docs/PHASE37_VISUAL_REDESIGN_BLUEPRINT.md`
-- `Docs/PHASE38_TABLE_REBUILD.md`
-- `Docs/PHASE39_UI_RESKIN.md`
-- `Docs/PHASE40_MENU_RESULT_RECOMPOSITION.md`
-- `Docs/PHASE41_FINAL_POLISH.md`
-- `Docs/PHASE42_MENU_ELEVATION.md`
-- `Docs/PHASE43_TMP_SDF_TEXT.md`
-- `Docs/PHASE44_MENU_ATMOSPHERE.md`
-- `Docs/PHASE45_MENU_DEPTH.md`
-- `Docs/PHASE46_CANDLE_CRAFT.md`
-- `Docs/PHASE47_ORB_AND_CRAFT.md`
-- `Docs/PHASE48_BACKDROP_CEILING.md`
-- `Docs/PHASE49_READINGROOM_LIGHT.md`
-- `Docs/THIRD_PARTY_ASSETS.md`
+- `Docs/PROJECT_CHRONICLE.md` — condensed history of Phases 1–56 (each under a `## Phase N —` heading).
+- `Docs/PHASE37_VISUAL_REDESIGN_BLUEPRINT.md` — the Midnight Parlor design north-star.
+- `Docs/PHASE57_CANDLE_MODELLING.md` — lathed candle geometry.
+- `Docs/PHASE58_CAPTURE_CONVERGENCE.md` — the capture-pipeline (unconverged-GI) fix + methodology lesson.
+- `Docs/PHASE59_FLAME_QUALITY.md` — the flame rebuild (with one open taste item).
+- `Docs/UI_COMPLETION_MAINLINE.md` — completion / next-steps registry.
+- `Docs/THIRD_PARTY_ASSETS.md` — asset + license provenance.
+- `Docs/PRE_PHASE6_READINESS.md` — pre-Phase-6 readiness notes.
 
 ## Current Playable Slice
 

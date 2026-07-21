@@ -18,7 +18,7 @@ namespace TarotUnity.Tests.EditMode
     public sealed class Phase55ShuffleFeelTests
     {
         private const string ScenePath = "Assets/Scenes/ReadingRoom.unity";
-        private const string DocPath = "Docs/PHASE55_SHUFFLE_FEEL.md";
+        private const string DocPath = "Docs/PROJECT_CHRONICLE.md";
 
         [Test]
         public void ShuffleTuningStaysInATastefulEnvelope()

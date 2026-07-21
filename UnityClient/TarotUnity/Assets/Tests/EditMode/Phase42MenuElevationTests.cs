@@ -117,7 +117,7 @@ namespace TarotUnity.Tests.EditMode
         [Test]
         public void Phase42DocumentationExists()
         {
-            const string doc = "Docs/PHASE42_MENU_ELEVATION.md";
+            const string doc = "Docs/PROJECT_CHRONICLE.md";
             Assert.That(File.Exists(doc), Is.True);
             var text = File.ReadAllText(doc);
             Assert.That(text, Does.Contain("skybox"));

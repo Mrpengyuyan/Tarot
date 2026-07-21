@@ -85,7 +85,7 @@ namespace TarotUnity.Tests.EditMode
         [Test]
         public void Phase51DocumentationExists()
         {
-            const string doc = "Docs/PHASE51_RESULT_TMP.md";
+            const string doc = "Docs/PROJECT_CHRONICLE.md";
             Assert.That(File.Exists(doc), Is.True);
             Assert.That(File.ReadAllText(doc), Does.Contain("Overlay"));
         }

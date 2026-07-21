@@ -10,7 +10,7 @@ namespace TarotUnity.Tests.EditMode
     public sealed class Phase31VisualArchiveTests
     {
         private const string ArchiveFolder = "Docs/VisualReview/Phase31_HDArchive";
-        private const string DocPath = "Docs/PHASE31_HD_VISUAL_ARCHIVE.md";
+        private const string DocPath = "Docs/PROJECT_CHRONICLE.md";
 
         private static readonly string[] ArchiveShots =
         {
