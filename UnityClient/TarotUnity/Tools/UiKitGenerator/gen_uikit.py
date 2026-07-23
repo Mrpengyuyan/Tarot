@@ -208,28 +208,54 @@ def make_divider(w=512, h=32, s=2, name="TarotDivider.png"):
 
 
 def make_socket(w=512, h=863, s=2, name="TarotSocket.png"):
-    """Gold inset marking a card slot on the cloth (decal, transparent bg)."""
+    """A card slot pressed into the velvet: a dark recess with a soft gold
+    inner-edge glow and a single lit rim. Not a blueprint outline - an empty
+    slot that quietly waits for its card, then vanishes once one lands on it."""
     W, H = w * s, h * s
     img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    # inner shadow so the slot reads as pressed into the cloth
-    sh = Image.new("L", (W, H), 0)
-    sd = ImageDraw.Draw(sh)
-    m = 26 * s
-    sd.rounded_rectangle([m, m, W - m, H - m], radius=30 * s, fill=90)
-    sh = sh.filter(ImageFilter.GaussianBlur(22 * s))
-    shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    shadow.paste(Image.new("RGBA", (W, H), (5, 2, 5, 170)), (0, 0), sh)
-    img.alpha_composite(shadow)
+    m = 22 * s
+    rad = 30 * s
 
-    gold = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    gd = ImageDraw.Draw(gold)
-    g = GOLD + (235,)
-    b1 = 18 * s
-    gd.rounded_rectangle([b1, b1, W - b1, H - b1], radius=26 * s, outline=g, width=4 * s)
-    b2 = 34 * s
-    gd.rounded_rectangle([b2, b2, W - b2, H - b2], radius=20 * s, outline=g, width=2 * s)
-    corner_ticks(gd, b2, b2, W - b2, H - b2, s, g, 40 * s)
-    img.alpha_composite(sheen(gold))
+    # 1) Deep recess: a soft dark pool so the slot reads as pressed into the
+    #    cloth, darkest toward the center and fading before the rim.
+    recess = Image.new("L", (W, H), 0)
+    rd = ImageDraw.Draw(recess)
+    rd.rounded_rectangle([m, m, W - m, H - m], radius=rad, fill=150)
+    recess = recess.filter(ImageFilter.GaussianBlur(30 * s))
+    dark = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    dark.paste(Image.new("RGBA", (W, H), (4, 2, 6, 205)), (0, 0), recess)
+    img.alpha_composite(dark)
+
+    # 2) Inner-edge shadow: a crisper dark ring just inside the rim = the lip
+    #    of the recess catching shadow, which sells the pressed-in depth.
+    lip = Image.new("L", (W, H), 0)
+    ld = ImageDraw.Draw(lip)
+    ld.rounded_rectangle([m, m, W - m, H - m], radius=rad, outline=255, width=10 * s)
+    lip = lip.filter(ImageFilter.GaussianBlur(9 * s))
+    lipimg = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    lipimg.paste(Image.new("RGBA", (W, H), (2, 1, 3, 150)), (0, 0), lip)
+    img.alpha_composite(lipimg)
+
+    # 3) Warm inner glow hugging the rim: the candle-lit edge of the socket,
+    #    faint so the empty slot only breathes rather than shouts.
+    glow = Image.new("L", (W, H), 0)
+    gd = ImageDraw.Draw(glow)
+    gd.rounded_rectangle([m + 3 * s, m + 3 * s, W - m - 3 * s, H - m - 3 * s],
+                         radius=rad, outline=255, width=6 * s)
+    glow = glow.filter(ImageFilter.GaussianBlur(11 * s))
+    glowimg = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    glowimg.paste(Image.new("RGBA", (W, H), GOLD_HI + (110,)), (0, 0), glow)
+    img.alpha_composite(glowimg)
+
+    # 4) A single lit rim - soft, not a hard line. One gold pass, lightly
+    #    blurred and given a metal sheen so it catches the light like a bevel.
+    rim = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    rmd = ImageDraw.Draw(rim)
+    rmd.rounded_rectangle([m, m, W - m, H - m], radius=rad,
+                          outline=GOLD + (170,), width=3 * s)
+    rim = rim.filter(ImageFilter.GaussianBlur(1 * s))
+    img.alpha_composite(sheen(rim, strength=0.6))
+
     img.resize((w, h), Image.LANCZOS).save(name)
 
 
