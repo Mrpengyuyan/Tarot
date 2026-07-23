@@ -52,6 +52,17 @@ namespace TarotUnity.UI
         [SerializeField] private Vector2 spreadReadingPos = new Vector2(0f, -150f);
         [SerializeField] private Vector2 spreadReadingSize = new Vector2(1120f, 232f);
 
+        // Phase 62: the band is a pool of cells laid out at runtime, so any card
+        // count (not just three) shows every card. Cells are centred as a single
+        // row; the pitch shrinks (and the cells scale down with it) once the row
+        // would overflow the band width, so a larger spread stays on screen instead
+        // of dropping cards past the third.
+        [Header("Phase 62: dynamic N-card row")]
+        [SerializeField] private float spreadRowWidth = 1180f;
+        [SerializeField] private float spreadBasePitch = 348f;
+        [SerializeField] private float spreadMinCellScale = 0.34f;
+        [SerializeField] private float spreadCellY = 88f;
+
         private CardArtworkCatalog defaultArtworkCatalog;
 
         public void Present(PredictionDetailResponse detail)
@@ -135,8 +146,26 @@ namespace TarotUnity.UI
                 spreadBandRoot.SetActive(true);
                 ApplyReadingLayout(spreadReadingPos, spreadReadingSize);
 
+                // How many of the pool's cells this reading uses. If a spread ever
+                // has more cards than the pool, the extras have nowhere to go - warn
+                // rather than drop silently, so it can never regress unnoticed.
+                var used = Mathf.Min(count, spreadCards.Length);
+                if (count > spreadCards.Length)
+                {
+                    Debug.LogWarning($"ResultPanelPresenter: {count}-card spread exceeds the " +
+                        $"{spreadCards.Length}-cell band; rebuild the band with more cells.");
+                }
+
+                var pitch = Mathf.Min(spreadBasePitch, used > 0 ? spreadRowWidth / used : spreadBasePitch);
+                var scale = Mathf.Clamp(pitch / spreadBasePitch, spreadMinCellScale, 1f);
+
                 for (var i = 0; i < spreadCards.Length; i++)
                 {
+                    if (i < used)
+                    {
+                        PositionSpreadCell(spreadCards[i], i, used, pitch, scale);
+                    }
+
                     FillSpreadCell(spreadCards[i], i < count ? draws[i] : null, catalog);
                 }
                 return;
@@ -202,6 +231,27 @@ namespace TarotUnity.UI
             {
                 cell.label.text = BuildCellLabel(draw);
             }
+        }
+
+        // Centre the used cells as one row: cell i sits at (i - (used-1)/2)*pitch,
+        // so any count is symmetric about the middle. The whole cell (frame, art,
+        // label, glow) scales together as the pitch tightens for larger spreads.
+        private void PositionSpreadCell(SpreadCardCell cell, int index, int used, float pitch, float scale)
+        {
+            if (cell == null || cell.root == null)
+            {
+                return;
+            }
+
+            var rt = cell.root.transform as RectTransform;
+            if (rt == null)
+            {
+                return;
+            }
+
+            var x = (index - (used - 1) * 0.5f) * pitch;
+            rt.anchoredPosition = new Vector2(x, spreadCellY);
+            rt.localScale = Vector3.one * scale;
         }
 
         private static string BuildCellLabel(CardDrawData draw)

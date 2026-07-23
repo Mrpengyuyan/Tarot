@@ -26,11 +26,14 @@ namespace TarotUnity.Editor
         private const string FoilMaterialPath = "Assets/Materials/MAT_HolographicHeroCardUI.mat";
 
         private const string BandName = "MP_ResultSpreadBand";
-        private const int CellCount = 3;
+        // Phase 62: build a pool of cells (enough for a Celtic Cross), not three.
+        // The presenter positions and scales the used cells as a centred row at
+        // runtime, so any card count shows every card instead of dropping past the
+        // third. A one- or three-card reading lays out identically to before.
+        private const int CellCount = 10;
 
-        // Layout (canvas ref 1280x720, centre-anchored). The three cells sit in a
-        // row under the header; the reading scroll moves full-width below them.
-        private static readonly float[] CellX = { -348f, 0f, 348f };
+        // Layout (canvas ref 1280x720, centre-anchored). Cells are parked at the row
+        // centre here; ResultPanelPresenter re-positions the used ones per reading.
         private const float CellY = 88f;
         private static readonly Vector2 CellSize = new Vector2(164f, 268f);
         private static readonly Vector2 FrameSize = new Vector2(164f, 234f);
@@ -93,7 +96,7 @@ namespace TarotUnity.Editor
 
             for (var i = 0; i < CellCount; i++)
             {
-                var cell = NewUi($"SpreadCell_{i}", band, new Vector2(CellX[i], CellY), CellSize);
+                var cell = NewUi($"SpreadCell_{i}", band, new Vector2(0f, CellY), CellSize);
                 cellRoots[i] = cell.gameObject;
 
                 // Warm candle glow behind the card (matches the hero showcase).
@@ -135,7 +138,9 @@ namespace TarotUnity.Editor
 
                 var label = NewUi("Label", cell, new Vector2(0f, LabelY), new Vector2(180f, 36f));
                 var tmp = label.gameObject.AddComponent<TextMeshProUGUI>();
-                tmp.text = i == 0 ? "过去" : i == 1 ? "现在" : "建议";
+                // Author-time placeholder only; the presenter sets the real position
+                // name per reading. Cells past the first three start blank.
+                tmp.text = i == 0 ? "过去" : i == 1 ? "现在" : i == 2 ? "建议" : string.Empty;
                 tmp.alignment = TextAlignmentOptions.Center;
                 tmp.fontSize = 22f;
                 tmp.color = GoldLabel;
@@ -182,6 +187,13 @@ namespace TarotUnity.Editor
             so.FindProperty("spreadReadingPos").vector2Value = SpreadReadingPos;
             so.FindProperty("spreadReadingSize").vector2Value = SpreadReadingSize;
 
+            // Phase 62 dynamic-row layout params. The 3-card pitch (348) is preserved
+            // as the base, so 1- and 3-card readings are pixel-identical to before.
+            SetFloat(so, "spreadRowWidth", 1180f);
+            SetFloat(so, "spreadBasePitch", 348f);
+            SetFloat(so, "spreadMinCellScale", 0.34f);
+            SetFloat(so, "spreadCellY", CellY);
+
             var arr = so.FindProperty("spreadCards");
             arr.arraySize = CellCount;
             for (var i = 0; i < CellCount; i++)
@@ -213,6 +225,15 @@ namespace TarotUnity.Editor
             if (p != null)
             {
                 p.objectReferenceValue = value;
+            }
+        }
+
+        private static void SetFloat(SerializedObject so, string prop, float value)
+        {
+            var p = so.FindProperty(prop);
+            if (p != null)
+            {
+                p.floatValue = value;
             }
         }
 
