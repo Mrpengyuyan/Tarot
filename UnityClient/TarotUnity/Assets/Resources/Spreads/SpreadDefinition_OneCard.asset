@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 241863ce49dc6434ea18bb65cac951a3, type: 3}
+  m_Name: SpreadDefinition_OneCard
+  m_EditorClassIdentifier: TarotUnity.Runtime::TarotUnity.Gameplay.SpreadDefinition
+  spreadId: 1
+  cardCount: 1
+  displayName: One Card Focus
+  slots:
+  - localPosition: {x: 0, y: 0.12, z: 0.15}
+    yawDegrees: 0
+  positionNames:
+  - "\u6838\u5FC3"
+  positionMeanings:
+  - "\u9488\u5BF9\u8FD9\u4E2A\u95EE\u9898\u6700\u6E05\u6670\u7684\u4FE1\u53F7\u3002"
+  cameraPosition: {x: 0, y: 0, z: 0}
+  cameraEuler: {x: 0, y: 0, z: 0}
+  cameraFov: 60

@@ -5,12 +5,24 @@ namespace TarotUnity.Presentation
 {
     public sealed class CameraChoreographyController : MonoBehaviour
     {
+        // Phase 63: a spread can register its own framing pose (by card count) so a
+        // large spread like the Celtic Cross gets a pulled-back shot. The legacy
+        // one/three-card poses below stay as the fallback.
+        [System.Serializable]
+        public sealed class SpreadPose
+        {
+            public int cardCount;
+            public Transform pose;
+            public float fov = 60f;
+        }
+
         [SerializeField] private Camera targetCamera;
         [SerializeField] private Transform defaultPose;
         [SerializeField] private Transform deckPose;
         [SerializeField] private Transform oneCardPose;
         [SerializeField] private Transform threeCardPose;
         [SerializeField] private Transform resultPose;
+        [SerializeField] private SpreadPose[] spreadPoses = new SpreadPose[0];
         [SerializeField] private float transitionDuration = 0.75f;
         [SerializeField] private AnimationCurve transitionCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
@@ -89,6 +101,15 @@ namespace TarotUnity.Presentation
 
         public void FocusSpread(int cardCount)
         {
+            foreach (var entry in spreadPoses)
+            {
+                if (entry != null && entry.cardCount == cardCount && entry.pose != null)
+                {
+                    MoveTo(entry.pose, entry.fov);
+                    return;
+                }
+            }
+
             if (cardCount == 1)
             {
                 MoveTo(oneCardPose, oneCardFov);

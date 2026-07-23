@@ -65,10 +65,15 @@ namespace TarotUnity.Tests.EditMode
         {
             var indicator = OpenAndFindIndicator();
 
+            // Phase 63: socket glows are keyed by card count, so select a one-card
+            // spread before checking its socket lights.
+            var flow = Object.FindFirstObjectByType<ReadingFlowController>();
+            flow.SelectSpread(1, 1);
+
             indicator.ApplyFlowState(ReadingFlowState.Shuffling);
             Assert.That(indicator.CurrentStep, Is.EqualTo(2));
             Assert.That(FindGlow("OneCardSlot").gameObject.activeSelf, Is.True,
-                "the one-card socket should glow while drawing the default spread");
+                "the one-card socket should glow while drawing a one-card spread");
 
             indicator.ApplyFlowState(ReadingFlowState.ResultReady);
             Assert.That(indicator.CurrentStep, Is.EqualTo(4));

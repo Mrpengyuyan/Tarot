@@ -18,8 +18,10 @@ namespace TarotUnity.UI
         [SerializeField] private DeckController deckController;
         [SerializeField] private Button oneCardButton;
         [SerializeField] private Button threeCardButton;
+        [SerializeField] private Button celticCrossButton;
         [SerializeField] private Button drawButton;
         [SerializeField] private Button revealResultButton;
+        [SerializeField] private SpreadCatalog spreadCatalog;
         // Phase 50: the ReadingRoom migrates to TMP SDF like the menu did. The
         // question field needed the TMP_InputField swap the menu never had, and
         // the three status readouts become TMP_Text. Both expose the same .text
@@ -46,6 +48,7 @@ namespace TarotUnity.UI
         {
             oneCardButton?.onClick.AddListener(SelectOneCard);
             threeCardButton?.onClick.AddListener(SelectThreeCards);
+            celticCrossButton?.onClick.AddListener(SelectCelticCross);
             drawButton?.onClick.AddListener(BeginDraw);
             revealResultButton?.onClick.AddListener(LoadResult);
 
@@ -79,6 +82,7 @@ namespace TarotUnity.UI
         {
             oneCardButton?.onClick.RemoveListener(SelectOneCard);
             threeCardButton?.onClick.RemoveListener(SelectThreeCards);
+            celticCrossButton?.onClick.RemoveListener(SelectCelticCross);
             drawButton?.onClick.RemoveListener(BeginDraw);
             revealResultButton?.onClick.RemoveListener(LoadResult);
 
@@ -101,6 +105,12 @@ namespace TarotUnity.UI
         private void SelectThreeCards()
         {
             SelectSpread(2, 3, "Past / Present / Advice");
+        }
+
+        private void SelectCelticCross()
+        {
+            var def = ResolveCatalog()?.GetByCardCount(10);
+            SelectSpread(def != null ? def.spreadId : 3, 10, def != null ? def.displayName : "凯尔特十字");
         }
 
         private void SelectSpread(int spreadId, int cardCount, string spreadName)
@@ -203,7 +213,7 @@ namespace TarotUnity.UI
 
             if (session == null)
             {
-                var localDraws = LocalReadingSimulator.CreatePlaceholderDraws(selectedCardCount);
+                var localDraws = CreateLocalDraws();
                 session = LocalReadingSimulator.CreateSession(
                     selectedSpreadId,
                     selectedSpreadName,
@@ -212,7 +222,7 @@ namespace TarotUnity.UI
                     localDraws);
             }
 
-            var draws = session.cardDraws ?? LocalReadingSimulator.CreatePlaceholderDraws(selectedCardCount);
+            var draws = session.cardDraws ?? CreateLocalDraws();
             ReadingSessionStore.Save(session);
 
             flowController?.BeginDeal();
@@ -417,6 +427,23 @@ namespace TarotUnity.UI
 
             return backendMode == BackendIntegrationMode.BackendOnly
                 || backendReadingService.CanCreateAuthenticatedReading;
+        }
+
+        private SpreadCatalog ResolveCatalog()
+        {
+            if (spreadCatalog == null)
+            {
+                spreadCatalog = Resources.Load<SpreadCatalog>(SpreadCatalog.ResourcePath);
+            }
+
+            return spreadCatalog;
+        }
+
+        private CardDrawData[] CreateLocalDraws()
+        {
+            var def = ResolveCatalog()?.GetByCardCount(selectedCardCount);
+            return LocalReadingSimulator.CreatePlaceholderDraws(
+                selectedCardCount, def?.positionNames, def?.positionMeanings);
         }
 
         private SpreadSummary FindBackendSpread(int cardCount)

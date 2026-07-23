@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using TarotUnity.Gameplay;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,6 +13,8 @@ namespace TarotUnity.UI
     /// <see cref="ReadingFlowController"/> state machine: the chip for the current
     /// step lights gold, the steps behind it read as completed, and once the draw
     /// begins the sockets for the selected spread glow to invite the cards.
+    /// Phase 63: the socket glows are keyed by card count so any spread (including
+    /// the ten-card Celtic Cross) lights its own sockets.
     /// </summary>
     public sealed class RitualStepIndicator : MonoBehaviour
     {
@@ -24,12 +27,19 @@ namespace TarotUnity.UI
             public Graphic label; // UI.Text or TMP_Text — both derive from Graphic.
         }
 
+        /// <summary>The socket glows for one spread, keyed by its card count.</summary>
+        [Serializable]
+        public sealed class SpreadGlowSet
+        {
+            public int cardCount;
+            public GameObject[] glows = Array.Empty<GameObject>();
+        }
+
         [SerializeField] private ReadingFlowController flowController;
         [SerializeField] private StepChip[] chips = Array.Empty<StepChip>();
 
         [Header("Socket glow — lit for the selected spread at draw time")]
-        [SerializeField] private GameObject oneCardSocketGlow;
-        [SerializeField] private GameObject[] threeCardSocketGlows = Array.Empty<GameObject>();
+        [SerializeField] private SpreadGlowSet[] socketGlowSets = Array.Empty<SpreadGlowSet>();
 
         [Header("Chip palette")]
         [SerializeField] private Color upcomingPlate = new Color(0.10f, 0.07f, 0.14f, 0.86f);
@@ -47,8 +57,7 @@ namespace TarotUnity.UI
 
         private int currentStep = -1;
         private bool socketsLit;
-        private Vector3 oneCardGlowBaseScale = Vector3.one;
-        private Vector3[] threeCardGlowBaseScales = Array.Empty<Vector3>();
+        private readonly Dictionary<GameObject, Vector3> glowBaseScales = new();
 
         /// <summary>The highlighted step (0..4), or -1 before the ritual begins.</summary>
         public int CurrentStep => currentStep;
@@ -156,20 +165,21 @@ namespace TarotUnity.UI
         private void SetSocketsLit(bool lit)
         {
             socketsLit = lit;
-            var count = flowController != null ? flowController.SelectedSpreadCardCount : 1;
+            var count = flowController != null ? flowController.SelectedSpreadCardCount : 0;
 
-            if (oneCardSocketGlow != null)
+            foreach (var set in socketGlowSets)
             {
-                oneCardSocketGlow.SetActive(lit && count != 3);
-            }
+                if (set == null)
+                {
+                    continue;
+                }
 
-            if (threeCardSocketGlows != null)
-            {
-                foreach (var glow in threeCardSocketGlows)
+                var on = lit && set.cardCount == count;
+                foreach (var glow in set.glows)
                 {
                     if (glow != null)
                     {
-                        glow.SetActive(lit && count == 3);
+                        glow.SetActive(on);
                     }
                 }
             }
@@ -185,19 +195,18 @@ namespace TarotUnity.UI
             var t = Mathf.Lerp(glowScaleMin, glowScaleMax,
                 0.5f + 0.5f * Mathf.Sin(Time.time * glowPulseSpeed));
 
-            if (oneCardSocketGlow != null && oneCardSocketGlow.activeSelf)
+            foreach (var set in socketGlowSets)
             {
-                oneCardSocketGlow.transform.localScale = oneCardGlowBaseScale * t;
-            }
-
-            if (threeCardSocketGlows != null)
-            {
-                for (var i = 0; i < threeCardSocketGlows.Length; i++)
+                if (set == null)
                 {
-                    var glow = threeCardSocketGlows[i];
-                    if (glow != null && glow.activeSelf && i < threeCardGlowBaseScales.Length)
+                    continue;
+                }
+
+                foreach (var glow in set.glows)
+                {
+                    if (glow != null && glow.activeSelf && glowBaseScales.TryGetValue(glow, out var baseScale))
                     {
-                        glow.transform.localScale = threeCardGlowBaseScales[i] * t;
+                        glow.transform.localScale = baseScale * t;
                     }
                 }
             }
@@ -205,19 +214,20 @@ namespace TarotUnity.UI
 
         private void CacheGlowScales()
         {
-            if (oneCardSocketGlow != null)
+            glowBaseScales.Clear();
+            foreach (var set in socketGlowSets)
             {
-                oneCardGlowBaseScale = oneCardSocketGlow.transform.localScale;
-            }
-
-            if (threeCardSocketGlows != null)
-            {
-                threeCardGlowBaseScales = new Vector3[threeCardSocketGlows.Length];
-                for (var i = 0; i < threeCardSocketGlows.Length; i++)
+                if (set == null)
                 {
-                    threeCardGlowBaseScales[i] = threeCardSocketGlows[i] != null
-                        ? threeCardSocketGlows[i].transform.localScale
-                        : Vector3.one;
+                    continue;
+                }
+
+                foreach (var glow in set.glows)
+                {
+                    if (glow != null && !glowBaseScales.ContainsKey(glow))
+                    {
+                        glowBaseScales[glow] = glow.transform.localScale;
+                    }
                 }
             }
         }

@@ -163,13 +163,12 @@ namespace TarotUnity.Editor
                     marker != null ? FindGraphic(marker.transform, "Label") : null;
             }
 
-            so.FindProperty("oneCardSocketGlow").objectReferenceValue = oneGlow;
-            var threeProp = so.FindProperty("threeCardSocketGlows");
-            threeProp.arraySize = threeGlows.Length;
-            for (var i = 0; i < threeGlows.Length; i++)
-            {
-                threeProp.GetArrayElementAtIndex(i).objectReferenceValue = threeGlows[i];
-            }
+            // Phase 63: socket glows are keyed by card count now. Wire the one- and
+            // three-card sets here; the Phase 63 bootstrapper adds the Celtic set.
+            var setsProp = so.FindProperty("socketGlowSets");
+            setsProp.arraySize = 2;
+            WriteGlowSet(setsProp.GetArrayElementAtIndex(0), 1, new[] { oneGlow });
+            WriteGlowSet(setsProp.GetArrayElementAtIndex(1), 3, threeGlows);
 
             so.ApplyModifiedPropertiesWithoutUndo();
         }
@@ -178,6 +177,18 @@ namespace TarotUnity.Editor
         {
             var child = parent.Find(childName);
             return child != null ? child.GetComponent<Graphic>() : null;
+        }
+
+        // Writes one RitualStepIndicator.SpreadGlowSet element (cardCount + glows[]).
+        internal static void WriteGlowSet(SerializedProperty element, int cardCount, GameObject[] glows)
+        {
+            element.FindPropertyRelative("cardCount").intValue = cardCount;
+            var glowsProp = element.FindPropertyRelative("glows");
+            glowsProp.arraySize = glows.Length;
+            for (var i = 0; i < glows.Length; i++)
+            {
+                glowsProp.GetArrayElementAtIndex(i).objectReferenceValue = glows[i];
+            }
         }
     }
 }
