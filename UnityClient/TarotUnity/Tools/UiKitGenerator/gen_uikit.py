@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Midnight Parlor UI kit generator (nine-slice sprites + decals)."""
 import math
-from PIL import Image, ImageDraw, ImageFilter, ImageEnhance
+from PIL import Image, ImageDraw, ImageFilter, ImageEnhance, ImageOps
 
 GOLD = (201, 162, 39)
 GOLD_HI = (232, 206, 121)
@@ -269,6 +269,49 @@ def make_glow(size=512, name="TarotGlow.png"):
         a = int(200 * (1 - i / steps) ** 2.2)
         d.ellipse([cx - r, cx - r, cx + r, cx + r], fill=(255, 208, 120, a))
     img.save(name)
+
+
+def make_backdrop(w=1280, h=720, name="TarotBackdrop.png"):
+    """A dark parlor backdrop for the Result screen: an aubergine gradient with a
+    warm candle glow rising from the lower centre, a faint sigil echoing the menu's
+    astrology circle, and a soft vignette - so the reading no longer floats on pure
+    black. Kept deliberately dark so the gold/ivory text stays legible over it."""
+    img = Image.new("RGB", (w, h))
+    d = ImageDraw.Draw(img)
+    top, bot = (8, 4, 8), (28, 15, 22)
+    for y in range(h):
+        t = y / (h - 1)
+        d.line([(0, y), (w, y)], fill=(
+            int(top[0] + (bot[0] - top[0]) * t),
+            int(top[1] + (bot[1] - top[1]) * t),
+            int(top[2] + (bot[2] - top[2]) * t)))
+    img = img.convert("RGBA")
+
+    # Warm candle glow rising from the lower centre.
+    glow = Image.new("L", (w, h), 0)
+    ImageDraw.Draw(glow).ellipse([w * 0.12, h * 0.55, w * 0.88, h * 1.35], fill=175)
+    glow = glow.filter(ImageFilter.GaussianBlur(140))
+    warm = Image.new("RGBA", (w, h), (150, 84, 38, 0))
+    warm.putalpha(glow)
+    img.alpha_composite(warm)
+
+    # Faint sigil rings, echoing the menu's astrology circle.
+    sig = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    sd = ImageDraw.Draw(sig)
+    cx, cy = w * 0.5, h * 0.52
+    for rad in (h * 0.30, h * 0.235, h * 0.15):
+        sd.ellipse([cx - rad, cy - rad, cx + rad, cy + rad], outline=GOLD + (26,), width=2)
+    img.alpha_composite(sig.filter(ImageFilter.GaussianBlur(1.5)))
+
+    # Vignette: darken the edges and corners.
+    vig = Image.new("L", (w, h), 0)
+    ImageDraw.Draw(vig).ellipse([-w * 0.15, -h * 0.15, w * 1.15, h * 1.15], fill=255)
+    vig = vig.filter(ImageFilter.GaussianBlur(180))
+    dark = Image.new("RGBA", (w, h), (0, 0, 0, 210))
+    dark.putalpha(ImageOps.invert(vig))
+    img.alpha_composite(dark)
+
+    img.convert("RGB").save(name)
 
 
 if __name__ == "__main__":
