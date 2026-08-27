@@ -1,4 +1,5 @@
 from app.api.v1.endpoints import records as records_endpoint
+from app.core.config import settings
 
 
 def test_guest_session_returns_bearer_token_and_authenticated_profile(client):
@@ -133,3 +134,28 @@ def test_guest_session_completes_full_reading_lifecycle(client, seeded_spread_an
     assert detail["status"] == "completed"
     assert len(detail["card_draws"]) == 3
     assert detail["interpretation"]["summary"] == "Focus supports progress."
+
+
+def test_guest_session_enforces_configured_daily_reading_limit(
+    client,
+    seeded_spread_and_cards,
+    monkeypatch,
+):
+    monkeypatch.setattr(settings, "GUEST_DAILY_READING_LIMIT", 1)
+
+    guest_response = client.post("/api/v1/guest-session")
+    assert guest_response.status_code == 200
+    headers = {"Authorization": f"Bearer {guest_response.json()['access_token']}"}
+    payload = {
+        "question": "What should I focus on today?",
+        "question_type": "general",
+        "spread_type_id": seeded_spread_and_cards["spread_id"],
+    }
+
+    first_record = client.post("/api/v1/records/", headers=headers, json=payload)
+    assert first_record.status_code == 200
+
+    second_record = client.post("/api/v1/records/", headers=headers, json=payload)
+    assert second_record.status_code == 429
+    assert "daily reading limit" in second_record.json()["detail"].lower()
+    assert int(second_record.headers["retry-after"]) > 0

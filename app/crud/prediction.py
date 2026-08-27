@@ -143,6 +143,19 @@ def get_recent_prediction_overview(db: Session, user_id: int, limit: int = 4) ->
         .all()
     )
 
+
+def count_predictions_created_since(db: Session, user_id: int, since: datetime) -> int:
+    """Count reading attempts for a user from the supplied UTC boundary onward."""
+    count = (
+        db.query(func.count(Prediction.id))
+        .filter(
+            Prediction.user_id == user_id,
+            Prediction.created_at >= since,
+        )
+        .scalar()
+    )
+    return int(count or 0)
+
 def create_prediction(db: Session, user_id: int, prediction_create: PredictionCreate) -> Prediction:
     """创建预测记录"""
     prediction_data = prediction_create.model_dump()

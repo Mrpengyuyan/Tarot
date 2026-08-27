@@ -116,6 +116,7 @@ class Settings(BaseSettings):
     AUTO_CREATE_TABLES_ON_STARTUP: bool = False
     AUTO_BOOTSTRAP_REFERENCE_DATA_ON_STARTUP: bool = False
     AUTO_REPAIR_PREDICTION_QUESTIONS_ON_STARTUP: bool = False
+    GUEST_DAILY_READING_LIMIT: int = 3
 
     model_config = {
         "case_sensitive": True,

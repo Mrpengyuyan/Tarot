@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 import logging
 import random
+from math import ceil
 from typing import List, Optional, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -9,6 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_active_user
+from app.core.config import settings
 from app.crud import card as card_crud
 from app.crud import prediction as prediction_crud
 from app.crud import spread as spread_crud
@@ -39,6 +42,35 @@ from app.services.tarot_service import tarot_interpretation_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+def _is_guest_account(current_user: User) -> bool:
+    username = str(current_user.username or "")
+    email = str(current_user.email or "")
+    return username.startswith("guest_") and email.endswith("@guest.tarot.game")
+
+
+def _enforce_guest_daily_reading_limit(db: Session, current_user: User) -> None:
+    limit = max(0, int(settings.GUEST_DAILY_READING_LIMIT or 0))
+    if limit == 0 or not _is_guest_account(current_user):
+        return
+
+    now = datetime.now(timezone.utc)
+    day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    used = prediction_crud.count_predictions_created_since(
+        db,
+        user_id=current_user.id,
+        since=day_start,
+    )
+    if used < limit:
+        return
+
+    seconds_until_reset = max(1, ceil((day_start + timedelta(days=1) - now).total_seconds()))
+    raise HTTPException(
+        status_code=429,
+        detail="Guest daily reading limit reached. Please try again tomorrow.",
+        headers={"Retry-After": str(seconds_until_reset)},
+    )
 
 
 def _normalize_key_themes(value) -> Optional[str]:  # noqa: ANN001
@@ -180,6 +212,8 @@ def create_prediction(
 ):
     if not spread_crud.validate_spread_exists(db, spread_id=prediction_create.spread_type_id):
         raise HTTPException(status_code=400, detail="Spread does not exist or is inactive")
+
+    _enforce_guest_daily_reading_limit(db, current_user)
 
     return prediction_crud.create_prediction_with_stats(
         db,
