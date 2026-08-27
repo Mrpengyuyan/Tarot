@@ -1,58 +1,66 @@
 # Tarot Unity Client
 
-Unity frontend workspace for the Tarot vertical slice.
+Unity frontend for the Tarot desktop game. The current baseline is Unity
+`6000.3.16f1`, URP, and release version `0.9.0`.
 
-## Editor
+## Project Structure
 
-- Unity: `6000.3.16f1`
-- Template: URP
-- First target platforms: macOS and Windows desktop
+- `Assets/Scenes/Boot.unity` is the editor entry scene.
+- `Assets/Scenes/MainMenu.unity` is the menu and spread selection screen.
+- `Assets/Scenes/ReadingRoom.unity` is the question, draw, and flip screen.
+- `Assets/Scenes/Result.unity` is the multi-card result and interpretation screen.
+- `Assets/Scripts/` contains runtime code grouped by core, data, gameplay,
+  network, presentation, and UI responsibilities.
+- `Assets/Tests/` contains EditMode and PlayMode coverage for the vertical slice.
 
-## Current Package Baseline
+## Playable Flow
 
-Already present in `Packages/manifest.json`:
+```text
+Boot -> Main Menu -> Spread Select -> Question Input -> Shuffle/Draw
+     -> Flip Cards -> Result
+```
 
-- Universal Render Pipeline `17.3.0`
-- Input System `1.19.0`
-- Unity Test Framework `1.6.0`
-- UGUI `2.0.0`
+The editor flow is always available through the local simulator. The online
+flow uses the FastAPI backend through the runtime configuration in
+`Assets/StreamingAssets/tarot_desktop_config.json`.
 
-Package Manager follow-up for later phases:
+## Runtime Modes
 
-- Cinemachine for reveal and result camera choreography
-- TextMeshPro essential resources before final UI work
-- Addressables only after card art and audio assets grow
+- Offline mode: runs without a backend and uses local reading data.
+- Online mode: sends the reading request to the configured backend. API keys
+  must remain on the backend and must never be placed in this Unity project.
 
-## V1 Flow
+The default address is intended for local development only. A public release
+must point to a deployed HTTPS backend rather than a developer machine's
+`localhost` address.
 
-The first playable slice stays focused on:
+## Documentation
 
-`MainMenu -> Spread Select -> Question Input -> Shuffle/Draw -> Flip Cards -> Result`
+- [`PROJECT_COMPLETION_PLAN.md`](../../PROJECT_COMPLETION_PLAN.md) — current
+  completion roadmap, release scope, and acceptance checklist.
+- [`UNITY_FRONTEND_PLAN.md`](../../UNITY_FRONTEND_PLAN.md) — original product
+  direction and frontend/backend boundary.
+- `Docs/PROJECT_CHRONICLE.md` — condensed history for Phases 1-64.
+- `Docs/UI_COMPLETION_MAINLINE.md` — visual completion registry and tuning notes.
+- `Docs/THIRD_PARTY_ASSETS.md` — asset provenance and license record.
+- `Docs/PHASE37_VISUAL_REDESIGN_BLUEPRINT.md` — Midnight Parlor visual north-star.
+- `Docs/PHASE60_RESULT_SPREAD.md` through `Docs/PHASE64_RESULT_BACKDROP.md` —
+  latest standalone implementation notes.
 
-Do not build history, settings, profile, admin, or packaging workflows in this phase.
+## Local Development
 
-## Bootstrap Notes
+1. Open this folder with Unity `6000.3.16f1`.
+2. Open `Assets/Scenes/Boot.unity`.
+3. Press Play and complete the local flow.
+4. Start the FastAPI backend separately when validating online mode.
 
-The phase-by-phase history (Phases 1–56) is consolidated into one chronicle.
-Four recent/forward-looking phase docs are kept standalone as live task guidance,
-alongside the cross-cutting registries:
+The Unity package manifest already contains URP, Input System, UGUI, and the
+Unity Test Framework. Do not commit `Library`, `Temp`, `Logs`, `TestResults`,
+IDE project files, Python caches, or local secrets.
 
-- `Docs/PROJECT_CHRONICLE.md` — condensed history of Phases 1–56 (each under a `## Phase N —` heading).
-- `Docs/PHASE37_VISUAL_REDESIGN_BLUEPRINT.md` — the Midnight Parlor design north-star.
-- `Docs/PHASE57_CANDLE_MODELLING.md` — lathed candle geometry.
-- `Docs/PHASE58_CAPTURE_CONVERGENCE.md` — the capture-pipeline (unconverged-GI) fix + methodology lesson.
-- `Docs/PHASE59_FLAME_QUALITY.md` — the flame rebuild (with one open taste item).
-- `Docs/PHASE60_RESULT_SPREAD.md` — the Result screen shows every card of a spread.
-- `Docs/UI_COMPLETION_MAINLINE.md` — completion / next-steps registry.
-- `Docs/THIRD_PARTY_ASSETS.md` — asset + license provenance.
-- `Docs/PRE_PHASE6_READINESS.md` — pre-Phase-6 readiness notes.
+## Release
 
-## Current Playable Slice
-
-Open `Assets/Scenes/Boot.unity` and press Play.
-
-Expected local flow:
-
-`Start Reading -> choose spread -> enter question -> Draw -> click cards to flip -> Reveal Result`
-
-The current slice can run with local placeholder data or the Phase 4 backend integration mode. Phase 6 adds desktop runtime config plus generated macOS and Windows prototype build paths. Phase 7 upgrades the vertical slice UI toward an immersive ritual desktop prototype. Phase 8 adds the first visual identity pass for the table, cards, result frame, and theme palette. Phase 9 adds card-game rhythm scaffolding for shuffle, deal, flip, and result reveal. Phase 10 adds release package readme/config files and player-readable offline/backend status copy. Phase 11 adds screenshot-based visual review artifacts and a first layout adjustment pass. Phase 12 adds card-first reveal anchors and a durable card face-art slot. Phase 13 adds the RWS1909 tarot artwork pipeline, default card artwork catalog, and ReadingRoom/Result scene wiring for real card-face sprites. Phase 14 adds a 2.5D dimensional card reveal layer, card edge/shadow/glow anchors, and stage polish around the existing real card art. Phase 15 adds the first 3D table foundation with card mesh-shell anchors, ritual table depth, warm/cool lighting, and Result card-stage support. Phase 16 adds a controlled ritual aura VFX layer with glow pools, rune-ring anchors, particle anchor markers, and Result aura support. Phase 17 adds lightweight runtime aura motion for rune-ring rotation, glow pulsing, and particle-anchor drift. Phase 18 adds the first true ParticleSystem layer for ambient dust, deck focus, flip sparkle, and Result card motes while preserving the vertical slice. Phase 19 connects shuffle, deal, flip, and result cues to that particle layer through action-triggered VFX integration. Phase 20 enables the cinematic rendering pipeline: HDR color grading, ACES tonemapping, bloom, vignette, SMAA, and HDR-boosted glow/emissive materials across MainMenu, ReadingRoom, and Result. Phase 21 replaces the prototype camera with seated cinematic framing (narrow FOV, research-driven poses), idle breathing, an opening settle-in shot, and a flip punch-in reaction. Phase 22 re-composes the ReadingRoom UI for that camera: a clear card stage band, a bottom action tray holding every clickable control, deactivated flat-era table overlays, and a deck stack visible in the default framing. Phase 23 adds card physicality: hover lift/tilt on face-down cards with near-100ms response, plus research-backed rhythm tuning for the flip punch, flip lift, and deal interval. Phase 24 gives the all-Chinese UI a real typographic identity: it bundles the LXGW WenKai (SIL OFL) calligraphic font so text no longer falls back to an inconsistent OS sans-serif, then bakes a body/display type hierarchy with title outlines across MainMenu, ReadingRoom, and Result through a central TarotUiTheme font system. Phase 25 re-composes the Result payoff screen on rule-of-thirds lines: a full-width gold question header, the drawn card's artwork as a hero in the left third, the AI interpretation as aligned gold-header/ivory-body pairs on a backing panel in the right two-thirds, and a centered footer, with redundant flat-era overlays deactivated and a TarotUiAccentText marker keeping headers gold at runtime. Phase 26 hardens that reading for variable-length backend AI text: each interpretation section uses best-fit text so long copy shrinks to fit its box instead of overflowing into the next section, while short copy stays at full size. Phase 27 upgrades the card faces to HD: all 78 authentic public-domain Rider-Waite-Smith 1909 scans were re-sourced at high resolution (~740x1280), imported as sprites, and wired through the catalog so flipping a card and the result hero show crisp art. Phase 28 gives the flipped card face a holographic foil sheen: a custom URP shader adds a view-angle glare band plus subtle iridescence that sweeps as the card tilts, so the HD face reads as a glossy, dimensional object. Phase 29 replaces Phase 26's best-fit shrink with a true scrollable reading panel on the Result screen: the four interpretation sections are reparented into a vertical ScrollRect (RectMask2D viewport + VerticalLayoutGroup/ContentSizeFitter Content), so any length of backend AI text renders at full size and scrolls instead of shrinking or overflowing. Phase 30 unifies the three screens' secondary spacing/alignment: a read-only layout audit confirmed they already share one CanvasScaler (1280x720, match 0.5) and symmetric centering, so this phase codifies that rhythm in a shared `TarotUiSpacing` source of truth and adds cross-screen regression tests rather than risk speculative repositioning. Phase 31 builds a complete HD visual archive (2560x1440) of the current screens - MainMenu, ReadingRoom, and the Result default/long-reading states - into `Docs/VisualReview/Phase31_HDArchive/` for review, and flags a card-face sizing question on the hero prefab (the HD sprites import larger than the face slot was tuned for) for a feedback-tuned follow-up. Phase 32 fixes that card-face bug: `CardView.FitFaceArtwork` sizes the face artwork to the card footprint regardless of sprite resolution/PPU, and the prefab lifts the face renderer clear of the cream front planes so it is no longer occluded - flipping a card now shows the HD art correctly sized and crisp on the card. Phase 33 gives the game actual sound: the audio system was fully wired but silent (empty cueMap, beep fallback), so this adds seven original royalty-free synthesized SFX (one per presentation cue) plus a looping ambient music bed, assigned on the persistent Boot `AudioManager`. Phase 34 adds a main-menu quit button so desktop players can exit in-game. Phase 35 repairs three visual-review defects: the leftover 3D result card stage no longer peeks out from behind the reading panel, the flat-era ResultReadingFrame no longer darkens the hero card slot with a seam, and the main menu now reads as primary plate / status line / quiet quit link. Phase 36 is the first performance pass: the flip path no longer scans the scene per click, a PlayMode probe measures the real three-card slice (steady state is allocation-free, main-thread frames ~0.1 ms in batch), and the doc records how to read real GPU numbers with the Metal HUD. Phase 37 opens the Midnight Parlor visual redesign (Hearthstone-benchmark research, art direction, CC0 PBR surfaces, and a locally composed gold UI kit with a celestial card back; provenance in `Docs/THIRD_PARTY_ASSETS.md`). Phase 38 rebuilds the ReadingRoom on that foundation: one velvet-and-walnut table stage with gold card sockets, a staggered deck stack, and the real composed card back on the card prefab, with the superseded flat-plane era deleted and guarded against resurrection. Phase 39 reskins the ReadingRoom chrome onto that table: the step tracker, action dock, question input, and all four buttons wear the gold nine-slice plaques, with clean button ColorBlocks and the redundant flat-era frames deactivated. Phase 40 re-composes the MainMenu (candlelit tabletop vignette: deck stack, scattered cards, candle halos replace the deleted disc/slab) and the Result screen (gold-framed hero showcase and reading scroll, diamond dividers, radial candle glow) on the same stage. Phase 41 closes the redesign out: HD archive regenerated on the new look, 14 orphaned legacy materials swept after a GUID reference check, suites green, fresh desktop build. Phase 42 answers the first playthrough: the player now presents as a borderless fullscreen window at native resolution (a stretched fixed 720p window, not render scale or post-processing, was what softened every glyph), and the main menu is restaged as a lit room - stock daylight skybox ambient replaced with a near-black floor so the candles own the lighting, a seated 27deg/36mm framing instead of a 10.8deg wide-angle, a composed parlor haze instead of a black void, real candles with emissive wax, and a deep-oxblood velvet that lets the gold read. Phase 43 changes the text rendering method itself to TextMeshPro SDF (dynamic atlas, so arbitrary backend Chinese still works - the reason Phase 24 rejected TMP no longer holds), gilds the menu title with a real shader gradient and stroke, and fixes the sharpness regression Phase 42 never actually shipped: the Phase 6 build setup was silently reverting the fullscreen/resolution fix before every build. Phase 44 answers the second menu review: the loose cards no longer clip (they were coplanar), the copy speaks in ritual (入席问牌 / 离席) instead of instructions, the centre column offers one way in with the status line at the foot and quit as a bottom-right link, and the table carries an arcane circle decal, dust motes and trinkets. Phase 45 fills the menu's mid-ground - velvet drapery in the backdrop, a violet-lit scrying orb (the palette's one cold note), a censer with burning coals and smoke, and two more candles at a second depth - and binds the type into one block with a gold rule and tracked display cut. Phase 46 rebuilds the candles as wax rather than tubing - a poured grain with drips and soot, and a translucency map so the flame lights the wax it sits in instead of the whole stick at one value - and gives every flame a seeded two-band Perlin flicker. Phase 47 makes the scrying orb read as glass with a custom Fresnel/parallax-interior shader (the geometry was never the problem - a downloaded asset would have been a sphere plus someone else's art direction), bevels the primary button, and lifts the deck's tint so its stacked edges can be counted. Phase 48 measures the menu backdrop's geometric ceiling: at this camera the highest visible world Y at the backdrop's depth is 0.34, so a lamp/window/picture cannot be in shot and Phase 45's drapery was never on screen (now regenerated into the visible band). The moonlight it attempted was dropped as unverifiable. Phase 49 starts on the screen the player actually sits in: the ReadingRoom still ran Unity's daylight skybox ambient over a midnight room, and nothing in it emitted light at all. It now carries the menu's lighting contract and four real candles. Phase 50 finishes the TMP migration Phase 43 started, on that same screen: the ReadingRoom's 15 legacy UI.Text (which soften at the built resolution) all become TextMeshPro SDF, and the one element the menu never had - the question field - is rebuilt from a legacy InputField into a TMP_InputField (correct masked Text Area, an ivory caret that is actually visible on the dark ground, an italic muted placeholder), with ReadingRoomController's four fields re-typed to the TMP equivalents. Phase 51 completes the migration on the Result screen - its 13 legacy Text become TMP SDF (ResultPanelPresenter's seven readouts, four of them carrying arbitrary-length backend AI copy, re-typed to TMP_Text; the Phase 29 reading scroll still works), and the scene adopts the same Flat ambient contract as the other two, stated honestly as a data-correctness change since this Overlay-over-solid-clear screen shows no visible difference from it. All three shipping screens are TMP SDF now, with no legacy UI.Text or InputField remaining anywhere. Phase 52 is a game-feel pass on the card flip and the camera: the flip gains real weight - a wind-up dip, an accelerate-through-the-reveal whip (it used to crawl at the edge-on seam), a scale pop on the face, and a rotational overshoot that damps to an exact rest - and the camera now fires its impact shake on the exact reveal frame instead of at the earlier lean-in peak, so the punch lands with the face. Every motion is a serialized knob on CardFlipController; a PlayMode test proves the flip's secondary motion is present and settles without drift, though the feel itself is the player's to judge. Phase 53 brings the holographic foil (Phase 28's, on the flipped 3D face) to the Result hero card: since that card is a UI Image on an Overlay canvas with no view angle, a new UI shader (`TarotUnity/HolographicCardUI`) carries the same glare/iridescence driven by a fed-in sheen uniform, and HolographicHeroCard animates it - a slow idle drift so the foil is always alive, and on hover the band follows the pointer while the card tilts toward it. Phase 54 gives the deal its landing: the dealt card used to fly its arc and then snap dead onto the slot, and now it touches down - a squash-and-recover on contact (−10% height, springing back to an exact rest over 0.14 s) with a subtle camera kick on the impact frame, the deal's counterpart to the flip's reveal shake, while the Phase 9 arc pacing stays untouched. Phase 55 completes the motion chain at its first beat: the shuffle used to be sound and dust over a perfectly still deck, and now the stack itself plays - a press-down anticipation, a riffle ripple running bottom-to-top through the stacked cards (each pops with a small twist and drops back with weight), a square-up squash with a camera kick on the contact frame, and an exact settle back to the authored stagger, timed to the Phase 9 shuffle breath. Phase 59 rebuilds the candle flame - the focal light's brightest object and, after a three-screen review, the worst-looking one: it showed horizontal banding and a stepped hard edge. The cause was not the art but the import (a pure-gradient flame compressed into venetian blinds by block compression), so a reproducible `gen_flame.py` now composes a 512px flame with a true candle silhouette, a heat ramp to a white core, and a cool blue root, imported uncompressed. Phase 58 was opened to fix the menu's front candles rendering as saturated red instead of cream wax, and ended without touching a light or a material: the candles were never red, the capture pipeline was. The wax is RealtimeEmissive and realtime GI does not resolve on the frame a scene loads, so the first render reads RGB(246,77,23) and every render after it reads RGB(233,177,78) - and all fifteen capture builders rendered exactly once after opening a scene, meaning every visual review in this project was looking at unsettled lighting the player never saw. `CaptureRig.RenderConverged` now fronts all of them, with a test that fails on the next direct `Camera.Render()` anyone writes. Phase 57 models the candles instead of stacking them: a read-only diagnosis found every candle in both scenes was four Unity primitives at 20 radial segments, with a `Lip` disc wider than the body reading as a machined collar over a flat lid, so `CandleMeshBuilder` now lathes one continuous surface per candle along a real profile - pooled base, tapered body, melted shoulder, rolled rim, a burn crater dishing to the wick, an uneven burn line, and the nine drips as geometry at the exact angles the wax texture paints them. Phase 56 cuts release `0.9.0`, the presentation-complete build: the version had not moved since Phase 6 set it, so everything from the visual identity through the Midnight Parlor redesign, the TMP migration, and the full card motion chain had been shipping as `0.6.0`. It is held below 1.0 deliberately - the backend reading path is not yet verified end-to-end in a playthrough. The Windows release zip is generated at `Builds/Desktop/Release/TarotUnity-Windows-x64.zip`.
+The intended player experience is: download a platform archive, extract it,
+and launch the game without installing Python, Conda, Docker, or Unity. Release
+archives belong in GitHub Releases; build outputs do not belong in source
+history.

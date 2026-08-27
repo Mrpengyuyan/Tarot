@@ -18,7 +18,7 @@ namespace TarotUnity.Tests.EditMode
     public sealed class Phase58CaptureConvergenceTests
     {
         private const string EditorFolder = "Assets/Editor";
-        private const string DocPath = "Docs/PHASE58_CAPTURE_CONVERGENCE.md";
+        private const string DocPath = "Docs/PROJECT_CHRONICLE.md";
 
         // The probes deliberately drive Render() one frame at a time - measuring
         // convergence is the whole point of them.
@@ -76,7 +76,7 @@ namespace TarotUnity.Tests.EditMode
         [Test]
         public void Phase58DocumentationExists()
         {
-            Assert.That(File.Exists(DocPath), Is.True, $"Missing Phase58 doc at {DocPath}");
+            Assert.That(File.Exists(DocPath), Is.True, $"Missing project chronicle at {DocPath}");
             var text = File.ReadAllText(DocPath);
             Assert.That(text, Does.Contain("converge"));
             Assert.That(text, Does.Contain("candle"));

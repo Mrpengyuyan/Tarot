@@ -11,7 +11,6 @@ namespace TarotUnity.Editor
     public static class Phase11VisualReviewBuilder
     {
         public const string ReviewFolder = "Docs/VisualReview/Phase11";
-        public const string ReviewDocPath = "Docs/PHASE11_VISUAL_REVIEW.md";
         public const int ScreenshotWidth = 1280;
         public const int ScreenshotHeight = 720;
 
@@ -55,11 +54,8 @@ namespace TarotUnity.Editor
             }
 
             WriteManifest();
-            // Phase 11's narrative now lives in Docs/PROJECT_CHRONICLE.md (the doc
-            // consolidation). WriteReviewDoc() is left dormant so re-running this
-            // capture cannot resurrect the deleted per-phase doc; the screenshots
-            // above are still regenerated.
-            // WriteReviewDoc();
+            // Phase 11's narrative lives in Docs/PROJECT_CHRONICLE.md. Captures
+            // remain reproducible, but this tool no longer writes a phase doc.
 
             AssetDatabase.Refresh();
             Debug.Log("Tarot Unity Phase 11 visual review capture complete.");
@@ -255,58 +251,6 @@ namespace TarotUnity.Editor
             builder.AppendLine("  ]");
             builder.AppendLine("}");
             File.WriteAllText(Path.Combine(ReviewFolder, "phase11_visual_review_manifest.json"), builder.ToString());
-        }
-
-        private static void WriteReviewDoc()
-        {
-            File.WriteAllText(
-                ReviewDocPath,
-                "# Phase 11 Visual Review And Final Adjustment\n" +
-                "\n" +
-                "Date: 2026-05-27\n" +
-                "\n" +
-                "## Purpose\n" +
-                "\n" +
-                "Phase 11 creates a repeatable screenshot baseline before the next beauty pass. The goal is to make visual problems concrete instead of relying on memory from the Unity Editor.\n" +
-                "\n" +
-                "The long-term target remains a Hearthstone-like 3D card-table presentation, but this phase does not import the final deck art yet.\n" +
-                "\n" +
-                "## Captured Screens\n" +
-                "\n" +
-                "- Main Menu: `Docs/VisualReview/Phase11/MainMenu.png`\n" +
-                "- Reading Room: `Docs/VisualReview/Phase11/ReadingRoom.png`\n" +
-                "- Result: `Docs/VisualReview/Phase11/Result.png`\n" +
-                "\n" +
-                "Capture note: run `TarotUnity.Editor.Phase11VisualReviewBuilder.Run` in Unity batchmode with graphics enabled. Do not add `-nographics`, because that can produce uniform placeholder screenshots instead of actual scene renders.\n" +
-                "\n" +
-                "## Review Notes\n" +
-                "\n" +
-                "- Main Menu must sell the tarot-table fantasy within the first viewport.\n" +
-                "- Reading Room must keep spread select, question input, shuffle/draw, flip cards, and result reveal readable at 1280x720.\n" +
-                "- Result must feel like a resolved reading, not a plain text report.\n" +
-                "- Flipped card faces should later use real tarot card artwork instead of placeholder text or generic symbols.\n" +
-                "- The real tarot card artwork task needs source and license review before assets are imported into the release package.\n" +
-                "\n" +
-                "## Screenshot Review Findings\n" +
-                "\n" +
-                "- Main Menu has the clearest mood, but the central seal and button overlap into a flat block; later passes should separate title, emblem, table, and primary action with more depth.\n" +
-                "- Reading Room is functional, but the top workflow buttons and question panel feel like stacked UI bars above the table; later passes should make the table and deck/card area the visual center.\n" +
-                "- Result is readable but still report-like. It needs a stronger result panel composition, card presence, and staged hierarchy before it will feel like a finished game screen.\n" +
-                "\n" +
-                "## Adjustments Applied\n" +
-                "\n" +
-                "- Main Menu: separated the title, crest, action rail, and table shadow so the first screen has more depth.\n" +
-                "- Reading Room: added a table focus frame and action dock, then lowered result/status copy away from the card table.\n" +
-                "- Result: added a left-side card-presence panel and shifted reading text into a clearer right-side column.\n" +
-                "\n" +
-                "## Deferred Asset Task\n" +
-                "\n" +
-                "Before importing card art, choose a deck source, verify usage license, define image naming, map backend/local card names to assets, and decide texture import settings for desktop builds.\n" +
-                "\n" +
-                "## Current Limitations\n" +
-                "\n" +
-                "- The interface is still a prototype visual pass and is not yet the final 3D card-game look.\n" +
-                "- Windows executable smoke testing still needs a Windows machine.\n");
         }
 
         private static Image EnsurePanel(Transform parent, string name, Vector2 position, Vector2 size, Color color, int siblingIndex)

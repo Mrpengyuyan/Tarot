@@ -6,10 +6,10 @@ Date: 2026-05-26
 > spread (past/present/advice band with reversed cards turned), not just the first
 > — see `PHASE60_RESULT_SPREAD.md`.
 >
-> Note (2026-07-21): the individual per-phase narrative docs for Phases 1–56
+> Note (2026-08-27): the individual per-phase narrative docs for Phases 1–59
 > (except 37) were consolidated into `PROJECT_CHRONICLE.md`. This mainline stays
 > as the living completion / next-steps registry; read the chronicle for the
-> condensed per-phase history, and `PHASE37/57/58/59` for the kept standalone passes.
+> condensed history, and `PHASE37/60/61/62/63/64` for the kept standalone passes.
 
 ## Goal
 
@@ -703,7 +703,8 @@ Remaining limitation:
   gold card sockets, staggered deck stack) replaces the Graybox/Phase8/12/14/15
   flat-plane palimpsest; the card prefab wears the composed celestial back and
   drops the primitive ornaments and always-on 2.5D dressing.
-- Superseded objects were deleted (listed in `Docs/PHASE38_TABLE_REBUILD.md`)
+- Superseded objects were deleted (the decision is summarized in
+  `Docs/PROJECT_CHRONICLE.md`)
   and the era tests now guard the deletion; five capture iterations reviewed at
   2560x1440 via Phase38CaptureBuilder; Phase38TableRebuildTests guard the stage.
 

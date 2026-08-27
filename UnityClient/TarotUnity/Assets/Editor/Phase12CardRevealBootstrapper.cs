@@ -12,7 +12,6 @@ namespace TarotUnity.Editor
         public const string CardPrefabPath = "Assets/Prefabs/Cards/PF_TarotCard.prefab";
         public const string ReadingRoomScenePath = "Assets/Scenes/ReadingRoom.unity";
         public const string ResultScenePath = "Assets/Scenes/Result.unity";
-        public const string Phase12DocPath = "Docs/PHASE12_CARD_FIRST_REVEAL.md";
         private const string MaterialFolder = "Assets/Materials";
 
         private static readonly Color ParchmentGold = new(0.91f, 0.76f, 0.42f, 1f);
@@ -37,10 +36,8 @@ namespace TarotUnity.Editor
             UpgradeCardPrefab();
             UpgradeReadingRoomScene();
             UpgradeResultScene();
-            // Phase 12's narrative now lives in Docs/PROJECT_CHRONICLE.md (the doc
-            // consolidation). WritePhase12Doc() is left dormant so re-running this
-            // bootstrapper cannot resurrect the deleted per-phase doc.
-            // WritePhase12Doc();
+            // Phase 12's narrative lives in Docs/PROJECT_CHRONICLE.md. This
+            // bootstrapper only changes scene and prefab assets.
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -174,50 +171,6 @@ namespace TarotUnity.Editor
             }
 
             EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene(), ResultScenePath);
-        }
-
-        private static void WritePhase12Doc()
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(Phase12DocPath));
-            File.WriteAllText(
-                Phase12DocPath,
-                "# Phase 12 Card-First Reveal\n" +
-                "\n" +
-                "Date: 2026-05-28\n" +
-                "\n" +
-                "## Scope\n" +
-                "\n" +
-                "Phase 12 implements the approved card-first reveal direction for the current Unity tarot vertical slice. It prepares durable scene and prefab anchors for card face artwork, reveal staging, and result-card presence while keeping the existing gameplay and text interpretation flow intact.\n" +
-                "\n" +
-                "Phase 12 adds a durable face-art slot and card-first reveal staging, but it does not import the final tarot deck artwork. The real deck task still requires source discovery, license review, texture import settings, and card-name mapping.\n" +
-                "\n" +
-                "## Approved Direction B\n" +
-                "\n" +
-                "Direction B puts the card face first: the ReadingRoom should stage the reveal around the selected card, and the Result scene should preserve a visible card showcase beside the interpretation text. Text remains important, but it now supports the card moment instead of replacing it.\n" +
-                "\n" +
-                "## Bootstrap Changes\n" +
-                "\n" +
-                "- Card prefab: adds `Front/Phase12_FaceArtworkFrame`, `Front/Phase12_FaceArtworkPlaceholder`, and `Front/Phase12_FaceArtworkPlaceholder/Phase12_FaceArtworkLabel`; assigns `CardView.faceArtworkRenderer` to the placeholder `SpriteRenderer`; leaves `TitleLabel` and `PositionLabel` as fallback labels.\n" +
-                "- ReadingRoom: adds `Phase12_CardRevealStage`, `Phase12_RevealBackdrop`, `Phase12_FocusedCardLight`, `Phase12_CardFocusVignette`, and `Phase12_RevealInstruction` with the copy `点击牌面，揭开此刻的讯息`.\n" +
-                "- Result: adds `Phase12_ResultCardShowcase`, `Phase12_ResultCardPlaceholder`, and `Phase12_ResultCardArtworkSlot`; preserves result text fields and keeps `OverallText` wide enough for reading copy.\n" +
-                "\n" +
-                "## How To Run The Bootstrapper\n" +
-                "\n" +
-                "In the Unity Editor, run `Tools/Tarot Unity/Run Phase 12 Card Reveal Bootstrap`.\n" +
-                "\n" +
-                "Batchmode example, only when no Unity Editor lock is held:\n" +
-                "\n" +
-                "```bash\n" +
-                "/Applications/Unity/Hub/Editor/6000.3.16f1/Unity.app/Contents/MacOS/Unity -batchmode -projectPath /Users/maochuandou/BUPT/Game/UnityTarot/UnityClient/TarotUnity -executeMethod TarotUnity.Editor.Phase12CardRevealBootstrapper.Run -quit\n" +
-                "```\n" +
-                "\n" +
-                "## How To Run Tests\n" +
-                "\n" +
-                "```bash\n" +
-                "/Applications/Unity/Hub/Editor/6000.3.16f1/Unity.app/Contents/MacOS/Unity -batchmode -projectPath /Users/maochuandou/BUPT/Game/UnityTarot/UnityClient/TarotUnity -runTests -testPlatform EditMode -testFilter TarotUnity.Tests.EditMode.Phase12CardFirstRevealTests -testResults TestResults/phase12-editmode.xml\n" +
-                "```\n" +
-                "\n" +
-                "Do not use `-nographics` for visual screenshot capture workflows; Phase 12 tests themselves are EditMode asset and scene checks.\n");
         }
 
         private static GameObject EnsureQuad(Transform parent, string name, Vector3 localPosition, Vector3 localScale, Color color, int siblingIndex)

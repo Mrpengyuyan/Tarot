@@ -15,7 +15,7 @@ namespace TarotUnity.Tests.EditMode
     /// </summary>
     public sealed class Phase57CandleModelTests
     {
-        private const string DocPath = "Docs/PHASE57_CANDLE_MODELLING.md";
+        private const string DocPath = "Docs/PROJECT_CHRONICLE.md";
         private const string MeshFolder = "Assets/Models/Candles";
 
         private static readonly (string Scene, string[] Candles)[] Screens =
@@ -142,7 +142,7 @@ namespace TarotUnity.Tests.EditMode
         [Test]
         public void Phase57DocumentationExists()
         {
-            Assert.That(File.Exists(DocPath), Is.True, $"Missing Phase57 doc at {DocPath}");
+            Assert.That(File.Exists(DocPath), Is.True, $"Missing project chronicle at {DocPath}");
             var text = File.ReadAllText(DocPath);
             Assert.That(text, Does.Contain("crater"));
             Assert.That(text, Does.Contain("lathe"));

@@ -28,8 +28,10 @@ here anyway).
 
 ## Fonts and audio (recorded elsewhere, unchanged)
 
-- LXGW WenKai (SIL OFL 1.1) — Phase 24, see `Docs/PHASE24_TYPOGRAPHY.md`.
-- Phase 33 SFX/music — synthesized in-house, see `Docs/PHASE33_AMBIENT_AUDIO.md`.
+- LXGW WenKai (SIL OFL 1.1) — integrated during the typography pass; see the
+  corresponding entry in `Docs/PROJECT_CHRONICLE.md`.
+- SFX/music — synthesized in-house; the audio pass is summarized in
+  `Docs/PROJECT_CHRONICLE.md`.
 
 ## Evaluated and not imported
 

@@ -1,25 +1,25 @@
-# Project Chronicle — Phases 1–56
+# Project Chronicle — Phases 1–64
 
-Date consolidated: 2026-07-21
+Date consolidated: 2026-08-27
 
 This is the single, condensed history of the Tarot Unity desktop client, from the
-first bootstrap through the 0.9.0 presentation-complete build. It replaces 53
-individual per-phase documents (`PHASE1`…`PHASE56`), each of which is summarised
-below under its own `## Phase N —` heading with what it did and the decision or
-lesson worth keeping. The full original text of any phase remains in git history.
+first bootstrap through the current Phase 64 presentation baseline. Historical
+per-phase documents are summarized here under their phase headings; the full
+original text of deleted phase notes remains available in git history.
 
-Four phase documents are **kept standalone** because they are still live task
-guidance and are not summarised here — read them directly:
+The following phase documents are **kept standalone** because they are the
+visual north-star or the latest implementation details:
 
 - `PHASE37_VISUAL_REDESIGN_BLUEPRINT.md` — the Midnight Parlor design north-star.
-- `PHASE57_CANDLE_MODELLING.md` — the lathed candle geometry pass.
-- `PHASE58_CAPTURE_CONVERGENCE.md` — the capture-pipeline (unconverged-GI) fix and
-  its methodology lesson.
-- `PHASE59_FLAME_QUALITY.md` — the current flame rebuild, with an open taste item.
+- `PHASE60_RESULT_SPREAD.md` — the multi-card Result presentation.
+- `PHASE61_READING_ROOM_SLOT_STEP.md` — reading-room sockets and ritual progress.
+- `PHASE62_RESULT_DYNAMIC_ROW.md` — data-driven Result card rows.
+- `PHASE63_SPREAD_DEFINITION.md` — the data-driven spread catalog.
+- `PHASE64_RESULT_BACKDROP.md` — the current Result parlor composition.
 
 Cross-cutting references also live outside this chronicle: `UI_COMPLETION_MAINLINE.md`
-(the completion/next-steps registry), `THIRD_PARTY_ASSETS.md` (asset + license
-provenance), and `PRE_PHASE6_READINESS.md`.
+(the completion/next-steps registry) and `THIRD_PARTY_ASSETS.md` (asset + license
+provenance).
 
 Every phase followed the same discipline: an idempotent editor bootstrapper under
 `Tools/Tarot Unity/…`, EditMode/PlayMode guard tests, and screenshot verification
@@ -415,3 +415,54 @@ end-to-end and Phases 52–55 are unjudged by a player. `Phase6DesktopBuildBuild
 is the single source of truth, written into `PlayerSettings.bundleVersion` on every
 build. Also corrected the stale `1280×720` line in the Phase 6 doc — the exact setting
 behind the blurry-text regression.
+
+---
+
+## Era 6 — Final presentation passes (Phases 57–64)
+
+The last presentation passes are summarized here so the project keeps one
+historical entry point instead of one document per small visual adjustment.
+
+### Phase 57 — Candle geometry
+
+Replaced the stacked low-resolution candle primitives with lathed wax geometry:
+pooled bases, tapered bodies, melted shoulders, rolled rims, burn craters and
+drips. The flame, light positions and wax-to-flame spacing remained stable.
+
+### Phase 58 — Capture convergence
+
+Found that the apparent red candle defect came from screenshots taken before
+realtime GI converged. `CaptureRig.RenderConverged` now warms the scene before
+capture, and the capture test prevents a new single-render regression.
+
+### Phase 59 — Flame quality
+
+Rebuilt the flame as a reproducible 512px gradient and imported it uncompressed.
+This removes compression banding while keeping the candle flame silhouette and
+the existing lighting contract.
+
+### Phase 60 — Result spread
+
+The Result screen now renders every card in a multi-card spread while preserving
+the single-card hero presentation for one-card readings.
+
+### Phase 61 — Reading-room slots and ritual steps
+
+Reading-room sockets became recessed glowing slots, and the ritual step indicator
+now follows the live flow state instead of being a static row of labels.
+
+### Phase 62 — Dynamic Result row
+
+The Result card row became data-driven so the visual presentation follows the
+number of cards in the selected spread rather than a fixed three-card layout.
+
+### Phase 63 — Spread definitions
+
+Spread metadata moved into reusable definitions, including the ten-card Celtic
+Cross layout, position names and position meanings used by both local and online
+reading flows.
+
+### Phase 64 — Result backdrop
+
+The Result screen received the current parlor backdrop and a readable quiet exit
+link, completing the Phase 64 visual baseline for the next product-closure work.

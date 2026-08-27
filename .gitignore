@@ -24,6 +24,9 @@
 
 # Superpowers brainstorm server state (local tooling cache)
 **/.superpowers/
+**/__pycache__/
+**/*.pyc
+**/mono_crash.*.json
 
 # macOS
 .DS_Store

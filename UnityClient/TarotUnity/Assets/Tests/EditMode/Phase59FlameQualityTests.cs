@@ -16,7 +16,7 @@ namespace TarotUnity.Tests.EditMode
     {
         private const string TexturePath = "Assets/Art/MidnightParlor/Sprites/CandleFlame.png";
         private const string GeneratorPath = "Tools/UiKitGenerator/gen_flame.py";
-        private const string DocPath = "Docs/PHASE59_FLAME_QUALITY.md";
+        private const string DocPath = "Docs/PROJECT_CHRONICLE.md";
 
         [Test]
         public void TheFlameTextureIsHighResolution()
@@ -50,7 +50,7 @@ namespace TarotUnity.Tests.EditMode
         [Test]
         public void Phase59DocumentationExists()
         {
-            Assert.That(File.Exists(DocPath), Is.True, $"Missing Phase59 doc at {DocPath}");
+            Assert.That(File.Exists(DocPath), Is.True, $"Missing project chronicle at {DocPath}");
             var text = File.ReadAllText(DocPath);
             Assert.That(text, Does.Contain("flame"));
             Assert.That(text, Does.Contain("compression"));

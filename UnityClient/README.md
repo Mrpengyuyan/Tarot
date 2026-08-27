@@ -1,36 +1,8 @@
 # Unity Client Workspace
 
-Place the Unity frontend project here.
+This folder contains the Unity frontend for the Tarot project.
 
-Recommended project name:
-
-- `TarotUnity`
-
-Recommended final structure:
-
-```text
-UnityTarot/
-  UNITY_FRONTEND_PLAN.md
-  UNITY_EXECUTION_PHASES.md
-  UnityClient/
-    README.md
-    TarotUnity/
-```
-
-Recommended Unity project path:
-
-```text
-/Users/maochuandou/BUPT/Game/UnityTarot/UnityClient/TarotUnity
-```
-
-Current status:
-
-- `TarotUnity/` exists and has been bootstrapped for Phase 1.
-- Unity editor version is recorded in `TarotUnity/README.md`.
-- Phase 1 scene, prefab, script, and API scope are recorded in `TarotUnity/Docs/PHASE1_BOOTSTRAP.md`.
-- Phase 2 graybox flow is recorded in `TarotUnity/Docs/PHASE2_GRAYBOX.md`.
-
-Alternative shortened view:
+## Layout
 
 ```text
 UnityClient/
@@ -38,14 +10,27 @@ UnityClient/
   TarotUnity/
 ```
 
-This Unity project is planned to replace the current web presentation layer while keeping the existing FastAPI backend for:
+The Unity project lives at:
 
-- auth
-- reading records
-- card draws
-- AI interpretation
-- API key security
+```text
+/Users/maochuandou/BUPT/Game/UnityTarot/UnityClient/TarotUnity
+```
 
-Before creating the project, read:
+Open the project with Unity `6000.3.16f1` and start from
+`TarotUnity/Assets/Scenes/Boot.unity`.
 
-- [UNITY_FRONTEND_PLAN.md](../UNITY_FRONTEND_PLAN.md)
+## Project Boundary
+
+Unity owns the desktop presentation layer, 3D table, card interaction, camera,
+VFX, audio, and result UI. The existing FastAPI service owns authentication,
+reading records, card draws, AI interpretation, rate limits, and API key
+security.
+
+## Main References
+
+- [`PROJECT_COMPLETION_PLAN.md`](../PROJECT_COMPLETION_PLAN.md) — current
+  project completion and release plan.
+- [`UNITY_FRONTEND_PLAN.md`](../UNITY_FRONTEND_PLAN.md) — frontend direction and
+  backend boundary.
+- [`TarotUnity/README.md`](TarotUnity/README.md) — Unity project setup and play
+  instructions.
