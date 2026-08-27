@@ -63,7 +63,7 @@ GitHub Releases 下载并解压运行；在线模式必须指向部署后的 HTT
 
 ## 当前下一步
 
-1. 在当前基线提交上完成真实后端会话和 Unity 在线阅读闭环。
-2. 重新执行当前 Unity EditMode、PlayMode 和真实后端集成测试。
-3. 完成成本限制、发行配置和 macOS/Windows 干净环境验证。
+1. 激活 Unity Editor 许可证，重新执行 EditMode、PlayMode 和真实客户端联调。
+2. 将后端部署到 HTTPS 地址，并把发行配置从 `localhost` 切换到正式地址。
+3. 完成访客配额、频率限制和 AI 预算保护，再验证 macOS/Windows 干净环境。
 4. 通过 1.0 验收后，将发行包放入 GitHub Release，而不是提交到源码历史。

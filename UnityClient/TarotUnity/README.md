@@ -34,6 +34,13 @@ The default address is intended for local development only. A public release
 must point to a deployed HTTPS backend rather than a developer machine's
 `localhost` address.
 
+At startup, the client checks `/api/v1/health/` and then requests
+`/api/v1/guest-session`. If the backend is unavailable, the game keeps the
+offline local-simulation path available. The current local FastAPI smoke flow
+has been verified for 1-card, 3-card, and 10-card readings with mock AI; a
+deployed backend and an activated Unity Editor license are still required for
+final client acceptance.
+
 ## Documentation
 
 - [`PROJECT_COMPLETION_PLAN.md`](../../PROJECT_COMPLETION_PLAN.md) — current
@@ -53,6 +60,8 @@ must point to a deployed HTTPS backend rather than a developer machine's
 2. Open `Assets/Scenes/Boot.unity`.
 3. Press Play and complete the local flow.
 4. Start the FastAPI backend separately when validating online mode.
+5. Confirm that Unity Hub has an active Editor license before running EditMode
+   or PlayMode tests in batch mode.
 
 The Unity package manifest already contains URP, Input System, UGUI, and the
 Unity Test Framework. Do not commit `Library`, `Temp`, `Logs`, `TestResults`,
