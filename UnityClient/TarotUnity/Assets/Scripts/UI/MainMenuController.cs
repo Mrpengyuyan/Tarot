@@ -1,4 +1,5 @@
 using TarotUnity.Core;
+using TarotUnity.Network;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -11,6 +12,8 @@ namespace TarotUnity.UI
         [SerializeField] private Button startReadingButton;
         [SerializeField] private Button quitButton;
         [SerializeField] private TMP_Text statusText;
+
+        private BackendSessionBootstrap backendSessionBootstrap;
 
         private void Awake()
         {
@@ -27,9 +30,15 @@ namespace TarotUnity.UI
 
         private void Start()
         {
-            if (statusText != null)
+            SetStatus("烛火已燃，牌已洗过。\n正在准备在线解读……");
+
+            backendSessionBootstrap = FindFirstObjectByType<BackendSessionBootstrap>();
+            if (backendSessionBootstrap != null)
             {
-                statusText.text = "烛火已燃，牌已洗过。";
+                backendSessionBootstrap.StatusChanged += HandleBackendSessionStatusChanged;
+                HandleBackendSessionStatusChanged(
+                    backendSessionBootstrap.Status,
+                    backendSessionBootstrap.LastError);
             }
         }
 
@@ -43,6 +52,35 @@ namespace TarotUnity.UI
             if (quitButton != null)
             {
                 quitButton.onClick.RemoveListener(QuitGame);
+            }
+
+            if (backendSessionBootstrap != null)
+            {
+                backendSessionBootstrap.StatusChanged -= HandleBackendSessionStatusChanged;
+            }
+        }
+
+        private void HandleBackendSessionStatusChanged(BackendSessionStatus status, string error)
+        {
+            switch (status)
+            {
+                case BackendSessionStatus.Connecting:
+                    SetStatus("正在连接在线解读……");
+                    break;
+                case BackendSessionStatus.Online:
+                    SetStatus("在线解读已连接。\n烛火已燃，牌已洗过。");
+                    break;
+                case BackendSessionStatus.Offline:
+                    SetStatus("在线解读暂不可用，已准备离线模式。\n烛火已燃，牌已洗过。");
+                    break;
+            }
+        }
+
+        private void SetStatus(string message)
+        {
+            if (statusText != null)
+            {
+                statusText.text = message;
             }
         }
 

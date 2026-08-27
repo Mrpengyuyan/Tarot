@@ -86,6 +86,15 @@ namespace TarotUnity.Network
             HandleResponse(request, onSuccess, onError, token => accessToken = token.access_token);
         }
 
+        public IEnumerator CreateGuestSession(Action<TokenResponse> onSuccess, Action<string> onError)
+        {
+            yield return PostEmpty(
+                ApiRoutes.GuestSession,
+                onSuccess,
+                onError,
+                token => accessToken = token?.access_token);
+        }
+
         public IEnumerator GetCurrentUser(Action<UserProfile> onSuccess, Action<string> onError)
         {
             yield return Get(ApiRoutes.UsersMe, onSuccess, onError);

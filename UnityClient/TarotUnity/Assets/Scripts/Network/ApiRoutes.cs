@@ -3,6 +3,7 @@ namespace TarotUnity.Network
     public static class ApiRoutes
     {
         public const string Login = "/login";
+        public const string GuestSession = "/guest-session";
         public const string UsersMe = "/users/me";
         public const string Refresh = "/refresh";
         public const string Logout = "/logout";
@@ -35,4 +36,3 @@ namespace TarotUnity.Network
         }
     }
 }
-
