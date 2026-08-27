@@ -9,7 +9,12 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import _ensure_cookie_csrf_protection
 from app.core.config import settings
-from app.core.security import create_access_token, create_refresh_token, verify_token
+from app.core.security import (
+    create_access_token,
+    create_refresh_token,
+    get_password_hash,
+    verify_token,
+)
 from app.crud.user import (
     authenticate_user,
     create_user,
@@ -18,6 +23,7 @@ from app.crud.user import (
     is_active,
 )
 from app.db.session import get_db
+from app.models.user import User as UserModel
 from app.schemas.user import Token, User, UserCreate
 
 router = APIRouter()
@@ -98,6 +104,32 @@ def _clear_auth_cookie(response: Response) -> None:
     )
 
 
+def _create_guest_user(db: Session) -> UserModel:
+    """Create a random account used by the desktop client's guest mode."""
+    for _ in range(3):
+        username = f"guest_{secrets.token_hex(16)}"
+        guest_user = UserModel(
+            username=username,
+            email=f"{username}@guest.tarot.game",
+            hashed_password=get_password_hash(secrets.token_urlsafe(32)),
+            nickname="访客",
+            is_active=True,
+            is_superuser=False,
+        )
+        db.add(guest_user)
+        try:
+            db.commit()
+            db.refresh(guest_user)
+            return guest_user
+        except IntegrityError:
+            db.rollback()
+
+    raise HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail="Could not create a guest session",
+    )
+
+
 @router.post("/register", response_model=User, summary="User register")
 def register(
     user_create: UserCreate,
@@ -117,6 +149,19 @@ def register(
     except IntegrityError as exc:
         db.rollback()
         raise HTTPException(status_code=400, detail="Username or email already registered") from exc
+
+
+@router.post("/guest-session", response_model=Token, summary="Create guest session")
+def guest_session(
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    """Issue a limited anonymous session for the desktop client."""
+    guest_user = _create_guest_user(db)
+    access_token = _issue_access_token(cast(str, guest_user.username))
+    refresh_token = _issue_refresh_token(cast(str, guest_user.username))
+    _set_auth_cookie(response, access_token, refresh_token)
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
 @router.post("/login", response_model=Token, summary="User login")
