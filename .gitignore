@@ -26,6 +26,7 @@ logs/
 app/scripts/reports/
 .edge-smoke/
 .npm-cache/
+.brew-cache/
 .playwright-browsers/
 _run_*.html
 _run_*_logs.zip
