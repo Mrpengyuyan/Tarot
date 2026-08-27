@@ -95,6 +95,11 @@ namespace TarotUnity.Network
                 token => accessToken = token?.access_token);
         }
 
+        public IEnumerator CheckHealth(Action<HealthCheckResponse> onSuccess, Action<string> onError)
+        {
+            yield return Get(ApiRoutes.Health, onSuccess, onError);
+        }
+
         public IEnumerator GetCurrentUser(Action<UserProfile> onSuccess, Action<string> onError)
         {
             yield return Get(ApiRoutes.UsersMe, onSuccess, onError);

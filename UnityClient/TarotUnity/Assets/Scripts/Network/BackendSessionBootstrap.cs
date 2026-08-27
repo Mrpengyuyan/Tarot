@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using TarotUnity.Data;
 using UnityEngine;
 
 namespace TarotUnity.Network
@@ -63,6 +64,26 @@ namespace TarotUnity.Network
         {
             IsRequesting = true;
             SetStatus(BackendSessionStatus.Connecting, string.Empty);
+
+            HealthCheckResponse health = null;
+            string healthError = null;
+            yield return apiClient.CheckHealth(
+                value => health = value,
+                value => healthError = value);
+
+            if (!string.IsNullOrWhiteSpace(healthError))
+            {
+                IsRequesting = false;
+                SetOffline(healthError);
+                yield break;
+            }
+
+            if (health == null || !string.Equals(health.status, "healthy", StringComparison.OrdinalIgnoreCase))
+            {
+                IsRequesting = false;
+                SetOffline($"Backend health check failed: {health?.status ?? "empty response"}.");
+                yield break;
+            }
 
             TokenResponse token = null;
             string error = null;

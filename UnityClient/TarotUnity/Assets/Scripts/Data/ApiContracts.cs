@@ -3,6 +3,15 @@ using System;
 namespace TarotUnity.Data
 {
     [Serializable]
+    public sealed class HealthCheckResponse
+    {
+        public string status;
+        public string timestamp;
+        public string service;
+        public string version;
+    }
+
+    [Serializable]
     public sealed class TokenResponse
     {
         public string access_token;
