@@ -30,3 +30,19 @@
 
 # macOS
 .DS_Store
+
+# Secrets (repository-wide safety net)
+.env
+.env.*
+!.env.example
+
+# Backend runtime artifacts (Server/)
+Server/**/*.db
+Server/**/*.sqlite
+Server/**/*.sqlite3
+Server/**/*.log
+Server/**/.pytest_cache/
+Server/**/*.egg-info/
+Server/.venv/
+Server/venv/
+Server/app/scripts/reports/
