@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using TarotUnity.Data;
 using TarotUnity.Gameplay;
 using TMPro;
@@ -63,6 +64,23 @@ namespace TarotUnity.UI
         [SerializeField] private float spreadMinCellScale = 0.34f;
         [SerializeField] private float spreadCellY = 88f;
 
+        // Phase 66: an online reading can reach this screen before its AI text exists.
+        // The status line, the mode label and the retry / offline buttons are wired by
+        // the Phase 66 bootstrapper; readingContentGroup (on the scroll's Viewport)
+        // hides the empty sections while the text is pending or has failed.
+        [Header("Phase 66: online interpretation states")]
+        [SerializeField] private TMP_Text interpretationStatusText;
+        [SerializeField] private TMP_Text modeLabelText;
+        [SerializeField] private Button retryInterpretationButton;
+        [SerializeField] private Button offlineInterpretationButton;
+        [SerializeField] private CanvasGroup readingContentGroup;
+        [SerializeField] private float readyFadeSeconds = 0.6f;
+
+        public const float PendingSlowNoticeSeconds = 20f;
+
+        private float pendingSince = -1f;
+        private Coroutine readyFade;
+
         private CardArtworkCatalog defaultArtworkCatalog;
 
         public void Present(PredictionDetailResponse detail)
@@ -91,14 +109,194 @@ namespace TarotUnity.UI
                 return;
             }
 
+            if (session.source == ReadingSource.Offline)
+            {
+                ShowOffline(session);
+                return;
+            }
+
+            switch (session.interpretationState)
+            {
+                case InterpretationState.Pending:
+                    ShowPending(session);
+                    break;
+                case InterpretationState.Failed:
+                    ShowFailed(session);
+                    break;
+                default:
+                    ShowReady(session, false);
+                    break;
+            }
+        }
+
+        public void ShowPending(ReadingSessionSnapshot session)
+        {
+            PresentFrame(session);
+            SetReadingTexts(null);
+            SetReadingVisible(false);
+            SetStatus(ReleaseUxCopy.ResultPending);
+            SetText(modeLabelText, string.Empty);
+            SetInterpretationButtons(false, false);
+            pendingSince = Time.unscaledTime;
+        }
+
+        public void ShowReady(ReadingSessionSnapshot session, bool fadeIn)
+        {
+            PresentFrame(session);
+            SetReadingTexts(session);
+            SetStatus(null);
+            SetText(modeLabelText, ModeLabelFor(session));
+            SetInterpretationButtons(false, false);
+            pendingSince = -1f;
+            SetReadingVisible(true);
+
+            if (fadeIn && readingContentGroup != null && isActiveAndEnabled && readyFadeSeconds > 0f)
+            {
+                if (readyFade != null)
+                {
+                    StopCoroutine(readyFade);
+                }
+
+                readyFade = StartCoroutine(FadeInReading());
+            }
+        }
+
+        public void ShowFailed(ReadingSessionSnapshot session)
+        {
+            PresentFrame(session);
+            SetReadingTexts(null);
+            SetReadingVisible(false);
+            SetStatus(session.failureMessage);
+            SetText(modeLabelText, string.Empty);
+            SetInterpretationButtons(session.canRetry, true);
+            pendingSince = -1f;
+        }
+
+        public void ShowOffline(ReadingSessionSnapshot session)
+        {
+            PresentFrame(session);
+            SetReadingTexts(session);
+            SetStatus(null);
+            SetText(modeLabelText, ReleaseUxCopy.ModeOffline);
+            SetInterpretationButtons(false, false);
+            pendingSince = -1f;
+            SetReadingVisible(true);
+        }
+
+        public static string BuildPendingStatus(float elapsedSeconds)
+        {
+            return elapsedSeconds >= PendingSlowNoticeSeconds
+                ? ReleaseUxCopy.ResultPending + "\n" + ReleaseUxCopy.ResultPendingSlow
+                : ReleaseUxCopy.ResultPending;
+        }
+
+        public static string ModeLabelFor(ReadingSessionSnapshot session)
+        {
+            if (session == null)
+            {
+                return string.Empty;
+            }
+
+            if (session.source == ReadingSource.Offline)
+            {
+                return ReleaseUxCopy.ModeOffline;
+            }
+
+            return string.Equals(session.modelUsed, "mock_ai", StringComparison.OrdinalIgnoreCase)
+                ? ReleaseUxCopy.ModeMock
+                : string.Empty;
+        }
+
+        private void Update()
+        {
+            if (pendingSince < 0f || interpretationStatusText == null)
+            {
+                return;
+            }
+
+            // A breathing status line while the interpretation is generating; after
+            // 20 s the slow-generation notice joins it (spec 7.1).
+            var elapsed = Time.unscaledTime - pendingSince;
+            var status = BuildPendingStatus(elapsed);
+            if (interpretationStatusText.text != status)
+            {
+                interpretationStatusText.text = status;
+            }
+
+            interpretationStatusText.alpha = 0.55f + 0.45f * (0.5f + 0.5f * Mathf.Sin(elapsed * Mathf.PI * 2f / 2.4f));
+        }
+
+        private IEnumerator FadeInReading()
+        {
+            readingContentGroup.alpha = 0f;
+            var elapsed = 0f;
+            while (elapsed < readyFadeSeconds)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                readingContentGroup.alpha = Mathf.Clamp01(elapsed / readyFadeSeconds);
+                yield return null;
+            }
+
+            readingContentGroup.alpha = 1f;
+            readyFade = null;
+        }
+
+        private void PresentFrame(ReadingSessionSnapshot session)
+        {
             SetText(questionText, session.question);
             SetText(spreadNameText, session.spreadName);
-            SetText(summaryText, session.summary);
-            SetText(overallText, session.overallInterpretation);
-            SetText(cardAnalysisText, session.cardAnalysis);
-            SetText(adviceText, session.advice);
-            SetText(warningText, session.warning);
             PresentCards(session.cardDraws);
+        }
+
+        private void SetReadingTexts(ReadingSessionSnapshot session)
+        {
+            SetText(summaryText, session?.summary);
+            SetText(overallText, session?.overallInterpretation);
+            SetText(cardAnalysisText, session?.cardAnalysis);
+            SetText(adviceText, session?.advice);
+            SetText(warningText, session?.warning);
+        }
+
+        private void SetReadingVisible(bool visible)
+        {
+            if (readingContentGroup == null)
+            {
+                return;
+            }
+
+            if (!visible && readyFade != null)
+            {
+                StopCoroutine(readyFade);
+                readyFade = null;
+            }
+
+            readingContentGroup.alpha = visible ? 1f : 0f;
+            readingContentGroup.blocksRaycasts = visible;
+        }
+
+        private void SetStatus(string message)
+        {
+            if (interpretationStatusText == null)
+            {
+                return;
+            }
+
+            interpretationStatusText.gameObject.SetActive(!string.IsNullOrEmpty(message));
+            interpretationStatusText.text = message ?? string.Empty;
+            interpretationStatusText.alpha = 1f;
+        }
+
+        private void SetInterpretationButtons(bool retryVisible, bool offlineVisible)
+        {
+            if (retryInterpretationButton != null)
+            {
+                retryInterpretationButton.gameObject.SetActive(retryVisible);
+            }
+
+            if (offlineInterpretationButton != null)
+            {
+                offlineInterpretationButton.gameObject.SetActive(offlineVisible);
+            }
         }
 
         public void Clear()
@@ -111,6 +309,11 @@ namespace TarotUnity.UI
             SetText(cardAnalysisText, string.Empty);
             SetText(warningText, string.Empty);
             PresentCards(null);
+            SetStatus(null);
+            SetText(modeLabelText, string.Empty);
+            SetInterpretationButtons(false, false);
+            SetReadingVisible(true);
+            pendingSince = -1f;
         }
 
         private static void SetText(TMP_Text target, string value)

@@ -395,6 +395,169 @@ namespace TarotUnity.Tests.EditMode
                 "the old path waited on the AI before dealing; online readings use StartReading");
         }
 
+        private const string ResultScenePath = "Assets/Scenes/Result.unity";
+
+        [Test]
+        public void ResultSceneHasInterpretationStateUiWired()
+        {
+            EditorSceneManager.OpenScene(ResultScenePath);
+            var canvas = GameObject.Find("ResultCanvas");
+            Assert.That(canvas, Is.Not.Null, "control: ResultCanvas exists");
+            var presenter = canvas.GetComponent<ResultPanelPresenter>();
+            var controller = canvas.GetComponent<ResultSceneController>();
+            Assert.That(presenter, Is.Not.Null);
+            Assert.That(controller, Is.Not.Null);
+
+            var presenterSo = new SerializedObject(presenter);
+            var status = presenterSo.FindProperty("interpretationStatusText").objectReferenceValue as TMP_Text;
+            var mode = presenterSo.FindProperty("modeLabelText").objectReferenceValue as TMP_Text;
+            var retry = presenterSo.FindProperty("retryInterpretationButton").objectReferenceValue as Button;
+            var offline = presenterSo.FindProperty("offlineInterpretationButton").objectReferenceValue as Button;
+            var group = presenterSo.FindProperty("readingContentGroup").objectReferenceValue as CanvasGroup;
+
+            Assert.That(status, Is.Not.Null, "status line");
+            Assert.That(mode, Is.Not.Null, "mode label");
+            Assert.That(retry, Is.Not.Null, "retry button");
+            Assert.That(offline, Is.Not.Null, "offline button");
+            Assert.That(group, Is.Not.Null, "reading content group");
+
+            Assert.That(status.transform.parent.name, Is.EqualTo("ResultReadingScroll"));
+            Assert.That(group.gameObject.name, Is.EqualTo("Viewport"));
+            Assert.That(retry.transform.Find("Label").GetComponent<TMP_Text>().text, Is.EqualTo(ReleaseUxCopy.RetryButtonLabel));
+            Assert.That(offline.transform.Find("Label").GetComponent<TMP_Text>().text, Is.EqualTo(ReleaseUxCopy.OfflineButtonLabel));
+            Assert.That(retry.gameObject.activeSelf, Is.False, "retry stays hidden until a reading fails");
+            Assert.That(offline.gameObject.activeSelf, Is.False, "offline stays hidden until a reading fails");
+
+            var controllerSo = new SerializedObject(controller);
+            Assert.That(controllerSo.FindProperty("retryInterpretationButton").objectReferenceValue, Is.SameAs(retry));
+            Assert.That(controllerSo.FindProperty("offlineInterpretationButton").objectReferenceValue, Is.SameAs(offline));
+        }
+
+        [Test]
+        public void InterpretationStateUiUsesTheBundledFontsByRole()
+        {
+            EditorSceneManager.OpenScene(ResultScenePath);
+            var presenterSo = new SerializedObject(GameObject.Find("ResultCanvas").GetComponent<ResultPanelPresenter>());
+            var body = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/LXGWWenKai-Regular SDF.asset");
+            var display = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/LXGWWenKai-Medium SDF.asset");
+            Assert.That(body, Is.Not.Null, "control: body SDF font asset");
+            Assert.That(display, Is.Not.Null, "control: display SDF font asset");
+
+            var status = (TMP_Text)presenterSo.FindProperty("interpretationStatusText").objectReferenceValue;
+            var mode = (TMP_Text)presenterSo.FindProperty("modeLabelText").objectReferenceValue;
+            var retry = (Button)presenterSo.FindProperty("retryInterpretationButton").objectReferenceValue;
+            var offline = (Button)presenterSo.FindProperty("offlineInterpretationButton").objectReferenceValue;
+
+            Assert.That(status.font, Is.EqualTo(body));
+            Assert.That(status.fontSize, Is.LessThan(30f));
+            Assert.That(mode.font, Is.EqualTo(body));
+            Assert.That(mode.fontSize, Is.LessThan(30f));
+            Assert.That(retry.transform.Find("Label").GetComponent<TMP_Text>().font, Is.EqualTo(display));
+            Assert.That(offline.transform.Find("Label").GetComponent<TMP_Text>().font, Is.EqualTo(display));
+        }
+
+        [Test]
+        public void InterpretationButtonsShareTheBackButtonRowWithoutOverlapping()
+        {
+            EditorSceneManager.OpenScene(ResultScenePath);
+            var canvas = GameObject.Find("ResultCanvas").transform;
+            var back = canvas.Find("BackToMenuButton") as RectTransform;
+            var retry = canvas.Find("Phase66_RetryInterpretationButton") as RectTransform;
+            var offline = canvas.Find("Phase66_OfflineInterpretationButton") as RectTransform;
+            Assert.That(back, Is.Not.Null, "control: the back button exists");
+            Assert.That(retry, Is.Not.Null);
+            Assert.That(offline, Is.Not.Null);
+
+            foreach (var button in new[] { retry, offline })
+            {
+                Assert.That(button.anchorMin, Is.EqualTo(back.anchorMin));
+                Assert.That(button.anchoredPosition.y, Is.EqualTo(back.anchoredPosition.y).Within(0.01f));
+            }
+
+            Assert.That(RightEdge(retry), Is.LessThan(LeftEdge(back)), "重新解读 sits left of 回到牌桌");
+            Assert.That(RightEdge(back), Is.LessThan(LeftEdge(offline)), "查看离线解读 sits right of 回到牌桌");
+        }
+
+        [Test]
+        public void PresenterShowsEachInterpretationState()
+        {
+            EditorSceneManager.OpenScene(ResultScenePath);
+            var presenter = GameObject.Find("ResultCanvas").GetComponent<ResultPanelPresenter>();
+            var presenterSo = new SerializedObject(presenter);
+            var status = (TMP_Text)presenterSo.FindProperty("interpretationStatusText").objectReferenceValue;
+            var mode = (TMP_Text)presenterSo.FindProperty("modeLabelText").objectReferenceValue;
+            var retry = (Button)presenterSo.FindProperty("retryInterpretationButton").objectReferenceValue;
+            var offline = (Button)presenterSo.FindProperty("offlineInterpretationButton").objectReferenceValue;
+            var group = (CanvasGroup)presenterSo.FindProperty("readingContentGroup").objectReferenceValue;
+            var summary = (TMP_Text)presenterSo.FindProperty("summaryText").objectReferenceValue;
+
+            var offlineSession = LocalReadingSimulator.CreateSession(
+                1, "单张牌", "问题？", "general", LocalReadingSimulator.CreatePlaceholderDraws(1));
+            presenter.PresentSession(offlineSession);
+            Assert.That(status.gameObject.activeSelf, Is.False, "offline: no status line");
+            Assert.That(mode.text, Is.EqualTo(ReleaseUxCopy.ModeOffline));
+            Assert.That(group.alpha, Is.EqualTo(1f));
+            Assert.That(summary.text, Is.EqualTo(offlineSession.summary));
+            Assert.That(retry.gameObject.activeSelf || offline.gameObject.activeSelf, Is.False);
+
+            var online = ReadingSessionMapper.FromBackendStart(
+                new PredictionResponse { id = 9, question = "问题？" }, LocalReadingSimulator.CreatePlaceholderDraws(1));
+            online.spreadName = "单牌抽取";
+            presenter.PresentSession(online);
+            Assert.That(status.gameObject.activeSelf, Is.True, "pending: the status line shows");
+            Assert.That(status.text, Is.EqualTo(ReleaseUxCopy.ResultPending));
+            Assert.That(group.alpha, Is.EqualTo(0f), "pending: the empty sections stay hidden");
+            Assert.That(summary.text, Is.Empty);
+            Assert.That(mode.text, Is.Empty);
+
+            InterpretationPoller.ApplyFailure(online, InterpretationFailure.ConnectionLost);
+            presenter.PresentSession(online);
+            Assert.That(status.text, Is.EqualTo(ReleaseUxCopy.InterpretationConnectionLost));
+            Assert.That(retry.gameObject.activeSelf, Is.True);
+            Assert.That(offline.gameObject.activeSelf, Is.True);
+
+            InterpretationPoller.ApplyFailure(online, InterpretationFailure.SessionExpired);
+            presenter.PresentSession(online);
+            Assert.That(retry.gameObject.activeSelf, Is.False, "not retryable");
+            Assert.That(offline.gameObject.activeSelf, Is.True);
+
+            ReadingSessionMapper.ApplyInterpretation(online, new InterpretationResponse
+            {
+                id = 1,
+                summary = "概要",
+                overall_interpretation = "整体",
+                model_used = "mock_ai",
+            });
+            presenter.PresentSession(online);
+            Assert.That(status.gameObject.activeSelf, Is.False, "ready: no status line");
+            Assert.That(group.alpha, Is.EqualTo(1f));
+            Assert.That(summary.text, Is.EqualTo("概要"));
+            Assert.That(mode.text, Is.EqualTo(ReleaseUxCopy.ModeMock));
+            Assert.That(retry.gameObject.activeSelf || offline.gameObject.activeSelf, Is.False);
+
+            online.modelUsed = "deepseek-chat";
+            presenter.PresentSession(online);
+            Assert.That(mode.text, Is.Empty, "a real model needs no label");
+        }
+
+        [TestCase(0f, "牌意正在汇聚……")]
+        [TestCase(19.9f, "牌意正在汇聚……")]
+        [TestCase(20f, "牌意正在汇聚……\n这次解读比平时慢一些，请再稍候。")]
+        public void PendingStatusAddsTheSlowNoticeAfterTwentySeconds(float elapsedSeconds, string expected)
+        {
+            Assert.That(ResultPanelPresenter.BuildPendingStatus(elapsedSeconds), Is.EqualTo(expected));
+        }
+
+        private static float LeftEdge(RectTransform rect)
+        {
+            return rect.anchoredPosition.x - rect.sizeDelta.x * rect.pivot.x;
+        }
+
+        private static float RightEdge(RectTransform rect)
+        {
+            return rect.anchoredPosition.x + rect.sizeDelta.x * (1f - rect.pivot.x);
+        }
+
         // Phase 66: later tasks append tests above this line.
     }
 }
