@@ -43,6 +43,7 @@
 | P6 | 文档没有运行验证 | 文档任务增加 README 命令冒烟（在 scratchpad 副本中运行，端口 8765） | 证明 `Server/README.md` 里的命令确实能跑通 |
 | P7 | 在 scratchpad 新建 venv；依赖装不上时改用 conda 3.10 | 复用现有 conda 环境 `/opt/miniconda3/envs/tarot`（Python 3.11.15），只读使用 | 用户在执行 Task 2 前决定（2026-09-11）。该环境中 16 个固定依赖的版本与 `requirements.txt` 完全一致，`pip check` 无冲突；不需要联网安装，scratchpad 也不新增环境目录。代价：它不是全新环境，未声明的依赖要到 GitHub CI 首次运行时才会暴露，但不影响搬运前后一致性的比对 |
 | P8 | 用 `.outcomes` 比对测试结果 | 另用 `extract_ids.sh` 生成 `.ids`，比对 `.ids` | 执行 Task 2 时发现：`-rA` 会打印测试捕获的日志，`^ERROR ` 这个正则把一行 `ERROR    app.api.v1.endpoints.records:records.py:512 …simulated ai failure` 也计入了结果（166 个通过却统计出 167 行）。真正的结果行在关键字后面只有一个空格。`run_pytest.sh` 按规定不能覆盖，所以新增脚本 |
+| P9 | spec §8.5 和 Task 5 Step 7 预期对照命中 3 个文件 | 实际是 6 个：`.env.example`、`app/core/config.py`、`app/services/coze_service.py`、`app/services/tarot_service.py`、`check_config.py`、`tests/test_repo_hygiene.py` | 编写 spec 时统计命令末尾带着 `\| head -3`，输出被截断成 3 行，却被当成了总数。执行 Task 5 时发现，并在 `f19c7cd` 上不截断重新统计确认为 6 个，与 `Server/` 一致 |
 
 ## 文件结构
 
@@ -561,7 +562,7 @@ SH
 bash "$SCRATCH/scan_secrets.sh" "$UNITY/Server"; echo "exit=$?"
 ```
 
-Expected: `control hits (files naming DEEPSEEK_API_KEY): 3`（即 `.env.example`、`app/core/config.py`、`app/services/coze_service.py`），然后是 `PASS: 0 secret-pattern hits`、`PASS: no .env files besides .env.example`，最后 `exit=0`。
+Expected: `control hits (files naming DEEPSEEK_API_KEY): 6`（即 `.env.example`、`app/core/config.py`、`app/services/coze_service.py`、`app/services/tarot_service.py`、`check_config.py`、`tests/test_repo_hygiene.py`，见 P9），然后是 `PASS: 0 secret-pattern hits`、`PASS: no .env files besides .env.example`，最后 `exit=0`。
 
 - [ ] **Step 8: 提交，并对提交再比对一次**
 
@@ -761,6 +762,7 @@ Expected: `1 file changed, 42 insertions(+)`
 - Modify (rewrite): `README.md`（已跟踪；旧版可以用 `git show main:README.md` 找回，spec §9 已批准重写）
 - Create: `Server/README.md`
 - Modify: `PROJECT_COMPLETION_PLAN.md`（三处替换）
+- Modify: `docs/superpowers/plans/2026-09-11-repo-unification.md`、`docs/superpowers/specs/2026-09-11-repo-unification-design.md`（提交 1 之后执行中的更正，例如 P9）
 - Create (scratch): `$SCRATCH/check_docs.py`、`$SCRATCH/update_plan_doc.py`、`$SCRATCH/smoke_server.sh`、`$SCRATCH/smoke/`
 
 **Interfaces:**
@@ -1189,7 +1191,7 @@ echo "PASS: GET /api/v1/health/ -> 200"
 body=$(head -c 300 "$SMOKE/guest.json" | tr -d '\n' | sed -E 's/"(access_token|refresh_token)":"[^"]*"/"\1":"<redacted>"/g')
 echo "INFO: POST /api/v1/guest-session -> $guest body=$body"
 SH
-cd "$UNITY" && git add README.md Server/README.md PROJECT_COMPLETION_PLAN.md
+cd "$UNITY" && git add README.md Server/README.md PROJECT_COMPLETION_PLAN.md docs/superpowers/plans/2026-09-11-repo-unification.md docs/superpowers/specs/2026-09-11-repo-unification-design.md
 bash "$SCRATCH/smoke_server.sh"; echo "exit=$?"
 ```
 
@@ -1211,7 +1213,7 @@ exit=0
 
 ```bash
 cd /Users/maochuandou/BUPT/Game/UnityTarot
-git status --porcelain | grep -v -E '^(M  README\.md|A  Server/README\.md|M  PROJECT_COMPLETION_PLAN\.md)$'; echo "(end unexpected changes)"
+git status --porcelain | grep -v -E '^(M  README\.md|A  Server/README\.md|M  PROJECT_COMPLETION_PLAN\.md|M  docs/superpowers/(plans/2026-09-11-repo-unification|specs/2026-09-11-repo-unification-design)\.md)$'; echo "(end unexpected changes)"
 git commit -q -F - <<'MSG'
 docs: rewrite root README, add Server README, record Phase 0 status
 
@@ -1225,6 +1227,8 @@ docs: rewrite root README, add Server README, record Phase 0 status
 - PROJECT_COMPLETION_PLAN.md: drop the resolved repository-boundary gap,
   add the 2026-09-11 execution record, and give Phase 0 a per-task
   status (the v0.9.0 tag is still missing).
+- Plan and spec: record corrections found while executing (for
+  example the control-hit count in the secret scan is 6, not 3).
 
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01SzXyQ4Efyzs2UuRKp9SrAp
@@ -1232,7 +1236,7 @@ MSG
 git show --stat --format='%h %s' HEAD | tail -4
 ```
 
-Expected: 第一条命令只输出 `(end unexpected changes)`；提交后显示 `3 files changed`，涉及 `PROJECT_COMPLETION_PLAN.md`、`README.md`、`Server/README.md`。
+Expected: 第一条命令只输出 `(end unexpected changes)`；提交后显示 `5 files changed`，涉及 `PROJECT_COMPLETION_PLAN.md`、`README.md`、`Server/README.md`，以及计划和 spec 两份文档（执行中的更正）。
 
 ---
 

@@ -69,7 +69,6 @@
 
 - Unity 已具备启动健康探测和访客会话申请，当前仍缺少 Unity 编辑器授权后的真实客户端手动验收，以及正式发行时的登录/账号升级入口。
 - 客户端配置默认指向 `http://localhost:8000/api/v1`，朋友下载后不能直接访问开发者电脑上的后端。
-- GitHub 当前 `main` 主要是 Unity 客户端树，旧的 FastAPI/React 代码位于另一个本地仓库，代码仓库边界和发布方式需要统一。
 - 已在本地真实 FastAPI 进程上完成访客会话和 1/3/10 张牌阵的 mock 解读冒烟验证，但不能替代真实部署环境和真实 AI Key 验证。
 - Unity EditMode、PlayMode 和发行包测试需要在 Unity Editor 许可证激活后重新执行；当前批处理测试因许可证不可用未生成测试报告。
 - 访客每日阅读上限已由后端配置控制；仍需完成后端仓库的最终归属、正式 HTTPS 地址、部署级 IP/设备限流和 macOS/Windows 干净环境验证。
@@ -85,6 +84,14 @@
 - 本地 FastAPI 冒烟流程已验证 1 张、3 张、10 张牌阵；后端全量回归当前为 `166 passed`。
 - 访客每日阅读上限默认值为 3，超出后返回 `429` 和 `Retry-After`，不会影响正式账户。
 - Unity 测试执行的唯一环境阻塞是本机没有有效的 Unity Editor 许可证，需在 Unity Hub 激活后重新运行。
+
+### 2.4 本轮执行记录（2026-09-11）
+
+- 仓库归一完成：后端 80 个文件从旧仓库提交 `f19c7cd` 以一次纯搬运提交并入 `Server/`，路径、权限和 blob SHA 与源提交完全一致。
+- 旧后端的 16 个提交保留在远端分支 `backend-main`；React Web 前端废弃，不进入 `main`；`docker-compose.yml` 等部署方式确定后重写。
+- 后端 CI 移到 `.github/workflows/backend-tests.yml`，只在 `Server/` 或该文件变动时运行。
+- 本地旧仓库 `Tarot/` 改为追踪 `origin/backend-main` 并禁用推送，不再作为提交入口。
+- 后端测试在 `Server/` 下与源提交干净导出的结果逐条一致：`pytest -q tests` 为 `166 passed, 1 warning`，`pytest -q` 为 `166 passed, 1 warning`。
 
 ## 三、总体路线图
 
@@ -106,6 +113,8 @@
 ### Phase 0：范围冻结与仓库归一化
 
 **目标：** 先消除两个本地仓库、一个 GitHub 地址和多个运行方式造成的发布歧义。
+
+> **状态（2026-09-11）：** 任务 2、3 已由仓库归一完成（`docs/superpowers/specs/2026-09-11-repo-unification-design.md`）；任务 4 已由提交 `c636595` 和本次 README 重写完成；任务 1、5 已在清理基线提交 `9307007` 中完成；任务 6 的版本策略已写在本节，但尚未创建 `v0.9.0` tag。
 
 #### 任务
 
