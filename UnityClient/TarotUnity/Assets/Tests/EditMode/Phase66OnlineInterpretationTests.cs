@@ -558,6 +558,20 @@ namespace TarotUnity.Tests.EditMode
             return rect.anchoredPosition.x + rect.sizeDelta.x * (1f - rect.pivot.x);
         }
 
+        [Test]
+        public void Phase66DocumentationExists()
+        {
+            const string docPath = "Docs/PHASE66_ONLINE_INTERPRETATION.md";
+            Assert.That(File.Exists(docPath), Is.True, $"Missing Phase 66 doc at {docPath}");
+            var text = File.ReadAllText(docPath);
+            Assert.That(text, Does.Contain("InterpretationPoller"));
+            Assert.That(text, Does.Contain("ApiClient.Shared"));
+            Assert.That(text, Does.Contain("Result"));
+
+            var chronicle = File.ReadAllText("Docs/PROJECT_CHRONICLE.md");
+            Assert.That(chronicle, Does.Contain("### Phase 66"));
+        }
+
         // Phase 66: later tasks append tests above this line.
     }
 }

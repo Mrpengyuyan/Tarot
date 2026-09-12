@@ -466,3 +466,10 @@ reading flows.
 
 The Result screen received the current parlor backdrop and a readable quiet exit
 link, completing the Phase 64 visual baseline for the next product-closure work.
+
+### Phase 66 — Online interpretation loop
+
+The reading room now deals the backend's cards as soon as they exist, and a
+persistent `InterpretationPoller` fetches the AI interpretation in the background.
+The Result screen shows generating, ready, failed or offline states with Chinese copy
+instead of the table waiting on the AI. See `Docs/PHASE66_ONLINE_INTERPRETATION.md`.
