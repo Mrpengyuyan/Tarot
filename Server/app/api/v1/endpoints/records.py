@@ -397,6 +397,134 @@ def get_prediction_cards(
     return result
 
 
+async def _build_ai_interpretation_create(
+    db: Session,
+    prediction: PredictionModel,
+    user_context: Optional[str],
+) -> InterpretationCreate:
+    """Generate interpretation content with the AI service.
+
+    On AI failure the prediction is marked FAILED and 504/502 is raised,
+    which is the behavior the synchronous endpoint has always had.
+    """
+    prediction_id = prediction.id
+    try:
+        card_draws = prediction_crud.get_prediction_card_draws(db, prediction_id=prediction_id)
+        if not card_draws:
+            raise HTTPException(status_code=400, detail="Cards must be drawn before interpretation")
+
+        spread = spread_crud.get_spread_by_id(db, spread_id=prediction.spread_type_id)
+        cards_data = []
+        for draw in card_draws:
+            card = card_crud.get_card_by_id(db, card_id=draw.tarot_card_id)
+            if not card:
+                continue
+            position_name = spread.get_position_name(draw.position) if spread else f"Position {draw.position}"
+            cards_data.append(
+                {
+                    "card": card,
+                    "position": position_name,
+                    "is_reversed": draw.is_reversed,
+                }
+            )
+
+        if len(cards_data) != len(card_draws):
+            raise HTTPException(
+                status_code=500,
+                detail="Card data is incomplete; please redraw cards",
+            )
+
+        ai_payload = await tarot_interpretation_service.create_interpretation(
+            db=db,
+            prediction=prediction,
+            cards_data=cards_data,
+            user_context=user_context,
+        )
+
+        return InterpretationCreate(
+            overall_interpretation=ai_payload.get("overall_interpretation", ""),
+            card_analysis=ai_payload.get("card_analysis"),
+            relationship_analysis=ai_payload.get("relationship_analysis"),
+            advice=ai_payload.get("advice"),
+            warning=ai_payload.get("warning"),
+            summary=ai_payload.get("summary"),
+            key_themes=_normalize_key_themes(ai_payload.get("key_themes")),
+            model_used=ai_payload.get(
+                "model_used",
+                tarot_interpretation_service.default_model_name()
+                if tarot_interpretation_service.ai_service.is_configured()
+                else "mock_ai",
+            ),
+            model_version=ai_payload.get("model_version"),
+            confidence_score=(
+                ai_payload.get("confidence_score")
+                if ai_payload.get("confidence_score") is not None
+                else 0.85
+            ),
+        )
+    except HTTPException:
+        raise
+    except CozeTimeoutError as exc:
+        logger.error("AI interpretation timed out: %s", exc)
+        prediction_crud.update_prediction_status(
+            db,
+            prediction_id=prediction_id,
+            status=PredictionStatus.FAILED,
+        )
+        raise HTTPException(status_code=504, detail="AI interpretation request timed out") from exc
+    except CozeHttpStatusError as exc:
+        logger.error("AI interpretation provider HTTP error: %s", exc)
+        prediction_crud.update_prediction_status(
+            db,
+            prediction_id=prediction_id,
+            status=PredictionStatus.FAILED,
+        )
+        raise HTTPException(status_code=502, detail="AI interpretation upstream service error") from exc
+    except (CozeRequestError, CozeError) as exc:
+        logger.error("AI interpretation upstream request failed: %s", exc)
+        prediction_crud.update_prediction_status(
+            db,
+            prediction_id=prediction_id,
+            status=PredictionStatus.FAILED,
+        )
+        raise HTTPException(status_code=502, detail="AI interpretation request failed") from exc
+    except Exception as exc:
+        logger.error("AI interpretation generation failed: %s", exc)
+        prediction_crud.update_prediction_status(
+            db,
+            prediction_id=prediction_id,
+            status=PredictionStatus.FAILED,
+        )
+        raise HTTPException(status_code=502, detail="AI interpretation service unavailable") from exc
+
+
+def _store_interpretation(
+    db: Session,
+    prediction_id: int,
+    interpretation_create: InterpretationCreate,
+):
+    """Persist an interpretation and mark the prediction COMPLETED; return the existing one on a race."""
+    try:
+        interpretation = prediction_crud.create_interpretation(
+            db,
+            prediction_id=prediction_id,
+            interpretation_create=interpretation_create,
+        )
+    except IntegrityError:
+        db.rollback()
+        interpretation = prediction_crud.get_prediction_interpretation(db, prediction_id=prediction_id)
+        if interpretation:
+            return interpretation
+        raise
+
+    prediction_crud.update_prediction_status(
+        db,
+        prediction_id=prediction_id,
+        status=PredictionStatus.COMPLETED,
+    )
+    return interpretation
+
+
 @router.post("/{prediction_id:int}/interpret", response_model=Interpretation, summary="Create AI interpretation")
 async def create_ai_interpretation(
     prediction_id: int,
@@ -428,114 +556,9 @@ async def create_ai_interpretation(
         return existing_interpretation
 
     if not interpretation_create or force_ai:
-        try:
-            card_draws = prediction_crud.get_prediction_card_draws(db, prediction_id=prediction_id)
-            if not card_draws:
-                raise HTTPException(status_code=400, detail="Cards must be drawn before interpretation")
+        interpretation_create = await _build_ai_interpretation_create(db, prediction, user_context)
 
-            spread = spread_crud.get_spread_by_id(db, spread_id=prediction.spread_type_id)
-            cards_data = []
-            for draw in card_draws:
-                card = card_crud.get_card_by_id(db, card_id=draw.tarot_card_id)
-                if not card:
-                    continue
-                position_name = spread.get_position_name(draw.position) if spread else f"Position {draw.position}"
-                cards_data.append(
-                    {
-                        "card": card,
-                        "position": position_name,
-                        "is_reversed": draw.is_reversed,
-                    }
-                )
-
-            if len(cards_data) != len(card_draws):
-                raise HTTPException(
-                    status_code=500,
-                    detail="Card data is incomplete; please redraw cards",
-                )
-
-            ai_payload = await tarot_interpretation_service.create_interpretation(
-                db=db,
-                prediction=prediction,
-                cards_data=cards_data,
-                user_context=user_context,
-            )
-
-            interpretation_create = InterpretationCreate(
-                overall_interpretation=ai_payload.get("overall_interpretation", ""),
-                card_analysis=ai_payload.get("card_analysis"),
-                relationship_analysis=ai_payload.get("relationship_analysis"),
-                advice=ai_payload.get("advice"),
-                warning=ai_payload.get("warning"),
-                summary=ai_payload.get("summary"),
-                key_themes=_normalize_key_themes(ai_payload.get("key_themes")),
-                model_used=ai_payload.get(
-                    "model_used",
-                    tarot_interpretation_service.default_model_name()
-                    if tarot_interpretation_service.ai_service.is_configured()
-                    else "mock_ai",
-                ),
-                model_version=ai_payload.get("model_version"),
-                confidence_score=(
-                    ai_payload.get("confidence_score")
-                    if ai_payload.get("confidence_score") is not None
-                    else 0.85
-                ),
-            )
-        except HTTPException:
-            raise
-        except CozeTimeoutError as exc:
-            logger.error("AI interpretation timed out: %s", exc)
-            prediction_crud.update_prediction_status(
-                db,
-                prediction_id=prediction_id,
-                status=PredictionStatus.FAILED,
-            )
-            raise HTTPException(status_code=504, detail="AI interpretation request timed out") from exc
-        except CozeHttpStatusError as exc:
-            logger.error("AI interpretation provider HTTP error: %s", exc)
-            prediction_crud.update_prediction_status(
-                db,
-                prediction_id=prediction_id,
-                status=PredictionStatus.FAILED,
-            )
-            raise HTTPException(status_code=502, detail="AI interpretation upstream service error") from exc
-        except (CozeRequestError, CozeError) as exc:
-            logger.error("AI interpretation upstream request failed: %s", exc)
-            prediction_crud.update_prediction_status(
-                db,
-                prediction_id=prediction_id,
-                status=PredictionStatus.FAILED,
-            )
-            raise HTTPException(status_code=502, detail="AI interpretation request failed") from exc
-        except Exception as exc:
-            logger.error("AI interpretation generation failed: %s", exc)
-            prediction_crud.update_prediction_status(
-                db,
-                prediction_id=prediction_id,
-                status=PredictionStatus.FAILED,
-            )
-            raise HTTPException(status_code=502, detail="AI interpretation service unavailable") from exc
-
-    try:
-        interpretation = prediction_crud.create_interpretation(
-            db,
-            prediction_id=prediction_id,
-            interpretation_create=interpretation_create,
-        )
-    except IntegrityError:
-        db.rollback()
-        interpretation = prediction_crud.get_prediction_interpretation(db, prediction_id=prediction_id)
-        if interpretation:
-            return interpretation
-        raise
-
-    prediction_crud.update_prediction_status(
-        db,
-        prediction_id=prediction_id,
-        status=PredictionStatus.COMPLETED,
-    )
-    return interpretation
+    return _store_interpretation(db, prediction_id, interpretation_create)
 
 
 @router.get("/{prediction_id:int}/interpretation", response_model=Interpretation, summary="Get interpretation")
