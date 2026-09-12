@@ -107,7 +107,7 @@ namespace TarotUnity.Network
             using var request = UnityWebRequest.Post(BuildUrl(ApiRoutes.Login), form);
             PrepareRequest(request);
             yield return request.SendWebRequest();
-            HandleResponse(request, onSuccess, onError, token => accessToken = token.access_token);
+            HandleResponse(request, onSuccess, onError, token => accessToken = token?.access_token);
         }
 
         public IEnumerator CreateGuestSession(Action<TokenResponse> onSuccess, Action<string> onError)
@@ -131,7 +131,7 @@ namespace TarotUnity.Network
 
         public IEnumerator Refresh(Action<TokenResponse> onSuccess, Action<string> onError)
         {
-            yield return PostEmpty(ApiRoutes.Refresh, onSuccess, onError, token => accessToken = token.access_token);
+            yield return PostEmpty(ApiRoutes.Refresh, onSuccess, onError, token => accessToken = token?.access_token);
         }
 
         public IEnumerator Logout(Action<ApiMessageResponse> onSuccess, Action<string> onError)
@@ -445,9 +445,20 @@ namespace TarotUnity.Network
             }
 
             var text = request.downloadHandler?.text;
-            var response = string.IsNullOrWhiteSpace(text)
-                ? default
-                : JsonUtility.FromJson<TResponse>(text);
+            TResponse response;
+            try
+            {
+                response = string.IsNullOrWhiteSpace(text)
+                    ? default
+                    : JsonUtility.FromJson<TResponse>(text);
+            }
+            catch (ArgumentException exception)
+            {
+                // Phase 66: an unreadable body is reported as an error instead of throwing
+                // out of the caller's coroutine (a thrown refresh stranded the poller).
+                onError?.Invoke($"{request.responseCode}: unreadable JSON ({exception.Message})");
+                return;
+            }
 
             afterSuccess?.Invoke(response);
             onSuccess?.Invoke(response);

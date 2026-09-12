@@ -289,6 +289,23 @@ namespace TarotUnity.Tests.PlayMode
             Assert.That(server.Count("GET", DetailPath), Is.EqualTo(0));
         }
 
+        [UnityTest]
+        public IEnumerator MalformedRefreshResponseExpiresTheSessionInsteadOfHanging()
+        {
+            server.Script("POST", AsyncPath, Accepted());
+            server.Script("GET", DetailPath, MockTarotBackend.Json(401, "{\"detail\":\"Could not validate credentials\"}"));
+            server.Script("POST", RefreshPath, MockTarotBackend.Json(200, "not json"));
+            var snapshot = OnlineSnapshot(1);
+
+            poller.Begin(snapshot);
+            yield return WaitUntil(() => snapshot.interpretationState == InterpretationState.Failed, 10f,
+                "expected Failed instead of a stranded Pending poll");
+
+            Assert.That(server.Count("POST", RefreshPath), Is.EqualTo(1), "control: the refresh really ran");
+            Assert.That(snapshot.failureMessage, Is.EqualTo(ReleaseUxCopy.InterpretationSessionExpired));
+            Assert.That(snapshot.canRetry, Is.False);
+        }
+
         private static IEnumerator BeginFromRoom(InterpretationPoller target, ReadingSessionSnapshot snapshot)
         {
             yield return null;

@@ -266,7 +266,9 @@ namespace TarotUnity.Network
 
                     refreshedThisRequest = true;
                     var refreshed = false;
-                    yield return client.Refresh(_ => refreshed = true, _ => refreshed = false);
+                    yield return client.Refresh(
+                        token => refreshed = token != null && !string.IsNullOrWhiteSpace(token.access_token),
+                        _ => refreshed = false);
                     if (run != runId)
                     {
                         yield break;
