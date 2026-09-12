@@ -160,4 +160,18 @@ namespace TarotUnity.Data
         public CardDrawData[] card_draws;
         public InterpretationResponse interpretation;
     }
+
+    // Phase 66: POST /records/{id}/interpret/async answers 202 while the
+    // interpretation is generating and 200 with it once one is stored.
+    public enum AsyncInterpretationOutcome
+    {
+        Accepted,
+        AlreadyReady,
+    }
+
+    public sealed class AsyncInterpretationResult
+    {
+        public AsyncInterpretationOutcome outcome;
+        public InterpretationResponse interpretation;
+    }
 }

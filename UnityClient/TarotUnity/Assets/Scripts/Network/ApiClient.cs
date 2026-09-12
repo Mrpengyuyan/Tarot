@@ -174,6 +174,202 @@ namespace TarotUnity.Network
             yield return Get(ApiRoutes.RecordDetail(predictionId), onSuccess, onError);
         }
 
+        // Phase 66: structured variants for the online interpretation flow. Each one
+        // calls exactly one of its callbacks and reports failures as ApiError
+        // (status, kind, Retry-After). The Action<string> methods above are unchanged.
+        public IEnumerator PostRecord(
+            PredictionCreateRequest payload,
+            Action<PredictionResponse> onSuccess,
+            Action<ApiError> onError)
+        {
+            using var request = CreatePost(ApiRoutes.Records, JsonUtility.ToJson(payload));
+            yield return request.SendWebRequest();
+            HandleStructured(request, onSuccess, onError);
+        }
+
+        public IEnumerator PostDraw(int predictionId, Action<DrawCardsResponse> onSuccess, Action<ApiError> onError)
+        {
+            using var request = CreatePost(ApiRoutes.RecordDraw(predictionId), null);
+            yield return request.SendWebRequest();
+            HandleStructured(request, onSuccess, onError);
+        }
+
+        public IEnumerator FetchRecordCards(int predictionId, Action<CardDrawData[]> onSuccess, Action<ApiError> onError)
+        {
+            using var request = UnityWebRequest.Get(BuildUrl(ApiRoutes.RecordCards(predictionId)));
+            PrepareRequest(request);
+            yield return request.SendWebRequest();
+            HandleStructuredArray(request, onSuccess, onError);
+        }
+
+        public IEnumerator PostInterpretAsync(
+            int predictionId,
+            Action<AsyncInterpretationResult> onSuccess,
+            Action<ApiError> onError)
+        {
+            using var request = CreatePost(ApiRoutes.RecordInterpretAsync(predictionId), null);
+            yield return request.SendWebRequest();
+            HandleInterpretAsync(request, onSuccess, onError);
+        }
+
+        public IEnumerator FetchRecordDetail(
+            int predictionId,
+            Action<PredictionDetailResponse> onSuccess,
+            Action<ApiError> onError)
+        {
+            using var request = UnityWebRequest.Get(BuildUrl(ApiRoutes.RecordDetail(predictionId)));
+            PrepareRequest(request);
+            yield return request.SendWebRequest();
+            HandleStructured(request, onSuccess, onError);
+        }
+
+        public static TItem[] ParseJsonArray<TItem>(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return Array.Empty<TItem>();
+            }
+
+            var wrapper = JsonUtility.FromJson<ArrayWrapper<TItem>>($"{{\"items\":{text}}}");
+            return wrapper?.items ?? Array.Empty<TItem>();
+        }
+
+        private UnityWebRequest CreatePost(string path, string json)
+        {
+            var request = new UnityWebRequest(BuildUrl(path), UnityWebRequest.kHttpVerbPOST);
+            if (json != null)
+            {
+                request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(json));
+                request.SetRequestHeader("Content-Type", "application/json");
+            }
+
+            request.downloadHandler = new DownloadHandlerBuffer();
+            PrepareRequest(request);
+            return request;
+        }
+
+        private void HandleStructured<TResponse>(
+            UnityWebRequest request,
+            Action<TResponse> onSuccess,
+            Action<ApiError> onError)
+        {
+            CaptureCookies(request);
+            if (IsError(request))
+            {
+                onError?.Invoke(BuildApiError(request));
+                return;
+            }
+
+            if (TryParseJson(request, out TResponse response, onError))
+            {
+                onSuccess?.Invoke(response);
+            }
+        }
+
+        private void HandleStructuredArray<TItem>(
+            UnityWebRequest request,
+            Action<TItem[]> onSuccess,
+            Action<ApiError> onError)
+        {
+            CaptureCookies(request);
+            if (IsError(request))
+            {
+                onError?.Invoke(BuildApiError(request));
+                return;
+            }
+
+            TItem[] items;
+            try
+            {
+                items = ParseJsonArray<TItem>(request.downloadHandler?.text);
+            }
+            catch (ArgumentException exception)
+            {
+                onError?.Invoke(UnreadableBody(request, exception));
+                return;
+            }
+
+            onSuccess?.Invoke(items);
+        }
+
+        private void HandleInterpretAsync(
+            UnityWebRequest request,
+            Action<AsyncInterpretationResult> onSuccess,
+            Action<ApiError> onError)
+        {
+            CaptureCookies(request);
+            if (IsError(request))
+            {
+                onError?.Invoke(BuildApiError(request));
+                return;
+            }
+
+            // 202: generation started or is already running; 200: the stored interpretation.
+            if (request.responseCode == 202)
+            {
+                onSuccess?.Invoke(new AsyncInterpretationResult { outcome = AsyncInterpretationOutcome.Accepted });
+                return;
+            }
+
+            if (!TryParseJson(request, out InterpretationResponse interpretation, onError))
+            {
+                return;
+            }
+
+            if (!ReadingSessionMapper.IsRealInterpretation(interpretation))
+            {
+                onError?.Invoke(new ApiError(
+                    request.responseCode,
+                    ApiErrorKind.Unexpected,
+                    -1,
+                    $"{request.responseCode}: the interpretation body was empty"));
+                return;
+            }
+
+            onSuccess?.Invoke(new AsyncInterpretationResult
+            {
+                outcome = AsyncInterpretationOutcome.AlreadyReady,
+                interpretation = interpretation,
+            });
+        }
+
+        private static bool TryParseJson<TResponse>(
+            UnityWebRequest request,
+            out TResponse response,
+            Action<ApiError> onError)
+        {
+            var text = request.downloadHandler?.text;
+            try
+            {
+                response = string.IsNullOrWhiteSpace(text) ? default : JsonUtility.FromJson<TResponse>(text);
+                return true;
+            }
+            catch (ArgumentException exception)
+            {
+                response = default;
+                onError?.Invoke(UnreadableBody(request, exception));
+                return false;
+            }
+        }
+
+        private static ApiError BuildApiError(UnityWebRequest request)
+        {
+            return ApiError.FromResponse(
+                request.responseCode,
+                request.error,
+                request.downloadHandler?.text,
+                request.GetResponseHeader("Retry-After"));
+        }
+
+        private static ApiError UnreadableBody(UnityWebRequest request, Exception exception)
+        {
+            return new ApiError(
+                request.responseCode,
+                ApiErrorKind.Unexpected,
+                -1,
+                $"{request.responseCode}: unreadable JSON ({exception.Message})");
+        }
+
         private IEnumerator Get<TResponse>(string path, Action<TResponse> onSuccess, Action<string> onError)
         {
             using var request = UnityWebRequest.Get(BuildUrl(path));
