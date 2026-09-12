@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 import app.db.base  # noqa: F401 - ensure model metadata is loaded
 from app.db.base_class import Base
-from app.db.session import get_db
+from app.db.session import get_db, get_session_factory
 from app.main import app
 from app.models.spread import SpreadType
 from app.models.tarot_card import CardType, TarotCard
@@ -65,6 +65,7 @@ def client(monkeypatch, db_session_factory) -> Generator[TestClient, None, None]
             db.close()
 
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_session_factory] = lambda: db_session_factory
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()

@@ -4,9 +4,11 @@ from datetime import datetime, timedelta, timezone
 import logging
 import random
 from math import ceil
-from typing import List, Optional, cast
+from typing import Callable, List, Optional, cast
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -15,7 +17,7 @@ from app.core.config import settings
 from app.crud import card as card_crud
 from app.crud import prediction as prediction_crud
 from app.crud import spread as spread_crud
-from app.db.session import get_db
+from app.db.session import get_db, get_session_factory
 from app.models.record import Prediction as PredictionModel
 from app.models.record import PredictionStatus, QuestionType
 from app.schemas.prediction import (
@@ -559,6 +561,124 @@ async def create_ai_interpretation(
         interpretation_create = await _build_ai_interpretation_create(db, prediction, user_context)
 
     return _store_interpretation(db, prediction_id, interpretation_create)
+
+
+async def generate_and_store_interpretation(
+    db: Session,
+    prediction: PredictionModel,
+    user_context: Optional[str],
+):
+    """Generate with AI and persist; the entry point used by background generation."""
+    interpretation_create = await _build_ai_interpretation_create(db, prediction, user_context)
+    return _store_interpretation(db, prediction.id, interpretation_create)
+
+
+async def run_interpretation_job(
+    session_factory: Callable[[], Session],
+    prediction_id: int,
+    user_context: Optional[str],
+) -> None:
+    """Background task. Opens its own session because the request session is already closed."""
+    db = session_factory()
+    try:
+        prediction = prediction_crud.get_prediction_by_id(db, prediction_id=prediction_id)
+        if prediction is None:
+            logger.warning("Background interpretation skipped: record %s not found", prediction_id)
+            return
+        await generate_and_store_interpretation(db, prediction, user_context)
+    except Exception as exc:  # noqa: BLE001 - background work must never raise into the event loop
+        logger.error("Background interpretation for record %s failed: %s", prediction_id, exc)
+        db.rollback()
+        prediction_crud.update_prediction_status(
+            db,
+            prediction_id=prediction_id,
+            status=PredictionStatus.FAILED,
+        )
+    finally:
+        db.close()
+
+
+def _interpretation_json(interpretation) -> JSONResponse:  # noqa: ANN001
+    return JSONResponse(
+        status_code=200,
+        content=jsonable_encoder(Interpretation.model_validate(interpretation)),
+    )
+
+
+def _processing_json(prediction_id: int) -> JSONResponse:
+    return JSONResponse(
+        status_code=202,
+        content={"prediction_id": prediction_id, "status": "processing"},
+    )
+
+
+def _as_utc(value: Optional[datetime]) -> Optional[datetime]:
+    if value is None or value.tzinfo is not None:
+        return value
+    return value.replace(tzinfo=timezone.utc)
+
+
+@router.post(
+    "/{prediction_id:int}/interpret/async",
+    summary="Start AI interpretation in the background",
+    responses={
+        200: {"model": Interpretation, "description": "Interpretation already exists"},
+        202: {"description": "Generation started or already running"},
+        429: {"description": "Interpretation attempts exhausted"},
+    },
+)
+async def start_ai_interpretation_async(
+    prediction_id: int,
+    background_tasks: BackgroundTasks,
+    user_context: Optional[str] = Query(None, description="Additional user context"),
+    db: Session = Depends(get_db),
+    session_factory: Callable[[], Session] = Depends(get_session_factory),
+    current_user: User = Depends(get_current_active_user),
+):
+    if not current_user.is_superuser and not prediction_crud.validate_prediction_ownership(
+        db,
+        prediction_id=prediction_id,
+        user_id=current_user.id,
+    ):
+        raise HTTPException(status_code=404, detail="Record not found")
+
+    prediction = prediction_crud.get_prediction_by_id(db, prediction_id=prediction_id)
+    if not prediction:
+        raise HTTPException(status_code=404, detail="Record not found")
+
+    existing_interpretation = prediction_crud.get_prediction_interpretation(db, prediction_id=prediction_id)
+    if existing_interpretation:
+        return _interpretation_json(existing_interpretation)
+
+    if not prediction_crud.get_prediction_card_draws(db, prediction_id=prediction_id):
+        raise HTTPException(status_code=400, detail="Cards must be drawn before interpretation")
+
+    now = datetime.now(timezone.utc)
+    stale_before = now - timedelta(seconds=max(1, int(settings.AI_INTERPRETATION_STALE_SECONDS)))
+    max_attempts = max(1, int(settings.AI_INTERPRETATION_MAX_ATTEMPTS))
+    if prediction_crud.claim_interpretation_generation(
+        db,
+        prediction_id=prediction_id,
+        now=now,
+        stale_before=stale_before,
+        max_attempts=max_attempts,
+    ):
+        background_tasks.add_task(run_interpretation_job, session_factory, prediction_id, user_context)
+        return _processing_json(prediction_id)
+
+    db.refresh(prediction)
+    existing_interpretation = prediction_crud.get_prediction_interpretation(db, prediction_id=prediction_id)
+    if existing_interpretation:
+        return _interpretation_json(existing_interpretation)
+
+    started_at = _as_utc(prediction.interpretation_started_at)
+    if prediction.status == PredictionStatus.PROCESSING and started_at is not None and started_at >= stale_before:
+        return _processing_json(prediction_id)
+
+    if prediction.interpretation_attempts >= max_attempts:
+        raise HTTPException(status_code=429, detail="Interpretation attempts exhausted")
+
+    return _processing_json(prediction_id)
 
 
 @router.get("/{prediction_id:int}/interpretation", response_model=Interpretation, summary="Get interpretation")

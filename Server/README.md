@@ -60,6 +60,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 - `GET http://localhost:8000/api/v1/health/`：基础健康检查，Unity 启动时首先访问它。
 - `POST http://localhost:8000/api/v1/guest-session`：申请访客会话。
+- `POST http://localhost:8000/api/v1/records/{id}/interpret/async`：在后台生成 AI 解读，返回 202 后轮询 `GET /api/v1/records/{id}` 获取结果（Unity 使用这条路径）。
 - `http://localhost:8000/docs`：OpenAPI 文档，仅在 `DEBUG=true` 时可用。
 
 ## 关键配置

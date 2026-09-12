@@ -1,5 +1,5 @@
 import logging
-from typing import Generator
+from typing import Callable, Generator
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session, sessionmaker
@@ -47,6 +47,11 @@ def get_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
+
+
+def get_session_factory() -> Callable[[], Session]:
+    """Session factory for work that outlives the request, such as FastAPI background tasks."""
+    return SessionLocal
 
 
 def get_db_session() -> Session:
