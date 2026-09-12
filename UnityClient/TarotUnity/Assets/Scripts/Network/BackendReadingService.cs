@@ -9,10 +9,17 @@ namespace TarotUnity.Network
     {
         [SerializeField] private ApiClient apiClient;
 
+        // Phase 66: prefer the Boot client that holds the guest session (see
+        // ApiClient.Shared); the scene reference is only a fallback.
         public ApiClient Client
         {
             get
             {
+                if (ApiClient.Shared != null)
+                {
+                    return ApiClient.Shared;
+                }
+
                 if (apiClient == null)
                 {
                     apiClient = FindFirstObjectByType<ApiClient>();

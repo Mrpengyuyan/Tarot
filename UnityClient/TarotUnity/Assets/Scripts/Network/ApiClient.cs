@@ -21,6 +21,22 @@ namespace TarotUnity.Network
         private string cookieHeader;
         private string csrfToken;
 
+        // Phase 66: the guest session is opened on the persistent Boot ApiClient,
+        // but ReadingRoom carries its own scene ApiClient that never gets a token.
+        // Scene code reads Shared first so a reading uses the session the menu
+        // actually opened; without Boot (a scene run directly) Shared stays null.
+        public static ApiClient Shared { get; private set; }
+
+        public static void SetShared(ApiClient client)
+        {
+            Shared = client;
+        }
+
+        public static void ClearShared()
+        {
+            Shared = null;
+        }
+
         public string BaseUrl
         {
             get => baseUrl;
@@ -43,6 +59,14 @@ namespace TarotUnity.Network
 
             baseUrl = config.BackendBaseUrl;
             requestTimeoutSeconds = config.RequestTimeoutSeconds;
+        }
+
+        private void OnDestroy()
+        {
+            if (Shared == this)
+            {
+                Shared = null;
+            }
         }
 
         public void SetAccessToken(string token)

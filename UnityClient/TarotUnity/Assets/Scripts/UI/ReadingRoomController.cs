@@ -378,7 +378,11 @@ namespace TarotUnity.UI
 
         private void EnsureBackendReferences()
         {
-            if (apiClient == null)
+            if (ApiClient.Shared != null)
+            {
+                apiClient = ApiClient.Shared;
+            }
+            else if (apiClient == null)
             {
                 apiClient = FindFirstObjectByType<ApiClient>();
             }

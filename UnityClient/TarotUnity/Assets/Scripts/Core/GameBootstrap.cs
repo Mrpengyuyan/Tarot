@@ -15,6 +15,7 @@ namespace TarotUnity.Core
             EnsureService<SceneFlowManager>();
             EnsureService<AudioManager>();
             EnsureService<ApiClient>();
+            ApiClient.SetShared(GetComponent<ApiClient>());
             EnsureService<DesktopConfigLoader>();
             EnsureService<BackendSessionBootstrap>();
             GetComponent<DesktopConfigLoader>()?.LoadAndApply();
