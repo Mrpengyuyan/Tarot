@@ -218,7 +218,7 @@ namespace TarotUnity.Tests.PlayMode
             }
         }
 
-        private static int GetFreePort()
+        internal static int GetFreePort()
         {
             var tcp = new TcpListener(IPAddress.Loopback, 0);
             tcp.Start();

@@ -1,6 +1,4 @@
 using System.Collections;
-using System.Net;
-using System.Net.Sockets;
 using NUnit.Framework;
 using TarotUnity.Core;
 using TarotUnity.Data;
@@ -99,7 +97,7 @@ namespace TarotUnity.Tests.PlayMode
             Assert.That(controlError, Is.Null, "control: the same client reaches a live backend");
             Assert.That(reachable, Is.Not.Null, "control: the same client reaches a live backend");
 
-            client.BaseUrl = $"http://127.0.0.1:{UnusedLoopbackPort()}/api/v1";
+            client.BaseUrl = $"http://127.0.0.1:{MockTarotBackend.GetFreePort()}/api/v1";
             PredictionDetailResponse detail = null;
             ApiError error = null;
             yield return client.FetchRecordDetail(777, value => detail = value, value => error = value);
@@ -181,15 +179,6 @@ namespace TarotUnity.Tests.PlayMode
                 question_type = "general",
                 spread_type_id = spreadId,
             };
-        }
-
-        private static int UnusedLoopbackPort()
-        {
-            var probe = new TcpListener(IPAddress.Loopback, 0);
-            probe.Start();
-            var port = ((IPEndPoint)probe.LocalEndpoint).Port;
-            probe.Stop();
-            return port;
         }
     }
 }
