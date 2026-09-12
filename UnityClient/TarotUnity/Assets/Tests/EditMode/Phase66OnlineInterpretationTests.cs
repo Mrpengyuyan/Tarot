@@ -279,6 +279,72 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(pending.modelUsed, Is.Empty);
         }
 
+        [Test]
+        public void PollDelaysFollowTwoTwoThreeThreeThenFive()
+        {
+            var expected = new[] { 2f, 2f, 3f, 3f, 5f, 5f, 5f };
+            for (var i = 0; i < expected.Length; i++)
+            {
+                Assert.That(InterpretationPoller.PollDelaySeconds(i), Is.EqualTo(expected[i]), $"attempt {i}");
+            }
+
+            Assert.That(InterpretationPoller.PollDelaySeconds(40), Is.EqualTo(5f));
+        }
+
+        [Test]
+        public void PollerLimitsMatchTheBackendContract()
+        {
+            Assert.That(InterpretationPoller.TotalDeadlineSeconds, Is.EqualTo(330f), "backend stale window 300 s + 30 s");
+            Assert.That(InterpretationPoller.MaxConsecutiveNetworkErrors, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void ApplyingAFailureRecordsCopyAndRetryability()
+        {
+            var snapshot = ReadingSessionMapper.FromBackendStart(
+                new PredictionResponse { id = 601 }, LocalReadingSimulator.CreatePlaceholderDraws(1));
+
+            InterpretationPoller.ApplyFailure(snapshot, InterpretationFailure.ConnectionLost);
+            Assert.That(snapshot.interpretationState, Is.EqualTo(InterpretationState.Failed));
+            Assert.That(snapshot.failureMessage, Is.EqualTo(ReleaseUxCopy.InterpretationConnectionLost));
+            Assert.That(snapshot.canRetry, Is.True);
+
+            InterpretationPoller.ApplyFailure(snapshot, InterpretationFailure.SessionExpired);
+            Assert.That(snapshot.failureMessage, Is.EqualTo(ReleaseUxCopy.InterpretationSessionExpired));
+            Assert.That(snapshot.canRetry, Is.False);
+        }
+
+        [Test]
+        public void UsingOfflineTextKeepsTheDrawnCardsAndSwitchesSource()
+        {
+            var cards = LocalReadingSimulator.CreatePlaceholderDraws(3);
+            var snapshot = ReadingSessionMapper.FromBackendStart(
+                new PredictionResponse { id = 601, question = "问题" }, cards);
+            snapshot.spreadName = "过去现在未来";
+            InterpretationPoller.ApplyFailure(snapshot, InterpretationFailure.Unavailable);
+
+            InterpretationPoller.ApplyOffline(snapshot);
+
+            Assert.That(snapshot.source, Is.EqualTo(ReadingSource.Offline));
+            Assert.That(snapshot.interpretationState, Is.EqualTo(InterpretationState.Ready));
+            Assert.That(snapshot.cardDraws, Is.SameAs(cards));
+            Assert.That(snapshot.predictionId, Is.EqualTo(601));
+            Assert.That(snapshot.warning, Is.EqualTo(ReleaseUxCopy.OfflineWarning));
+            Assert.That(snapshot.cardAnalysis, Does.Contain(cards[0].tarot_card.name_zh));
+            Assert.That(snapshot.failureMessage, Is.Empty);
+            Assert.That(snapshot.canRetry, Is.False);
+        }
+
+        [Test]
+        public void GameBootstrapSharesTheClientAndHostsThePoller()
+        {
+            var source = File.ReadAllText("Assets/Scripts/Core/GameBootstrap.cs");
+
+            Assert.That(source, Does.Contain("EnsureService<ApiClient>()"), "control: the scan reads the real bootstrap");
+            Assert.That(source, Does.Contain("ApiClient.SetShared(GetComponent<ApiClient>())"));
+            Assert.That(source, Does.Contain("EnsureService<InterpretationPoller>()"));
+        }
+
         // Phase 66: later tasks append tests above this line.
     }
 }

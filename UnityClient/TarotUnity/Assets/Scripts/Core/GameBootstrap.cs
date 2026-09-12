@@ -18,6 +18,7 @@ namespace TarotUnity.Core
             ApiClient.SetShared(GetComponent<ApiClient>());
             EnsureService<DesktopConfigLoader>();
             EnsureService<BackendSessionBootstrap>();
+            EnsureService<InterpretationPoller>();
             GetComponent<DesktopConfigLoader>()?.LoadAndApply();
         }
 
