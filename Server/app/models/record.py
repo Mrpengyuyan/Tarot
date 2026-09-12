@@ -66,6 +66,18 @@ class Prediction(Base):
         comment="创建时间",
     )
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, comment="完成时间")
+    interpretation_started_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        comment="最近一次开始生成解读的时间",
+    )
+    interpretation_attempts: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        server_default="0",
+        nullable=False,
+        comment="已开始生成解读的次数",
+    )
 
     is_favorite: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, comment="是否收藏")
     user_rating: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="用户评分（1-5）")
