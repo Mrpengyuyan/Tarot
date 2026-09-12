@@ -30,7 +30,78 @@ namespace TarotUnity.Data
                 cardAnalysis = interpretation?.card_analysis ?? string.Empty,
                 advice = interpretation?.advice ?? string.Empty,
                 warning = interpretation?.warning ?? string.Empty,
+                predictionId = detail.id,
+                source = ReadingSource.Online,
+                interpretationState = IsRealInterpretation(interpretation)
+                    ? InterpretationState.Ready
+                    : InterpretationState.Pending,
+                modelUsed = IsRealInterpretation(interpretation)
+                    ? interpretation.model_used ?? string.Empty
+                    : string.Empty,
             };
+        }
+
+        // Phase 66: the start of an online reading - the record and its drawn cards,
+        // with no interpretation yet. The caller fills in spreadName; the poller
+        // fills in the text once the background generation finishes.
+        public static ReadingSessionSnapshot FromBackendStart(PredictionResponse prediction, CardDrawData[] cards)
+        {
+            if (prediction == null)
+            {
+                return null;
+            }
+
+            var draws = cards ?? Array.Empty<CardDrawData>();
+            return new ReadingSessionSnapshot
+            {
+                spreadId = prediction.spread_type_id,
+                spreadName = string.Empty,
+                cardCount = draws.Length,
+                question = prediction.question,
+                questionType = prediction.question_type,
+                cardDraws = draws,
+                summary = string.Empty,
+                overallInterpretation = string.Empty,
+                cardAnalysis = string.Empty,
+                advice = string.Empty,
+                warning = string.Empty,
+                predictionId = prediction.id,
+                source = ReadingSource.Online,
+                interpretationState = InterpretationState.Pending,
+            };
+        }
+
+        // Phase 66: JsonUtility may turn a JSON "interpretation": null into an empty
+        // instance rather than null, so "has an interpretation" means a stored row
+        // (id > 0) or body text - never merely a non-null reference.
+        public static bool HasInterpretation(PredictionDetailResponse detail)
+        {
+            return IsRealInterpretation(detail?.interpretation);
+        }
+
+        public static bool IsRealInterpretation(InterpretationResponse interpretation)
+        {
+            return interpretation != null
+                && (interpretation.id > 0 || !string.IsNullOrWhiteSpace(interpretation.overall_interpretation));
+        }
+
+        public static void ApplyInterpretation(ReadingSessionSnapshot target, InterpretationResponse interpretation)
+        {
+            if (target == null || interpretation == null)
+            {
+                return;
+            }
+
+            target.summary = interpretation.summary ?? string.Empty;
+            target.overallInterpretation = interpretation.overall_interpretation ?? string.Empty;
+            target.cardAnalysis = interpretation.card_analysis ?? string.Empty;
+            target.advice = interpretation.advice ?? string.Empty;
+            target.warning = interpretation.warning ?? string.Empty;
+            target.modelUsed = interpretation.model_used ?? string.Empty;
+            target.source = ReadingSource.Online;
+            target.interpretationState = InterpretationState.Ready;
+            target.failureMessage = string.Empty;
+            target.canRetry = false;
         }
 
         public static ReadingSessionSnapshot FromBackendParts(

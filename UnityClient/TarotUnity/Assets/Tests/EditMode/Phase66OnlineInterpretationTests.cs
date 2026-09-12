@@ -182,6 +182,103 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(session.source, Is.EqualTo(ReadingSource.Offline));
         }
 
+        private const string DetailWithoutInterpretationJson =
+            "{\"id\":601,\"user_id\":7,\"spread_type_id\":1,\"question\":\"问题\",\"question_type\":\"general\","
+            + "\"status\":\"processing\",\"card_draws\":[],\"interpretation\":null}";
+
+        private const string DetailWithInterpretationJson =
+            "{\"id\":601,\"user_id\":7,\"spread_type_id\":1,\"question\":\"问题\",\"question_type\":\"general\","
+            + "\"status\":\"processing\",\"card_draws\":[],\"interpretation\":{\"id\":3001,\"prediction_id\":601,"
+            + "\"overall_interpretation\":\"整体\",\"card_analysis\":\"牌面\",\"advice\":\"建议\",\"warning\":\"提醒\","
+            + "\"summary\":\"概要\",\"model_used\":\"deepseek-chat\"}}";
+
+        [Test]
+        public void JsonNullInterpretationIsNotTreatedAsReady()
+        {
+            var detail = JsonUtility.FromJson<PredictionDetailResponse>(DetailWithoutInterpretationJson);
+
+            Assert.That(detail, Is.Not.Null, "control: the JSON parsed");
+            Assert.That(detail.id, Is.EqualTo(601), "control: fields were read");
+            Assert.That(ReadingSessionMapper.HasInterpretation(detail), Is.False);
+        }
+
+        [Test]
+        public void InterpretationPresentCountsAsReadyWhateverTheStatus()
+        {
+            var detail = JsonUtility.FromJson<PredictionDetailResponse>(DetailWithInterpretationJson);
+
+            Assert.That(detail.status, Is.EqualTo("processing"), "control: status is not completed");
+            Assert.That(ReadingSessionMapper.HasInterpretation(detail), Is.True);
+        }
+
+        [Test]
+        public void StartMappingProducesAnOnlinePendingSnapshot()
+        {
+            var prediction = new PredictionResponse { id = 601, spread_type_id = 2, question = "问题", question_type = "general" };
+            var cards = LocalReadingSimulator.CreatePlaceholderDraws(3);
+
+            var snapshot = ReadingSessionMapper.FromBackendStart(prediction, cards);
+
+            Assert.That(snapshot.predictionId, Is.EqualTo(601));
+            Assert.That(snapshot.spreadId, Is.EqualTo(2));
+            Assert.That(snapshot.source, Is.EqualTo(ReadingSource.Online));
+            Assert.That(snapshot.interpretationState, Is.EqualTo(InterpretationState.Pending));
+            Assert.That(snapshot.cardDraws, Is.SameAs(cards));
+            Assert.That(snapshot.cardCount, Is.EqualTo(3));
+            Assert.That(snapshot.question, Is.EqualTo("问题"));
+            Assert.That(snapshot.summary, Is.Empty);
+            Assert.That(snapshot.warning, Is.Empty);
+            Assert.That(ReadingSessionMapper.FromBackendStart(null, cards), Is.Null);
+        }
+
+        [Test]
+        public void ApplyingAnInterpretationMakesTheSnapshotReady()
+        {
+            var snapshot = ReadingSessionMapper.FromBackendStart(
+                new PredictionResponse { id = 601 }, LocalReadingSimulator.CreatePlaceholderDraws(1));
+            snapshot.interpretationState = InterpretationState.Failed;
+            snapshot.failureMessage = "旧的失败原因";
+            snapshot.canRetry = true;
+
+            ReadingSessionMapper.ApplyInterpretation(snapshot, new InterpretationResponse
+            {
+                id = 3001,
+                summary = "概要",
+                overall_interpretation = "整体",
+                card_analysis = "牌面",
+                advice = "建议",
+                warning = "提醒",
+                model_used = "deepseek-chat",
+            });
+
+            Assert.That(snapshot.interpretationState, Is.EqualTo(InterpretationState.Ready));
+            Assert.That(snapshot.source, Is.EqualTo(ReadingSource.Online));
+            Assert.That(snapshot.summary, Is.EqualTo("概要"));
+            Assert.That(snapshot.overallInterpretation, Is.EqualTo("整体"));
+            Assert.That(snapshot.cardAnalysis, Is.EqualTo("牌面"));
+            Assert.That(snapshot.advice, Is.EqualTo("建议"));
+            Assert.That(snapshot.warning, Is.EqualTo("提醒"));
+            Assert.That(snapshot.modelUsed, Is.EqualTo("deepseek-chat"));
+            Assert.That(snapshot.failureMessage, Is.Empty);
+            Assert.That(snapshot.canRetry, Is.False);
+        }
+
+        [Test]
+        public void DetailMappingRecordsTheOnlineStateAndModel()
+        {
+            var ready = ReadingSessionMapper.FromBackendDetail(
+                JsonUtility.FromJson<PredictionDetailResponse>(DetailWithInterpretationJson));
+            Assert.That(ready.predictionId, Is.EqualTo(601));
+            Assert.That(ready.source, Is.EqualTo(ReadingSource.Online));
+            Assert.That(ready.interpretationState, Is.EqualTo(InterpretationState.Ready));
+            Assert.That(ready.modelUsed, Is.EqualTo("deepseek-chat"));
+
+            var pending = ReadingSessionMapper.FromBackendDetail(
+                JsonUtility.FromJson<PredictionDetailResponse>(DetailWithoutInterpretationJson));
+            Assert.That(pending.interpretationState, Is.EqualTo(InterpretationState.Pending));
+            Assert.That(pending.modelUsed, Is.Empty);
+        }
+
         // Phase 66: later tasks append tests above this line.
     }
 }
