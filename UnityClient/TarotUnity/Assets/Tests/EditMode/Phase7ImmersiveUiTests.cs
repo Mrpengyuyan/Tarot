@@ -35,7 +35,9 @@ namespace TarotUnity.Tests.EditMode
             var controller = Object.FindFirstObjectByType<MainMenuController>();
             Assert.That(controller, Is.Not.Null);
             InvokePrivate(controller, "Start");
-            AssertText(canvas.transform, "StatusText", "烛火已燃，牌已洗过。");
+            // Phase 65: the ritual line now shares the status with the online-session
+            // line; before any session status arrives the menu says it is connecting.
+            AssertText(canvas.transform, "StatusText", "烛火已燃，牌已洗过。\n正在准备在线解读……");
         }
 
         [Test]
