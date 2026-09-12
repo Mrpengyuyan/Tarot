@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using TarotUnity.Data;
+using TarotUnity.UI;
 
 namespace TarotUnity.Gameplay
 {
@@ -103,7 +104,7 @@ namespace TarotUnity.Gameplay
                 overallInterpretation = BuildOverall(draws),
                 cardAnalysis = BuildCardAnalysis(draws),
                 advice = "放慢脚步，只选定一个下一步，然后留意揭示之后有什么改变。",
-                warning = "这是本地占位文本，后端 AI 解读将在后续阶段接入。",
+                warning = ReleaseUxCopy.OfflineWarning,
             };
         }
 

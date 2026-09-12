@@ -35,5 +35,10 @@ namespace TarotUnity.Network
         {
             return $"/records/{predictionId}";
         }
+
+        public static string RecordInterpretAsync(int predictionId)
+        {
+            return $"/records/{predictionId}/interpret/async";
+        }
     }
 }
