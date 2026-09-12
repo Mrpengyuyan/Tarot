@@ -306,25 +306,27 @@ class TarotInterpretationService:
         cards: List[Dict[str, Any]],
         reason: str = "",
     ) -> Dict[str, Any]:
-        card_lines = []
+        orientation_names = {"upright": "正位", "reversed": "逆位"}
+        card_names: List[str] = []
+        card_lines: List[str] = []
         for idx, card in enumerate(cards, start=1):
-            name = card.get("name_zh", "Unknown card")
-            orientation = card.get("orientation", "upright")
-            position = card.get("position", f"Position {idx}")
-            card_lines.append(f"{idx}. {position} - {name} ({orientation})")
+            name = card.get("name_zh") or "未知牌"
+            orientation = orientation_names.get(card.get("orientation", "upright"), "正位")
+            position = card.get("position") or f"位置 {idx}"
+            card_names.append(name)
+            card_lines.append(f"{idx}. {position}：{name}（{orientation}）")
 
         overall = (
-            f"This is a mock interpretation generated at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}.\n"
-            f"Question: {prediction.question}\n"
-            "Current cards suggest balancing intuition with practical action. "
-            "Focus on one high-impact step at a time and review progress regularly."
+            f"这是模拟解读，未连接 AI 服务（生成于 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}）。\n"
+            f"问题：{prediction.question}\n"
+            "牌面提示你在直觉与现实行动之间找到平衡，一次专注推进一个最关键的步骤，并定期回顾进展。"
         )
 
         card_analysis = "\n".join(card_lines) if card_lines else None
-        advice = "Break your next move into small, actionable steps and execute with consistency."
-        warning = "Avoid overcommitting on too many goals in parallel."
-        summary = "Maintain pace, prioritize clarity, and iterate."
-        key_themes = ", ".join([card_lines[0].split(" - ")[1].split(" (")[0], "pace", "focus"]) if card_lines else "pace,focus"
+        advice = "把下一步拆成几个可以马上执行的小动作，保持稳定的节奏去完成。"
+        warning = "避免同时追逐太多目标，分散精力会拖慢进展。"
+        summary = "保持节奏，先求清晰，再逐步推进。"
+        key_themes = ",".join([card_names[0], "节奏", "专注"]) if card_names else "节奏,专注"
 
         if reason:
             logger.warning("Using mock interpretation fallback. reason=%s", reason)
