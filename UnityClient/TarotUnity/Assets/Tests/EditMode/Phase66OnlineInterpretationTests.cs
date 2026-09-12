@@ -345,6 +345,56 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(source, Does.Contain("EnsureService<InterpretationPoller>()"));
         }
 
+        private static readonly string[] RetiredReadingRoomLiterals =
+        {
+            "\"Shuffling...\"",
+            "\"Creating backend reading...\"",
+            "\"Dealing cards...\"",
+            "\"Click each card to flip it.\"",
+            "\"The reading is almost ready.\"",
+            "\"The reading is ready.\"",
+            "\"What should I notice now?\"",
+            "\"Backend spreads loaded.\"",
+        };
+
+        [Test]
+        public void ReadingRoomFlowCopyIsChineseAndCentralised()
+        {
+            var flowCopy = new[]
+            {
+                ReleaseUxCopy.DefaultQuestion,
+                ReleaseUxCopy.FlowShuffling,
+                ReleaseUxCopy.FlowDealing,
+                ReleaseUxCopy.FlowFlipPrompt,
+                ReleaseUxCopy.FlowAllRevealed,
+                ReleaseUxCopy.FlowResultReady,
+                ReleaseUxCopy.InterpretationGenerating,
+                ReleaseUxCopy.InterpretationReadyHint,
+                ReleaseUxCopy.OnlineReady,
+            };
+            foreach (var line in flowCopy)
+            {
+                Assert.That(line, Is.Not.Empty);
+                Assert.That(Regex.IsMatch(line, "[A-Za-z]"), Is.False, $"'{line}' should not contain ASCII letters");
+            }
+
+            var source = File.ReadAllText("Assets/Scripts/UI/ReadingRoomController.cs");
+            Assert.That(source, Does.Contain("ReleaseUxCopy.FlowShuffling"), "control: the scan reads the real controller");
+            foreach (var literal in RetiredReadingRoomLiterals)
+            {
+                Assert.That(source, Does.Not.Contain(literal), $"{literal} should come from ReleaseUxCopy");
+            }
+        }
+
+        [Test]
+        public void CompleteReadingIsRetired()
+        {
+            Assert.That(typeof(BackendReadingService).GetMethod("StartReading"), Is.Not.Null,
+                "control: reflection sees the service");
+            Assert.That(typeof(BackendReadingService).GetMethod("CompleteReading"), Is.Null,
+                "the old path waited on the AI before dealing; online readings use StartReading");
+        }
+
         // Phase 66: later tasks append tests above this line.
     }
 }

@@ -43,6 +43,12 @@ namespace TarotUnity.UI
         private string selectedSpreadName = "One Card Focus";
         private bool drawInProgress;
         private SpreadSummary[] backendSpreads;
+        private InterpretationPoller subscribedPoller;
+
+        // Phase 66: the longest the draw waits for the online start (three requests,
+        // a session recovery and one retry, each bounded by the request timeout)
+        // before dealing an offline reading instead.
+        private const float OnlineStartTimeoutSeconds = 150f;
 
         private void Awake()
         {
@@ -95,6 +101,8 @@ namespace TarotUnity.UI
             {
                 deckController.CardDealt -= HandleCardDealt;
             }
+
+            UnsubscribePoller();
         }
 
         private void SelectOneCard()
@@ -162,7 +170,7 @@ namespace TarotUnity.UI
             SetDrawControls(false);
 
             var question = string.IsNullOrWhiteSpace(questionInput?.text)
-                ? "What should I notice now?"
+                ? ReleaseUxCopy.DefaultQuestion
                 : questionInput.text.Trim();
 
             flowController?.SetQuestion(question, "general");
@@ -170,64 +178,71 @@ namespace TarotUnity.UI
             cameraChoreography?.FocusDeck();
             ritualFeedback?.PlayCue(PresentationCueId.ShuffleStarted, deckController != null ? deckController.transform : null);
             deckShuffle?.Play();
-            SetStatus("Shuffling...");
+            SetStatus(ReleaseUxCopy.FlowShuffling);
 
-            var session = default(ReadingSessionSnapshot);
-            var backendError = default(string);
+            // Phase 66: the online start (record + draw + cards, no AI) runs while the
+            // shuffle plays. The interpretation is generated in the background and
+            // fetched by the persistent InterpretationPoller once the deal begins.
+            var attempt = new OnlineStartAttempt();
             if (ShouldTryBackend())
             {
-                SetStatus("Creating backend reading...");
-                yield return backendReadingService.CompleteReading(
-                    flowController != null
-                        ? flowController.BuildCreateRecordPayload()
-                        : new PredictionCreateRequest
-                        {
-                            question = question,
-                            question_type = "general",
-                            spread_type_id = selectedSpreadId,
-                        },
-                    value => session = value,
-                    value => backendError = value);
-
-                if (session == null && backendMode == BackendIntegrationMode.BackendOnly)
-                {
-                    var message = ReleaseUxCopy.BackendOnlyFailure(backendError);
-                    SetStatus(message);
-                    SetReleaseStatus(message);
-                    SetDrawControls(true);
-                    drawInProgress = false;
-                    yield break;
-                }
-
-                if (session == null)
-                {
-                    var message = ReleaseUxCopy.BackendFallback(backendError);
-                    SetStatus(message);
-                    SetReleaseStatus(message);
-                }
+                StartCoroutine(StartOnlineReadingRoutine(question, attempt));
+            }
+            else
+            {
+                attempt.Done = true;
             }
 
             yield return new WaitForSeconds(rhythmDirector != null
                 ? rhythmDirector.ResolvePause(PresentationCueId.ShuffleStarted)
                 : 0.8f);
 
+            var giveUpAt = Time.realtimeSinceStartup + OnlineStartTimeoutSeconds;
+            yield return new WaitUntil(() => attempt.Done || Time.realtimeSinceStartup > giveUpAt);
+            if (!attempt.Done)
+            {
+                attempt.Session = null;
+                attempt.OfflineMessage = ReleaseUxCopy.OfflineBecauseNetwork;
+                attempt.RawError = $"the online start did not finish within {OnlineStartTimeoutSeconds} s";
+                Debug.Log($"ReadingRoom: {attempt.RawError}");
+            }
+
+            var session = attempt.Session;
+            if (session == null && attempt.OfflineMessage != null && backendMode == BackendIntegrationMode.BackendOnly)
+            {
+                var message = ReleaseUxCopy.BackendOnlyFailure(attempt.RawError);
+                SetStatus(message);
+                SetReleaseStatus(message);
+                SetDrawControls(true);
+                drawInProgress = false;
+                yield break;
+            }
+
             if (session == null)
             {
-                var localDraws = CreateLocalDraws();
+                if (attempt.OfflineMessage != null)
+                {
+                    SetReleaseStatus(attempt.OfflineMessage);
+                }
+
                 session = LocalReadingSimulator.CreateSession(
                     selectedSpreadId,
                     selectedSpreadName,
                     question,
                     "general",
-                    localDraws);
+                    CreateLocalDraws());
             }
 
-            var draws = session.cardDraws ?? CreateLocalDraws();
             ReadingSessionStore.Save(session);
+            if (session.source == ReadingSource.Online)
+            {
+                BeginInterpretation(session);
+            }
 
             flowController?.BeginDeal();
-            SetStatus("Dealing cards...");
+            SetStatus(ReleaseUxCopy.FlowDealing);
 
+            var draws = session.cardDraws ?? CreateLocalDraws();
             var slots = flowController != null ? flowController.GetSelectedSpreadSlots() : new List<Transform>();
             if (deckController != null)
             {
@@ -242,8 +257,145 @@ namespace TarotUnity.UI
 
             flowController?.WaitForCardFlips();
             cameraChoreography?.FocusSpread(selectedCardCount);
-            SetStatus("Click each card to flip it.");
+            SetStatus(ReleaseUxCopy.FlowFlipPrompt);
             drawInProgress = false;
+        }
+
+        private sealed class OnlineStartAttempt
+        {
+            public bool Done;
+            public ReadingSessionSnapshot Session;
+            public string OfflineMessage;
+            public string RawError;
+        }
+
+        private IEnumerator StartOnlineReadingRoutine(string question, OnlineStartAttempt attempt)
+        {
+            if (backendSpreads == null)
+            {
+                yield return LoadBackendSpreadsRoutine();
+            }
+
+            // Phase 66: only ask for a spread the backend really has with this card
+            // count - a local spread id would name a different backend spread.
+            var backendSpread = FindBackendSpread(selectedCardCount);
+            if (backendSpread == null)
+            {
+                attempt.OfflineMessage = ReleaseUxCopy.OfflineBecauseSpread;
+                attempt.RawError = $"no backend spread with {selectedCardCount} cards";
+                Debug.Log($"ReadingRoom: online reading skipped - {attempt.RawError}");
+                attempt.Done = true;
+                yield break;
+            }
+
+            var payload = new PredictionCreateRequest
+            {
+                question = question,
+                question_type = "general",
+                spread_type_id = backendSpread.id,
+            };
+
+            ReadingSessionSnapshot session = null;
+            ApiError error = null;
+            yield return backendReadingService.StartReading(payload, value => session = value, value => error = value);
+
+            // Spec 6.6 step 2: nothing exists yet, so a rejected token may refresh or
+            // even become a new guest before one retry.
+            if (error != null && error.Kind == ApiErrorKind.Unauthorized)
+            {
+                var recovered = false;
+                yield return backendReadingService.RecoverSession(value => recovered = value);
+                if (recovered)
+                {
+                    error = null;
+                    session = null;
+                    yield return backendReadingService.StartReading(payload, value => session = value, value => error = value);
+                }
+            }
+
+            if (error == null && session != null && session.cardDraws.Length != selectedCardCount)
+            {
+                error = new ApiError(
+                    200,
+                    ApiErrorKind.Unexpected,
+                    -1,
+                    $"200: the backend dealt {session.cardDraws.Length} cards for a {selectedCardCount}-card spread");
+            }
+
+            if (error != null || session == null)
+            {
+                Debug.Log($"ReadingRoom: online reading unavailable - {error?.RawMessage}");
+                attempt.OfflineMessage = ReleaseUxCopy.ForStartReadingFailure(error);
+                attempt.RawError = error?.RawMessage;
+                attempt.Session = null;
+            }
+            else
+            {
+                session.spreadId = backendSpread.id;
+                session.spreadName = !string.IsNullOrWhiteSpace(backendSpread.name) ? backendSpread.name : selectedSpreadName;
+                attempt.Session = session;
+            }
+
+            attempt.Done = true;
+        }
+
+        private void BeginInterpretation(ReadingSessionSnapshot session)
+        {
+            var poller = InterpretationPoller.Instance;
+            if (poller == null)
+            {
+                // Without Boot (this scene run on its own) nothing survives into the
+                // Result screen to fetch the interpretation, so use the offline text.
+                InterpretationPoller.ApplyOffline(session);
+                SetReleaseStatus(ReleaseUxCopy.OfflineBecauseUnavailable);
+                return;
+            }
+
+            if (subscribedPoller != poller)
+            {
+                UnsubscribePoller();
+                subscribedPoller = poller;
+                poller.StateChanged += HandleInterpretationStateChanged;
+            }
+
+            poller.Begin(session);
+        }
+
+        private void HandleInterpretationStateChanged(ReadingSessionSnapshot session)
+        {
+            if (session == null || session != ReadingSessionStore.Current)
+            {
+                return;
+            }
+
+            if (session.source == ReadingSource.Offline)
+            {
+                SetReleaseStatus(ReleaseUxCopy.OfflineWarning);
+                return;
+            }
+
+            switch (session.interpretationState)
+            {
+                case InterpretationState.Pending:
+                    SetReleaseStatus(ReleaseUxCopy.InterpretationGenerating);
+                    break;
+                case InterpretationState.Ready:
+                    SetReleaseStatus(ReleaseUxCopy.InterpretationReadyHint);
+                    break;
+                default:
+                    SetReleaseStatus(session.failureMessage);
+                    break;
+            }
+        }
+
+        private void UnsubscribePoller()
+        {
+            if (subscribedPoller != null)
+            {
+                subscribedPoller.StateChanged -= HandleInterpretationStateChanged;
+            }
+
+            subscribedPoller = null;
         }
 
         private void HandleCardDealt(CardView card)
@@ -310,7 +462,7 @@ namespace TarotUnity.UI
 
         private IEnumerator ResultReadyRoutine()
         {
-            SetStatus("The reading is almost ready.");
+            SetStatus(ReleaseUxCopy.FlowAllRevealed);
             cameraChoreography?.FocusResult();
             ritualFeedback?.PlayCue(PresentationCueId.ResultReady);
             SetResultButtonVisible(true);
@@ -320,7 +472,7 @@ namespace TarotUnity.UI
                 yield return new WaitForSeconds(rhythmDirector.ResultBreathSeconds);
             }
 
-            SetStatus("The reading is ready.");
+            SetStatus(ReleaseUxCopy.FlowResultReady);
         }
 
         private void LoadResult()
@@ -403,7 +555,7 @@ namespace TarotUnity.UI
             {
                 backendSpreads = loaded;
                 SelectSpread(selectedSpreadId, selectedCardCount, selectedSpreadName);
-                SetStatus("Backend spreads loaded.");
+                SetReleaseStatus(ReleaseUxCopy.OnlineReady);
                 yield break;
             }
 
