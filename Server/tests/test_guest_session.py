@@ -159,3 +159,77 @@ def test_guest_session_enforces_configured_daily_reading_limit(
     assert second_record.status_code == 429
     assert "daily reading limit" in second_record.json()["detail"].lower()
     assert int(second_record.headers["retry-after"]) > 0
+
+
+def test_guest_session_refresh_keeps_access_to_own_record(client, seeded_spread_and_cards):
+    guest_response = client.post("/api/v1/guest-session")
+    assert guest_response.status_code == 200
+    first_token = guest_response.json()["access_token"]
+
+    record_response = client.post(
+        "/api/v1/records/",
+        headers={"Authorization": f"Bearer {first_token}"},
+        json={
+            "question": "续期之后还能看到这条记录吗？",
+            "question_type": "general",
+            "spread_type_id": seeded_spread_and_cards["spread_id"],
+        },
+    )
+    assert record_response.status_code == 200
+    prediction_id = record_response.json()["id"]
+
+    csrf_token = client.cookies.get(settings.CSRF_COOKIE_NAME)
+    assert csrf_token
+    refresh_response = client.post("/api/v1/refresh", headers={settings.CSRF_HEADER_NAME: csrf_token})
+
+    assert refresh_response.status_code == 200
+    refreshed_token = refresh_response.json()["access_token"]
+    assert refreshed_token
+
+    detail_response = client.get(
+        f"/api/v1/records/{prediction_id}",
+        headers={"Authorization": f"Bearer {refreshed_token}"},
+    )
+    assert detail_response.status_code == 200
+    assert detail_response.json()["id"] == prediction_id
+
+
+def test_guest_session_can_run_async_interpretation(client, seeded_spread_and_cards, monkeypatch):
+    guest_response = client.post("/api/v1/guest-session")
+    assert guest_response.status_code == 200
+    headers = {"Authorization": f"Bearer {guest_response.json()['access_token']}"}
+
+    record_response = client.post(
+        "/api/v1/records/",
+        headers=headers,
+        json={
+            "question": "访客也能在后台生成解读吗？",
+            "question_type": "general",
+            "spread_type_id": seeded_spread_and_cards["spread_id"],
+        },
+    )
+    assert record_response.status_code == 200
+    prediction_id = record_response.json()["id"]
+    assert client.post(f"/api/v1/records/{prediction_id}/draw", headers=headers).status_code == 200
+
+    async def fake_create_interpretation(db, prediction, cards_data, user_context=None):  # noqa: ANN001
+        return {
+            "overall_interpretation": "访客的后台解读已经生成。",
+            "summary": "可以继续。",
+            "model_used": "guest_async_mock_ai",
+        }
+
+    monkeypatch.setattr(
+        records_endpoint.tarot_interpretation_service,
+        "create_interpretation",
+        fake_create_interpretation,
+    )
+
+    start_response = client.post(f"/api/v1/records/{prediction_id}/interpret/async", headers=headers)
+    assert start_response.status_code == 202
+
+    detail_response = client.get(f"/api/v1/records/{prediction_id}", headers=headers)
+    assert detail_response.status_code == 200
+    detail = detail_response.json()
+    assert detail["status"] == "completed"
+    assert detail["interpretation"]["model_used"] == "guest_async_mock_ai"
