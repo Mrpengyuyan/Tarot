@@ -73,6 +73,8 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 | `AI_BUDGET_GUARD_ENABLED` | `true` | AI 预算保护。计数器保存在进程内存中，多实例部署时需要集中存储 |
 | `AUTO_CREATE_TABLES_ON_STARTUP` | `false` | 设为 `true` 后，启动时自动建表 |
 | `AUTO_BOOTSTRAP_REFERENCE_DATA_ON_STARTUP` | `false` | 设为 `true` 后，启动时自动导入牌和牌阵数据 |
+| `AI_INTERPRETATION_STALE_SECONDS` | `300` | 解读处于生成中超过这个秒数，视为卡住，可以重新开始生成 |
+| `AI_INTERPRETATION_MAX_ATTEMPTS` | `3` | 每条记录最多开始生成解读的次数，超出后异步接口返回 `429` |
 
 ## 测试
 

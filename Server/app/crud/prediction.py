@@ -1,7 +1,7 @@
 from typing import List, Optional
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import and_, or_, desc, asc, func, update
+from sqlalchemy import and_, or_, desc, asc, func, select, update
 from app.models.record import Prediction, CardDraw, Interpretation, QuestionType, PredictionStatus
 from app.models.user import User
 from app.models.tarot_card import TarotCard
@@ -217,6 +217,43 @@ def update_prediction_status(db: Session, prediction_id: int, status: Prediction
         db.commit()
         return True
     return False
+
+def claim_interpretation_generation(
+    db: Session,
+    prediction_id: int,
+    now: datetime,
+    stale_before: datetime,
+    max_attempts: int,
+) -> bool:
+    """原子地抢占解读生成权。
+
+    只有在记录还没有解读、生成次数未达上限，并且不处于有效的生成中
+    （状态不是 PROCESSING，或者 PROCESSING 已经早于 stale_before）时才会成功。
+    并发调用时最多只有一个返回 True。
+    """
+    has_interpretation = select(Interpretation.id).where(Interpretation.prediction_id == prediction_id).exists()
+    statement = (
+        update(Prediction)
+        .where(Prediction.id == prediction_id)
+        .where(Prediction.interpretation_attempts < max_attempts)
+        .where(~has_interpretation)
+        .where(
+            or_(
+                Prediction.status != PredictionStatus.PROCESSING,
+                Prediction.interpretation_started_at.is_(None),
+                Prediction.interpretation_started_at < stale_before,
+            )
+        )
+        .values(
+            status=PredictionStatus.PROCESSING,
+            interpretation_started_at=now,
+            interpretation_attempts=Prediction.interpretation_attempts + 1,
+        )
+        .execution_options(synchronize_session=False)
+    )
+    result = db.execute(statement)
+    db.commit()
+    return result.rowcount == 1
 
 def delete_prediction(db: Session, prediction_id: int) -> bool:
     """删除预测记录"""

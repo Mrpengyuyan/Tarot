@@ -117,6 +117,10 @@ class Settings(BaseSettings):
     AUTO_BOOTSTRAP_REFERENCE_DATA_ON_STARTUP: bool = False
     AUTO_REPAIR_PREDICTION_QUESTIONS_ON_STARTUP: bool = False
     GUEST_DAILY_READING_LIMIT: int = 3
+    # Background interpretation generation (POST /records/{id}/interpret/async).
+    # Unity's InterpretationPoller gives up after STALE_SECONDS + 30s; keep the two in sync.
+    AI_INTERPRETATION_STALE_SECONDS: int = 300
+    AI_INTERPRETATION_MAX_ATTEMPTS: int = 3
 
     model_config = {
         "case_sensitive": True,
