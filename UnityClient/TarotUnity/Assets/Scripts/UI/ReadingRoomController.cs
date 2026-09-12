@@ -45,10 +45,17 @@ namespace TarotUnity.UI
         private SpreadSummary[] backendSpreads;
         private InterpretationPoller subscribedPoller;
 
-        // Phase 66: the longest the draw waits for the online start (three requests,
-        // a session recovery and one retry, each bounded by the request timeout)
-        // before dealing an offline reading instead.
-        private const float OnlineStartTimeoutSeconds = 150f;
+        // Phase 66: the longest online start is nine requests (spread list, record,
+        // draw, cards, refresh, guest session, then record, draw and cards again), each
+        // bounded by the client's request timeout, plus a little slack.
+        private float OnlineStartTimeoutSeconds()
+        {
+            var client = backendReadingService != null ? backendReadingService.Client : null;
+            var perRequest = client != null
+                ? client.RequestTimeoutSeconds
+                : DesktopRuntimeConfig.DefaultRequestTimeoutSeconds;
+            return perRequest * 9f + 15f;
+        }
 
         private void Awake()
         {
@@ -197,13 +204,14 @@ namespace TarotUnity.UI
                 ? rhythmDirector.ResolvePause(PresentationCueId.ShuffleStarted)
                 : 0.8f);
 
-            var giveUpAt = Time.realtimeSinceStartup + OnlineStartTimeoutSeconds;
+            var onlineStartTimeoutSeconds = OnlineStartTimeoutSeconds();
+            var giveUpAt = Time.realtimeSinceStartup + onlineStartTimeoutSeconds;
             yield return new WaitUntil(() => attempt.Done || Time.realtimeSinceStartup > giveUpAt);
             if (!attempt.Done)
             {
                 attempt.Session = null;
                 attempt.OfflineMessage = ReleaseUxCopy.OfflineBecauseNetwork;
-                attempt.RawError = $"the online start did not finish within {OnlineStartTimeoutSeconds} s";
+                attempt.RawError = $"the online start did not finish within {onlineStartTimeoutSeconds} s";
                 Debug.Log($"ReadingRoom: {attempt.RawError}");
             }
 
@@ -274,6 +282,17 @@ namespace TarotUnity.UI
             if (backendSpreads == null)
             {
                 yield return LoadBackendSpreadsRoutine();
+            }
+
+            // Phase 66: spreads that could not be loaded mean the service is unreachable
+            // (spec 7.3 row 1), not that this particular spread is unsupported.
+            if (backendSpreads == null)
+            {
+                attempt.OfflineMessage = ReleaseUxCopy.OfflineBecauseNetwork;
+                attempt.RawError = "backend spreads could not be loaded";
+                Debug.Log($"ReadingRoom: online reading skipped - {attempt.RawError}");
+                attempt.Done = true;
+                yield break;
             }
 
             // Phase 66: only ask for a spread the backend really has with this card
@@ -496,6 +515,11 @@ namespace TarotUnity.UI
             if (threeCardButton != null)
             {
                 threeCardButton.interactable = enabled;
+            }
+
+            if (celticCrossButton != null)
+            {
+                celticCrossButton.interactable = enabled;
             }
 
             if (drawButton != null)

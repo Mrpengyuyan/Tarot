@@ -95,6 +95,16 @@ namespace TarotUnity.Tests.PlayMode
             }
         }
 
+        // Replaces a route's whole reply queue (Script only appends, and the last
+        // reply repeats, so a fixture-wide reply could not otherwise be overridden).
+        public void Replace(string method, string path, params Reply[] replies)
+        {
+            lock (routes)
+            {
+                routes[Key(method, path)] = new Queue<Reply>(replies);
+            }
+        }
+
         public int Count(string method, string path)
         {
             var key = Key(method, path);

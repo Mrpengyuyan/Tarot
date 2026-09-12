@@ -169,6 +169,48 @@ namespace TarotUnity.Tests.PlayMode
             Assert.That(server.Count("POST", "/api/v1/records/702/interpret/async"), Is.EqualTo(0));
         }
 
+        [UnityTest]
+        public IEnumerator UnreachableSpreadListShowsTheConnectionCopyWithoutCreatingARecord()
+        {
+            server.Replace("GET", "/api/v1/spreads/", MockTarotBackend.Json(503, "{\"detail\":\"Service Unavailable\"}"));
+
+            yield return LoadReadingRoom();
+            var room = Object.FindFirstObjectByType<ReadingRoomController>();
+            var deck = Object.FindFirstObjectByType<DeckController>();
+            yield return WaitUntil(() => server.Count("GET", "/api/v1/spreads/") >= 1, 10f,
+                "control: the room asked for the spread list");
+
+            GetField<Button>(room, "oneCardButton").onClick.Invoke();
+            GetField<Button>(room, "drawButton").onClick.Invoke();
+            yield return WaitUntil(() => deck.ActiveCards.Count == 1, 20f, "expected one dealt card");
+
+            Assert.That(ReadingSessionStore.Current.source, Is.EqualTo(ReadingSource.Offline));
+            Assert.That(GetField<TMP_Text>(room, "releaseStatusText").text, Is.EqualTo(ReleaseUxCopy.OfflineBecauseNetwork));
+            Assert.That(server.Count("POST", "/api/v1/records/"), Is.EqualTo(0));
+        }
+
+        [UnityTest]
+        public IEnumerator EverySpreadButtonStaysLockedWhileTheDealtCardsWait()
+        {
+            yield return LoadReadingRoom();
+            var room = Object.FindFirstObjectByType<ReadingRoomController>();
+            var flow = Object.FindFirstObjectByType<ReadingFlowController>();
+            var deck = Object.FindFirstObjectByType<DeckController>();
+            yield return WaitForBackendSpreads(room);
+
+            GetField<Button>(room, "oneCardButton").onClick.Invoke();
+            GetField<Button>(room, "drawButton").onClick.Invoke();
+            yield return WaitUntil(
+                () => deck.ActiveCards.Count == 1 && flow.State == ReadingFlowState.WaitingForFlip,
+                20f,
+                "expected one dealt card waiting for its flip");
+
+            Assert.That(GetField<Button>(room, "oneCardButton").interactable, Is.False, "control: the existing lock works");
+            Assert.That(GetField<Button>(room, "threeCardButton").interactable, Is.False);
+            Assert.That(GetField<Button>(room, "celticCrossButton").interactable, Is.False,
+                "凯尔特十字 must not re-open spread selection over dealt cards");
+        }
+
         private static IEnumerator LoadReadingRoom()
         {
             SceneManager.LoadScene("ReadingRoom");
