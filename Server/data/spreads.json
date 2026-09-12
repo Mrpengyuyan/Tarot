@@ -1,0 +1,231 @@
+[
+  {
+    "id": 1,
+    "name": "单牌抽取",
+    "nameEn": "Single Card Draw",
+    "description": "最简单的塔罗占卜方法，适合日常指导和快速答案",
+    "cardCount": 1,
+    "difficulty": 1,
+    "isBeginnerFriendly": true,
+    "positions": [
+      {
+        "position": 1,
+        "name": "指导",
+        "meaning": "今日指导或问题的核心答案"
+      }
+    ],
+    "layoutImageUrl": "/images/spreads/single_card.jpg",
+    "suitableFor": ["love", "career", "finance", "health", "general"],
+    "usageCount": 0
+  },
+  {
+    "id": 2,
+    "name": "过去现在未来",
+    "nameEn": "Past-Present-Future",
+    "description": "三牌牌阵，展示过去、现在和未来的情况",
+    "cardCount": 3,
+    "difficulty": 2,
+    "isBeginnerFriendly": true,
+    "positions": [
+      {
+        "position": 1,
+        "name": "过去",
+        "meaning": "影响现状的过去因素或根源"
+      },
+      {
+        "position": 2,
+        "name": "现在",
+        "meaning": "当前的状况和现有的能量"
+      },
+      {
+        "position": 3,
+        "name": "未来",
+        "meaning": "可能的发展趋势和结果"
+      }
+    ],
+    "layoutImageUrl": "/images/spreads/past_present_future.jpg",
+    "suitableFor": ["love", "career", "finance", "health", "general"],
+    "usageCount": 0
+  },
+  {
+    "id": 3,
+    "name": "爱情牌阵",
+    "nameEn": "Love Spread",
+    "description": "专门用于爱情和关系问题的牌阵",
+    "cardCount": 5,
+    "difficulty": 3,
+    "isBeginnerFriendly": false,
+    "positions": [
+      {
+        "position": 1,
+        "name": "你的感受",
+        "meaning": "你对这段关系的真实感受"
+      },
+      {
+        "position": 2,
+        "name": "对方感受",
+        "meaning": "对方对你和这段关系的感受"
+      },
+      {
+        "position": 3,
+        "name": "关系现状",
+        "meaning": "你们关系的当前状态"
+      },
+      {
+        "position": 4,
+        "name": "阻碍因素",
+        "meaning": "阻碍关系发展的因素"
+      },
+      {
+        "position": 5,
+        "name": "关系前景",
+        "meaning": "这段关系的发展前景"
+      }
+    ],
+    "layoutImageUrl": "/images/spreads/love_spread.jpg",
+    "suitableFor": ["love"],
+    "usageCount": 0
+  },
+  {
+    "id": 4,
+    "name": "事业发展",
+    "nameEn": "Career Spread",
+    "description": "专门用于事业和工作相关问题的牌阵",
+    "cardCount": 6,
+    "difficulty": 3,
+    "isBeginnerFriendly": false,
+    "positions": [
+      {
+        "position": 1,
+        "name": "当前状况",
+        "meaning": "你当前的工作状况"
+      },
+      {
+        "position": 2,
+        "name": "技能优势",
+        "meaning": "你的技能和优势"
+      },
+      {
+        "position": 3,
+        "name": "需要改进",
+        "meaning": "需要改进的方面"
+      },
+      {
+        "position": 4,
+        "name": "机遇",
+        "meaning": "即将到来的机会"
+      },
+      {
+        "position": 5,
+        "name": "挑战",
+        "meaning": "将要面对的挑战"
+      },
+      {
+        "position": 6,
+        "name": "发展前景",
+        "meaning": "事业发展的前景"
+      }
+    ],
+    "layoutImageUrl": "/images/spreads/career_spread.jpg",
+    "suitableFor": ["career", "finance"],
+    "usageCount": 0
+  },
+  {
+    "id": 5,
+    "name": "凯尔特十字",
+    "nameEn": "Celtic Cross",
+    "description": "最经典的塔罗牌阵，提供深入全面的分析",
+    "cardCount": 10,
+    "difficulty": 5,
+    "isBeginnerFriendly": false,
+    "positions": [
+      {
+        "position": 1,
+        "name": "现状",
+        "meaning": "当前的情况和核心问题"
+      },
+      {
+        "position": 2,
+        "name": "挑战",
+        "meaning": "面临的挑战或阻碍"
+      },
+      {
+        "position": 3,
+        "name": "遥远过去",
+        "meaning": "问题的根源或远因"
+      },
+      {
+        "position": 4,
+        "name": "近期过去",
+        "meaning": "最近发生的相关事件"
+      },
+      {
+        "position": 5,
+        "name": "可能结果",
+        "meaning": "一种可能的发展方向"
+      },
+      {
+        "position": 6,
+        "name": "近期未来",
+        "meaning": "即将发生的事件"
+      },
+      {
+        "position": 7,
+        "name": "你的方法",
+        "meaning": "你应该采取的方法"
+      },
+      {
+        "position": 8,
+        "name": "外在影响",
+        "meaning": "环境和他人的影响"
+      },
+      {
+        "position": 9,
+        "name": "希望恐惧",
+        "meaning": "内心的希望和恐惧"
+      },
+      {
+        "position": 10,
+        "name": "最终结果",
+        "meaning": "最可能的最终结果"
+      }
+    ],
+    "layoutImageUrl": "/images/spreads/celtic_cross.jpg",
+    "suitableFor": ["love", "career", "finance", "health", "general"],
+    "usageCount": 0
+  },
+  {
+    "id": 6,
+    "name": "财运牌阵",
+    "nameEn": "Finance Spread",
+    "description": "专门用于财务和投资相关问题的牌阵",
+    "cardCount": 4,
+    "difficulty": 2,
+    "isBeginnerFriendly": true,
+    "positions": [
+      {
+        "position": 1,
+        "name": "财务现状",
+        "meaning": "当前的财务状况"
+      },
+      {
+        "position": 2,
+        "name": "收入机会",
+        "meaning": "增加收入的机会"
+      },
+      {
+        "position": 3,
+        "name": "支出控制",
+        "meaning": "需要控制的支出方面"
+      },
+      {
+        "position": 4,
+        "name": "财富前景",
+        "meaning": "未来的财富发展趋势"
+      }
+    ],
+    "layoutImageUrl": "/images/spreads/finance_spread.jpg",
+    "suitableFor": ["finance"],
+    "usageCount": 0
+  }
+] 
