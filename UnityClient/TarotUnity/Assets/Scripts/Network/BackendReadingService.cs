@@ -104,9 +104,11 @@ namespace TarotUnity.Network
             onSuccess?.Invoke(snapshot);
         }
 
-        // Phase 66: recover a guest whose access token was rejected before any record
-        // exists (spec 6.6 step 2): refresh first; if that fails, start a new guest.
-        // A new guest is safe here only because nothing has been created yet.
+        // Phase 66: recover a guest whose access token was rejected while starting a
+        // reading (spec 6.6 step 2): refresh first; if that fails, start a new guest.
+        // Usually the 401 comes from creating the record, so nothing exists yet; if the
+        // token expires between creating the record and drawing, the retry creates a
+        // second record and uses one more guest quota slot.
         public IEnumerator RecoverSession(Action<bool> onDone)
         {
             var client = Client;

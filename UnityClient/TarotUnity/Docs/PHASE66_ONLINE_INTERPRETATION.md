@@ -38,6 +38,13 @@ not have, or a card-count mismatch, never goes online.
   to deployment.
 - The spread-selection copy ("Choose a spread…", "One Card Focus") is still English; it
   belongs to the reading-room clarity sub-project.
+- While the interpretation is generating, the Result screen offers only 回到牌桌; the
+  offline text becomes reachable only once generation fails (spec 7.1 table). Whether to
+  offer 查看离线解读 during generation is an open product decision.
+- Running the ReadingRoom scene on its own (without Boot) never goes online: the guest
+  session and the interpretation poller live on the Boot object.
+- In BackendOnly mode (a developer setting, not the shipped configuration) a failed start
+  still shows the raw reason through `ReleaseUxCopy.BackendOnlyFailure`.
 
 ## Files
 
