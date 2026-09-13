@@ -47,7 +47,7 @@ class TarotPromptTemplate:
     def _output_schema() -> Dict[str, str]:
         return {
             "overall_interpretation": "string, required, complete holistic reading in Simplified Chinese",
-            "card_analysis": "string, optional, per-card analysis",
+            "card_analysis": "string, optional, one line per card in input order: '<position>：<card name_zh>（正位|逆位）— <analysis>'",
             "relationship_analysis": "string, optional, inter-card relationship analysis",
             "advice": "string, optional, practical next-step suggestions",
             "warning": "string, optional, risk reminders",
