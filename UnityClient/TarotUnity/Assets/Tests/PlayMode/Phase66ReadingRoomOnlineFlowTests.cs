@@ -190,6 +190,26 @@ namespace TarotUnity.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator UnreadableSpreadListShowsTheConnectionCopyWithoutThrowing()
+        {
+            server.Replace("GET", "/api/v1/spreads/", MockTarotBackend.Json(200, "not json"));
+
+            yield return LoadReadingRoom();
+            var room = Object.FindFirstObjectByType<ReadingRoomController>();
+            var deck = Object.FindFirstObjectByType<DeckController>();
+            yield return WaitUntil(() => server.Count("GET", "/api/v1/spreads/") >= 1, 10f,
+                "control: the room asked for the spread list");
+
+            GetField<Button>(room, "oneCardButton").onClick.Invoke();
+            GetField<Button>(room, "drawButton").onClick.Invoke();
+            yield return WaitUntil(() => deck.ActiveCards.Count == 1, 20f, "expected one dealt card");
+
+            Assert.That(ReadingSessionStore.Current.source, Is.EqualTo(ReadingSource.Offline));
+            Assert.That(GetField<TMP_Text>(room, "releaseStatusText").text, Is.EqualTo(ReleaseUxCopy.OfflineBecauseNetwork));
+            Assert.That(server.Count("POST", "/api/v1/records/"), Is.EqualTo(0));
+        }
+
+        [UnityTest]
         public IEnumerator EverySpreadButtonStaysLockedWhileTheDealtCardsWait()
         {
             yield return LoadReadingRoom();

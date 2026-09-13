@@ -475,7 +475,19 @@ namespace TarotUnity.Network
             }
 
             var text = request.downloadHandler?.text;
-            var wrapper = JsonUtility.FromJson<ArrayWrapper<TItem>>($"{{\"items\":{text}}}");
+            ArrayWrapper<TItem> wrapper;
+            try
+            {
+                wrapper = JsonUtility.FromJson<ArrayWrapper<TItem>>($"{{\"items\":{text}}}");
+            }
+            catch (ArgumentException exception)
+            {
+                // Phase 66: an unreadable array body is reported as an error instead of
+                // throwing out of the caller's coroutine (same rule as HandleResponse).
+                onError?.Invoke($"{request.responseCode}: unreadable JSON ({exception.Message})");
+                return;
+            }
+
             onSuccess?.Invoke(wrapper?.items ?? Array.Empty<TItem>());
         }
 
