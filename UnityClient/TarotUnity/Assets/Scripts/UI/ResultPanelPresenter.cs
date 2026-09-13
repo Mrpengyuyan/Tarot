@@ -76,6 +76,14 @@ namespace TarotUnity.UI
         [SerializeField] private CanvasGroup readingContentGroup;
         [SerializeField] private float readyFadeSeconds = 0.6f;
 
+        // Phase 67: reading experience (spec C). Wired by Phase67ResultReadingBootstrapper.
+        [Header("Phase 67: reading experience")]
+        [SerializeField] private ResultReadingNavigator readingNavigator;
+        [SerializeField] private TMP_Text offlineNoticeText;
+        [SerializeField] private GameObject warningHeading;
+        [SerializeField] private GameObject bottomDivider;
+        [SerializeField] private ResultSpreadCellTarget[] cellTargets;
+
         public const float PendingSlowNoticeSeconds = 20f;
 
         private float pendingSince = -1f;

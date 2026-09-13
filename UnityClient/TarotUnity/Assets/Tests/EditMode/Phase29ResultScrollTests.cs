@@ -72,11 +72,17 @@ namespace TarotUnity.Tests.EditMode
         public void AllSectionsLiveInContentInReadingOrder()
         {
             var content = FindScroll().content;
+            var first = content.Find(SectionOrder[0]);
+            Assert.That(first, Is.Not.Null, $"{SectionOrder[0]} should be parented under the scroll Content");
+
+            // Phase 67 puts the offline notice before the sections and the warning section after
+            // them, so the eight keep reading order as one adjacent run rather than at fixed indices.
+            var start = first.GetSiblingIndex();
             for (var i = 0; i < SectionOrder.Length; i++)
             {
                 var child = content.Find(SectionOrder[i]);
                 Assert.That(child, Is.Not.Null, $"{SectionOrder[i]} should be parented under the scroll Content");
-                Assert.That(child.GetSiblingIndex(), Is.EqualTo(i),
+                Assert.That(child.GetSiblingIndex(), Is.EqualTo(start + i),
                     $"{SectionOrder[i]} should keep reading order (header then body)");
             }
         }
