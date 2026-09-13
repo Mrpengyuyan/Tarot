@@ -28,9 +28,8 @@ namespace TarotUnity.UI
         // Phase 60: a multi-card spread shows every drawn card, not just the first.
         // A one-card reading keeps the original single hero (left third + right
         // reading); a multi-card reading switches to a top band of all N cards with
-        // the reading reflowed full-width below it. The band, the single hero root,
-        // and the reading scroll's two layouts are all wired by the Phase 60
-        // bootstrapper, so the presenter only toggles and fills them.
+        // the reading reflowed full-width below it. Phase 67 moves the band and
+        // reading geometry into ResultSpreadLayout.
         [Serializable]
         public sealed class SpreadCardCell
         {
@@ -48,21 +47,8 @@ namespace TarotUnity.UI
         [SerializeField] private GameObject spreadBandRoot;
         [SerializeField] private SpreadCardCell[] spreadCards = Array.Empty<SpreadCardCell>();
         [SerializeField] private RectTransform readingScrollRect;
-        [SerializeField] private Vector2 singleReadingPos = new Vector2(178f, 4f);
-        [SerializeField] private Vector2 singleReadingSize = new Vector2(736f, 448f);
-        [SerializeField] private Vector2 spreadReadingPos = new Vector2(0f, -150f);
-        [SerializeField] private Vector2 spreadReadingSize = new Vector2(1120f, 232f);
-
-        // Phase 62: the band is a pool of cells laid out at runtime, so any card
-        // count (not just three) shows every card. Cells are centred as a single
-        // row; the pitch shrinks (and the cells scale down with it) once the row
-        // would overflow the band width, so a larger spread stays on screen instead
-        // of dropping cards past the third.
-        [Header("Phase 62: dynamic N-card row")]
-        [SerializeField] private float spreadRowWidth = 1180f;
-        [SerializeField] private float spreadBasePitch = 348f;
-        [SerializeField] private float spreadMinCellScale = 0.34f;
-        [SerializeField] private float spreadCellY = 88f;
+        [SerializeField] private Vector2 singleReadingPos = new Vector2(160f, 4f);
+        [SerializeField] private Vector2 singleReadingSize = new Vector2(772f, 448f);
 
         // Phase 66: an online reading can reach this screen before its AI text exists.
         // The status line, the mode label and the retry / offline buttons are wired by
@@ -88,6 +74,8 @@ namespace TarotUnity.UI
 
         private float pendingSince = -1f;
         private Coroutine readyFade;
+        private CardDrawData[] presentedDraws;
+        private float laidOutCanvasHeight = -1f;
 
         private CardArtworkCatalog defaultArtworkCatalog;
 
@@ -99,14 +87,17 @@ namespace TarotUnity.UI
                 return;
             }
 
-            SetText(questionText, detail.question);
-            SetText(spreadNameText, detail.spread_type?.name);
-            SetText(summaryText, detail.interpretation?.summary);
-            SetText(overallText, detail.interpretation?.overall_interpretation);
-            SetText(cardAnalysisText, detail.interpretation?.card_analysis);
-            SetText(adviceText, detail.interpretation?.advice);
-            SetText(warningText, detail.interpretation?.warning);
+            SetText(questionText, ReadingTextSanitizer.Plain(detail.question));
+            SetText(spreadNameText, ReadingTextSanitizer.Plain(detail.spread_type?.name));
+            SetText(summaryText, ReadingTextSanitizer.Plain(detail.interpretation?.summary));
+            SetText(overallText, ReadingTextSanitizer.Plain(detail.interpretation?.overall_interpretation));
+            ApplyCardAnalysis(detail.interpretation?.card_analysis, detail.card_draws);
+            SetText(adviceText, ReadingTextSanitizer.Plain(detail.interpretation?.advice));
+            SetText(warningText, ReadingTextSanitizer.Plain(detail.interpretation?.warning));
+            SetOfflineNotice(false);
+            SetWarningSection(!string.IsNullOrWhiteSpace(detail.interpretation?.warning));
             PresentCards(detail.card_draws);
+            SetNavigatorInteractive(true);
         }
 
         public void PresentSession(ReadingSessionSnapshot session)
@@ -145,6 +136,7 @@ namespace TarotUnity.UI
             SetStatus(ReleaseUxCopy.ResultPending);
             SetText(modeLabelText, string.Empty);
             SetInterpretationButtons(false, false);
+            SetNavigatorInteractive(false);
             pendingSince = Time.unscaledTime;
         }
 
@@ -157,6 +149,7 @@ namespace TarotUnity.UI
             SetInterpretationButtons(false, false);
             pendingSince = -1f;
             SetReadingVisible(true);
+            SetNavigatorInteractive(true);
 
             if (fadeIn && readingContentGroup != null && isActiveAndEnabled && readyFadeSeconds > 0f)
             {
@@ -177,6 +170,7 @@ namespace TarotUnity.UI
             SetStatus(session.failureMessage);
             SetText(modeLabelText, string.Empty);
             SetInterpretationButtons(session.canRetry, true);
+            SetNavigatorInteractive(false);
             pendingSince = -1f;
         }
 
@@ -189,6 +183,7 @@ namespace TarotUnity.UI
             SetInterpretationButtons(false, false);
             pendingSince = -1f;
             SetReadingVisible(true);
+            SetNavigatorInteractive(true);
         }
 
         public static string BuildPendingStatus(float elapsedSeconds)
@@ -215,8 +210,34 @@ namespace TarotUnity.UI
                 : string.Empty;
         }
 
+        /// <summary>
+        /// Phase 67 (spec C 4.1): lays the spread band and the reading panel out for a canvas
+        /// size. The presenter calls it when it presents a spread and whenever the canvas
+        /// height changes; the capture builder calls it after resizing the canvas.
+        /// </summary>
+        public void ApplyLayout(Vector2 canvasSize)
+        {
+            laidOutCanvasHeight = canvasSize.y;
+            var count = presentedDraws?.Length ?? 0;
+            if (spreadBandRoot == null || !spreadBandRoot.activeSelf || spreadCards == null || count < 2)
+            {
+                return;
+            }
+
+            var used = Mathf.Min(count, spreadCards.Length);
+            var layout = ResultSpreadLayout.Compute(used, canvasSize.y);
+            for (var i = 0; i < used; i++)
+            {
+                PositionSpreadCell(i, layout.Cells[i], layout);
+            }
+
+            ApplyReadingLayout(layout.ReadingPosition, layout.ReadingSize);
+        }
+
         private void Update()
         {
+            RelayoutIfCanvasChanged();
+
             if (pendingSince < 0f || interpretationStatusText == null)
             {
                 return;
@@ -236,33 +257,91 @@ namespace TarotUnity.UI
 
         private IEnumerator FadeInReading()
         {
-            readingContentGroup.alpha = 0f;
+            SetReadingAlpha(0f);
             var elapsed = 0f;
             while (elapsed < readyFadeSeconds)
             {
                 elapsed += Time.unscaledDeltaTime;
-                readingContentGroup.alpha = Mathf.Clamp01(elapsed / readyFadeSeconds);
+                SetReadingAlpha(Mathf.Clamp01(elapsed / readyFadeSeconds));
                 yield return null;
             }
 
-            readingContentGroup.alpha = 1f;
+            SetReadingAlpha(1f);
             readyFade = null;
+        }
+
+        // Phase 67: the mode label fades in with the reading it describes.
+        private void SetReadingAlpha(float alpha)
+        {
+            readingContentGroup.alpha = alpha;
+            if (modeLabelText != null)
+            {
+                modeLabelText.alpha = alpha;
+            }
         }
 
         private void PresentFrame(ReadingSessionSnapshot session)
         {
-            SetText(questionText, session.question);
-            SetText(spreadNameText, session.spreadName);
+            SetText(questionText, ReadingTextSanitizer.Plain(session.question));
+            SetText(spreadNameText, ReadingTextSanitizer.Plain(session.spreadName));
             PresentCards(session.cardDraws);
         }
 
         private void SetReadingTexts(ReadingSessionSnapshot session)
         {
-            SetText(summaryText, session?.summary);
-            SetText(overallText, session?.overallInterpretation);
-            SetText(cardAnalysisText, session?.cardAnalysis);
-            SetText(adviceText, session?.advice);
-            SetText(warningText, session?.warning);
+            SetText(summaryText, ReadingTextSanitizer.Plain(session?.summary));
+            SetText(overallText, ReadingTextSanitizer.Plain(session?.overallInterpretation));
+            ApplyCardAnalysis(session?.cardAnalysis, session?.cardDraws);
+            SetText(adviceText, ReadingTextSanitizer.Plain(session?.advice));
+            SetText(warningText, ReadingTextSanitizer.Plain(session?.warning));
+
+            // Phase 67 (spec C 4.6): an offline reading says so in its first line. Its warning
+            // field holds that same sentence, so the 提醒 section is only for an online warning.
+            var offline = session != null && session.source == ReadingSource.Offline;
+            SetOfflineNotice(offline);
+            SetWarningSection(session != null && !offline && !string.IsNullOrWhiteSpace(session.warning));
+        }
+
+        private void ApplyCardAnalysis(string cardAnalysis, CardDrawData[] draws)
+        {
+            var formatted = CardAnalysisFormatter.Build(cardAnalysis, draws);
+            SetText(cardAnalysisText, formatted.RichText);
+            if (readingNavigator != null)
+            {
+                readingNavigator.SetBlocks(formatted.Ranges);
+            }
+        }
+
+        private void SetOfflineNotice(bool visible)
+        {
+            if (offlineNoticeText == null)
+            {
+                return;
+            }
+
+            offlineNoticeText.text = ReleaseUxCopy.OfflineWarning;
+            offlineNoticeText.gameObject.SetActive(visible);
+        }
+
+        private void SetWarningSection(bool visible)
+        {
+            if (warningHeading != null)
+            {
+                warningHeading.SetActive(visible);
+            }
+
+            if (warningText != null)
+            {
+                warningText.gameObject.SetActive(visible);
+            }
+        }
+
+        private void SetNavigatorInteractive(bool interactive)
+        {
+            if (readingNavigator != null)
+            {
+                readingNavigator.SetInteractive(interactive);
+            }
         }
 
         private void SetReadingVisible(bool visible)
@@ -280,6 +359,10 @@ namespace TarotUnity.UI
 
             readingContentGroup.alpha = visible ? 1f : 0f;
             readingContentGroup.blocksRaycasts = visible;
+            if (visible && modeLabelText != null)
+            {
+                modeLabelText.alpha = 1f;
+            }
         }
 
         private void SetStatus(string message)
@@ -316,10 +399,18 @@ namespace TarotUnity.UI
             SetText(overallText, string.Empty);
             SetText(cardAnalysisText, string.Empty);
             SetText(warningText, string.Empty);
+            if (readingNavigator != null)
+            {
+                readingNavigator.SetBlocks(null);
+            }
+
+            SetOfflineNotice(false);
+            SetWarningSection(false);
             PresentCards(null);
             SetStatus(null);
             SetText(modeLabelText, string.Empty);
             SetInterpretationButtons(false, false);
+            SetNavigatorInteractive(false);
             SetReadingVisible(true);
             pendingSince = -1f;
         }
@@ -341,6 +432,7 @@ namespace TarotUnity.UI
 
         private void PresentCards(CardDrawData[] draws)
         {
+            presentedDraws = draws;
             var catalog = ResolveCatalog();
             var count = draws?.Length ?? 0;
 
@@ -350,35 +442,28 @@ namespace TarotUnity.UI
             if (useSpread)
             {
                 SetSingleModeActive(false);
-                // The warning line is pinned near the footer for the single-card
-                // layout; the full-width spread reading reaches into it, so it is
-                // hidden here (its copy is still set for a backend that returns one).
-                if (warningText != null) warningText.gameObject.SetActive(false);
-                spreadBandRoot.SetActive(true);
-                ApplyReadingLayout(spreadReadingPos, spreadReadingSize);
+                if (bottomDivider != null)
+                {
+                    // The single-card footer divider would cross the taller spread reading.
+                    bottomDivider.SetActive(false);
+                }
 
-                // How many of the pool's cells this reading uses. If a spread ever
-                // has more cards than the pool, the extras have nowhere to go - warn
-                // rather than drop silently, so it can never regress unnoticed.
-                var used = Mathf.Min(count, spreadCards.Length);
+                spreadBandRoot.SetActive(true);
+
+                // If a spread ever has more cards than the pool, the extras have nowhere to
+                // go - warn rather than drop silently, so it can never regress unnoticed.
                 if (count > spreadCards.Length)
                 {
                     Debug.LogWarning($"ResultPanelPresenter: {count}-card spread exceeds the " +
                         $"{spreadCards.Length}-cell band; rebuild the band with more cells.");
                 }
 
-                var pitch = Mathf.Min(spreadBasePitch, used > 0 ? spreadRowWidth / used : spreadBasePitch);
-                var scale = Mathf.Clamp(pitch / spreadBasePitch, spreadMinCellScale, 1f);
-
                 for (var i = 0; i < spreadCards.Length; i++)
                 {
-                    if (i < used)
-                    {
-                        PositionSpreadCell(spreadCards[i], i, used, pitch, scale);
-                    }
-
                     FillSpreadCell(spreadCards[i], i < count ? draws[i] : null, catalog);
                 }
+
+                ApplyLayout(CurrentCanvasSize());
                 return;
             }
 
@@ -387,12 +472,55 @@ namespace TarotUnity.UI
             {
                 spreadBandRoot.SetActive(false);
             }
+
             SetSingleModeActive(true);
-            if (warningText != null) warningText.gameObject.SetActive(true);
+            if (bottomDivider != null)
+            {
+                bottomDivider.SetActive(true);
+            }
+
             ApplyReadingLayout(singleReadingPos, singleReadingSize);
+            laidOutCanvasHeight = CurrentCanvasSize().y;
 
             var primary = count > 0 && catalog != null ? catalog.FindSprite(draws[0]) : null;
             SetArtwork(primary);
+        }
+
+        // EditMode tests and captures lay out at the reference size; at runtime the canvas
+        // rect carries the real size once the scaler has run.
+        private Vector2 CurrentCanvasSize()
+        {
+            var reference = new Vector2(TarotUiSpacing.ReferenceWidth, TarotUiSpacing.ReferenceHeight);
+            if (!Application.isPlaying)
+            {
+                return reference;
+            }
+
+            var rect = transform as RectTransform;
+            return rect != null && rect.rect.height >= 1f ? rect.rect.size : reference;
+        }
+
+        private void RelayoutIfCanvasChanged()
+        {
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            var size = CurrentCanvasSize();
+            if (Mathf.Approximately(size.y, laidOutCanvasHeight))
+            {
+                return;
+            }
+
+            if (spreadBandRoot != null && spreadBandRoot.activeSelf)
+            {
+                ApplyLayout(size);
+            }
+            else
+            {
+                laidOutCanvasHeight = size.y;
+            }
         }
 
         private void SetSingleModeActive(bool active)
@@ -440,15 +568,13 @@ namespace TarotUnity.UI
 
             if (cell.label != null)
             {
-                cell.label.text = BuildCellLabel(draw);
+                cell.label.text = ReadingTextSanitizer.Plain(BuildCellLabel(draw));
             }
         }
 
-        // Centre the used cells as one row: cell i sits at (i - (used-1)/2)*pitch,
-        // so any count is symmetric about the middle. The whole cell (frame, art,
-        // label, glow) scales together as the pitch tightens for larger spreads.
-        private void PositionSpreadCell(SpreadCardCell cell, int index, int used, float pitch, float scale)
+        private void PositionSpreadCell(int index, SpreadCellPlacement placement, SpreadLayoutResult layout)
         {
+            var cell = spreadCards[index];
             if (cell == null || cell.root == null)
             {
                 return;
@@ -460,9 +586,24 @@ namespace TarotUnity.UI
                 return;
             }
 
-            var x = (index - (used - 1) * 0.5f) * pitch;
-            rt.anchoredPosition = new Vector2(x, spreadCellY);
-            rt.localScale = Vector3.one * scale;
+            rt.anchoredPosition = placement.Position;
+            var target = cellTargets != null && index < cellTargets.Length ? cellTargets[index] : null;
+            if (target != null)
+            {
+                target.SetBaseScale(placement.Scale);
+            }
+            else
+            {
+                rt.localScale = Vector3.one * placement.Scale;
+            }
+
+            // The label is a child of the scaled cell; compensate so it keeps a fixed on-screen size.
+            if (cell.label != null && placement.Scale > 0f)
+            {
+                cell.label.fontSize = layout.LabelFontSize / placement.Scale;
+                cell.label.rectTransform.sizeDelta = new Vector2(
+                    ResultSpreadLayout.BasePitch / placement.Scale, layout.LabelHeight / placement.Scale);
+            }
         }
 
         private static string BuildCellLabel(CardDrawData draw)
@@ -471,7 +612,7 @@ namespace TarotUnity.UI
                 ? draw.position_name
                 : (draw.tarot_card != null ? draw.tarot_card.name_zh : string.Empty);
             position ??= string.Empty;
-            return draw.is_reversed ? position + "（逆位）" : position;
+            return draw.is_reversed ? position + ReleaseUxCopy.CardReversedMark : position;
         }
 
         private void ApplyReadingLayout(Vector2 pos, Vector2 size)
