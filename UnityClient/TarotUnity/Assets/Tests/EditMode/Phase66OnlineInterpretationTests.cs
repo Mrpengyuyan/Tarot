@@ -212,6 +212,23 @@ namespace TarotUnity.Tests.EditMode
         }
 
         [Test]
+        public void IsRealInterpretationAcceptsAStoredRowOrBodyText()
+        {
+            Assert.That(ReadingSessionMapper.IsRealInterpretation(null), Is.False, "null reference");
+            Assert.That(ReadingSessionMapper.IsRealInterpretation(new InterpretationResponse()), Is.False,
+                "control: the empty instance JsonUtility makes of null is not an interpretation");
+            Assert.That(ReadingSessionMapper.IsRealInterpretation(
+                    new InterpretationResponse { id = 3001, overall_interpretation = string.Empty }), Is.True,
+                "a stored row counts even when its text is empty");
+            Assert.That(ReadingSessionMapper.IsRealInterpretation(
+                    new InterpretationResponse { id = 0, overall_interpretation = "整体" }), Is.True,
+                "body text counts even without a row id");
+            Assert.That(ReadingSessionMapper.IsRealInterpretation(
+                    new InterpretationResponse { id = 0, overall_interpretation = "   " }), Is.False,
+                "whitespace is not body text");
+        }
+
+        [Test]
         public void StartMappingProducesAnOnlinePendingSnapshot()
         {
             var prediction = new PredictionResponse { id = 601, spread_type_id = 2, question = "问题", question_type = "general" };

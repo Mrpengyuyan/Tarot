@@ -171,6 +171,24 @@ namespace TarotUnity.Tests.PlayMode
             Assert.That(server.RequestLog, Is.EqualTo(new[] { "POST /api/v1/refresh", "POST /api/v1/guest-session" }));
         }
 
+        [UnityTest]
+        public IEnumerator SharedClientIsClearedOnlyWhenThatClientIsDestroyed()
+        {
+            var firstObject = new GameObject("Phase66_SharedClientFirst");
+            var secondObject = new GameObject("Phase66_SharedClientSecond");
+            var first = firstObject.AddComponent<ApiClient>();
+            var second = secondObject.AddComponent<ApiClient>();
+            ApiClient.SetShared(first);
+
+            Object.Destroy(second.gameObject);
+            yield return null;
+            Assert.That(ApiClient.Shared, Is.SameAs(first), "destroying another client keeps the shared one");
+
+            Object.Destroy(first.gameObject);
+            yield return null;
+            Assert.That(ApiClient.Shared, Is.Null);
+        }
+
         private static PredictionCreateRequest Payload(int spreadId)
         {
             return new PredictionCreateRequest

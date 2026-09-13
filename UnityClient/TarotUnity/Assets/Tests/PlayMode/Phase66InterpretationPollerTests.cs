@@ -306,6 +306,103 @@ namespace TarotUnity.Tests.PlayMode
             Assert.That(snapshot.canRetry, Is.False);
         }
 
+        [UnityTest]
+        public IEnumerator BeginIgnoresSnapshotsThatCannotBePolled()
+        {
+            server.Script("POST", AsyncPath, Accepted());
+            server.Script("GET", DetailPath, Processing());
+
+            ReadingSessionSnapshot nullSnapshot = null;
+
+            var offlineSourceSnapshot = OnlineSnapshot(1);
+            offlineSourceSnapshot.source = ReadingSource.Offline;
+
+            var zeroIdSnapshot = OnlineSnapshot(1);
+            zeroIdSnapshot.predictionId = 0;
+
+            var offlineSourceState = offlineSourceSnapshot.interpretationState;
+            var zeroIdState = zeroIdSnapshot.interpretationState;
+
+            poller.Begin(nullSnapshot);
+            Assert.That(poller.IsPolling, Is.False);
+            Assert.That(poller.Current, Is.Null);
+
+            poller.Begin(offlineSourceSnapshot);
+            Assert.That(poller.IsPolling, Is.False);
+            Assert.That(poller.Current, Is.SameAs(offlineSourceSnapshot));
+
+            poller.Begin(zeroIdSnapshot);
+            Assert.That(poller.IsPolling, Is.False);
+            Assert.That(poller.Current, Is.SameAs(zeroIdSnapshot));
+
+            yield return new WaitForSecondsRealtime(0.5f);
+
+            Assert.That(server.Count("POST", AsyncPath), Is.EqualTo(0));
+            Assert.That(server.Count("GET", DetailPath), Is.EqualTo(0));
+            Assert.That(observed, Is.Empty);
+
+            Assert.That(offlineSourceSnapshot.interpretationState, Is.EqualTo(offlineSourceState));
+            Assert.That(offlineSourceSnapshot.failureMessage, Is.Empty);
+            Assert.That(offlineSourceSnapshot.canRetry, Is.False);
+
+            Assert.That(zeroIdSnapshot.interpretationState, Is.EqualTo(zeroIdState));
+            Assert.That(zeroIdSnapshot.failureMessage, Is.Empty);
+            Assert.That(zeroIdSnapshot.canRetry, Is.False);
+
+            // Control: the wiring in this test really can poll.
+            poller.Begin(OnlineSnapshot(1));
+            yield return WaitUntil(() => server.Count("POST", AsyncPath) == 1, 10f, "control: a pollable snapshot polls");
+        }
+
+        [UnityTest]
+        public IEnumerator StartingAnOfflineReadingStopsPollingThePreviousOne()
+        {
+            server.Script("POST", AsyncPath, Accepted());
+            server.Script("GET", DetailPath, Processing());
+
+            var online = OnlineSnapshot(1);
+            poller.Begin(online);
+            yield return WaitUntil(() => server.Count("GET", DetailPath) >= 2, 10f,
+                "control: the online reading is being polled");
+            Assert.That(poller.IsPolling, Is.True);
+
+            var offline = OnlineSnapshot(1);
+            offline.source = ReadingSource.Offline;
+            offline.predictionId = 0;
+            var offlineStateBefore = offline.interpretationState;
+
+            poller.Begin(offline);
+            Assert.That(poller.IsPolling, Is.False);
+            Assert.That(poller.Current, Is.SameAs(offline));
+
+            yield return new WaitForSecondsRealtime(0.3f);
+            var settled = server.Count("GET", DetailPath);
+
+            var onlineChanges = 0;
+            void CountOnlineChange(ReadingSessionSnapshot changed)
+            {
+                if (changed == online)
+                {
+                    onlineChanges++;
+                }
+            }
+
+            poller.StateChanged += CountOnlineChange;
+            try
+            {
+                yield return new WaitForSecondsRealtime(1.0f);
+
+                Assert.That(server.Count("GET", DetailPath), Is.EqualTo(settled));
+                Assert.That(onlineChanges, Is.EqualTo(0));
+                Assert.That(online.interpretationState, Is.EqualTo(InterpretationState.Pending));
+                Assert.That(offline.interpretationState, Is.EqualTo(offlineStateBefore));
+            }
+            finally
+            {
+                poller.StateChanged -= CountOnlineChange;
+            }
+        }
+
         private static IEnumerator BeginFromRoom(InterpretationPoller target, ReadingSessionSnapshot snapshot)
         {
             yield return null;
