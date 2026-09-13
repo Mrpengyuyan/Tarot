@@ -23420,6 +23420,7 @@ GameObject:
   - component: {fileID: 1593410503}
   - component: {fileID: 1593410502}
   - component: {fileID: 1593410504}
+  - component: {fileID: 1593410505}
   m_Layer: 0
   m_Name: Phase67_OfflineNotice
   m_TagString: Untagged
@@ -23559,6 +23560,18 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &1593410505
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1593410500}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5220ad95567240d59b242b2a1714674, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TarotUnity.Runtime::TarotUnity.UI.TarotUiPreserveColor
 --- !u!1 &1613302969
 GameObject:
   m_ObjectHideFlags: 0

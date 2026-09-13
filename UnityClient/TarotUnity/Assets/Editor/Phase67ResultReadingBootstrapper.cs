@@ -159,6 +159,7 @@ namespace TarotUnity.Editor
         private static TextMeshProUGUI EnsureNotice(RectTransform content, TMP_Text fontSource)
         {
             var notice = EnsureContentText(content, OfflineNoticeName, fontSource);
+            EnsureComponent<TarotUiPreserveColor>(notice.gameObject);
             notice.fontSize = 16f;
             notice.color = NoticeInk;
             notice.alignment = TextAlignmentOptions.TopLeft;

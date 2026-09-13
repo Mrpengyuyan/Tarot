@@ -173,8 +173,8 @@ namespace TarotUnity.UI
 
             // An authored vertex gradient (the gilded title) is a deliberate
             // treatment; flattening it to a single colour here would undo it the
-            // moment the scene wakes.
-            if (!text.enableVertexGradient)
+            // moment the scene wakes. TarotUiPreserveColor marks another such deliberate colour.
+            if (!text.enableVertexGradient && text.GetComponent<TarotUiPreserveColor>() == null)
             {
                 if (text.GetComponent<TarotUiAccentText>() != null)
                 {
@@ -202,13 +202,17 @@ namespace TarotUnity.UI
                 text.font = font;
             }
 
-            if (text.GetComponent<TarotUiAccentText>() != null)
+            // TarotUiPreserveColor marks a text whose authored colour must survive restyling.
+            if (text.GetComponent<TarotUiPreserveColor>() == null)
             {
-                text.color = accentGoldColor;
-            }
-            else
-            {
-                text.color = text.fontSize <= 16 ? mutedTextColor : textColor;
+                if (text.GetComponent<TarotUiAccentText>() != null)
+                {
+                    text.color = accentGoldColor;
+                }
+                else
+                {
+                    text.color = text.fontSize <= 16 ? mutedTextColor : textColor;
+                }
             }
 
             text.lineSpacing = Mathf.Max(text.lineSpacing, bodyLineSpacing);

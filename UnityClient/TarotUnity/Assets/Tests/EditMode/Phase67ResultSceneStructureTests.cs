@@ -72,6 +72,23 @@ namespace TarotUnity.Tests.EditMode
         }
 
         [Test]
+        public void ThemeKeepsTheOfflineNoticeInk()
+        {
+            var theme = canvas.GetComponent<TarotUiTheme>();
+            Assert.That(theme, Is.Not.Null, "control: the Result canvas carries the UI theme");
+            var notice = Content.Find("Phase67_OfflineNotice").GetComponent<TMP_Text>();
+            var modeLabel = canvas.Find("Phase66_ModeLabel").GetComponent<TMP_Text>();
+            var authoredNotice = notice.color;
+            var authoredMode = modeLabel.color;
+
+            theme.Apply();
+
+            Assert.That(modeLabel.color, Is.Not.EqualTo(authoredMode), "control: the theme recolours an unmarked small text");
+            Assert.That(notice.color, Is.EqualTo(authoredNotice), "the offline notice keeps its dark-gold ink");
+            Assert.That(notice.GetComponent<TarotUiPreserveColor>(), Is.Not.Null, "the notice carries the colour-preserving marker");
+        }
+
+        [Test]
         public void ScrollbarAndFadeAreWired()
         {
             var scrollRect = Scroll.GetComponent<ScrollRect>();
