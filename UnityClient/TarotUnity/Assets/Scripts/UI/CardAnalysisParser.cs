@@ -60,7 +60,22 @@ namespace TarotUnity.UI
             var bodies = new string[draws.Length];
             var used = new bool[lines.Count];
             var matched = 0;
-            for (var d = 0; d < draws.Length; d++)
+
+            // Longer position names claim their lines first, so a name that is a prefix of another
+            // (过去 / 过去的影响) cannot take the other card's line.
+            var order = new int[draws.Length];
+            for (var i = 0; i < order.Length; i++)
+            {
+                order[i] = i;
+            }
+
+            Array.Sort(order, (a, b) =>
+            {
+                var byLength = PositionLength(draws[b]).CompareTo(PositionLength(draws[a]));
+                return byLength != 0 ? byLength : a.CompareTo(b);
+            });
+
+            foreach (var d in order)
             {
                 var position = draws[d]?.position_name?.Trim();
                 if (string.IsNullOrEmpty(position))
@@ -143,6 +158,11 @@ namespace TarotUnity.UI
             text = LeadingOrientation.Replace(text, string.Empty, 1);
             text = LeadingSeparators.Replace(text, string.Empty, 1);
             return text.Trim();
+        }
+
+        private static int PositionLength(CardDrawData draw)
+        {
+            return draw?.position_name?.Trim().Length ?? 0;
         }
     }
 }

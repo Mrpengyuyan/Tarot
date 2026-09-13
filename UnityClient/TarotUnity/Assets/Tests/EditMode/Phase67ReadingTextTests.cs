@@ -133,6 +133,19 @@ namespace TarotUnity.Tests.EditMode
         }
 
         [Test]
+        public void LongerPositionNamesClaimTheirLinesBeforeShorterPrefixes()
+        {
+            var draws = LocalReadingSimulator.CreatePlaceholderDraws(2, new[] { "过去", "过去的影响" }, null);
+            const string analysis = "过去的影响：魔术师 — 旧习惯仍在拉扯。\n过去：愚者 — 敢于开始的勇气仍在。";
+
+            var result = CardAnalysisParser.Parse(analysis, draws);
+
+            Assert.That(result.Success, Is.True);
+            Assert.That(result.Bodies, Is.EqualTo(new[] { "敢于开始的勇气仍在。", "旧习惯仍在拉扯。" }),
+                "过去 must not take the line that belongs to 过去的影响");
+        }
+
+        [Test]
         public void FailsOnEmptyInput()
         {
             Assert.That(CardAnalysisParser.Parse(null, ThreeCards()).Success, Is.False);
