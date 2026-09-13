@@ -467,6 +467,14 @@ reading flows.
 The Result screen received the current parlor backdrop and a readable quiet exit
 link, completing the Phase 64 visual baseline for the next product-closure work.
 
+### Phase 65 — Guest sessions and one repository
+
+The project got a cleaned Unity baseline with documented run modes. Boot now probes
+the backend's health and then starts a guest session, while the menu shows that
+online reading is being prepared. The FastAPI backend moved into this repository
+under `Server/`, with its own README, secret ignore rules and a CI workflow scoped
+to `Server/`.
+
 ### Phase 66 — Online interpretation loop
 
 The reading room now deals the backend's cards as soon as they exist, and a
