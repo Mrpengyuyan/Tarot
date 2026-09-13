@@ -39,6 +39,12 @@ namespace TarotUnity.UI
         public const string OfflineButtonLabel = "查看离线解读";
         public const string OfflineWarning = "这是离线解读，由本地牌义生成，未经过 AI。";
 
+        // Phase 67: Result reading (spec C 4.3, 4.6). No ASCII letters.
+        public const string ResultSectionWarning = "提醒";
+        public const string CardHeadingSeparator = " · ";
+        public const string CardUprightMark = "（正位）";
+        public const string CardReversedMark = "（逆位）";
+
         public static string GuestQuotaExhausted(int retryAfterSeconds)
         {
             const string head = "今天的访客占卜次数已用完，";
