@@ -3225,12 +3225,12 @@ S=/Users/maochuandou/BUPT/Game/UnityTarot/.superpowers/sdd/2026-09-13-result-rea
 bash "$S/run/ut.sh" PlayMode c6-red -testFilter TarotUnity.Tests.PlayMode.Phase67ResultReadingPlayTests
 ```
 
-预期 `total=3 failed=2`：
+预期 `total=3 failed=3`：
 - `ClickingACard…` 失败在 `control: the analysis was split into ten blocks`（presenter 还没把分块交给导航组件）；
 - `FadeHides…` 失败在 `long text at the top shows the fade`（导航组件还没被设为可交互）；
-- `RevealBringsIn…` 已经通过（伴随组在 Task 4、5 已接好，这条测试守护的是整条流程）。
+- `RevealBringsIn…` 失败在 `Phase67_OfflineNotice should be active for an offline three-card reading`（离线提示要等本任务的 presenter 才会显示；伴随组本身在 Task 4、5 已接好）。
 
-如果 `RevealBringsIn…` 失败，STOP 并报告。
+任何一条的失败原因与上面不同，就 STOP 并报告。
 
 - [ ] **Step 3: 写 EditMode 测试**
 
