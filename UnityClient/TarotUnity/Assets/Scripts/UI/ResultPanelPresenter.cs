@@ -72,7 +72,11 @@ namespace TarotUnity.UI
 
         public const float PendingSlowNoticeSeconds = 20f;
 
-        private float pendingSince = -1f;
+        private float pendingSince;
+
+        // Explicit flag rather than a negative pendingSince: a shifted start time (tests fake
+        // "20 s ago" this way) is still a generating reading.
+        private bool isPending;
         private Coroutine readyFade;
         private CardDrawData[] presentedDraws;
         private float laidOutCanvasHeight = -1f;
@@ -138,6 +142,7 @@ namespace TarotUnity.UI
             SetInterpretationButtons(false, false);
             SetNavigatorInteractive(false);
             pendingSince = Time.unscaledTime;
+            isPending = true;
         }
 
         public void ShowReady(ReadingSessionSnapshot session, bool fadeIn)
@@ -147,7 +152,7 @@ namespace TarotUnity.UI
             SetStatus(null);
             SetText(modeLabelText, ModeLabelFor(session));
             SetInterpretationButtons(false, false);
-            pendingSince = -1f;
+            isPending = false;
             SetReadingVisible(true);
             SetNavigatorInteractive(true);
 
@@ -171,7 +176,7 @@ namespace TarotUnity.UI
             SetText(modeLabelText, string.Empty);
             SetInterpretationButtons(session.canRetry, true);
             SetNavigatorInteractive(false);
-            pendingSince = -1f;
+            isPending = false;
         }
 
         public void ShowOffline(ReadingSessionSnapshot session)
@@ -181,7 +186,7 @@ namespace TarotUnity.UI
             SetStatus(null);
             SetText(modeLabelText, ReleaseUxCopy.ModeOffline);
             SetInterpretationButtons(false, false);
-            pendingSince = -1f;
+            isPending = false;
             SetReadingVisible(true);
             SetNavigatorInteractive(true);
         }
@@ -238,21 +243,41 @@ namespace TarotUnity.UI
         {
             RelayoutIfCanvasChanged();
 
-            if (pendingSince < 0f || interpretationStatusText == null)
+            if (isPending)
             {
-                return;
+                RefreshPendingState(Time.unscaledTime - pendingSince);
+            }
+        }
+
+        public static bool ShouldOfferOfflineWhilePending(float elapsedSeconds)
+        {
+            return elapsedSeconds >= PendingSlowNoticeSeconds;
+        }
+
+        /// <summary>
+        /// The generating state after <paramref name="elapsedSeconds"/>: a breathing status line
+        /// (spec 7.1), and from 20 s the slow notice together with 查看离线解读 (spec C, decision C3).
+        /// Update drives it every frame; the capture builder calls it to render the 20-second state.
+        /// </summary>
+        public void RefreshPendingState(float elapsedSeconds)
+        {
+            if (interpretationStatusText != null)
+            {
+                var status = BuildPendingStatus(elapsedSeconds);
+                if (interpretationStatusText.text != status)
+                {
+                    interpretationStatusText.text = status;
+                }
+
+                interpretationStatusText.alpha =
+                    0.55f + 0.45f * (0.5f + 0.5f * Mathf.Sin(elapsedSeconds * Mathf.PI * 2f / 2.4f));
             }
 
-            // A breathing status line while the interpretation is generating; after
-            // 20 s the slow-generation notice joins it (spec 7.1).
-            var elapsed = Time.unscaledTime - pendingSince;
-            var status = BuildPendingStatus(elapsed);
-            if (interpretationStatusText.text != status)
+            if (ShouldOfferOfflineWhilePending(elapsedSeconds) && offlineInterpretationButton != null
+                && !offlineInterpretationButton.gameObject.activeSelf)
             {
-                interpretationStatusText.text = status;
+                SetInterpretationButtons(false, true);
             }
-
-            interpretationStatusText.alpha = 0.55f + 0.45f * (0.5f + 0.5f * Mathf.Sin(elapsed * Mathf.PI * 2f / 2.4f));
         }
 
         private IEnumerator FadeInReading()
@@ -412,7 +437,7 @@ namespace TarotUnity.UI
             SetInterpretationButtons(false, false);
             SetNavigatorInteractive(false);
             SetReadingVisible(true);
-            pendingSince = -1f;
+            isPending = false;
         }
 
         private static void SetText(TMP_Text target, string value)

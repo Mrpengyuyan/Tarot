@@ -6,6 +6,7 @@ using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace TarotUnity.Tests.EditMode
 {
@@ -168,6 +169,28 @@ namespace TarotUnity.Tests.EditMode
             var scroll = Field<RectTransform>("readingScrollRect");
             Assert.That(scroll.anchoredPosition, Is.EqualTo(new Vector2(160f, 4f)));
             Assert.That(scroll.sizeDelta, Is.EqualTo(new Vector2(772f, 448f)));
+        }
+
+        [Test]
+        public void PendingReadingOffersOfflineTextFromTwentySeconds()
+        {
+            var online = ReadingSessionMapper.FromBackendStart(
+                new PredictionResponse { id = 68, question = "问题？" }, LocalReadingSimulator.CreatePlaceholderDraws(3));
+            var offline = Field<Button>("offlineInterpretationButton");
+            var retry = Field<Button>("retryInterpretationButton");
+            var status = Field<TMP_Text>("interpretationStatusText");
+
+            presenter.PresentSession(online);
+            Assert.That(online.interpretationState, Is.EqualTo(InterpretationState.Pending), "control: generating");
+
+            presenter.RefreshPendingState(19.9f);
+            Assert.That(offline.gameObject.activeSelf, Is.False, "no offline button before 20 seconds");
+            Assert.That(status.text, Is.EqualTo(ReleaseUxCopy.ResultPending));
+
+            presenter.RefreshPendingState(ResultPanelPresenter.PendingSlowNoticeSeconds);
+            Assert.That(offline.gameObject.activeSelf, Is.True, "查看离线解读 appears with the slow notice");
+            Assert.That(retry.gameObject.activeSelf, Is.False, "retry stays reserved for failures");
+            Assert.That(status.text, Does.Contain(ReleaseUxCopy.ResultPendingSlow));
         }
     }
 }
