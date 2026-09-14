@@ -27,16 +27,19 @@ namespace TarotUnity.Editor
         private const float FrameInnerLineUnits = 18f; // TarotPanel's inner gold line ends 18 canvas units inside the panel edge
         private const float BelowFrameUnits = 6f;      // canvas units checked under the panel's bottom edge
         private const int CornerMargin = 40;           // skip the rounded frame corners
-        private const float InkTolerance = 0.1f;       // RGB distance from a text ink that still counts as text
+        private const float LightInkTolerance = 0.2f;  // rendered body glyphs sit about 0.1 darker than their authored ink (measured)
+        private const float NoticeInkTolerance = 0.1f; // the notice's dark gold is only 0.22 from the frame gold, so stay tight
         private const string ControlShotFile = "Result_10card_16x10.png";
 
-        // Inks reading text is drawn in: the theme's ivory and muted grey, the bootstrapper's body ink,
-        // and the offline notice's dark gold. Gold headings share the frame's gold, so they are not counted.
-        private static readonly Color[] TextInks =
+        // Inks reading text is drawn in: the theme's ivory and muted grey and the bootstrapper's body ink
+        // (light inks), and the offline notice's dark gold. Gold headings share the frame's gold, so they
+        // are not counted.
+        private static readonly Color[] LightTextInks =
         {
-            new Color(0.96f, 0.91f, 0.80f), new Color(0.92f, 0.88f, 0.78f),
-            new Color(0.74f, 0.72f, 0.76f), new Color(0.78f, 0.66f, 0.44f),
+            new Color(0.96f, 0.91f, 0.80f), new Color(0.92f, 0.88f, 0.78f), new Color(0.74f, 0.72f, 0.76f),
         };
+
+        private static readonly Color NoticeTextInk = new Color(0.78f, 0.66f, 0.44f);
 
         private static readonly string[] CelticNames =
         {
@@ -312,18 +315,23 @@ namespace TarotUnity.Editor
 
         private static bool IsTextInk(Color pixel)
         {
-            foreach (var ink in TextInks)
+            foreach (var ink in LightTextInks)
             {
-                var dr = pixel.r - ink.r;
-                var dg = pixel.g - ink.g;
-                var db = pixel.b - ink.b;
-                if (dr * dr + dg * dg + db * db < InkTolerance * InkTolerance)
+                if (IsWithin(pixel, ink, LightInkTolerance))
                 {
                     return true;
                 }
             }
 
-            return false;
+            return IsWithin(pixel, NoticeTextInk, NoticeInkTolerance);
+        }
+
+        private static bool IsWithin(Color pixel, Color ink, float tolerance)
+        {
+            var dr = pixel.r - ink.r;
+            var dg = pixel.g - ink.g;
+            var db = pixel.b - ink.b;
+            return dr * dr + dg * dg + db * db < tolerance * tolerance;
         }
 
         private static (Canvas c, RenderMode m, Camera cam, float d, bool p)[] PrepareCanvases(Camera camera)
