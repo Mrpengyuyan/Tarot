@@ -32,7 +32,10 @@ Spec: `docs/superpowers/specs/2026-09-13-result-reading-experience-design.md` (s
 
 `Docs/VisualReview/Phase67/`: one, three, five and ten cards at 16:9; three and ten cards at 16:10;
 three cards at 4:3; and the generating (20 s), failed and offline states. The capture builder checks
-the canvas took the expected height and fails if body text appears at the reading frame's bottom edge.
+the canvas took the expected height and fails if reading text shows between the frame's inner gold
+line and just below the frame. A control render of the 10-card 16:10 shot with the viewport mask off
+proves the check can see unclipped text. Gold section headings match the frame's gold and are not
+counted.
 
 ## Known limits
 

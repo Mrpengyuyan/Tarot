@@ -15,16 +15,28 @@ namespace TarotUnity.Editor
     /// Phase 67 review shots of the Result reading: 1/3/5/10 cards at 16:9, 3 and 10 cards at
     /// 16:10, 3 cards at 4:3, and the generating (20 s), failed and offline states.
     /// READ-ONLY: it presents sample snapshots and renders; the scene is not saved. Each shot
-    /// checks the canvas really took the expected height and fails if any ivory body-text pixel
-    /// appears in the rows around the reading frame's bottom edge. Set PHASE67_CAPTURE_DIR to
-    /// render a review round somewhere other than Docs.
+    /// checks the canvas really took the expected height and fails if reading text shows between
+    /// the frame's inner gold line and just below the frame. A control render of
+    /// Result_10card_16x10 with the viewport mask off proves that check can see unclipped text.
+    /// Set PHASE67_CAPTURE_DIR to render a review round somewhere other than Docs.
     /// </summary>
     public static class Phase67ResultReadingCaptureBuilder
     {
         private const string ResultScenePath = "Assets/Scenes/Result.unity";
         private const string DefaultOutFolder = "Docs/VisualReview/Phase67";
-        private const int BelowFrameRows = 12;    // pixels either side of the frame's bottom edge (2 px per canvas unit)
-        private const int CornerMargin = 40;      // skip the rounded frame corners
+        private const float FrameInnerLineUnits = 18f; // TarotPanel's inner gold line ends 18 canvas units inside the panel edge
+        private const float BelowFrameUnits = 6f;      // canvas units checked under the panel's bottom edge
+        private const int CornerMargin = 40;           // skip the rounded frame corners
+        private const float InkTolerance = 0.1f;       // RGB distance from a text ink that still counts as text
+        private const string ControlShotFile = "Result_10card_16x10.png";
+
+        // Inks reading text is drawn in: the theme's ivory and muted grey, the bootstrapper's body ink,
+        // and the offline notice's dark gold. Gold headings share the frame's gold, so they are not counted.
+        private static readonly Color[] TextInks =
+        {
+            new Color(0.96f, 0.91f, 0.80f), new Color(0.92f, 0.88f, 0.78f),
+            new Color(0.74f, 0.72f, 0.76f), new Color(0.78f, 0.66f, 0.44f),
+        };
 
         private static readonly string[] CelticNames =
         {
@@ -209,12 +221,33 @@ namespace TarotUnity.Editor
                 tex.Apply();
                 File.WriteAllBytes(Path.Combine(outFolder, shot.File), tex.EncodeToPNG());
 
-                var ivory = CountIvoryAroundFrameBottom(tex, camera, scroll);
+                var pixelsPerUnit = shot.Height / canvasSize.y;
+                var outside = CountTextOutsideFrame(tex, camera, scroll, pixelsPerUnit);
                 Debug.Log($"Phase 67 capture {shot.File}: canvas={canvasSize.x:0}x{canvasSize.y:0} " +
-                    $"readingHeight={scroll.rect.height:0.0} belowFrameIvoryPixels={ivory}");
-                if (ivory > 0)
+                    $"readingHeight={scroll.rect.height:0.0} outsideFrameTextPixels={outside}");
+                if (outside > 0)
                 {
-                    throw new InvalidOperationException($"{shot.File}: {ivory} body-text pixels at the reading frame's bottom edge.");
+                    throw new InvalidOperationException($"{shot.File}: {outside} reading-text pixels outside the frame's inner gold line.");
+                }
+
+                if (shot.File == ControlShotFile)
+                {
+                    // Control: with the viewport mask off the reading runs past the frame, so the check
+                    // must see it. A zero here means the check itself is blind.
+                    var mask = scroll.Find("Viewport").GetComponent<RectMask2D>();
+                    mask.enabled = false;
+                    Canvas.ForceUpdateCanvases();
+                    CaptureRig.RenderConverged(camera);
+                    tex.ReadPixels(new Rect(0, 0, shot.Width, shot.Height), 0, 0);
+                    tex.Apply();
+                    mask.enabled = true;
+                    var unmasked = CountTextOutsideFrame(tex, camera, scroll, pixelsPerUnit);
+                    Debug.Log($"Phase 67 capture control {shot.File}: unmaskedOutsideFrameTextPixels={unmasked}");
+                    if (unmasked == 0)
+                    {
+                        throw new InvalidOperationException(
+                            $"{shot.File}: control failed - with the viewport mask off the outside-frame check still counts 0.");
+                    }
                 }
             }
             finally
@@ -245,10 +278,12 @@ namespace TarotUnity.Editor
             }
         }
 
-        // Body text is ivory (0.92, 0.88, 0.78); the gold frame lines, gold headings and the dark
-        // backdrop all fail the blue threshold. The rows checked run from 6 canvas units inside the
-        // frame's bottom edge (its transparent margin, below the outer gold line) to 6 units below it.
-        private static int CountIvoryAroundFrameBottom(Texture2D tex, Camera camera, RectTransform frame)
+        // Reading text must never show outside the frame's inner gold line. The rows checked run from
+        // that line (FrameInnerLineUnits above the panel's bottom edge, 6 units below the viewport clip)
+        // to BelowFrameUnits under the panel, so both a viewport inset shrunk past the gold line and a
+        // mask spilling beyond the panel are caught. The band is fixed to the frame's intended inner
+        // edge, not to the viewport's actual rect, so it does not move with an inset regression.
+        private static int CountTextOutsideFrame(Texture2D tex, Camera camera, RectTransform frame, float pixelsPerUnit)
         {
             var corners = new Vector3[4];
             frame.GetWorldCorners(corners);
@@ -257,14 +292,15 @@ namespace TarotUnity.Editor
             var bottom = Mathf.RoundToInt(bottomLeft.y);
             var left = Mathf.RoundToInt(bottomLeft.x) + CornerMargin;
             var right = Mathf.RoundToInt(bottomRight.x) - CornerMargin;
+            var lowest = bottom - Mathf.RoundToInt(BelowFrameUnits * pixelsPerUnit);
+            var highest = bottom + Mathf.RoundToInt(FrameInnerLineUnits * pixelsPerUnit);
 
             var count = 0;
-            for (var y = Mathf.Max(0, bottom - BelowFrameRows); y <= Mathf.Min(tex.height - 1, bottom + BelowFrameRows); y++)
+            for (var y = Mathf.Max(0, lowest); y <= Mathf.Min(tex.height - 1, highest); y++)
             {
                 for (var x = Mathf.Max(0, left); x <= Mathf.Min(tex.width - 1, right); x++)
                 {
-                    var pixel = tex.GetPixel(x, y);
-                    if (pixel.r > 0.8f && pixel.g > 0.75f && pixel.b > 0.62f)
+                    if (IsTextInk(tex.GetPixel(x, y)))
                     {
                         count++;
                     }
@@ -272,6 +308,22 @@ namespace TarotUnity.Editor
             }
 
             return count;
+        }
+
+        private static bool IsTextInk(Color pixel)
+        {
+            foreach (var ink in TextInks)
+            {
+                var dr = pixel.r - ink.r;
+                var dg = pixel.g - ink.g;
+                var db = pixel.b - ink.b;
+                if (dr * dr + dg * dg + db * db < InkTolerance * InkTolerance)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static (Canvas c, RenderMode m, Camera cam, float d, bool p)[] PrepareCanvases(Camera camera)
