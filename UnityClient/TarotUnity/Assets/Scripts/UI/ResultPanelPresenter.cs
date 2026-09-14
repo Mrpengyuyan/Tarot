@@ -101,6 +101,12 @@ namespace TarotUnity.UI
             SetOfflineNotice(false);
             SetWarningSection(!string.IsNullOrWhiteSpace(detail.interpretation?.warning));
             PresentCards(detail.card_draws);
+
+            // Phase 67: a finished detail ends any generating state, the way ShowReady does.
+            SetStatus(null);
+            SetInterpretationButtons(false, false);
+            isPending = false;
+            SetReadingVisible(true);
             SetNavigatorInteractive(true);
         }
 
@@ -622,12 +628,13 @@ namespace TarotUnity.UI
                 rt.localScale = Vector3.one * placement.Scale;
             }
 
-            // The label is a child of the scaled cell; compensate so it keeps a fixed on-screen size.
+            // The label is a child of the scaled cell; compensate so it keeps a fixed on-screen size. Its
+            // width (the hover and click area, P5) stops at the row pitch so neighbouring labels never overlap.
             if (cell.label != null && placement.Scale > 0f)
             {
                 cell.label.fontSize = layout.LabelFontSize / placement.Scale;
                 cell.label.rectTransform.sizeDelta = new Vector2(
-                    ResultSpreadLayout.BasePitch / placement.Scale, layout.LabelHeight / placement.Scale);
+                    Mathf.Min(ResultSpreadLayout.BasePitch, layout.RowPitch) / placement.Scale, layout.LabelHeight / placement.Scale);
             }
         }
 

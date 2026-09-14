@@ -24,6 +24,9 @@ namespace TarotUnity.UI
         public Vector2 ReadingPosition;
         public Vector2 ReadingSize;
 
+        /// <summary>The smallest pitch among the rows; a label no wider than it never overlaps its neighbours.</summary>
+        public float RowPitch;
+
         public float ReadingTop => ReadingPosition.y + ReadingSize.y * 0.5f;
         public float ReadingBottom => ReadingPosition.y - ReadingSize.y * 0.5f;
     }
@@ -60,6 +63,7 @@ namespace TarotUnity.UI
         public static SpreadLayoutResult Compute(int cardCount, float canvasHeight)
         {
             var count = Mathf.Max(0, cardCount);
+            // The ≥ 326 / ≥ 282 reading-height floors assume a canvas at least 720 tall, which ResultCanvasAspectFit guarantees.
             var height = canvasHeight >= 1f ? canvasHeight : TarotUiSpacing.ReferenceHeight;
             var twoRows = count >= TwoRowThreshold;
             var rows = count == 0 ? 0 : (twoRows ? 2 : 1);
@@ -70,6 +74,7 @@ namespace TarotUnity.UI
             var cells = new SpreadCellPlacement[count];
             var rowTop = height * 0.5f - BandTopFromCanvasTop;
             var bandBottom = rowTop;
+            var rowPitch = BasePitch;
             var placed = 0;
             for (var row = 0; row < rows; row++)
             {
@@ -77,6 +82,7 @@ namespace TarotUnity.UI
                 var centreY = rowTop - CellFrameTop * scale;
                 var labelBottom = centreY + CellLabelCentre * scale - labelHeight * 0.5f;
                 var pitch = Mathf.Min(BasePitch, inRow > 0 ? RowWidth / inRow : BasePitch);
+                rowPitch = Mathf.Min(rowPitch, pitch);
                 for (var i = 0; i < inRow; i++)
                 {
                     var x = (i - (inRow - 1) * 0.5f) * pitch;
@@ -98,6 +104,7 @@ namespace TarotUnity.UI
                 BandBottom = bandBottom,
                 ReadingPosition = new Vector2(0f, (readingTop + readingBottom) * 0.5f),
                 ReadingSize = new Vector2(ReadingWidth, Mathf.Max(0f, readingTop - readingBottom)),
+                RowPitch = rowPitch,
             };
         }
     }

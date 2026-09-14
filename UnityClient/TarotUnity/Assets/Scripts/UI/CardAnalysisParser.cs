@@ -29,7 +29,9 @@ namespace TarotUnity.UI
     /// <summary>
     /// Phase 67 (spec C 4.3): split card_analysis into one body per drawn card.
     /// 1) Each card takes the first unused line that starts, after an ordinal, with its position name.
-    /// 2) If not every card matched but the line count equals the card count, match by order.
+    /// 2) If not every card matched but the line count equals the card count, and every matched card
+    ///    took the line at its own index, each unmatched card takes the line at its own index (ordinal
+    ///    stripped) and matched cards keep their bodies. Line order never overrides a name match.
     /// 3) Otherwise fail; the caller then shows the whole text as before.
     /// </summary>
     public static class CardAnalysisParser
@@ -59,6 +61,7 @@ namespace TarotUnity.UI
 
             var bodies = new string[draws.Length];
             var used = new bool[lines.Count];
+            var matchedLine = new int[draws.Length];
             var matched = 0;
 
             // Longer position names claim their lines first, so a name that is a prefix of another
@@ -67,6 +70,7 @@ namespace TarotUnity.UI
             for (var i = 0; i < order.Length; i++)
             {
                 order[i] = i;
+                matchedLine[i] = -1;
             }
 
             Array.Sort(order, (a, b) =>
@@ -93,6 +97,7 @@ namespace TarotUnity.UI
 
                     used[l] = true;
                     bodies[d] = StripHeading(line.Substring(position.Length), draws[d]);
+                    matchedLine[d] = l;
                     matched++;
                     break;
                 }
@@ -112,18 +117,35 @@ namespace TarotUnity.UI
                 return new CardAnalysisParseResult(true, bodies, leftovers.ToArray());
             }
 
-            if (lines.Count == draws.Length)
+            // Line order only fills in the cards no name matched, and only when it agrees with every
+            // name match, so it never moves a matched line under another card's heading.
+            if (lines.Count == draws.Length && NameMatchesSitAtTheirOwnLines(matchedLine))
             {
-                var ordered = new string[lines.Count];
-                for (var l = 0; l < lines.Count; l++)
+                for (var card = 0; card < draws.Length; card++)
                 {
-                    ordered[l] = StripOrdinal(lines[l]);
+                    if (matchedLine[card] < 0)
+                    {
+                        bodies[card] = StripOrdinal(lines[card]);
+                    }
                 }
 
-                return new CardAnalysisParseResult(true, ordered, Array.Empty<string>());
+                return new CardAnalysisParseResult(true, bodies, Array.Empty<string>());
             }
 
             return CardAnalysisParseResult.Failed;
+        }
+
+        private static bool NameMatchesSitAtTheirOwnLines(int[] matchedLine)
+        {
+            for (var card = 0; card < matchedLine.Length; card++)
+            {
+                if (matchedLine[card] >= 0 && matchedLine[card] != card)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private static List<string> SplitLines(string text)

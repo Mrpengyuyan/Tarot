@@ -34,9 +34,10 @@ namespace TarotUnity.UI
 
     /// <summary>
     /// Phase 67 (spec C 4.3): one block per card - a gold heading built from the client's own
-    /// card data, then the body the parser found. HeadingStart counts every character TMP lays
-    /// out (line feeds included, rich-text tags excluded), so it indexes
-    /// TMP_TextInfo.characterInfo directly.
+    /// card data, then the body the parser found. HeadingStart and HeadingLength count the entries
+    /// TMP gives the text in TMP_TextInfo.characterInfo, so they index it directly: rich-text tags
+    /// get none, a surrogate pair gets one, and a variation selector straight after a character
+    /// gets none (TMP skips it). Line feeds count like any other character.
     /// </summary>
     public static class CardAnalysisFormatter
     {
@@ -55,51 +56,93 @@ namespace TarotUnity.UI
 
         public static FormattedCardAnalysis Build(string cardAnalysis, CardDrawData[] draws)
         {
-            var parsed = CardAnalysisParser.Parse(cardAnalysis, draws);
+            // The field is neutralised and capped once, then split. Bodies and leftovers are pieces of
+            // this visible text, so they do not go through Visible again (it is not idempotent at the cap).
+            var visible = ReadingTextSanitizer.Visible(cardAnalysis);
+            var parsed = CardAnalysisParser.Parse(visible, draws);
             if (!parsed.Success)
             {
-                return new FormattedCardAnalysis(ReadingTextSanitizer.Plain(cardAnalysis), Array.Empty<CardBlockRange>());
+                return new FormattedCardAnalysis(ReadingTextSanitizer.Wrap(visible), Array.Empty<CardBlockRange>());
             }
 
             var builder = new StringBuilder();
             var ranges = new CardBlockRange[draws.Length];
             var visibleCount = 0;
+            var afterCharacter = false; // whether TMP's last element so far is a character rather than a tag
             for (var i = 0; i < draws.Length; i++)
             {
                 if (i > 0)
                 {
-                    visibleCount += AppendVisible(builder, "\n\n");
+                    visibleCount += AppendVisible(builder, "\n\n", ref afterCharacter);
                 }
 
                 var heading = ReadingTextSanitizer.Visible(BuildHeading(draws[i]));
                 builder.Append(HeadingOpen);
-                ranges[i] = new CardBlockRange(i, visibleCount, heading.Length);
-                visibleCount += AppendVisible(builder, heading);
+                afterCharacter = false;
+                var headingCount = AppendVisible(builder, heading, ref afterCharacter);
+                ranges[i] = new CardBlockRange(i, visibleCount, headingCount);
+                visibleCount += headingCount;
                 builder.Append(HeadingClose);
+                afterCharacter = false;
 
-                var body = ReadingTextSanitizer.Visible(parsed.Bodies[i]);
-                if (body.Length > 0)
+                var body = parsed.Bodies[i];
+                if (!string.IsNullOrEmpty(body))
                 {
-                    visibleCount += AppendVisible(builder, "\n");
-                    visibleCount += AppendVisible(builder, body);
+                    visibleCount += AppendVisible(builder, "\n", ref afterCharacter);
+                    visibleCount += AppendVisible(builder, body, ref afterCharacter);
                 }
             }
 
             foreach (var line in parsed.Leftovers)
             {
-                visibleCount += AppendVisible(builder, "\n\n");
-                visibleCount += AppendVisible(builder, ReadingTextSanitizer.Visible(line));
+                visibleCount += AppendVisible(builder, "\n\n", ref afterCharacter);
+                visibleCount += AppendVisible(builder, line, ref afterCharacter);
             }
 
             return new FormattedCardAnalysis(builder.ToString(), ranges);
         }
 
-        // Appends text the player sees (wrapped in noparse when needed) and returns how many
-        // characters TMP will lay out for it.
-        private static int AppendVisible(StringBuilder builder, string visible)
+        // Appends text the player sees (wrapped in noparse when needed) and returns how many entries TMP
+        // gives it in characterInfo: one per UTF-16 unit, except that a valid surrogate pair is one, and a
+        // variation selector (U+FE00-FE0F, or U+E0100-E01EF) gets none when it directly follows a
+        // character - TextMeshProUGUI.SetArraySizes skips it, and a skipped selector does not skip the next
+        // one. afterCharacter carries TMP's previous element across segments: the noparse wrapper and the
+        // heading tags are tags, so a selector straight after them keeps its entry. A selector after an
+        // emoji TMP draws from its default sprite asset also keeps its entry, which this count does not
+        // model; such text leaves later offsets short by one per selector.
+        private static int AppendVisible(StringBuilder builder, string visible, ref bool afterCharacter)
         {
-            builder.Append(ReadingTextSanitizer.Wrap(visible));
-            return visible.Length;
+            var wrapped = ReadingTextSanitizer.Wrap(visible);
+            builder.Append(wrapped);
+            var isWrapped = wrapped.Length > visible.Length;
+            var previousIsCharacter = afterCharacter && !isWrapped;
+            var count = 0;
+            for (var i = 0; i < visible.Length; i++)
+            {
+                int codePoint = visible[i];
+                if (char.IsHighSurrogate(visible[i]) && i + 1 < visible.Length && char.IsLowSurrogate(visible[i + 1]))
+                {
+                    codePoint = char.ConvertToUtf32(visible[i], visible[i + 1]);
+                    i++;
+                }
+
+                if (previousIsCharacter && IsVariationSelector(codePoint))
+                {
+                    previousIsCharacter = false;
+                    continue;
+                }
+
+                count++;
+                previousIsCharacter = true;
+            }
+
+            afterCharacter = previousIsCharacter && !isWrapped;
+            return count;
+        }
+
+        private static bool IsVariationSelector(int codePoint)
+        {
+            return (codePoint >= 0xFE00 && codePoint <= 0xFE0F) || (codePoint >= 0xE0100 && codePoint <= 0xE01EF);
         }
     }
 }

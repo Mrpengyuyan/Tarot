@@ -94,7 +94,15 @@ namespace TarotUnity.UI
             StopHighlight();
             Canvas.ForceUpdateCanvases();
             var block = FindBlock(cardIndex);
-            var offset = block.HasValue ? HeadingLineOffset(block.Value) : SectionHeadingOffset();
+            var offset = block.HasValue ? HeadingLineOffset(block.Value) : null;
+            if (!offset.HasValue)
+            {
+                // No block for this card, or its heading lies past the text TMP laid out: scroll to the
+                // 牌面分析 heading, as for text that did not split, and glow nothing.
+                block = null;
+                offset = SectionHeadingOffset();
+            }
+
             if (!offset.HasValue)
             {
                 return;

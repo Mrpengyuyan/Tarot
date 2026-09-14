@@ -3,6 +3,8 @@ using NUnit.Framework;
 using TarotUnity.Data;
 using TarotUnity.Gameplay;
 using TarotUnity.UI;
+using TMPro;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
 
@@ -183,6 +185,188 @@ namespace TarotUnity.Tests.EditMode
 
             Assert.That(formatted.RichText, Is.EqualTo(analysis));
             Assert.That(formatted.Ranges, Is.Empty);
+        }
+
+        // Final review I1, M2, M3 and D1: TMP converts escape sequences before it parses tags, and acts on a
+        // few '<' sequences even inside noparse, so the sanitiser must neutralise both; the card analysis is
+        // capped once; line order never overrides a name match.
+
+        private const string BodyFontPath = "Assets/Fonts/LXGWWenKai-Regular SDF.asset";
+
+        private GameObject realTextRoot;
+
+        [TearDown]
+        public void DestroyRealText()
+        {
+            if (realTextRoot != null)
+            {
+                Object.DestroyImmediate(realTextRoot);
+                realTextRoot = null;
+            }
+        }
+
+        // What TMP really lays out for Plain(input), with the Result body font, rich text on and control
+        // characters parsed (as every Result text and TMP Settings have it), must be exactly Visible(input):
+        // nothing converted, nothing parsed as a tag.
+        private void AssertTmpShowsExactlyTheVisibleText(string input)
+        {
+            var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(BodyFontPath);
+            Assert.That(font, Is.Not.Null, "control: the Result body font");
+            realTextRoot = new GameObject("Phase67_RealTmpCanvas", typeof(Canvas));
+            var textObject = new GameObject("Text", typeof(RectTransform));
+            textObject.transform.SetParent(realTextRoot.transform, false);
+            var text = textObject.AddComponent<TextMeshProUGUI>();
+            text.font = font;
+            text.richText = true;
+            text.parseCtrlCharacters = true;
+            text.rectTransform.sizeDelta = new Vector2(4000f, 200f);
+
+            var visible = ReadingTextSanitizer.Visible(input);
+            text.text = ReadingTextSanitizer.Plain(input);
+            text.ForceMeshUpdate();
+            var info = text.textInfo;
+
+            Assert.That(info.characterCount, Is.EqualTo(visible.Length), $"TMP lays out every visible character of {text.text}");
+            for (var i = 0; i < visible.Length; i++)
+            {
+                Assert.That(info.characterInfo[i].character, Is.EqualTo(visible[i]), $"character {i} of {text.text}");
+            }
+        }
+
+        [Test]
+        public void TmpShowsAnEscapedAngleBracketLiterally()
+        {
+            AssertTmpShowsExactlyTheVisibleText("\\u003Csize=200>大");
+        }
+
+        [Test]
+        public void TmpKeepsNoparseOpenPastAnEscapedNoparseClose()
+        {
+            AssertTmpShowsExactlyTheVisibleText("a<b>\\u003C/noparse><size=200>b");
+        }
+
+        [Test]
+        public void TmpShowsALinkTagLiterally()
+        {
+            AssertTmpShowsExactlyTheVisibleText("a<b><a href=\"x\">链接</a>");
+        }
+
+        [Test]
+        public void TmpKeepsNoparseOpenPastANoparseCloseWithASpace()
+        {
+            AssertTmpShowsExactlyTheVisibleText("a<b></noparse ><size=200>b");
+        }
+
+        [Test]
+        public void VisibleTurnsAnEscapedLineBreakIntoALineFeed()
+        {
+            Assert.That(ReadingTextSanitizer.Visible("第一行\\n第二行"), Is.EqualTo("第一行\n第二行"));
+        }
+
+        [Test]
+        public void VisibleTurnsAnEscapedCrLfIntoOneLineFeed()
+        {
+            Assert.That(ReadingTextSanitizer.Visible("a\\r\\nb"), Is.EqualTo("a\nb"));
+        }
+
+        [Test]
+        public void VisibleShowsAnEscapedTabWithAFullWidthBackslash()
+        {
+            Assert.That(ReadingTextSanitizer.Visible("a\\tb"), Is.EqualTo("a＼tb"));
+        }
+
+        [Test]
+        public void VisibleShowsAPathBackslashFullWidth()
+        {
+            Assert.That(ReadingTextSanitizer.Visible("C:\\x"), Is.EqualTo("C:＼x"));
+        }
+
+        [Test]
+        public void VisibleNeutralisesLinkTags()
+        {
+            Assert.That(ReadingTextSanitizer.Visible("<a href=\"x\">链接</a>"), Is.EqualTo("＜a href=\"x\">链接＜/a>"));
+        }
+
+        [Test]
+        public void PlainKeepsOtherTagsLiteralInsideNoparse()
+        {
+            Assert.That(ReadingTextSanitizer.Plain("<abbr>"), Is.EqualTo("<noparse><abbr></noparse>"),
+                "control: a tag TMP does not act on inside noparse keeps its ASCII '<'");
+        }
+
+        [Test]
+        public void FormatterSplitsAnAnalysisWhoseLineBreaksAreEscaped()
+        {
+            var draws = ThreeCards();
+            const string analysis = "过去：愚者 — 旧的节奏正在松动。\\n现在：魔术师 — 资源齐备。\\n建议：女祭司（逆位）— 别只听外界的声音。";
+            Assert.That(analysis, Does.Not.Contain("\n"), "control: no real line feed anywhere");
+
+            var formatted = CardAnalysisFormatter.Build(analysis, draws);
+
+            Assert.That(formatted.Ranges.Length, Is.EqualTo(3), "double-escaped line breaks still split the analysis per card");
+        }
+
+        [Test]
+        public void VisibleCapKeepsASurrogatePairWhole()
+        {
+            var text = new string('字', ReadingTextSanitizer.MaxFieldLength - 1) + "\U0001F319";
+            Assert.That(text.Length, Is.EqualTo(ReadingTextSanitizer.MaxFieldLength + 1), "control: 4001 UTF-16 units");
+            Assert.That(char.IsHighSurrogate(text[ReadingTextSanitizer.MaxFieldLength - 1]), Is.True,
+                "control: the pair sits at indices 3999-4000");
+            LogAssert.Expect(LogType.Warning, new Regex("truncated a 4001-character field to 3999 characters"));
+
+            Assert.That(ReadingTextSanitizer.Visible(text),
+                Is.EqualTo(text.Substring(0, ReadingTextSanitizer.MaxFieldLength - 1) + ReadingTextSanitizer.TruncationMark));
+        }
+
+        [Test]
+        public void FormatterCapsTheCardAnalysisOnceBeforeSplitting()
+        {
+            var draws = ThreeCards();
+            var filler = new string('甲', 1500);
+            var analysis = string.Join("\n",
+                draws[0].position_name + "：" + filler,
+                draws[1].position_name + "：" + filler,
+                draws[2].position_name + "：" + filler);
+            Assert.That(analysis.Length, Is.EqualTo(4511), "control: the field is over the 4000 cap, each line under it");
+            LogAssert.Expect(LogType.Warning, new Regex("truncated a 4511-character field"));
+
+            var formatted = CardAnalysisFormatter.Build(analysis, draws);
+
+            var mark = ReadingTextSanitizer.TruncationMark;
+            var marks = (formatted.RichText.Length - formatted.RichText.Replace(mark, string.Empty).Length) / mark.Length;
+            Assert.That(marks, Is.EqualTo(1), "the whole card analysis is capped once");
+            Assert.That(formatted.Ranges.Length, Is.EqualTo(3), "the cap lands inside the third line, which still starts with its name");
+        }
+
+        // 过去 / 现在 / 未来: the backend's three-card position names.
+        private static CardDrawData[] PastPresentFuture()
+        {
+            return LocalReadingSimulator.CreatePlaceholderDraws(3, new[] { "过去", "现在", "未来" }, null);
+        }
+
+        [Test]
+        public void LineOrderNeverOverridesANameMatch()
+        {
+            // 未來 is traditional, so the third line matches no card; the two name matches are out of order.
+            const string analysis = "1. 现在：资源齐备。\n2. 过去：旧的节奏正在松动。\n3. 未來：别只听外界的声音。";
+
+            var result = CardAnalysisParser.Parse(analysis, PastPresentFuture());
+
+            Assert.That(result.Success, Is.False, "the 现在 line must not be shown under 过去's heading");
+        }
+
+        [Test]
+        public void LineOrderFillsOnlyTheCardsNoNameMatched()
+        {
+            const string analysis = "1. 过去：旧的节奏正在松动。\n2. 现在：资源齐备。\n3. 未來：别只听外界的声音。";
+
+            var result = CardAnalysisParser.Parse(analysis, PastPresentFuture());
+
+            Assert.That(result.Success, Is.True, "control: both name matches sit at their own lines");
+            Assert.That(result.Bodies[0], Does.Not.StartWith("过去"), "a name-matched card keeps its name-stripped body");
+            Assert.That(result.Bodies[1], Does.Not.StartWith("现在"), "a name-matched card keeps its name-stripped body");
+            Assert.That(result.Bodies[2], Is.EqualTo("未來：别只听外界的声音。"), "the unmatched card takes its own line without the ordinal");
         }
 
         [Test]
