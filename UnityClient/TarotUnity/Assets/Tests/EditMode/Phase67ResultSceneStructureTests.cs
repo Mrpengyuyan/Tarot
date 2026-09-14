@@ -1,3 +1,4 @@
+using System.IO;
 using System.Linq;
 using NUnit.Framework;
 using TarotUnity.Presentation;
@@ -210,6 +211,31 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(so.FindProperty("bottomDivider").objectReferenceValue,
                 Is.SameAs(canvas.Find("Phase8_ResultGoldDividerBottom").gameObject));
             Assert.That(so.FindProperty("cellTargets").arraySize, Is.EqualTo(10));
+        }
+
+        [Test]
+        public void Phase67DocumentationAndScreenshotsExist()
+        {
+            const string docPath = "Docs/PHASE67_RESULT_READING.md";
+            Assert.That(File.Exists(docPath), Is.True, $"Missing Phase 67 doc at {docPath}");
+            var doc = File.ReadAllText(docPath);
+            Assert.That(doc, Does.Contain("ResultSpreadLayout"));
+            Assert.That(doc, Does.Contain("CardAnalysisParser"));
+            Assert.That(doc, Does.Contain("noparse"));
+            Assert.That(File.ReadAllText("Docs/PROJECT_CHRONICLE.md"), Does.Contain("### Phase 67"));
+
+            var shots = new[]
+            {
+                "Result_1card_16x9.png", "Result_3card_16x9.png", "Result_5card_16x9.png", "Result_10card_16x9.png",
+                "Result_3card_16x10.png", "Result_10card_16x10.png", "Result_3card_4x3.png",
+                "Result_pending20s.png", "Result_failed.png", "Result_offline.png",
+            };
+            foreach (var file in shots)
+            {
+                var path = Path.Combine("Docs/VisualReview/Phase67", file);
+                Assert.That(File.Exists(path), Is.True, $"Missing review shot {path}");
+                Assert.That(new FileInfo(path).Length, Is.GreaterThan(4096), $"{path} is unexpectedly small");
+            }
         }
     }
 }

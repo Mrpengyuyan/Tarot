@@ -481,3 +481,10 @@ The reading room now deals the backend's cards as soon as they exist, and a
 persistent `InterpretationPoller` fetches the AI interpretation in the background.
 The Result screen shows generating, ready, failed or offline states with Chinese copy
 instead of the table waiting on the AI. See `Docs/PHASE66_ONLINE_INTERPRETATION.md`.
+
+### Phase 67 — Result reading experience
+
+The Result screen sizes its card band by card count (two rows for ten cards) and gives the
+reading panel the rest of the screen. Text clears the gold frame, scroll cues show when more
+is below, the card analysis splits into per-card blocks the cards jump to, and AI text is
+shown literally. See `Docs/PHASE67_RESULT_READING.md`.
