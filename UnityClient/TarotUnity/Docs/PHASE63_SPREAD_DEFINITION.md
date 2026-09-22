@@ -32,6 +32,21 @@ Everything keys off **card count**, so distinct-count spreads register cleanly:
 - `LocalReadingSimulator` — `CreatePlaceholderDraws` accepts position names/meanings
   and carries twelve distinct placeholder cards so a Celtic reading has no repeats.
 
+## Names match the backend (Phase 67 follow-up)
+
+The catalog is also what the Result screen shows, so a spread has to read the same
+whether the reading came from the server or the local simulator. The one- and
+three-card spreads therefore carry the backend's own names from
+`Server/data/spreads.json`: 单牌抽取 / 指导, and 过去现在未来 / 过去 · 现在 · 未来.
+They used to read "One Card Focus" and "Past / Present / Advice" offline, and the
+third position was 建议 offline but 未来 online - the same card under two names, and
+建议 is already the name of a section on the Result screen.
+
+`Phase63SpreadDefinitionTests.CatalogNamesMatchTheBackendSeedData` compares the two
+files, and skips if the server data is not checked out. The Celtic Cross is compared
+by spread name only: it keeps the classic position names, which the backend seed
+spells differently (遥远过去 / 近期过去 / 可能结果 ...). Aligning those is open.
+
 ## The Celtic Cross
 
 Ten cards: a six-card cross (现状 / 挑战 / 根基 / 过去 / 顶冠 / 未来, laid out

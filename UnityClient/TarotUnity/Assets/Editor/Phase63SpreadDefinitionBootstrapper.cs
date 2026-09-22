@@ -154,14 +154,14 @@ namespace TarotUnity.Editor
         {
             Directory.CreateDirectory(SpreadFolder);
 
-            var one = UpsertDefinition("SpreadDefinition_OneCard", 1, 1, "One Card Focus",
-                new[] { new Vector3(0f, 0.12f, 0.15f) }, new[] { "核心" },
+            var one = UpsertDefinition("SpreadDefinition_OneCard", 1, 1, "单牌抽取",
+                new[] { new Vector3(0f, 0.12f, 0.15f) }, new[] { "指导" },
                 new[] { "针对这个问题最清晰的信号。" });
 
-            var three = UpsertDefinition("SpreadDefinition_ThreeCard", 2, 3, "Past / Present / Advice",
+            var three = UpsertDefinition("SpreadDefinition_ThreeCard", 2, 3, "过去现在未来",
                 new[] { new Vector3(-1.45f, 0.12f, 0.15f), new Vector3(0f, 0.12f, 0.15f), new Vector3(1.45f, 0.12f, 0.15f) },
-                new[] { "过去", "现在", "建议" },
-                new[] { "是什么把这个问题带到了这里。", "此刻正在起作用的是什么。", "接下来更有用的姿态。" });
+                new[] { "过去", "现在", "未来" },
+                new[] { "是什么把这个问题带到了这里。", "此刻正在起作用的是什么。", "顺着当下走下去，会通向什么。" });
 
             var celtic = UpsertDefinition("SpreadDefinition_CelticCross", CelticId, CelticCount, "凯尔特十字",
                 CelticSlots, CelticNames, CelticMeanings, CelticCameraPos, CelticCameraRotation.eulerAngles, CelticCameraFov);

@@ -202,7 +202,7 @@ namespace TarotUnity.Tests.EditMode
         {
             var session = Offline(3);
             session.cardAnalysis = "过去：愚者 — 敢于开始的勇气\U0001F319仍在\U0001F319。\n现在：魔术师 — 资源齐备。\n" +
-                "建议：女祭司（逆位）— 别只听外界的声音。";
+                "未来：女祭司（逆位）— 别只听外界的声音。";
 
             AssertLaterHeadingsLineUpWithTmp(session);
         }
@@ -214,7 +214,7 @@ namespace TarotUnity.Tests.EditMode
             // another one straight after a character.
             var session = Offline(3);
             session.cardAnalysis = "过去：愚者 — ️敢于开始的勇气️仍在。\n现在：魔术师 — 资源齐备。\n" +
-                "建议：女祭司（逆位）— 别只听外界的声音。";
+                "未来：女祭司（逆位）— 别只听外界的声音。";
 
             AssertLaterHeadingsLineUpWithTmp(session);
         }
@@ -226,7 +226,7 @@ namespace TarotUnity.Tests.EditMode
             // keeps the entry for the variation selector that follows a sprite. Visible drops selectors first.
             var session = Offline(3);
             session.cardAnalysis = "过去：愚者 — 敬于开始的勇气😊️仍在。\n现在：魔术师 — 资源齐备。\n" +
-                "建议：女祭司（逆位）— 别只听外界的声音。";
+                "未来：女祭司（逆位）— 别只听外界的声音。";
 
             AssertLaterHeadingsLineUpWithTmp(session);
         }

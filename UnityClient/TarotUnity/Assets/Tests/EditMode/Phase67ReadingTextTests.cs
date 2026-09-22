@@ -16,7 +16,7 @@ namespace TarotUnity.Tests.EditMode
     /// </summary>
     public sealed class Phase67ReadingTextTests
     {
-        // 过去 / 现在 / 建议: 愚者, 魔术师, 女祭司 (the third card is reversed).
+        // 过去 / 现在 / 未来: 愚者, 魔术师, 女祭司 (the third card is reversed).
         private static CardDrawData[] ThreeCards()
         {
             return LocalReadingSimulator.CreatePlaceholderDraws(3);
@@ -89,7 +89,7 @@ namespace TarotUnity.Tests.EditMode
         public void ParsesTheBackendMockFormatWithEmptyBodies()
         {
             var draws = ThreeCards();
-            var result = CardAnalysisParser.Parse("1. 过去：愚者（正位）\n2. 现在：魔术师（正位）\n3. 建议：女祭司（逆位）", draws);
+            var result = CardAnalysisParser.Parse("1. 过去：愚者（正位）\n2. 现在：魔术师（正位）\n3. 未来：女祭司（逆位）", draws);
 
             Assert.That(result.Success, Is.True);
             Assert.That(result.Bodies, Is.EqualTo(new[] { string.Empty, string.Empty, string.Empty }));
@@ -99,7 +99,7 @@ namespace TarotUnity.Tests.EditMode
         public void ParsesOrdinalsSeparatorsAndPositionOnlyPrefixes()
         {
             var draws = ThreeCards();
-            const string analysis = "（1）过去——旧的节奏正在松动。\r\n② 现在：魔术师 资源齐备。\n三、建议 · 女祭司（逆位）：别只听外界的声音。";
+            const string analysis = "（1）过去——旧的节奏正在松动。\r\n② 现在：魔术师 资源齐备。\n三、未来 · 女祭司（逆位）：别只听外界的声音。";
 
             var result = CardAnalysisParser.Parse(analysis, draws);
 
@@ -161,7 +161,7 @@ namespace TarotUnity.Tests.EditMode
             var draws = ThreeCards();
             var formatted = CardAnalysisFormatter.Build(OfflineAnalysis(draws), draws);
             var visible = StripTags(formatted.RichText);
-            var expected = new[] { "过去 · 愚者（正位）", "现在 · 魔术师（正位）", "建议 · 女祭司（逆位）" };
+            var expected = new[] { "过去 · 愚者（正位）", "现在 · 魔术师（正位）", "未来 · 女祭司（逆位）" };
 
             Assert.That(formatted.Ranges.Length, Is.EqualTo(3));
             Assert.That(formatted.RichText, Does.Contain("<color=" + CardAnalysisFormatter.HeadingColorHex + ">"));
@@ -325,7 +325,7 @@ namespace TarotUnity.Tests.EditMode
         public void FormatterSplitsAnAnalysisWhoseLineBreaksAreEscaped()
         {
             var draws = ThreeCards();
-            const string analysis = "过去：愚者 — 旧的节奏正在松动。\\n现在：魔术师 — 资源齐备。\\n建议：女祭司（逆位）— 别只听外界的声音。";
+            const string analysis = "过去：愚者 — 旧的节奏正在松动。\\n现在：魔术师 — 资源齐备。\\n未来：女祭司（逆位）— 别只听外界的声音。";
             Assert.That(analysis, Does.Not.Contain("\n"), "control: no real line feed anywhere");
 
             var formatted = CardAnalysisFormatter.Build(analysis, draws);

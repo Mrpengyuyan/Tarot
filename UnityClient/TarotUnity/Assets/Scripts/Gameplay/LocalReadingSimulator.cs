@@ -117,7 +117,7 @@ namespace TarotUnity.Gameplay
 
             return draws.Length == 1
                 ? "一张牌，把此刻收拢成一个清晰的信号。"
-                : "这组牌从过去走到现在，再落到给你的建议——一个清晰的开始、当下与下一步。";
+                : "这组牌从过去走到现在，再望向未来——一个清晰的开始、当下与走向。";
         }
 
         private static string BuildCardAnalysis(CardDrawData[] draws)
@@ -164,14 +164,14 @@ namespace TarotUnity.Gameplay
         {
             if (count == 1)
             {
-                return "核心";
+                return "指导";
             }
 
             return index switch
             {
                 0 => "过去",
                 1 => "现在",
-                2 => "建议",
+                2 => "未来",
                 _ => $"第 {index + 1} 位",
             };
         }
@@ -187,7 +187,7 @@ namespace TarotUnity.Gameplay
             {
                 0 => "是什么把这个问题带到了这里。",
                 1 => "此刻正在起作用的是什么。",
-                2 => "接下来更有用的姿态。",
+                2 => "顺着当下走下去，会通向什么。",
                 _ => "额外的背景。",
             };
         }

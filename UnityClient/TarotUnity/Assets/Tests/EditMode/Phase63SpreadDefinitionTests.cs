@@ -17,6 +17,27 @@ namespace TarotUnity.Tests.EditMode
     {
         private const string ScenePath = "Assets/Scenes/ReadingRoom.unity";
         private const string DocPath = "Docs/PHASE63_SPREAD_DEFINITION.md";
+        private const string SeedPath = "../../Server/data/spreads.json";
+
+        [System.Serializable]
+        private sealed class SeedPosition
+        {
+            public string name;
+        }
+
+        [System.Serializable]
+        private sealed class SeedSpread
+        {
+            public string name;
+            public int cardCount;
+            public SeedPosition[] positions;
+        }
+
+        [System.Serializable]
+        private sealed class SeedSpreadList
+        {
+            public SeedSpread[] items;
+        }
 
         private static SpreadCatalog LoadCatalog()
         {
@@ -99,6 +120,41 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(draws[9].position_name, Is.EqualTo("结果"));
             // Ten distinct placeholder cards, not repeats.
             Assert.That(draws[0].tarot_card.name_zh, Is.Not.EqualTo(draws[9].tarot_card.name_zh));
+        }
+
+        // Phase 67 follow-up: the offline catalog and the backend's seed data name the same spread
+        // the same way, so a reading reads alike online and offline. The ten-card spread keeps the
+        // classic position names (现状/挑战/根基...) on purpose and is compared by name only.
+        [Test]
+        public void CatalogNamesMatchTheBackendSeedData()
+        {
+            if (!File.Exists(SeedPath))
+            {
+                Assert.Ignore($"backend seed data not present at {SeedPath}");
+            }
+
+            var seeds = JsonUtility.FromJson<SeedSpreadList>("{\"items\":" + File.ReadAllText(SeedPath) + "}");
+            Assert.That(seeds?.items, Is.Not.Null.And.Not.Empty, "control: the seed file parsed");
+
+            var catalog = LoadCatalog();
+            foreach (var cardCount in new[] { 1, 3, 10 })
+            {
+                var seed = System.Array.Find(seeds.items, entry => entry.cardCount == cardCount);
+                Assert.That(seed, Is.Not.Null, $"seed data has no {cardCount}-card spread");
+                var def = catalog.GetByCardCount(cardCount);
+                Assert.That(def, Is.Not.Null, $"catalog has no {cardCount}-card spread");
+                Assert.That(def.displayName, Is.EqualTo(seed.name), $"{cardCount}-card spread name");
+                if (cardCount == 10)
+                {
+                    continue;
+                }
+
+                for (var i = 0; i < cardCount; i++)
+                {
+                    Assert.That(def.positionNames[i], Is.EqualTo(seed.positions[i].name),
+                        $"{cardCount}-card position {i + 1}");
+                }
+            }
         }
 
         [Test]

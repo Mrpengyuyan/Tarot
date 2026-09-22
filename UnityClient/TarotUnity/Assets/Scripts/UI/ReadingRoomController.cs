@@ -40,7 +40,7 @@ namespace TarotUnity.UI
 
         private int selectedSpreadId = 1;
         private int selectedCardCount = 1;
-        private string selectedSpreadName = "One Card Focus";
+        private string selectedSpreadName = "单牌抽取";
         private bool drawInProgress;
         private SpreadSummary[] backendSpreads;
         private InterpretationPoller subscribedPoller;
@@ -81,7 +81,7 @@ namespace TarotUnity.UI
             EnsureBackendReferences();
             SelectOneCard();
             SetResultButtonVisible(false);
-            SetStatus("Choose a spread, ask a question, then draw.");
+            SetStatus("先选一个牌阵，写下你的问题，再抽牌。");
             SetReleaseStatus(ReleaseUxCopy.LocalModeReady);
             cameraChoreography?.PlayOpening();
 
@@ -114,18 +114,26 @@ namespace TarotUnity.UI
 
         private void SelectOneCard()
         {
-            SelectSpread(1, 1, "One Card Focus");
+            SelectFromCatalog(1, 1, "单牌抽取");
         }
 
         private void SelectThreeCards()
         {
-            SelectSpread(2, 3, "Past / Present / Advice");
+            SelectFromCatalog(2, 3, "过去现在未来");
         }
 
         private void SelectCelticCross()
         {
-            var def = ResolveCatalog()?.GetByCardCount(10);
-            SelectSpread(def != null ? def.spreadId : 3, 10, def != null ? def.displayName : "凯尔特十字");
+            SelectFromCatalog(3, 10, "凯尔特十字");
+        }
+
+        // The catalog holds the spread names the offline reading also uses, so both screens agree;
+        // the literal is only the fallback for a missing or half-built catalog.
+        private void SelectFromCatalog(int fallbackSpreadId, int cardCount, string fallbackName)
+        {
+            var def = ResolveCatalog()?.GetByCardCount(cardCount);
+            var name = def != null && !string.IsNullOrWhiteSpace(def.displayName) ? def.displayName : fallbackName;
+            SelectSpread(def != null ? def.spreadId : fallbackSpreadId, cardCount, name);
         }
 
         private void SelectSpread(int spreadId, int cardCount, string spreadName)
@@ -156,7 +164,7 @@ namespace TarotUnity.UI
 
             if (spreadStatusText != null)
             {
-                spreadStatusText.text = $"{spreadName} - {cardCount} card{(cardCount == 1 ? string.Empty : "s")}";
+                spreadStatusText.text = $"{spreadName} · {cardCount} 张";
             }
         }
 
