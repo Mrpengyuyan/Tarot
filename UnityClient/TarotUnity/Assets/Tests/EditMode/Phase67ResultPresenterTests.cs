@@ -219,6 +219,18 @@ namespace TarotUnity.Tests.EditMode
             AssertLaterHeadingsLineUpWithTmp(session);
         }
 
+        [Test]
+        public void CardBlockHeadingsLineUpWithTmpAfterAnEmojiSprite()
+        {
+            // The body font has no U+1F60A, so TMP draws it from the default sprite asset (EmojiOne) - and
+            // keeps the entry for the variation selector that follows a sprite. Visible drops selectors first.
+            var session = Offline(3);
+            session.cardAnalysis = "过去：愚者 — 敬于开始的勇气😊️仍在。\n现在：魔术师 — 资源齐备。\n" +
+                "建议：女祭司（逆位）— 别只听外界的声音。";
+
+            AssertLaterHeadingsLineUpWithTmp(session);
+        }
+
         private void AssertLaterHeadingsLineUpWithTmp(ReadingSessionSnapshot session)
         {
             presenter.PresentSession(session);
@@ -307,10 +319,10 @@ namespace TarotUnity.Tests.EditMode
             var navigator = Field<ResultReadingNavigator>("readingNavigator");
 
             presenter.ShowPending(online);
-            Assert.That(navigator.IsInteractive, Is.False, "a generating reading leaves the navigator non-interactive");
 
             // The state ShowReady leaves behind is the reference.
             presenter.ShowReady(online, false);
+            Assert.That(navigator.IsInteractive, Is.True, "control: a finished reading is clickable");
             var readyStatusShown = status.gameObject.activeSelf;
             var readyStatusText = status.text;
             var readyOffline = offline.gameObject.activeSelf;
@@ -322,6 +334,7 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(IsPending(), Is.True, "control: generating again");
             Assert.That(status.gameObject.activeSelf, Is.True, "control: the status line shows while generating");
             Assert.That(offline.gameObject.activeSelf, Is.True, "control: 查看离线解读 is offered after 20 seconds");
+            Assert.That(navigator.IsInteractive, Is.False, "a generating reading leaves the navigator non-interactive");
 
             presenter.Present(new PredictionDetailResponse
             {
@@ -343,6 +356,7 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(offline.gameObject.activeSelf, Is.EqualTo(readyOffline), "查看离线解读 is left as ShowReady leaves it");
             Assert.That(retry.gameObject.activeSelf, Is.EqualTo(readyRetry), "重新解读 is left as ShowReady leaves it");
             Assert.That(reading.alpha, Is.EqualTo(readyAlpha), "the reading is shown as ShowReady leaves it");
+            Assert.That(navigator.IsInteractive, Is.True, "the cards are clickable again, as ShowReady leaves them");
         }
 
         private bool IsPending()

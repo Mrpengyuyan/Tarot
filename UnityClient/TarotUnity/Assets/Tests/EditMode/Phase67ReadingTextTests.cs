@@ -288,6 +288,33 @@ namespace TarotUnity.Tests.EditMode
         }
 
         [Test]
+        public void VisibleDropsAVariationSelector()
+        {
+            Assert.That(ReadingTextSanitizer.Visible("a\uFE0Fb"), Is.EqualTo("ab"),
+                "TMP gives a selector after a character no entry, but keeps it after a sprite, so it never reaches the text");
+        }
+
+        [Test]
+        public void VisibleDropsASupplementaryVariationSelector()
+        {
+            Assert.That(ReadingTextSanitizer.Visible("a\U000E0101b"), Is.EqualTo("ab"));
+        }
+
+        [Test]
+        public void VisibleDropsANul()
+        {
+            Assert.That(ReadingTextSanitizer.Visible("a\0b"), Is.EqualTo("ab"),
+                "U+0000 stops TMP's text processing and would hide the rest of the field");
+        }
+
+        [Test]
+        public void VisibleKeepsASurrogatePairWholeWhileDroppingASelector()
+        {
+            Assert.That(ReadingTextSanitizer.Visible("\U0001F319\uFE0F"), Is.EqualTo("\U0001F319"),
+                "control: only the selector goes, the pair stays whole");
+        }
+
+        [Test]
         public void PlainKeepsOtherTagsLiteralInsideNoparse()
         {
             Assert.That(ReadingTextSanitizer.Plain("<abbr>"), Is.EqualTo("<noparse><abbr></noparse>"),

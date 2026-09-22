@@ -213,6 +213,14 @@ namespace TarotUnity.Tests.PlayMode
             }
 
             Assert.That(buttonTop, Is.GreaterThan(float.MinValue), $"control: the button row is showing ({where})");
+
+            // A stale layout computed for another canvas height still clears the button row, so pin the
+            // reading panel to the geometry this canvas asks for.
+            var expected = ResultSpreadLayout.Compute(3, canvas.rect.height);
+            Assert.That(reading.height, Is.EqualTo(expected.ReadingSize.y).Within(0.5f),
+                $"the reading panel is as tall as this canvas asks for ({where})");
+            Assert.That(reading.center.y, Is.EqualTo(expected.ReadingPosition.y).Within(0.5f),
+                $"the reading panel sits where this canvas asks for ({where})");
             Assert.That(reading.yMin - buttonTop, Is.GreaterThanOrEqualTo(10f - 0.01f),
                 $"the reading panel ends at least 10 above the button row: reading bottom {reading.yMin:0.##}, " +
                 $"button top {buttonTop:0.##} ({where})");

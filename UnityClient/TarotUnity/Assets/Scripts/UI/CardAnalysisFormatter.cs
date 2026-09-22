@@ -36,8 +36,9 @@ namespace TarotUnity.UI
     /// Phase 67 (spec C 4.3): one block per card - a gold heading built from the client's own
     /// card data, then the body the parser found. HeadingStart and HeadingLength count the entries
     /// TMP gives the text in TMP_TextInfo.characterInfo, so they index it directly: rich-text tags
-    /// get none, a surrogate pair gets one, and a variation selector straight after a character
-    /// gets none (TMP skips it). Line feeds count like any other character.
+    /// get none and a surrogate pair gets one. Line feeds count like any other character.
+    /// The text arrives from ReadingTextSanitizer.Visible, which has already dropped the characters
+    /// TMP lays out inconsistently, so nothing else can shift an entry.
     /// </summary>
     public static class CardAnalysisFormatter
     {
@@ -68,81 +69,54 @@ namespace TarotUnity.UI
             var builder = new StringBuilder();
             var ranges = new CardBlockRange[draws.Length];
             var visibleCount = 0;
-            var afterCharacter = false; // whether TMP's last element so far is a character rather than a tag
             for (var i = 0; i < draws.Length; i++)
             {
                 if (i > 0)
                 {
-                    visibleCount += AppendVisible(builder, "\n\n", ref afterCharacter);
+                    visibleCount += AppendVisible(builder, "\n\n");
                 }
 
                 var heading = ReadingTextSanitizer.Visible(BuildHeading(draws[i]));
                 builder.Append(HeadingOpen);
-                afterCharacter = false;
-                var headingCount = AppendVisible(builder, heading, ref afterCharacter);
+                var headingCount = AppendVisible(builder, heading);
                 ranges[i] = new CardBlockRange(i, visibleCount, headingCount);
                 visibleCount += headingCount;
                 builder.Append(HeadingClose);
-                afterCharacter = false;
 
                 var body = parsed.Bodies[i];
                 if (!string.IsNullOrEmpty(body))
                 {
-                    visibleCount += AppendVisible(builder, "\n", ref afterCharacter);
-                    visibleCount += AppendVisible(builder, body, ref afterCharacter);
+                    visibleCount += AppendVisible(builder, "\n");
+                    visibleCount += AppendVisible(builder, body);
                 }
             }
 
             foreach (var line in parsed.Leftovers)
             {
-                visibleCount += AppendVisible(builder, "\n\n", ref afterCharacter);
-                visibleCount += AppendVisible(builder, line, ref afterCharacter);
+                visibleCount += AppendVisible(builder, "\n\n");
+                visibleCount += AppendVisible(builder, line);
             }
 
             return new FormattedCardAnalysis(builder.ToString(), ranges);
         }
 
         // Appends text the player sees (wrapped in noparse when needed) and returns how many entries TMP
-        // gives it in characterInfo: one per UTF-16 unit, except that a valid surrogate pair is one, and a
-        // variation selector (U+FE00-FE0F, or U+E0100-E01EF) gets none when it directly follows a
-        // character - TextMeshProUGUI.SetArraySizes skips it, and a skipped selector does not skip the next
-        // one. afterCharacter carries TMP's previous element across segments: the noparse wrapper and the
-        // heading tags are tags, so a selector straight after them keeps its entry. A selector after an
-        // emoji TMP draws from its default sprite asset also keeps its entry, which this count does not
-        // model; such text leaves later offsets short by one per selector.
-        private static int AppendVisible(StringBuilder builder, string visible, ref bool afterCharacter)
+        // gives it in characterInfo: one per UTF-16 unit, except that a valid surrogate pair is one.
+        private static int AppendVisible(StringBuilder builder, string visible)
         {
-            var wrapped = ReadingTextSanitizer.Wrap(visible);
-            builder.Append(wrapped);
-            var isWrapped = wrapped.Length > visible.Length;
-            var previousIsCharacter = afterCharacter && !isWrapped;
+            builder.Append(ReadingTextSanitizer.Wrap(visible));
             var count = 0;
             for (var i = 0; i < visible.Length; i++)
             {
-                int codePoint = visible[i];
                 if (char.IsHighSurrogate(visible[i]) && i + 1 < visible.Length && char.IsLowSurrogate(visible[i + 1]))
                 {
-                    codePoint = char.ConvertToUtf32(visible[i], visible[i + 1]);
                     i++;
                 }
 
-                if (previousIsCharacter && IsVariationSelector(codePoint))
-                {
-                    previousIsCharacter = false;
-                    continue;
-                }
-
                 count++;
-                previousIsCharacter = true;
             }
 
-            afterCharacter = previousIsCharacter && !isWrapped;
             return count;
-        }
-
-        private static bool IsVariationSelector(int codePoint)
-        {
-            return (codePoint >= 0xFE00 && codePoint <= 0xFE0F) || (codePoint >= 0xE0100 && codePoint <= 0xE01EF);
         }
     }
 }

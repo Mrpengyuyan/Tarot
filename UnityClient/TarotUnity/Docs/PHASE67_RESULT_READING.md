@@ -21,8 +21,10 @@ Spec: `docs/superpowers/specs/2026-09-13-result-reading-experience-design.md` (s
 - **Safe display.** Server and player text is shown literally. TMP escape sequences are neutralised: a
   literal backslash-n becomes a line break, and other backslashes show as `＼`. Text containing `<` is
   wrapped in `noparse`, and the `<` of `</noparse`, `<a` and `</a`, which TMP acts on even inside
-  `noparse`, shows as `＜`. Each field is capped at 4000 characters; the card analysis is capped once,
-  before it is split.
+  `noparse`, shows as `＜`. Characters TMP does not lay out are dropped - U+0000, which stops its
+  text processing, and variation selectors, which it skips after a font character but keeps after a
+  sprite emoji - so block offsets always match what TMP lays out. Each field is capped at 4000
+  characters; the card analysis is capped once, before it is split.
 - **Notices.** An offline reading shows the offline notice as its first line on every layout; an
   online AI warning is a 提醒 section after 建议 on every layout.
 - **Generating.** After 20 seconds, 查看离线解读 appears together with the slow notice.
