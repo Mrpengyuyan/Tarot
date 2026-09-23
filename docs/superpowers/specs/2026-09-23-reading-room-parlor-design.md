@@ -1,167 +1,113 @@
-# 占卜房空间感设计（Phase 68）
+# 占卜房桌面设计（Phase 68）
 
 - **日期：** 2026-09-23
-- **状态：** 已获用户批准（2026-09-23）。
-  - 主攻方向、房间露出范围、贴图来源、整体方案由用户选定（第 2 节 D1–D4）。
-  - 第 3 节（几何与材质）、第 4 节（灯光与雾）逐段获批。
+- **状态：** 已获用户批准（2026-09-23，修订版）。
+  - 修订原因见第 1.1 节：初版（`01c4fb8`，「真墙 + 帷幔」）依据的截图不是玩家实际看到的机位。按真实机位渲染后，用户把本期主攻从「空间感」改为「桌面」，并批准了第 3、4 节。
   - 验收方式不在本文定义：实现完成后由用户在 Unity 中亲自检查，代码整理也由用户进行（D5）。第 5 节只列出本设计承诺的效果，供人工检查对照。
-- **对应计划：** `PROJECT_COMPLETION_PLAN.md` Phase 3 第 4 条（继续使用烛光、占卜球、帷幕、桌面方向，并控制实时灯光的性能预算）；1.0 目标中的「进入游戏后能看到具有空间层次的牌桌、烛光、背景和氛围效果」。
-- **前置工作：** 分支 `feat/online-interpretation-loop` @ `cd31577`（子项目 A 在线解读闭环与子项目 C 结果页阅读体验已合并）。本期分支 `feat/reading-room-parlor` 从该提交拉出。
+- **对应计划：** `PROJECT_COMPLETION_PLAN.md` Phase 3 第 4 条（继续使用烛光、桌面方向，并控制实时灯光的性能预算）；1.0 目标中的「进入游戏后能看到具有空间层次的牌桌、烛光、背景和氛围效果」。
+- **前置工作：** 分支 `feat/online-interpretation-loop` @ `cd31577`（子项目 A 与 C 已合并）。本期分支 `feat/reading-room-parlor` 从该提交拉出。
 - **Phase 编号：** 68
 
 ## 1. 背景：已经核实的问题
 
-下文代码路径以 `UnityClient/TarotUnity/Assets/` 为根，截图路径以 `UnityClient/TarotUnity/` 为根，坐标为世界单位。
+下文代码路径以 `UnityClient/TarotUnity/Assets/` 为根，坐标为世界单位。
 
-### 1.1 画面上三分之一是黑的
+### 1.1 以前的占卜房截图不是玩家看到的画面
 
-静置状态的占卜房（`Docs/VisualReview/Phase61/ReadingRoom_idle.png`）里，牌桌远边以上全部读作纯黑：没有墙、没有纵深，四支蜡烛像浮在虚空里。步骤条、底部按钮坞和两行居中提示占了大部分视觉重量，3D 只剩中间一条窄带。结果页在 Phase 64 已补上氛围背景，占卜房是三屏里唯一还没有背景的一屏。
+- 以往的占卜房评审截图（例如 `Docs/VisualReview/Phase61/ReadingRoom_idle.png`）都用主相机在场景中的保存位置渲染：`(0, 2.85, -4.15)`，FOV 40。
+- 但 `Scripts/UI/ReadingRoomController.cs` 的 `Start()` 会调用 `CameraChoreographyController.PlayOpening()`，在 0.75 秒内把相机移到 `defaultPose`：`(0, 2.45, -3.55)`，俯仰 32.2°，FOV 36。玩家静置和游玩时看到的都是 `CameraChoreographyController` 各机位的画面，保存位置只在开场不到一秒里出现。
+- 新增的 `Editor/Phase68ParlorCaptureBuilder.cs` 按控制器里的真实机位和 FOV 渲染全部机位：默认、牌堆、单牌、三牌、结果、凯尔特十字。
 
-### 1.2 现有背景板是什么
+在真实机位下：
 
-- `MP_TableStage/MP_ParlorBackdrop`：一块 Quad，位置 `(0, 2.5, 9.5)`，尺寸 40×12（`Editor/Phase38TableRebuildBootstrapper.cs`）。
-- Phase 38 给它的是 `MP_ParlorBackdrop.mat`（URP Unlit，纯色 `(0.055, 0.03, 0.05)`）；Phase 49 的 `StageBackdrop()` 把它换成了 `MP_ParlorHaze.mat`（`Editor/Phase49ReadingRoomLightBootstrapper.cs`）。占卜房场景现在引用的是后者，前者在该场景中已无引用。
-- `MP_ParlorHaze.mat`：URP Unlit，贴图 `Art/MidnightParlor/Sprites/ParlorBackdrop.png`（1024×512），画的是深酒红色丝绒竖褶，底部画了两团暖光。
+- 画面几乎全是桌面。真正发黑的只有顶部一条约 6–8% 的窄带，那是远边框后面烛光照不到的桌布，不是虚空。
+- 初版设计中放在 z=6.2 的墙，在默认、牌堆、单牌、三牌四个机位下都在画面之外。
 
-也就是说，「帷幔」和「墙上的烛光晕」已经以**画上去**的方式尝试过一次，但落在画面里仍读作纯黑。
+### 1.2 桌上同时画着 14 个牌位
 
-### 1.3 为什么照不亮
+- 场景里原有的 4 个牌位（`MP_TableStage/MP_CardSockets` 下的 `MP_Socket_OneCardSlot`、`_PastSlot`、`_PresentSlot`、`_AdviceSlot`），加上 Phase 63 的 10 个凯尔特牌位（`MP_CelticSockets/MP_Socket_Celtic_00..09`），全部保存为激活状态。
+- `Scripts/` 中没有任何代码按所选牌阵显示或隐藏牌位。所以无论选哪个牌阵，14 个描边始终叠在一起。凯尔特十字靠近镜头的几个在透视下很大，一直延伸出画面底边。
+- 这是 Phase 63 引入的回归：当时只在凯尔特机位下检查过效果。
 
-- **材质是 Unlit。** 任何灯都不影响它，烛光闪烁也不会在上面留下变化。
-- **距离超出烛光半径。** 后排两支蜡烛在 z≈3.3，光照半径 4.2，最远照到 z≈7.5；背景板在 z=9.5。即使改成 Lit，烛光在物理上也够不着。
-- **画的内容本身很暗。** 贴图上半部接近纯黑，暖光只在底部。
+### 1.3 放牌的中央是画面里最暗的地方
 
-所以不能只换材质，**能被照亮的面必须往前挪**。
+- 去掉 UI 的默认机位截图里，只有画外的前排蜡烛把画面左右边缘照出暖红，牌堆是唯一被照亮的物体；放牌的中央区域几乎是纯黑。
+- 桌面的主要光源 `MP_TableStage/MP_RoomFill` 是一盏点光源，位于 `(0, 2.3, 0.4)`，强度 1.5，半径 9.5（`Editor/Phase49ReadingRoomLightBootstrapper.cs`）。按平方反比，它在桌面中央的照度只有 1.5/2.3² ≈ 0.28；桌布底色又是有意压暗的深牛血红 `(0.27, 0.095, 0.125)`（`Editor/Phase37AssetFoundationBootstrapper.cs`，为的是让牌和金色保持最亮）。
+- 这盏补光的职责是「让金色读成金色」（Phase 42 的教训），画面边缘的牌堆也靠它。
+- 牌位材质 `MP_CardSocket.mat` 是 URP Unlit 透明，不受任何光照影响；在暗桌布上，它的暗色内里和桌面糊成一片。
 
-### 1.4 灯光现状（`Editor/Phase49ReadingRoomLightBootstrapper.cs`）
+### 1.4 约束
 
-| 光源 | 位置 | 颜色 | 半径 | 阴影 |
-|---|---|---|---|---|
-| `MP_RoomCandle_L` | (-2.90, 0, 0.45) | (1, 0.66, 0.30) | 7.0 | Soft |
-| `MP_RoomCandle_R` | (3.00, 0, 0.30) | 同上 | 7.0 | Soft |
-| `MP_RoomCandle_BackL` | (-4.15, 0, 3.40) | 同上 | 4.2 | 无 |
-| `MP_RoomCandle_BackR` | (4.25, 0, 3.15) | 同上 | 4.2 | 无 |
-| `MP_RoomFill` | (0, 2.3, 0.4) | (1, 0.84, 0.66)，强度 1.5 | 9.5 | 无 |
-
-- 蜡烛位置为烛底，灯光在火焰高度；前排闪烁幅度 0.15，后排 0.20。
-- 环境光为 Flat `(0.085, 0.068, 0.072)`，按 Phase 42/49 的约定只当「阴影地板」；雾关闭；反射强度 0.06。
-- URP 管线（`Settings/PC_RPAsset.asset`）已开启灯光分层（`m_SupportsLightLayers: 1`），渲染路径为 Forward+，没有每物体 4 盏附加灯的上限。
-
-### 1.5 约束
-
-- **相机和 UI 不动**（D2）。相机在 `Scripts/Presentation/CameraChoreographyController.cs` 的六个机位之间移动：`defaultPose`、`deckPose`、`oneCardPose`、`threeCardPose`、`resultPose`，以及凯尔特十字的 `spreadPoses` 条目（Phase 63，位置 `(0.75, 5.7, -4.7)`，FOV 50，离牌桌最远）。
-- **不新增贴图**（D3）。`Tools/UiKitGenerator/gen_uikit.py` 依赖 PIL，而本机所有 Python 环境都没有 PIL，且不在 tarot 环境中装包。可用的现有 PBR 材质：`Art/MidnightParlor/Textures/` 下的 ambientCG CC0 `Wood051`、`Fabric034`（均含 Color / Roughness / NormalGL）。
-- **既有守护测试：** `Phase38TableRebuildTests` 断言 `MP_TableStage` 下存在 `MP_ParlorBackdrop`、且 `MP_ParlorBackdrop.mat` 资产存在；`Phase40MenuResultTests` 断言主菜单舞台下也有同名对象。
-- **重跑风险：** Phase 49 的 bootstrapper 会把后排蜡烛半径写回 4.2、把雾关掉。
+- **相机、机位和 UI 都不动。**
+- **不新增贴图。** `Tools/UiKitGenerator/gen_uikit.py` 依赖 PIL，而本机所有 Python 环境都没有 PIL，且不在 tarot 环境中装包。
+- **既有守护测试：**
+  - `Phase38TableRebuildTests` 断言 `MP_CardSockets` 下正好 4 个子物体。
+  - `Phase63SpreadDefinitionTests` 用 `GameObject.Find("MP_CelticSockets")` 找牌位组，而 `GameObject.Find` 只能找到激活的对象；它还断言该组下正好 10 个子物体。
+- `ReadingFlowController.SelectSpread()` 通过 `SetState(QuestionInput)` 发出 `StateChanged`，但 `SetState` 在状态不变时直接返回。玩家在「写问题」阶段更换牌阵时，不会有任何事件。
 
 ## 2. 用户已定的方向
 
 | # | 决定 |
 |---|---|
-| D1 | 本期主攻**空间感**：把虚空变成房间（不是桌面近景细节、不是镜头构图、不是交互反馈）。 |
-| D2 | **只补视野内的那片黑**：相机、机位和 UI 布局都不动。 |
-| D3 | **不新增贴图**：用几何体、已有 ambientCG 材质和灯光来做。 |
-| D4 | 采用**方案 A「真墙 + 帷幔」**，而不是只改光雾（B）或建封闭小房间（C）。 |
+| D1 | 先修牌位重叠；本期主攻改为**桌面**（初版的「空间感：真墙 + 帷幔」取消）。 |
+| D2 | 相机、机位和 UI 布局都不动。 |
+| D3 | 不新增贴图。 |
+| D4 | 保留补光 `MP_RoomFill`；另加一盏聚光灯做桌面中央的光池。 |
 | D5 | 验收由用户实现完成后在 Unity 中亲自检查；代码整理由用户进行。本期不定义自动化验收，也不新增守护测试。 |
 
-## 3. 几何与材质
+## 3. 牌位只显示当前选中的牌阵
 
-### 3.1 后墙
+- 新增运行时组件 `Scripts/Presentation/SpreadSocketVisibility.cs`，按牌数存放牌位组：
+  - 1 张 → `MP_Socket_OneCardSlot`；
+  - 3 张 → `MP_Socket_PastSlot`、`MP_Socket_PresentSlot`、`MP_Socket_AdviceSlot`；
+  - 10 张 → `MP_Socket_Celtic_00` 至 `_09`。
+- 选中哪个牌数，就只激活对应组的牌位，其余全部隐藏；尚未选择任何牌阵（牌数为 0）时全部隐藏。
+- 写法沿用 Phase 61 `RitualStepIndicator.socketGlowSets` 的「按牌数分组」模式。
+- 在 `ReadingFlowController.SelectSpread()` 中新增事件 `SpreadSelected`（参数为牌数），**每次选牌阵都触发**，不受状态是否变化的影响。组件订阅它，并在启用时按当前牌数应用一次。
+- **只切换每个 `MP_Socket_*` 自身的显隐。** `MP_CardSockets` 和 `MP_CelticSockets` 两个组始终保持激活，层级不变，以满足第 1.4 节的两条测试约束。
+- 开场 `ReadingRoomController.Start()` 会自动选中「一张牌」，所以玩家一进入就只看到一个牌位。场景保存时也处于这个状态，编辑器里看到的与开场一致。
+- 牌位的辉光（Phase 61）照旧由 `RitualStepIndicator` 管理，不改。
 
-- 位置：z≈6.2，即牌桌远边框背沿（z=4.8）之后 1.4 个单位。后排蜡烛离墙约 2.9，烛光能落到墙上。
-- 材质：新建 `MP_ParlorWall.mat`，URP Lit，使用 `Wood051` 的 Color / Roughness / Normal，做成深色护墙板；底色压到约三成亮度。亮度由灯光给，不靠材质自己发亮，深夜气质才保得住。
-- 起始尺寸：宽 28、高 8，底边落在桌布平面（y≈-0.05）。最终尺寸按 3.4 的标准实测确定。
+## 4. 桌面中央的光池
 
-### 3.2 帷幔
-
-- 一对从左右垂下、向两侧收拢的丝绒帷幔，像拉开的舞台幕布，挂在墙前约 0.3 处（z≈5.9）。中间留空，露出后墙。
-  - 中间留空是有意的：牌的正后方保持安静的暗部，视线焦点留在牌上；两侧帷幔正好落在后排蜡烛的光晕里，褶皱吃到光。
-- 材质：新建 `MP_ParlorDrape.mat`，URP Lit，使用 `Fabric034`，底色为深酒红，与 `ParlorBackdrop.png` 的色调一致。
-- 网格：新增编辑器脚本 `Editor/ParlorDrapeMeshBuilder.cs`，过程化生成，沿用 Phase 57 `CandleMeshBuilder` 的做法。
-  - 纵向褶皱用正弦起伏，越靠近外侧绑带处越密、越深。
-  - 法线由褶皱函数解析求得，保证烛光能打出一道道明暗。
-  - 褶皱振幅不超过帷幔到墙的距离，不穿墙。
-- **褶皱是本期最重要的「房间证据」**：一块平板永远给不出烛光掠过褶皱留下的明暗条纹。
-
-### 3.3 原背景板保留
-
-- `MP_ParlorBackdrop` 及其 `MP_ParlorHaze` 材质原样保留，退到最后面当兜底：凯尔特机位离得最远，可能看到墙以外的地方。它本身就是帷幔风格，露出来也不违和。
-- 这样 `Phase38TableRebuildTests` 的断言保持成立，`MP_ParlorBackdrop.mat` 也不动。
-- 新墙和帷幔只用新建材质，不修改任何共享材质，主菜单不受影响。
-
-### 3.4 实测决定的尺寸
-
-以下两项不预先写死，实现时按渲染结果确定：
-
-- 墙的高度与宽度；
-- 是否需要两侧短回转墙（避免画面边缘出现墙的硬切）。
-
-标准：在 1.5 列出的**全部六个机位**下，牌桌远边以上不再露出纯黑的虚空。
-
-### 3.5 本期不做
-
-- 剪影道具（书架、椅背等）。墙、帷幔和光晕应该已经足以说明「这是个房间」；如果看起来仍然空，再单独提。
-- 烛光中的浮尘粒子。
-
-## 4. 灯光与雾
-
-### 4.1 灯光分工
-
-核心思路：不新增灯，给现有五盏灯重新分工，每盏只负责一件事。
-
-| 光源 | 负责 | 改动 |
-|---|---|---|
-| 后排两烛 | 墙上的两团暖色光晕 | 半径 4.2 → 约 5.5，刚好够到墙；仍不投影（点光源投影要渲 6 张阴影图，后排没必要） |
-| 前排两烛 | 帷幔褶皱的明暗 | 不改。半径 7.0 已够到墙（约 5.8 远），并自带软阴影 |
-| `MP_RoomFill` | **只照牌桌** | 用灯光分层排除墙和帷幔 |
-| 环境光 | 阴影地板 | 不改 |
-
-- 补光若不排除，会给整面墙刷一层均匀的底亮，把两团光晕抹平，又回到「一块板」。排除之后墙只被烛光照到，光晕之间的墙面靠环境光和材质底色维持在「很暗但不是纯黑」。
-- **分层方案：** 使用渲染层第 1 位作为「房间背景」层。
-  - 后墙和帷幔的 Renderer 只属于第 1 位；
-  - 四支蜡烛的灯影响第 0 位和第 1 位；
-  - `MP_RoomFill` 只影响第 0 位；
-  - 其他灯（如月光主光）保持原样。
-  - 给第 1 位起显示名称会修改 `ProjectSettings/TagManager.asset`，本期不起名，只在代码和文档中注明。
-
-### 4.2 雾（可选，最后调）
-
-- 线性雾，雾色取原背景板颜色 `(0.055, 0.03, 0.05)`，让墙的上沿和更远处慢慢融进暖黑，而不是一刀切到纯黑。
-- **铁律：任何机位下，牌桌和牌都不能被雾碰到。** 雾按离相机的距离计算，凯尔特机位离桌子最远，起雾距离按它来定。
-- 如果不开雾，墙和帷幔已经过渡自然，就不开。
-
-### 4.3 两条设计规则（防止提亮过头）
-
-1. **牌桌不变。** 每个机位下牌桌区域的观感应与现在一致。后排烛光半径加大会顺带照亮桌子远角，这是本条要防的主要风险。
-2. **墙不抢戏。** 墙面最亮处必须暗于牌桌最亮处，视线焦点始终在牌上。
-
-### 4.4 其他决定
-
-- **烛光闪烁：** 现有闪烁组件会让墙上的光晕跟着跳，这是白来的生气。但光晕面积大，后排 0.20 的幅度可能看起来像频闪，截图又看不出。后排闪烁幅度做成可调旋钮，由用户在真机上判断。
-- **不参与全局光照：** 新几何体不设为 GI Static，本期不重新烘焙场景；墙不会把光反弹回牌桌，这也帮助守住规则 1。
-- **执行顺序：** 新的数值由新的 Phase 68 bootstrapper 写入。它必须在 Phase 49 的 bootstrapper 之后运行；文档中写明「重跑 Phase 49 之后必须再跑 Phase 68」。
+- **保留**补光 `MP_RoomFill` 原样不动（D4）。
+- **新增一盏聚光灯** `MP_TableStage/MP_TablePool`：
+  - 位置约 `(0, 4.0, 0.3)`，垂直向下，对准三牌阵那一排牌的中心。
+  - 内圈约 40°、外圈约 75°。落到桌面，全亮区半径约 1.5，正好罩住三牌阵的三张牌（x = ±1.45）；再柔和过渡到半径约 3。
+  - 颜色取烛光 `(1, 0.66, 0.30)` 与补光 `(1, 0.84, 0.66)` 之间的暖白，起始 `(1, 0.8, 0.58)`；起始强度 12，按渲染结果调整。
+  - 不投影：前排两烛已经负责投影，本期不增加阴影开销。
+- **效果：** 空桌时，放牌的中央是整张桌布最亮的地方，向四周和远端逐渐沉入黑暗。顶部那条黑带从「虚空」变成「光池外的自然暗部」。
+- **凯尔特十字：** 十字主体（x 约 -1.75 至 1.7）落在光池里；右侧权杖那一列（x = 3.2）紧挨着右前烛（x = 3.0），本来就被它照着。
+- **三条规则，防止提亮过头：**
+  1. 发牌之后，牌仍然是画面中最亮的东西；桌布再亮也只是被照亮的深红。
+  2. 牌位描边和牌堆的金色不能被泛光糊掉（项目使用 ACES 色调映射和 Bloom）。
+  3. 牌堆不能比现在暗。
+- **牌位材质不改。** 桌面亮起来之后，暗色的牌位嵌在亮的桌布里，应当读成凹槽；如果到时仍不对，再单独提出。
+- **执行顺序：** 光池由新的 Phase 68 bootstrapper 写入，不修改 Phase 49 的 bootstrapper。重跑 Phase 49 不会影响光池（它只改 `MP_RoomFill`、蜡烛和旧灯）。
 
 ## 5. 本设计承诺的效果（供人工检查对照）
 
 本期不定义自动化验收。以下是本设计承诺的效果，供用户在 Unity 中检查时对照：
 
-1. 六个机位下，牌桌远边以上都不再露出纯黑的虚空。
-2. 后墙上能看到两团来自后排蜡烛的暖色光晕，光晕之间是很暗但非纯黑的墙面。
-3. 两侧帷幔能看出褶皱的明暗起伏。
-4. 牌桌、牌、牌位、牌堆的观感与现在一致，没有被照亮或被雾碰到。
-5. 墙面最亮处暗于牌桌最亮处。
-6. 墙上光晕的闪烁不像频闪。
+1. 进入占卜房时，桌上只有「一张牌」的一个牌位。
+2. 点「三张牌」或「凯尔特十字」时，桌上只剩该牌阵的牌位；在「写问题」阶段来回切换牌阵也一样。
+3. 空桌时，放牌的中央是桌布最亮处，向四周自然变暗。
+4. 发牌、翻牌之后，牌仍是画面中最亮的东西。
+5. 牌位描边、牌堆上的金色没有被泛光糊成一片。
+6. 牌堆不比现在暗。
 7. 主菜单与结果页没有任何变化。
 
 ## 6. 实现边界
 
 - **新增：**
-  - `Editor/Phase68ParlorRoomBootstrapper.cs`：建墙与帷幔、写材质、改后排蜡烛半径、设灯光分层、（可选）设雾。可重复运行，结果一致。
-  - `Editor/ParlorDrapeMeshBuilder.cs`：帷幔网格生成。
-  - 材质 `MP_ParlorWall.mat`、`MP_ParlorDrape.mat`，以及帷幔网格资产。
-  - 评审截图生成脚本与 `Docs/VisualReview/Phase68/` 下的评审截图（六个机位），用于实现时调参，也供用户对照。截图必须经过 Phase 58 的 `CaptureRig.RenderConverged`。
-  - 本期文档（新增 `Docs/` 下的 Phase 68 说明），写明执行顺序与渲染层约定。
-- **修改：** `Scenes/ReadingRoom.unity`（由 bootstrapper 写入）。
-- **不修改：** Phase 38 / 49 的 bootstrapper 源码、共享材质、主菜单与结果页场景、相机与 UI。
+  - `Scripts/Presentation/SpreadSocketVisibility.cs`（第 3 节）。
+  - `Editor/Phase68TableBootstrapper.cs`：给 `MP_TableStage` 挂上并连好 `SpreadSocketVisibility`，把场景存为「一张牌」状态，创建并设置 `MP_TablePool`。可重复运行，结果一致。
+  - `Editor/Phase68ParlorCaptureBuilder.cs`：按真实机位渲染评审截图（第 1.1 节），每个机位先应用对应牌阵的牌位；截图经过 Phase 58 的 `CaptureRig.RenderConverged`。
+  - `Docs/VisualReview/Phase68/` 下的评审截图。
+  - `Docs/PHASE68_READING_ROOM_TABLE.md`：本期说明。
+- **修改：**
+  - `Scripts/Gameplay/ReadingFlowController.cs`：新增 `SpreadSelected` 事件。
+  - `Scenes/ReadingRoom.unity`（由 bootstrapper 写入）。
+- **不修改：** Phase 37 / 38 / 49 / 63 的 bootstrapper 源码、共享材质、主菜单与结果页场景、相机与 UI。
 - **测试：** 不新增测试（D5）。现有 EditMode、PlayMode 与后端测试须全部保持通过。
-- **资源授权：** 只使用仓库中已有的 ambientCG CC0 贴图，不引入新的外部资源。
+- **资源：** 不引入任何新的外部资源。
