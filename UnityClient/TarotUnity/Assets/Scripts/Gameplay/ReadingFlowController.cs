@@ -27,6 +27,13 @@ namespace TarotUnity.Gameplay
 
         public event Action<ReadingFlowState> StateChanged;
 
+        /// <summary>
+        /// Phase 68: raised on every spread selection. SelectSpread moves the flow to
+        /// QuestionInput, but SetState returns early when the state is unchanged, so picking
+        /// another spread while writing the question raised nothing.
+        /// </summary>
+        public event Action<int> SpreadSelected;
+
         public ReadingFlowState State { get; private set; } = ReadingFlowState.MainMenu;
         public int SelectedSpreadId { get; private set; }
         public int SelectedSpreadCardCount { get; private set; }
@@ -45,6 +52,7 @@ namespace TarotUnity.Gameplay
             SelectedSpreadId = spreadId;
             SelectedSpreadCardCount = cardCount;
             expectedFlipCount = Mathf.Max(0, cardCount);
+            SpreadSelected?.Invoke(cardCount);
             SetState(ReadingFlowState.QuestionInput);
         }
 
