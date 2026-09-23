@@ -18892,12 +18892,6 @@ MonoBehaviour:
   readingScrollRect: {fileID: 866586537}
   singleReadingPos: {x: 160, y: 4}
   singleReadingSize: {x: 772, y: 448}
-  spreadReadingPos: {x: 0, y: -160}
-  spreadReadingSize: {x: 1128, y: 208}
-  spreadRowWidth: 1180
-  spreadBasePitch: 348
-  spreadMinCellScale: 0.34
-  spreadCellY: 88
   interpretationStatusText: {fileID: 887082220}
   modeLabelText: {fileID: 1680573852}
   retryInterpretationButton: {fileID: 35192441}
@@ -23534,7 +23528,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_margin: {x: 0, y: 10, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0

@@ -163,6 +163,9 @@ namespace TarotUnity.Editor
             notice.fontSize = 16f;
             notice.color = NoticeInk;
             notice.alignment = TextAlignmentOptions.TopLeft;
+            // The notice is the first line of an offline reading, so it needs the same top margin as a
+            // section heading - without it the text starts 2 units from the frame's corner dot.
+            notice.margin = new Vector4(0f, HeadingTopMargin, 0f, 0f);
             notice.enableWordWrapping = true;
             notice.text = ReleaseUxCopy.OfflineWarning;
             notice.transform.SetSiblingIndex(0);

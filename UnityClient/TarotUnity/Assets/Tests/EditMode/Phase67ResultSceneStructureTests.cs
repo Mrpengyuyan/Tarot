@@ -72,6 +72,17 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(canvas.Find("WarningText"), Is.Null, "WarningText has left the footer");
         }
 
+        // Final review V1: the notice is an offline reading's first line, so it needs a section
+        // heading's top margin - without it the text starts 2 units from the frame's corner dot.
+        [Test]
+        public void TheOfflineNoticeClearsTheFrameCornerDot()
+        {
+            var notice = Content.Find("Phase67_OfflineNotice").GetComponent<TMP_Text>();
+            var heading = Content.Find("Phase7_ResultSectionSummary").GetComponent<TMP_Text>();
+            Assert.That(heading.margin.y, Is.GreaterThan(0f), "control: a section heading has a top margin");
+            Assert.That(notice.margin.y, Is.EqualTo(heading.margin.y), "the notice takes the same top margin");
+        }
+
         [Test]
         public void ThemeKeepsTheOfflineNoticeInk()
         {
