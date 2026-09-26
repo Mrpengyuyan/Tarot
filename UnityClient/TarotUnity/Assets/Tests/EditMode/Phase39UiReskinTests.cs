@@ -2,6 +2,7 @@ using System.IO;
 using NUnit.Framework;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using TarotUnity.UI;
 using UnityEngine.UI;
 
 namespace TarotUnity.Tests.EditMode
@@ -28,11 +29,11 @@ namespace TarotUnity.Tests.EditMode
         public void ChromeWearsTheNineSlicePlaques()
         {
             var root = OpenCanvas();
+            // Phase 69: the gold plaques became smoked glass; the question field is an underline (see Phase69ReadingRoomRestyleTests).
             foreach (var (path, sprite) in new[]
             {
-                ("Phase7_RitualHudRoot/Phase7_HudPlate", "TarotPanelSubtle"),
-                ("Phase11_ActionDock", "TarotPanel"),
-                ("QuestionInput", "TarotPanelSubtle"),
+                ("Phase7_RitualHudRoot/Phase7_HudPlate", "GlassPanel"),
+                ("Phase11_ActionDock", "GlassPanel"),
             })
             {
                 var image = root.Find(path)?.GetComponent<Image>();
@@ -53,14 +54,15 @@ namespace TarotUnity.Tests.EditMode
                 Assert.That(button, Is.Not.Null, name);
 
                 var image = button.GetComponent<Image>();
-                Assert.That(image.sprite?.name, Is.EqualTo("TarotButton"), name);
+                // Phase 69: glass or card stock, by selection.
+                Assert.That(new[] { "GlassPanel", "CardStock" }, Does.Contain(image.sprite?.name), name);
                 Assert.That(image.type, Is.EqualTo(Image.Type.Sliced), name);
                 Assert.That(button.colors.normalColor, Is.EqualTo(Color.white), name);
             }
         }
 
         [Test]
-        public void ProgressPlatesShareTheSubtlePanel()
+        public void ProgressPlatesAreCardStockOnlyWhenCurrent()
         {
             var root = OpenCanvas();
             foreach (var step in new[]
@@ -69,9 +71,11 @@ namespace TarotUnity.Tests.EditMode
                 "Phase7_Progress_FlipCards", "Phase7_Progress_RevealResult",
             })
             {
-                var image = root.Find($"Phase7_RitualHudRoot/{step}/Plate")?.GetComponent<Image>();
-                Assert.That(image, Is.Not.Null, step);
-                Assert.That(image.sprite?.name, Is.EqualTo("TarotPanelSubtle"), step);
+                var chip = root.Find($"Phase7_RitualHudRoot/{step}");
+                var skin = chip.GetComponent<UiSkinState>();
+                Assert.That(skin, Is.Not.Null, step);
+                Assert.That(skin.CardStock?.name, Is.EqualTo("CardStock"), step);
+                Assert.That(skin.Glass, Is.Null, $"{step}: no plate unless current");
             }
         }
 
