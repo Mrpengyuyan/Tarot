@@ -24,7 +24,7 @@ namespace TarotUnity.Editor
     {
         private const string ResultScenePath = "Assets/Scenes/Result.unity";
         private const string DefaultOutFolder = "Docs/VisualReview/Phase67";
-        private const float FrameInnerLineUnits = 18f; // TarotPanel's inner gold line ends 18 canvas units inside the panel edge
+        private const float FrameInnerLineUnits = 14f; // Phase 69 GlassPanel: 8 px margin + inner line centred 5.5 px in, at multiplier 1
         private const float BelowFrameUnits = 6f;      // canvas units checked under the panel's bottom edge
         private const int CornerMargin = 40;           // skip the rounded frame corners
         private const float LightInkTolerance = 0.2f;  // rendered body glyphs sit about 0.1 darker than their authored ink (measured)

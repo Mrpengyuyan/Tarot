@@ -48,7 +48,8 @@ namespace TarotUnity.Tests.EditMode
             var root = GameObject.Find("MainMenuCanvas").transform;
 
             var start = root.Find("StartReadingButton").GetComponent<Image>();
-            Assert.That(start.sprite?.name, Is.EqualTo("TarotButton"));
+            // Phase 69: the invitation is ivory card stock.
+            Assert.That(start.sprite?.name, Is.EqualTo("CardStock"));
             Assert.That(start.type, Is.EqualTo(Image.Type.Sliced));
 
             // Phase 44: quit became a bare corner link - a plaque there still read
@@ -79,12 +80,13 @@ namespace TarotUnity.Tests.EditMode
                 "the rim beam read as a gray stripe behind the reading UI");
 
             var root = GameObject.Find("ResultCanvas").transform;
+            // Phase 69: gold plaques became glass; the way back is card stock.
             Assert.That(root.Find("ResultReadingScroll").GetComponent<Image>().sprite?.name,
-                Is.EqualTo("TarotPanel"));
+                Is.EqualTo("GlassPanel"));
             Assert.That(root.Find("Phase12_ResultCardShowcase").GetComponent<Image>().sprite?.name,
-                Is.EqualTo("TarotPanel"));
+                Is.EqualTo("GlassPanel"));
             Assert.That(root.Find("BackToMenuButton").GetComponent<Image>().sprite?.name,
-                Is.EqualTo("TarotButton"));
+                Is.EqualTo("CardStock"));
             Assert.That(root.Find("Phase14_ResultCardHalo").GetComponent<Image>().sprite?.name,
                 Is.EqualTo("TarotGlow"), "the flat amber rectangle became a radial glow");
             Assert.That(root.Find("Phase8_ResultGoldDividerTop").GetComponent<Image>().sprite?.name,

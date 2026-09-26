@@ -20,7 +20,7 @@ namespace TarotUnity.Tests.EditMode
     public sealed class Phase67ResultSceneStructureTests
     {
         private const string ScenePath = "Assets/Scenes/Result.unity";
-        private const float FrameInnerGoldLine = 18f; // TarotPanel border rendered at pixelsPerUnitMultiplier 2
+        private const float FrameInnerGoldLine = 14f; // Phase 69 GlassPanel inner line at pixelsPerUnitMultiplier 1
 
         private Transform canvas;
 
@@ -40,8 +40,8 @@ namespace TarotUnity.Tests.EditMode
         public void ViewportClearsTheFrameBorder()
         {
             var frame = Scroll.GetComponent<Image>();
-            Assert.That(frame.sprite?.name, Is.EqualTo("TarotPanel"), "control: the frame art the inset was measured on");
-            Assert.That(frame.pixelsPerUnitMultiplier, Is.EqualTo(2f), "control: the border renders at half size");
+            Assert.That(frame.sprite?.name, Is.EqualTo("GlassPanel"), "control: the frame art the inset was measured on");
+            Assert.That(frame.pixelsPerUnitMultiplier, Is.EqualTo(1f), "control: the border renders at full size");
             Assert.That(Viewport.anchorMin, Is.EqualTo(Vector2.zero));
             Assert.That(Viewport.anchorMax, Is.EqualTo(Vector2.one));
             Assert.That(Viewport.offsetMin.x, Is.GreaterThanOrEqualTo(FrameInnerGoldLine + 6f));

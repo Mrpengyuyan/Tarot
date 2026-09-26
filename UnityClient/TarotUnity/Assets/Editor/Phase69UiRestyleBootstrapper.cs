@@ -59,6 +59,8 @@ namespace TarotUnity.Editor
             }
 
             RestyleReadingRoom();
+            RestyleResult();
+            RestyleMenu();
             AssetDatabase.SaveAssets();
             Debug.Log("Tarot Unity Phase 69 UI restyle complete.");
         }
@@ -81,6 +83,7 @@ namespace TarotUnity.Editor
 
             BuildStepBar(root);
             BuildDock(root);
+            SettleText(root);
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
@@ -228,6 +231,70 @@ namespace TarotUnity.Editor
             }
         }
 
+        // ---------------------------------------------------------------- result
+
+        public static void RestyleResult()
+        {
+            var scene = EditorSceneManager.OpenScene(ResultPath, OpenSceneMode.Single);
+            var root = GameObject.Find("ResultCanvas").transform;
+
+            SetMutedThreshold(root, UiFitLayout.MutedSizeThresholdScaled);
+            // Card captions under the spread band are sized by ResultPanelPresenter at runtime.
+            ScaleType(root, root.gameObject, t => !t.transform.GetComponentsInParent<Transform>(true)
+                .Any(p => p.name.StartsWith("SpreadCell_", StringComparison.Ordinal)));
+
+            Skin(root.Find("ResultReadingScroll").GetComponent<Image>(), glass);
+            Skin(root.Find("Phase12_ResultCardShowcase").GetComponent<Image>(), glass);
+            var band = root.Find("MP_ResultSpreadBand");
+            for (var i = 0; i < band.childCount; i++)
+            {
+                var frame = band.GetChild(i).Find("ReversePivot/Frame")?.GetComponent<Image>();
+                if (frame != null)
+                {
+                    Skin(frame, glass);
+                }
+            }
+
+            foreach (var (name, emphasized) in new[]
+            {
+                ("BackToMenuButton", true),
+                ("Phase66_RetryInterpretationButton", true),
+                ("Phase66_OfflineInterpretationButton", false),
+            })
+            {
+                SkinStandaloneButton((RectTransform)root.Find(name), emphasized);
+            }
+
+            SettleText(root);
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+        }
+
+        // ---------------------------------------------------------------- menu
+
+        public static void RestyleMenu()
+        {
+            var scene = EditorSceneManager.OpenScene(MenuPath, OpenSceneMode.Single);
+            var root = GameObject.Find("MainMenuCanvas").transform;
+            var start = (RectTransform)root.Find("StartReadingButton");
+            ScaleType(start, start.gameObject, _ => true);   // only the invitation's text grows
+            SkinStandaloneButton(start, true);
+            SettleText(start);
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+        }
+
+        private static void SkinStandaloneButton(RectTransform button, bool emphasized)
+        {
+            var label = button.Find("Label").GetComponent<TMP_Text>();
+            FitLabelAtLeast(button, label);
+            var skin = GetOrAdd<UiSkinState>(button.gameObject);
+            skin.Configure(button.GetComponent<Image>(), label, glass, stock, true);
+            skin.SetEmphasis(emphasized);
+            EditorUtility.SetDirty(skin);
+            EditorUtility.SetDirty(button.GetComponent<Button>());
+        }
+
         // ---------------------------------------------------------------- shared tools
 
         /// <summary>Sizes a framed element to its label and stretches the label inside the skin margin.</summary>
@@ -270,6 +337,20 @@ namespace TarotUnity.Editor
 
             marker.AppliedScale = UiFitLayout.TypeScale;
             EditorUtility.SetDirty(marker);
+        }
+
+        /// <summary>
+        /// TMP caches its colour (m_fontColor32) only when the mesh is rebuilt. Rebuild every text
+        /// before saving, or a colour set this run is serialized on the next one and a second run
+        /// is not a no-op.
+        /// </summary>
+        private static void SettleText(Transform scope)
+        {
+            foreach (var text in scope.GetComponentsInChildren<TMP_Text>(true))
+            {
+                text.ForceMeshUpdate(true, true);
+                EditorUtility.SetDirty(text);
+            }
         }
 
         private static void SetMutedThreshold(Transform canvas, float value)
