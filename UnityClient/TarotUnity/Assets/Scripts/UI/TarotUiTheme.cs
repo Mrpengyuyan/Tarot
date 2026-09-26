@@ -38,6 +38,10 @@ namespace TarotUnity.UI
         [SerializeField] private Font displayFont;
         [SerializeField] private int displaySizeThreshold = 30;
 
+        // Phase 69: text at or below this size reads as muted. Scenes whose type was scaled
+        // by 1.15 raise it with the type (16 -> 18.5) so no text changes role.
+        [SerializeField] private float mutedSizeThreshold = 16f;
+
         // Phase 43 typography. The same two cuts as SDF font assets. Legacy Text
         // rasterises glyphs into a bitmap atlas at one size, so it softens the
         // moment it is scaled and its outline is four offset copies of the mesh;
@@ -56,6 +60,8 @@ namespace TarotUnity.UI
         public TMP_FontAsset TmpBodyFont => tmpBodyFont;
         public TMP_FontAsset TmpDisplayFont => tmpDisplayFont;
         public int DisplaySizeThreshold => displaySizeThreshold;
+
+        public float MutedSizeThreshold => mutedSizeThreshold;
 
         private void Awake()
         {
@@ -174,7 +180,9 @@ namespace TarotUnity.UI
             // An authored vertex gradient (the gilded title) is a deliberate
             // treatment; flattening it to a single colour here would undo it the
             // moment the scene wakes. TarotUiPreserveColor marks another such deliberate colour.
-            if (!text.enableVertexGradient && text.GetComponent<TarotUiPreserveColor>() == null)
+            // Phase 69: a skinned element (UiSkinState) owns its ink.
+            if (!text.enableVertexGradient && text.GetComponent<TarotUiPreserveColor>() == null
+                && text.GetComponentInParent<UiSkinState>(true) == null)
             {
                 if (text.GetComponent<TarotUiAccentText>() != null)
                 {
@@ -182,7 +190,7 @@ namespace TarotUnity.UI
                 }
                 else
                 {
-                    text.color = text.fontSize <= 16f ? mutedTextColor : textColor;
+                    text.color = text.fontSize <= mutedSizeThreshold ? mutedTextColor : textColor;
                 }
             }
 
@@ -211,7 +219,7 @@ namespace TarotUnity.UI
                 }
                 else
                 {
-                    text.color = text.fontSize <= 16 ? mutedTextColor : textColor;
+                    text.color = text.fontSize <= mutedSizeThreshold ? mutedTextColor : textColor;
                 }
             }
 
@@ -222,6 +230,12 @@ namespace TarotUnity.UI
         private void ApplyButtonStyle(Button button)
         {
             if (button == null)
+            {
+                return;
+            }
+
+            // Phase 69: skinned buttons keep the white-based ColorBlock their sprites need.
+            if (button.GetComponent<UiSkinState>() != null)
             {
                 return;
             }
@@ -254,7 +268,8 @@ namespace TarotUnity.UI
                 return;
             }
 
-            if (input.targetGraphic != null)
+            // Phase 69: the question field is an underline over a transparent, still clickable ground.
+            if (input.targetGraphic != null && input.GetComponent<TarotUiPreserveColor>() == null)
             {
                 input.targetGraphic.color = inputColor;
             }
