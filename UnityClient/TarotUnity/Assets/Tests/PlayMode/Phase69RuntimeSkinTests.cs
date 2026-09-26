@@ -52,5 +52,30 @@ namespace TarotUnity.Tests.PlayMode
             var askChip = canvas.Find("Phase7_RitualHudRoot/Phase7_Progress_AskQuestion").GetComponent<UiSkinState>();
             Assert.That(askChip.IsEmphasized, Is.True, "the step bar is on 写问题");
         }
+
+        // Final review: while the draw runs (and after it, when 揭示结果 is the next step) 洗牌抽取
+        // cannot be pressed, so it must not keep the card stock that marks the next action.
+        [UnityTest]
+        public IEnumerator DrawButtonDropsToGlassWhileItCannotBePressed()
+        {
+            SceneManager.LoadScene("ReadingRoom");
+            for (var i = 0; i < 5; i++)
+            {
+                yield return null;
+            }
+
+            var canvas = GameObject.Find("ReadingRoomCanvas").transform;
+            var draw = canvas.Find("DrawButton").GetComponent<Button>();
+            var drawSkin = draw.GetComponent<UiSkinState>();
+            Assert.That(drawSkin.IsEmphasized, Is.True, "control: ready to draw");
+
+            draw.onClick.Invoke();
+            yield return null;
+
+            Assert.That(draw.interactable, Is.False, "control: the draw is running");
+            Assert.That(drawSkin.IsEmphasized, Is.False);
+            Assert.That(canvas.Find("OneCardButton").GetComponent<UiSkinState>().IsEmphasized, Is.True,
+                "the chosen spread keeps its card stock");
+        }
     }
 }

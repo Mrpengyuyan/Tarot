@@ -555,6 +555,9 @@ namespace TarotUnity.UI
             {
                 drawButton.interactable = enabled;
             }
+
+            // Phase 69: card stock marks the next action; a draw button that cannot be pressed drops to glass.
+            SetEmphasis(drawButton, enabled);
         }
 
         private void SetResultButtonVisible(bool visible)

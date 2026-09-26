@@ -187,6 +187,18 @@ namespace TarotUnity.Tests.EditMode
             }
         }
 
+        // Final review: the flat Phase 7 vignette (1040 wide, 48% dark) stuck out past the narrower
+        // glass dock and showed through it as a hard step. It stays in the scene (Phase 7 finds it),
+        // but no longer draws.
+        [Test]
+        public void TheOldTableVignetteNoLongerDrawsUnderTheGlass()
+        {
+            var vignette = root.Find("Phase7_TableVignette");
+            Assert.That(vignette, Is.Not.Null);
+            Assert.That(vignette.gameObject.activeSelf, Is.True, "Phase7ImmersiveUiTests finds it with GameObject.Find");
+            Assert.That(vignette.GetComponent<Image>().enabled, Is.False);
+        }
+
         private UiSkinState Skin(string name) => root.Find(name).GetComponent<UiSkinState>();
 
         private Rect Bounds(string name)

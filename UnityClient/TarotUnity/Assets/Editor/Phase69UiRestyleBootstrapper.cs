@@ -206,6 +206,16 @@ namespace TarotUnity.Editor
             Skin(dock.GetComponent<Image>(), glass);
             AddCornerStars(dock);
 
+            // The flat Phase 7 vignette (1040 wide, 48% dark) stuck out past the narrower glass dock and
+            // showed through it as a hard step. Phase7ImmersiveUiTests finds it with GameObject.Find, so the
+            // object stays active; only its Image stops drawing.
+            var vignette = root.Find("Phase7_TableVignette")?.GetComponent<Image>();
+            if (vignette != null)
+            {
+                vignette.enabled = false;
+                EditorUtility.SetDirty(vignette);
+            }
+
             var inputY = top - UiFitLayout.SkinMargin - UiFitLayout.DockPad.y - inputHeight / 2f;
             input.sizeDelta = new Vector2(Mathf.Round(UiFitLayout.InputWidthRatio * dockWidth), inputHeight);
             input.anchoredPosition = new Vector2(0f, inputY);

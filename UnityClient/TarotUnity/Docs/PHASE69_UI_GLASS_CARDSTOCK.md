@@ -85,9 +85,13 @@
 - `FrameInnerLineUnits` 改为 14（8 px 外圈加内线）。
 - 它的自检（关掉遮罩后必须能检测到框外文字）原来只看一个位置。字号放大后，被检查的那条 20 单位高的横带恰好落在两段之间的空白里，所以一个像素也检测不到。现在让正文在 0 / 12 / 24 / 36 四个偏移上各测一次，取最大值。
 
+## 顺带处理
+
+- `Phase7_TableVignette`（操作栏背后那块平涂的暗色矩形）宽于新的操作栏，而且会透过玻璃露出一道硬边。现在只关掉它的 `Image`，对象保留并保持激活，因为 `Phase7ImmersiveUiTests` 要用 `GameObject.Find` 找到它。
+- 「洗牌抽取」不能按的时候（抽牌过程中、揭示结果出现之后）改为玻璃，只让真正的下一步保持卡纸（`ReadingRoomController.SetDrawControls`）。
+
 ## 没做的
 
 - 结果页牌下的位置标签字号没有放大。
 - 「离席」按钮没有改。
 - 旧贴图 `TarotPanel`、`TarotPanelSubtle`、`TarotButton` 保留。
-- `Phase7_TableVignette`（操作栏背后的平涂暗色矩形）没有动。它比新的操作栏宽，两侧会露出来，是否处理交给用户决定。
