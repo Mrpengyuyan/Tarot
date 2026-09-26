@@ -164,7 +164,7 @@
    - 步骤之间按草图加 ✧ 分隔（新子对象 `Phase69_StepDot_0..3`，不接收射线）。
    - 排布计算放在运行时程序集的纯静态类 `UiFitLayout` 里，因为 EditMode 测试程序集引用不到编辑器代码。
    - 字号放大的幂等性由画布上的标记组件 `UiTypeScale`（记录已应用的倍数）保证：再次运行时按「1.15 ÷ 已应用倍数」缩放，结果是 1，不会重复放大。
-   - 玻璃内线距外缘 6 个画布单位（贴图倍率 1），`FrameInnerLineUnits` 与 Phase 67 测试里的 `FrameInnerGoldLine` 都改为 6。
+   - 玻璃和卡纸贴图外圈各留 8 px 透明 / 投影边，这样同一个按钮在两种状态下看起来一样大。玻璃内线中心距贴图边缘 13.5 px（贴图倍率 1），所以 `FrameInnerLineUnits` 与 Phase 67 测试里的 `FrameInnerGoldLine` 都改为 14。
 4. **字体里没有 ✦ / ✧。** 已直接读取 `LXGWWenKai-Regular.ttf` / `-Medium.ttf` 的 cmap：U+2726、U+2727 都不在其中（只有 ★☆，太重）。因此所有小星都改用贴图：
    - 生成器再画第三张图 `Sprites/Sparkle.png`：64×64，四角星，白色，中心实、尖端渐隐；
    - 用 `Image` 显示，按用途着色：容器对角 `#e8b85a`，步骤分隔同色、不透明度 0.6，主按钮文字两侧 `#9a6b1e`；

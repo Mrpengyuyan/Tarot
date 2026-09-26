@@ -155,8 +155,8 @@ namespace TarotUnity.Tests.EditMode
         public void FitSizeWrapsTextInPaddingAndTheSkinMargin()
         {
             var size = UiFitLayout.FitSize(new Vector2(52.3f, 22.1f), 17.5f);
-            Assert.That(UiFitLayout.Padding(17.5f), Is.EqualTo(new Vector2(25f, 9f)));
-            Assert.That(size.x, Is.EqualTo(53f + 2f * 25f + 2f * UiFitLayout.SkinMargin));
+            Assert.That(UiFitLayout.Padding(17.5f), Is.EqualTo(new Vector2(24f, 9f)), "Mathf.Round: 24.5 -> 24, 8.75 -> 9");
+            Assert.That(size.x, Is.EqualTo(53f + 2f * 24f + 2f * UiFitLayout.SkinMargin));
             Assert.That(size.y, Is.EqualTo(23f + 2f * 9f + 2f * UiFitLayout.SkinMargin));
         }
 
@@ -476,7 +476,7 @@ namespace TarotUnity.UI
 - [ ] **Step 4: 运行，确认通过**
 
 Run: `bash $R EditMode p69-t1-green -testFilter Phase69UiPrimitivesTests`
-Expected: `total=19 passed=19`（9 个 TestCase + 10 个 Test）。
+Expected: `total=18 passed=18`（9 个 TestCase + 9 个 Test）。
 
 - [ ] **Step 5: 提交**
 
@@ -987,17 +987,10 @@ namespace TarotUnity.Tests.EditMode
             var tex = Load("Sparkle");
             Assert.That(tex.width, Is.EqualTo(64));
             Assert.That(tex.GetPixel(32, 32).a, Is.GreaterThan(0.95f));
-            Assert.That(tex.GetPixel(32, 58).a, Is.GreaterThan(tex.GetPixel(50, 50).a), "arms reach further than the diagonals");
+            Assert.That(tex.GetPixel(32, 50).a, Is.GreaterThan(0.5f), "an arm");
+            Assert.That(tex.GetPixel(44, 44).a, Is.LessThan(0.05f), "the diagonal between arms");
             Assert.That(tex.GetPixel(1, 1).a, Is.LessThan(0.02f));
             Object.DestroyImmediate(tex);
-        }
-
-        [Test]
-        public void GeneratingAgainIsByteIdentical()
-        {
-            var before = File.ReadAllBytes($"{Folder}/GlassPanel.png");
-            TarotUnity.Editor.Phase69UiKitGenerator.Run();
-            Assert.That(File.ReadAllBytes($"{Folder}/GlassPanel.png"), Is.EqualTo(before));
         }
 
         private static Texture2D Load(string name)
@@ -1010,7 +1003,7 @@ namespace TarotUnity.Tests.EditMode
 }
 ```
 
-注意：EditMode 测试程序集引用不到编辑器代码。`GeneratingAgainIsByteIdentical` 调用了 `TarotUnity.Editor.Phase69UiKitGenerator`，会编译失败。所以不保留这个测试，改在 Step 5 用命令行检查：运行生成器两次，比较前后的哈希。**把这个测试方法从上面的文件里删掉再保存。**
+逐字节一致性由 Step 5 在命令行检查：EditMode 测试程序集引用不到编辑器代码，不能在测试里调用生成器。
 
 - [ ] **Step 2: 运行，确认失败**
 
@@ -1236,7 +1229,7 @@ Expected: `SAME`。
 - [ ] **Step 6: 运行测试**
 
 Run: `bash $R EditMode p69-t4-green -testFilter Phase69UiKitTests`
-Expected: 全部通过（3 个 TestCase + 3 个 Test）。若像素断言失败，先用 Read 工具打开 PNG 看一眼，再查采样坐标；不要为了通过测试去放宽断言。
+Expected: `total=6 passed=6`（3 个 TestCase + 3 个 Test）。若像素断言失败，先用 Read 工具打开 PNG 看一眼，再查采样坐标；不要为了通过测试去放宽断言。
 
 - [ ] **Step 7: 提交**
 
@@ -1917,7 +1910,7 @@ namespace TarotUnity.Editor
 }
 ```
 
-（`FitLabelAtLeast` 留给 Task 6 使用；本任务不调用它，编译器会给出「未使用」提示，可以忽略。）
+（`FitLabelAtLeast` 留给 Task 6 使用。）
 
 - [ ] **Step 4: 批处理运行 bootstrapper**
 
@@ -1944,7 +1937,12 @@ Expected: `exit=0`，日志里有 `Tarot Unity Phase 69 UI restyle complete.`，
             })
 ```
 
-`ButtonsAreGoldPlaquesWithCleanColorBlocks` 里，把 `Is.EqualTo("TarotButton")` 改成 `Is.AnyOf("GlassPanel", "CardStock")`，并在该断言上方加注释 `// Phase 69: glass or card stock, by selection.`。
+`ButtonsAreGoldPlaquesWithCleanColorBlocks` 里，把 `Assert.That(image.sprite?.name, Is.EqualTo("TarotButton"), name);` 换成下面两行（Unity 自带的 NUnit 版本较旧，不用 `Is.AnyOf`）：
+
+```csharp
+                // Phase 69: glass or card stock, by selection.
+                Assert.That(new[] { "GlassPanel", "CardStock" }, Does.Contain(image.sprite?.name), name);
+```
 
 `ProgressPlatesShareTheSubtlePanel` 改名为 `ProgressPlatesAreCardStockOnlyWhenCurrent`，循环体改成：
 
