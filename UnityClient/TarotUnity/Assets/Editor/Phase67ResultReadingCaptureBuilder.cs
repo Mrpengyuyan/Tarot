@@ -30,6 +30,7 @@ namespace TarotUnity.Editor
         private const float LightInkTolerance = 0.2f;  // rendered body glyphs sit about 0.1 darker than their authored ink (measured)
         private const float NoticeInkTolerance = 0.1f; // the notice's dark gold is only 0.22 from the frame gold, so stay tight
         private const string ControlShotFile = "Result_10card_16x10.png";
+        private static readonly float[] ControlOffsets = { 0f, 12f, 24f, 36f };
 
         // Inks reading text is drawn in: the theme's ivory and muted grey and the bootstrapper's body ink
         // (light inks), and the offline notice's dark gold. Gold headings share the frame's gold, so they
@@ -237,15 +238,28 @@ namespace TarotUnity.Editor
                 {
                     // Control: with the viewport mask off the reading runs past the frame, so the check
                     // must see it. A zero here means the check itself is blind.
+                    // Phase 69: the checked band is ~20 units tall, so it can fall between two
+                    // paragraphs; nudge the reading through a few offsets and keep the largest count,
+                    // so the control does not depend on where the lines happen to land.
                     var mask = scroll.Find("Viewport").GetComponent<RectMask2D>();
+                    var content = (RectTransform)scroll.Find("Viewport/Content");
+                    var origin = content.anchoredPosition;
                     mask.enabled = false;
-                    Canvas.ForceUpdateCanvases();
-                    CaptureRig.RenderConverged(camera);
-                    tex.ReadPixels(new Rect(0, 0, shot.Width, shot.Height), 0, 0);
-                    tex.Apply();
+                    var unmasked = 0;
+                    foreach (var offset in ControlOffsets)
+                    {
+                        content.anchoredPosition = origin + new Vector2(0f, offset);
+                        Canvas.ForceUpdateCanvases();
+                        CaptureRig.RenderConverged(camera);
+                        tex.ReadPixels(new Rect(0, 0, shot.Width, shot.Height), 0, 0);
+                        tex.Apply();
+                        var count = CountTextOutsideFrame(tex, camera, scroll, pixelsPerUnit);
+                        Debug.Log($"Phase 67 capture control {shot.File}: offset={offset} unmaskedOutsideFrameTextPixels={count}");
+                        unmasked = Mathf.Max(unmasked, count);
+                    }
+
+                    content.anchoredPosition = origin;
                     mask.enabled = true;
-                    var unmasked = CountTextOutsideFrame(tex, camera, scroll, pixelsPerUnit);
-                    Debug.Log($"Phase 67 capture control {shot.File}: unmaskedOutsideFrameTextPixels={unmasked}");
                     if (unmasked == 0)
                     {
                         throw new InvalidOperationException(

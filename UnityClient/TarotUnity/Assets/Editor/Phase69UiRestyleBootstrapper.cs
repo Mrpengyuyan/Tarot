@@ -262,12 +262,54 @@ namespace TarotUnity.Editor
                 ("Phase66_OfflineInterpretationButton", false),
             })
             {
-                SkinStandaloneButton((RectTransform)root.Find(name), emphasized);
+                // ResultSpreadLayout reserves the space above ButtonTopFromCanvasBottom for the
+                // reading, so a taller button keeps its top edge and grows downwards.
+                var button = (RectTransform)root.Find(name);
+                var oldHeight = button.sizeDelta.y;
+                SkinStandaloneButton(button, emphasized);
+                var grow = button.sizeDelta.y - oldHeight;
+                var shift = -grow * (1f - button.pivot.y);
+                button.anchoredPosition += new Vector2(0f, shift);
+                RepinBottom(root, button, shift);
+                EditorUtility.SetDirty(button);
             }
 
             SettleText(root);
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
+        }
+
+        /// <summary>
+        /// ResultCanvasAspectFit re-pins the buttons at runtime from its own table (distance from the
+        /// bottom edge), so a moved button must move there too or the runtime puts it back.
+        /// </summary>
+        private static void RepinBottom(Transform canvas, RectTransform button, float shift)
+        {
+            if (Mathf.Approximately(shift, 0f))
+            {
+                return;
+            }
+
+            var fit = canvas.GetComponent<ResultCanvasAspectFit>();
+            var so = new SerializedObject(fit);
+            var pinned = so.FindProperty("pinned");
+            for (var i = 0; i < pinned.arraySize; i++)
+            {
+                var element = pinned.GetArrayElementAtIndex(i);
+                if (element.FindPropertyRelative("target").objectReferenceValue != button)
+                {
+                    continue;
+                }
+
+                if (element.FindPropertyRelative("edge").enumValueIndex != (int)ResultCanvasAspectFit.Edge.Bottom)
+                {
+                    throw new InvalidOperationException($"Phase 69: {button.name} is expected to be pinned to the bottom edge.");
+                }
+
+                element.FindPropertyRelative("offsetFromEdge").floatValue += shift;
+            }
+
+            so.ApplyModifiedPropertiesWithoutUndo();
         }
 
         // ---------------------------------------------------------------- menu

@@ -54,7 +54,9 @@ namespace TarotUnity.Tests.EditMode
 
             var inputRect = canvas.transform.Find("QuestionInput")?.GetComponent<RectTransform>();
             Assert.That(inputRect, Is.Not.Null);
-            Assert.That(inputRect.sizeDelta.x, Is.GreaterThanOrEqualTo(720f));
+            // Phase 69: the question is an underline spanning 62% of the glass dock (spec §4.5), not a 720-wide plaque.
+            var dockRect = canvas.transform.Find("Phase11_ActionDock").GetComponent<RectTransform>();
+            Assert.That(inputRect.sizeDelta.x, Is.EqualTo(Mathf.Round(UiFitLayout.InputWidthRatio * dockRect.sizeDelta.x)));
         }
 
         [Test]
