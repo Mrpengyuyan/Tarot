@@ -145,7 +145,13 @@ namespace TarotUnity.UI
                 var plateColor = i < currentStep ? completedPlate : isCurrent ? currentPlate : upcomingPlate;
                 var labelColor = i < currentStep ? completedLabel : isCurrent ? currentLabel : upcomingLabel;
 
-                if (chip.plate != null)
+                // Phase 69: a skinned chip shows card stock when current and no plate otherwise.
+                var skin = chip.root != null ? chip.root.GetComponent<UiSkinState>() : null;
+                if (skin != null)
+                {
+                    skin.SetEmphasis(isCurrent);
+                }
+                else if (chip.plate != null)
                 {
                     chip.plate.color = plateColor;
                 }

@@ -156,6 +156,7 @@ namespace TarotUnity.UI
             selectedSpreadId = spreadId;
             selectedCardCount = cardCount;
             selectedSpreadName = spreadName;
+            ApplySpreadEmphasis(cardCount);
 
             flowController?.EnterSpreadSelect();
             flowController?.SelectSpread(spreadId, cardCount);
@@ -511,6 +512,26 @@ namespace TarotUnity.UI
             }
 
             SceneManager.LoadScene(GameSceneId.Result.ToString());
+        }
+
+        /// <summary>
+        /// Phase 69: the chosen spread's button wears card stock, the others glass. Called on
+        /// every selection, including a switch while the question is being written.
+        /// </summary>
+        public void ApplySpreadEmphasis(int cardCount)
+        {
+            SetEmphasis(oneCardButton, cardCount == 1);
+            SetEmphasis(threeCardButton, cardCount == 3);
+            SetEmphasis(celticCrossButton, cardCount == 10);
+        }
+
+        private static void SetEmphasis(Button button, bool on)
+        {
+            var skin = button != null ? button.GetComponent<UiSkinState>() : null;
+            if (skin != null)
+            {
+                skin.SetEmphasis(on);
+            }
         }
 
         private void SetDrawControls(bool enabled)
