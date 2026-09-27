@@ -460,7 +460,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 129761675}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -688,6 +688,7 @@ GameObject:
   - component: {fileID: 168761571}
   - component: {fileID: 168761572}
   - component: {fileID: 168761573}
+  - component: {fileID: 168761574}
   m_Layer: 0
   m_Name: ReadingRoomCanvas
   m_TagString: Untagged
@@ -928,6 +929,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TarotUnity.Runtime::TarotUnity.UI.UiTypeScale
   appliedScale: 1.15
+--- !u!114 &168761574
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 168761565}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 081c8efffc2614e24918924c25fea978, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TarotUnity.Runtime::TarotUnity.UI.ResultCanvasAspectFit
+  scaler: {fileID: 168761568}
+  canvasRect: {fileID: 168761570}
+  pinned: []
 --- !u!1 &172610694
 GameObject:
   m_ObjectHideFlags: 0
@@ -12172,7 +12188,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: -162.5}
-  m_SizeDelta: {x: 568, y: 45}
+  m_SizeDelta: {x: 448, y: 45}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &346330848
 MonoBehaviour:
@@ -12908,7 +12924,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -361.5, y: -221}
+  m_AnchoredPosition: {x: -265, y: -221}
   m_SizeDelta: {x: 129, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &422059090
@@ -20134,7 +20150,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 733171596}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -26170,7 +26186,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 910356959}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -31484,6 +31500,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1020925404}
+  - component: {fileID: 1020925405}
   m_Layer: 0
   m_Name: Phase7_RitualHudRoot
   m_TagString: Untagged
@@ -31520,6 +31537,18 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 232}
   m_SizeDelta: {x: 670, y: 79}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!225 &1020925405
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1020925403}
+  m_Enabled: 1
+  m_Alpha: 0
+  m_Interactable: 0
+  m_BlocksRaycasts: 0
+  m_IgnoreParentGroups: 0
 --- !u!1 &1045774432
 GameObject:
   m_ObjectHideFlags: 0
@@ -31764,7 +31793,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1105308965}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -32729,7 +32758,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -212.5, y: -221}
+  m_AnchoredPosition: {x: -116, y: -221}
   m_SizeDelta: {x: 129, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1241351100
@@ -38485,7 +38514,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 146.5, y: -221}
+  m_AnchoredPosition: {x: 243, y: -221}
   m_SizeDelta: {x: 173, y: 68}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1308119980
@@ -39000,7 +39029,7 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 1
+  m_HorizontalAlignment: 2
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
@@ -39487,7 +39516,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1421754918}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -39962,7 +39991,7 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 2
-  m_HorizontalAlignment: 1
+  m_HorizontalAlignment: 2
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 0
@@ -46472,7 +46501,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 339.5, y: -221}
+  m_AnchoredPosition: {x: 243, y: -221}
   m_SizeDelta: {x: 173, y: 68}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1721592186
@@ -48038,7 +48067,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: -197.5}
-  m_SizeDelta: {x: 916, y: 151}
+  m_SizeDelta: {x: 723, y: 151}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1944720304
 MonoBehaviour:
@@ -48118,7 +48147,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1948669869}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -48424,7 +48453,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -44, y: -221}
+  m_AnchoredPosition: {x: 52.5, y: -221}
   m_SizeDelta: {x: 168, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1953446528
@@ -48486,7 +48515,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1967319946}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1

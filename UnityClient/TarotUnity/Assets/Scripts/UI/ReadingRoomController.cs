@@ -566,6 +566,12 @@ namespace TarotUnity.UI
             {
                 revealResultButton.gameObject.SetActive(visible);
             }
+
+            // Phase 70: 揭示结果 shares 洗牌抽取's slot; the draw cannot be pressed again this round.
+            if (drawButton != null)
+            {
+                drawButton.gameObject.SetActive(!visible);
+            }
         }
 
         private void SetStatus(string text)

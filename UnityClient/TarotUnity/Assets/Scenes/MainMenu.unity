@@ -13382,6 +13382,7 @@ GameObject:
   - component: {fileID: 863742158}
   - component: {fileID: 863742157}
   - component: {fileID: 863742162}
+  - component: {fileID: 863742163}
   m_Layer: 0
   m_Name: MainMenuCanvas
   m_TagString: Untagged
@@ -13528,6 +13529,21 @@ MonoBehaviour:
   mutedSizeThreshold: 16
   tmpBodyFont: {fileID: 11400000, guid: 8a94f78cc009042f89f09de99ee21208, type: 2}
   tmpDisplayFont: {fileID: 11400000, guid: 004d7eacf49c7448fb121d25b6d68553, type: 2}
+--- !u!114 &863742163
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 863742156}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 081c8efffc2614e24918924c25fea978, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TarotUnity.Runtime::TarotUnity.UI.ResultCanvasAspectFit
+  scaler: {fileID: 863742159}
+  canvasRect: {fileID: 863742161}
+  pinned: []
 --- !u!1 &865438746
 GameObject:
   m_ObjectHideFlags: 0

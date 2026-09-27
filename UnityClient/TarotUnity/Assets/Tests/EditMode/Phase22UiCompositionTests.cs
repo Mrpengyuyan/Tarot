@@ -37,7 +37,9 @@ namespace TarotUnity.Tests.EditMode
         {
             var canvas = OpenReadingRoomCanvas();
 
-            var buttonRow = new[] { "OneCardButton", "ThreeCardButton", "DrawButton", "RevealResultButton" };
+            // Phase 70: 揭示结果 shares 洗牌抽取's slot and the two are never shown together
+            // (Phase70RevealReplacesDrawTests), so the row is the four buttons a player sees.
+            var buttonRow = new[] { "OneCardButton", "ThreeCardButton", "CelticCrossButton", "DrawButton" };
             for (var i = 0; i < buttonRow.Length - 1; i++)
             {
                 var left = canvas.transform.Find(buttonRow[i])?.GetComponent<RectTransform>();
