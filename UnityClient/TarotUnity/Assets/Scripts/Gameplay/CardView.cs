@@ -27,6 +27,14 @@ namespace TarotUnity.Gameplay
 
         public event Action<CardView, bool> FaceChanged;
 
+        // Phase 71: how much wider the glow grows while the pointer is over the card.
+        [SerializeField] private float hoverHaloScale = 1.45f;
+
+        private bool awaitingFlip;
+        private bool hovered;
+        private bool haloScaleCaptured;
+        private Vector3 haloRestScale;
+
         public CardDrawData DrawData { get; private set; }
         public bool IsFaceUp { get; private set; }
 
@@ -133,6 +141,8 @@ namespace TarotUnity.Gameplay
                 backRoot.SetActive(!faceUp);
             }
 
+            ApplyHalo();   // Phase 71: a face-up card no longer glows
+
             if (faceUp)
             {
                 // The front is now active, so the face renderer bounds are valid and the
@@ -159,17 +169,45 @@ namespace TarotUnity.Gameplay
             FaceChanged?.Invoke(this, faceUp);
         }
 
+        /// <summary>
+        /// The deal's "flip me": a face-down card waiting to be turned glows softly under its
+        /// edges. The deal and the flip drive this; hovering is separate (<see cref="SetHovered"/>),
+        /// so leaving the card no longer puts the invitation out.
+        /// </summary>
         public void SetHighlighted(bool highlighted)
         {
+            awaitingFlip = highlighted;
+            ApplyHalo();
+        }
+
+        /// <summary>Phase 71: the pointer over a face-down card widens its glow.</summary>
+        public void SetHovered(bool hovered)
+        {
+            this.hovered = hovered;
+            ApplyHalo();
+        }
+
+        private void ApplyHalo()
+        {
+            var visible = !IsFaceUp && (awaitingFlip || hovered);
             if (highlightRenderer != null)
             {
-                highlightRenderer.enabled = highlighted;
+                highlightRenderer.enabled = visible;
             }
 
-            if (highlightRoot != null)
+            if (highlightRoot == null)
             {
-                highlightRoot.SetActive(highlighted);
+                return;
             }
+
+            if (!haloScaleCaptured)
+            {
+                haloRestScale = highlightRoot.transform.localScale;
+                haloScaleCaptured = true;
+            }
+
+            highlightRoot.transform.localScale = hovered ? haloRestScale * hoverHaloScale : haloRestScale;
+            highlightRoot.SetActive(visible);
         }
     }
 }

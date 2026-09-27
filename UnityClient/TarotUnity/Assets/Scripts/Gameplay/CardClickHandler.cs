@@ -16,14 +16,15 @@ namespace TarotUnity.Gameplay
             cardView = GetComponent<CardView>();
         }
 
+        // Phase 71: hover is its own state, so leaving a card keeps the deal's glow.
         public void OnPointerEnter(PointerEventData eventData)
         {
-            cardView.SetHighlighted(true);
+            cardView.SetHovered(true);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            cardView.SetHighlighted(false);
+            cardView.SetHovered(false);
         }
 
         public void OnPointerClick(PointerEventData eventData)
