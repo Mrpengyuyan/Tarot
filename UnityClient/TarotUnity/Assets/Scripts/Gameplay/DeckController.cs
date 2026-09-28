@@ -31,6 +31,17 @@ namespace TarotUnity.Gameplay
         [Tooltip("Camera shake on the landing frame. Subtle - deals arrive in quick succession.")]
         [SerializeField] private float landingCameraKick = 0.03f;
 
+        // Phase 72: a card the player picked from the fan is pulled out, hovers glowing,
+        // flies to its slot trailing light, and lands with the Phase 54 weight.
+        [Header("Phase72 Pick")]
+        [SerializeField] private float pickPullSeconds = 0.15f;
+        [SerializeField] private float pickPullDistance = 0.25f;
+        [SerializeField] private float pickRise = 0.55f;
+        [SerializeField] private float pickHoverSeconds = 0.25f;
+        [SerializeField] private float pickHoverBob = 0.02f;
+        [SerializeField] private float pickGlowBoost = 1.6f;
+        [SerializeField] private float returnSeconds = 0.45f;
+
         private readonly List<CardView> activeCards = new();
         private CardArtworkCatalog defaultArtworkCatalog;
         private CameraChoreographyController cameraChoreography;
@@ -52,6 +63,9 @@ namespace TarotUnity.Gameplay
 
         public event Action<CardView> CardDealStarted;
         public event Action<CardView> CardDealt;
+
+        /// <summary>Phase 72: raised when a picked card starts its hover beat, so its slot can answer.</summary>
+        public event Action<CardView> CardHovering;
 
         public IReadOnlyList<CardView> ActiveCards => activeCards;
 
@@ -98,6 +112,126 @@ namespace TarotUnity.Gameplay
                 CardDealt?.Invoke(card);
                 yield return new WaitForSeconds(dealInterval);
             }
+        }
+
+        /// <summary>
+        /// Phase 72: deals a card the player picked from the fan. Four beats - pull (out of
+        /// the fan toward the player and up, accelerating), hover (turns to the slot's heading
+        /// and bobs while its glow swells), flight (the deal arc, trailing light), and the
+        /// Phase 54 landing. The card joins ActiveCards on landing, still face down and unbound.
+        /// </summary>
+        public IEnumerator DealPickedCard(CardView card, Transform slot)
+        {
+            if (card == null || slot == null)
+            {
+                yield break;
+            }
+
+            var t = card.transform;
+            t.SetParent(cardParent != null ? cardParent : transform, true);
+            card.SetHighlighted(true);
+            CardDealStarted?.Invoke(card);
+
+            var start = t.position;
+            var toward = -(t.rotation * Vector3.forward);
+            toward.y = 0f;
+            var pulled = start + toward.normalized * pickPullDistance + Vector3.up * pickRise;
+            for (var elapsed = 0f; elapsed < pickPullSeconds; elapsed += Time.deltaTime)
+            {
+                var k = elapsed / pickPullSeconds;
+                t.position = Vector3.Lerp(start, pulled, k * k);
+                yield return null;
+            }
+
+            t.position = pulled;
+
+            CardHovering?.Invoke(card);
+            var fromRotation = t.rotation;
+            for (var elapsed = 0f; elapsed < pickHoverSeconds; elapsed += Time.deltaTime)
+            {
+                var k = elapsed / pickHoverSeconds;
+                t.rotation = Quaternion.Slerp(fromRotation, slot.rotation, k * k * (3f - 2f * k));
+                t.position = pulled + Vector3.up * (Mathf.Sin(k * Mathf.PI * 2f) * pickHoverBob);
+                card.SetHaloBoost(1f + (pickGlowBoost - 1f) * Mathf.Sin(k * Mathf.PI));
+                yield return null;
+            }
+
+            card.SetHaloBoost(1f);
+            t.SetPositionAndRotation(pulled, slot.rotation);
+
+            var trail = card.GetComponentInChildren<TrailRenderer>(true);
+            if (trail != null)
+            {
+                trail.Clear();
+                trail.emitting = true;
+            }
+
+            yield return MoveCardToSlot(t, slot);
+            if (trail != null)
+            {
+                trail.emitting = false;
+            }
+
+            yield return LandingSettle(t);
+            activeCards.Add(card);
+            var tilt = card.GetComponent<CardHoverTiltController>();
+            if (tilt != null)
+            {
+                tilt.Resume();
+            }
+
+            CardDealt?.Invoke(card);
+        }
+
+        /// <summary>Phase 72: gives the landed cards their draws, in slot order, once the reading exists.</summary>
+        public void BindDealtCards(IList<CardDrawData> draws)
+        {
+            if (draws == null)
+            {
+                return;
+            }
+
+            if (draws.Count != activeCards.Count)
+            {
+                Debug.LogWarning($"DeckController: {draws.Count} draws for {activeCards.Count} dealt cards.");
+            }
+
+            for (var i = 0; i < Mathf.Min(draws.Count, activeCards.Count); i++)
+            {
+                var card = activeCards[i];
+                card.Bind(draws[i]);
+                card.SetFaceArtwork(ResolveArtwork(draws[i]));
+                card.SetHighlighted(true);
+            }
+        }
+
+        /// <summary>Phase 72: a failed BackendOnly start sends the landed cards back to the deck.</summary>
+        public IEnumerator ReturnDealtCards()
+        {
+            var cards = new List<CardView>(activeCards);
+            var starts = new List<Vector3>();
+            foreach (var card in cards)
+            {
+                starts.Add(card.transform.position);
+            }
+
+            for (var elapsed = 0f; elapsed < returnSeconds; elapsed += Time.deltaTime)
+            {
+                var k = elapsed / returnSeconds;
+                var e = k * k * (3f - 2f * k);
+                for (var i = 0; i < cards.Count; i++)
+                {
+                    if (cards[i] != null)
+                    {
+                        cards[i].transform.position = Vector3.Lerp(starts[i], transform.position, e)
+                            + Vector3.up * (Mathf.Sin(k * Mathf.PI) * dealArcHeight * 0.5f);
+                    }
+                }
+
+                yield return null;
+            }
+
+            Clear();
         }
 
         private IEnumerator MoveCardToSlot(Transform cardTransform, Transform slot)
