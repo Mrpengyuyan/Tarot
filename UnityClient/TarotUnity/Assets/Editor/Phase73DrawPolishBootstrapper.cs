@@ -37,9 +37,19 @@ namespace TarotUnity.Editor
 
         private const string ClothMaterialPath = "Assets/Art/MidnightParlor/Materials/MP_TableCloth.mat";
         private const string NearClothMaterialPath = "Assets/Art/MidnightParlor/Materials/MP_TableClothNear.mat";
-        public const float NearClothEdgeZ = -13f;
+        // As long as the shared cloth (15), so its tiling is a whole number and the pattern runs on
+        // across the seam in phase.
+        public const float NearClothLength = 15f;
         public const float RimX = 11.45f;
         public const float RimFarZ = 4.8f;
+
+        // The reading room's ritual sparks (Phase 8 cue bursts and Phase 18 loops). Named, so a
+        // particle system added to the room later is not silenced by a re-run.
+        public static readonly string[] SilencedParticles =
+        {
+            "ShuffleParticles", "DealParticles", "FlipParticles", "ResultReadyParticles",
+            "Phase18_AmbientDustParticles", "Phase18_DeckFocusParticles", "Phase18_FlipSparkParticles",
+        };
 
         public static readonly Vector3 DeckPosition = new Vector3(-1.9f, 0.12f, 2.3f);
 
@@ -95,7 +105,8 @@ namespace TarotUnity.Editor
         {
             var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
 
-            foreach (var ps in Object.FindObjectsByType<ParticleSystem>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (var ps in Object.FindObjectsByType<ParticleSystem>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+                .Where(p => SilencedParticles.Contains(p.name)))
             {
                 ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
                 var main = ps.main;
@@ -133,7 +144,8 @@ namespace TarotUnity.Editor
             var cloth = GameObject.Find("MP_TableCloth");
             var clothBounds = cloth.GetComponent<Renderer>().bounds;
             var clothSize = cloth.transform.localScale;
-            var nearLength = clothBounds.min.z - NearClothEdgeZ;
+            var nearLength = NearClothLength;
+            var nearEdge = clothBounds.min.z - nearLength;
 
             // The shared cloth material tiles 3 x 3 over the 24 x 15 cloth; the near piece keeps that density.
             if (AssetDatabase.LoadAssetAtPath<Material>(NearClothMaterialPath) == null)
@@ -159,15 +171,15 @@ namespace TarotUnity.Editor
             near.name = "MP_TableClothNear";
             near.transform.localRotation = cloth.transform.localRotation;
             near.transform.localScale = new Vector3(clothSize.x, clothSize.y, nearLength);
-            near.transform.position = new Vector3(cloth.transform.position.x, cloth.transform.position.y, NearClothEdgeZ + nearLength / 2f);
+            near.transform.position = new Vector3(cloth.transform.position.x, cloth.transform.position.y, nearEdge + nearLength / 2f);
             near.GetComponent<Renderer>().sharedMaterial = material;
             EditorUtility.SetDirty(near);
 
-            var rimLength = RimFarZ - NearClothEdgeZ;
+            var rimLength = RimFarZ - nearEdge;
             foreach (var (name, side) in new[] { ("MP_TableRimLeft", -1f), ("MP_TableRimRight", 1f) })
             {
                 var rim = GameObject.Find(name).transform;
-                rim.position = new Vector3(side * RimX, rim.position.y, NearClothEdgeZ + rimLength / 2f);
+                rim.position = new Vector3(side * RimX, rim.position.y, nearEdge + rimLength / 2f);
                 rim.localScale = new Vector3(rim.localScale.x, rim.localScale.y, rimLength);
                 EditorUtility.SetDirty(rim);
             }

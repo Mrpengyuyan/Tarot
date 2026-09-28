@@ -136,14 +136,21 @@ namespace TarotUnity.Gameplay
             var toward = -(t.rotation * Vector3.forward);
             toward.y = 0f;
             var pulled = start + toward.normalized * pickPullDistance + Vector3.up * pickRise;
+
+            // Phase 73: a card picked from the fan may still be grown by its hover; it eases back
+            // to its own size as it comes out instead of snapping on the click.
+            var fromScale = t.localScale;
+            var restScale = cardPrefab != null ? cardPrefab.transform.localScale : Vector3.one;
             for (var elapsed = 0f; elapsed < pickPullSeconds; elapsed += Time.deltaTime)
             {
                 var k = elapsed / pickPullSeconds;
                 t.position = Vector3.Lerp(start, pulled, k * k);
+                t.localScale = Vector3.Lerp(fromScale, restScale, k);
                 yield return null;
             }
 
             t.position = pulled;
+            t.localScale = restScale;
 
             CardHovering?.Invoke(card);
             var fromRotation = t.rotation;

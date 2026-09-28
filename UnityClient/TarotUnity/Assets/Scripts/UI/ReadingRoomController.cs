@@ -279,6 +279,13 @@ namespace TarotUnity.UI
                 deckShuffle.Play();
             }
 
+            // Phase 73 review: the fan's 78 cards are made a few per frame while the shuffle plays.
+            var deckOrigin = deckShuffle != null ? deckShuffle.transform : deckController != null ? deckController.transform : transform;
+            if (FanCanDeal(selectedCardCount))
+            {
+                StartCoroutine(spreadFan.Prepare(deckOrigin));
+            }
+
             SetStatus(ReleaseUxCopy.FlowShuffling);
 
             // Phase 66: the online start (record + draw + cards, no AI) runs while the
@@ -312,7 +319,6 @@ namespace TarotUnity.UI
             }
 
             var slots = flowController != null ? flowController.GetSelectedSpreadSlots() : new List<Transform>();
-            var deckOrigin = deckShuffle != null ? deckShuffle.transform : deckController != null ? deckController.transform : transform;
             if (FanCanDeal(slots.Count))
             {
                 if (cameraChoreography != null)

@@ -73,7 +73,9 @@ namespace TarotUnity.Tests.PlayMode
         {
             var card = fan.FanCards[19];
             fan.GetFanPose(19, out var rest, out var restRotation);
-            var restScale = card.transform.localScale;
+            // Phase 73 review: the tilt and growth live on the visuals, not the root with the collider.
+            var body = card.GetComponentsInChildren<Transform>(true).First(t => t.name == "Phase15_CardBody");
+            var restScale = body.lossyScale;
             var peak = 0f;
             fan.SetHovered(card, true);
             for (var t = 0f; t < 0.6f; t += Time.deltaTime)
@@ -85,12 +87,13 @@ namespace TarotUnity.Tests.PlayMode
             var lift = card.transform.position.y - rest.y;
             Assert.That(lift, Is.GreaterThan(0.08f), "picked up");
             Assert.That(peak, Is.GreaterThan(lift * 1.02f), "a spring: it overshoots a little, then settles");
-            var tilt = Quaternion.Angle(card.transform.rotation, restRotation);
+            var tilt = Quaternion.Angle(body.rotation, restRotation);
             Assert.That(tilt, Is.InRange(8f, 20f), "tipped toward the camera");
-            var farEnd = card.transform.TransformPoint(Vector3.forward * 0.5f);
-            var nearEnd = card.transform.TransformPoint(Vector3.back * 0.5f);
+            var farEnd = body.position + body.forward * 0.5f;
+            var nearEnd = body.position - body.forward * 0.5f;
             Assert.That(farEnd.y, Is.GreaterThan(nearEnd.y), "the far edge rises, so the face turns to the player");
-            Assert.That(card.transform.localScale.x, Is.GreaterThan(restScale.x * 1.03f));
+            Assert.That(body.lossyScale.x, Is.GreaterThan(restScale.x * 1.03f));
+            Assert.That(Quaternion.Angle(card.transform.rotation, restRotation), Is.LessThan(0.5f), "the root, with the pointer target, does not tip");
         }
 
         [UnityTest]
@@ -245,6 +248,75 @@ namespace TarotUnity.Tests.PlayMode
             Assert.That(fanLight.intensity, Is.GreaterThan(1f));
             yield return fan.Gather(origin);
             Assert.That(fanLight.enabled, Is.False, "the table goes back to its usual light");
+        }
+
+        // Phase 73 review: the hovered card tips and grows, but its pointer target must not - a
+        // tipped box rose over the neighbours' strips and stole the pointer from them.
+        [UnityTest]
+        public IEnumerator AHoveredCardDoesNotStealThePointerFromItsNeighbours()
+        {
+            fan.SetHovered(fan.FanCards[19], true);
+            yield return new WaitForSeconds(0.6f);
+            Physics.SyncTransforms();
+            foreach (var neighbour in new[] { 20, 21 })
+            {
+                // A point on the far half of the neighbour's visible strip (its left edge, since the
+                // card to its right lies on top of it).
+                fan.GetFanPose(neighbour, out var p, out var r);
+                var point = p + r * new Vector3(-0.3f, 0f, 0.35f);
+                Assert.That(Physics.Raycast(point + Vector3.up * 5f, Vector3.down, out var hit, 10f), Is.True, "control: something is there");
+                Assert.That(hit.collider.GetComponentInParent<CardView>(), Is.SameAs(fan.FanCards[neighbour]),
+                    $"the pointer over card {neighbour}'s strip finds card {neighbour}");
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator GatherLetsGoOfTheHoverPose()
+        {
+            var card = fan.FanCards[19];
+            fan.SetHovered(card, true);
+            yield return new WaitForSeconds(0.6f);
+            fan.GetFanPose(19, out _, out var restRotation);
+            fan.StartCoroutine(fan.Gather(origin));
+            yield return null;
+            Assert.That(Quaternion.Angle(card.transform.rotation, restRotation), Is.LessThan(1f), "no longer tipped");
+            Assert.That(card.GetComponentsInChildren<Transform>(true).All(t => Mathf.Abs(t.lossyScale.x) < 5f), Is.True);
+            var body = card.GetComponentsInChildren<Transform>(true).First(t => t.name == "Phase15_CardBody");
+            Assert.That(body.lossyScale.x, Is.EqualTo(0.74f).Within(0.01f), "back to its normal size");
+        }
+
+        // Phase 73 review: 78 cards at rest were rewritten every frame; a settled card is left alone.
+        [UnityTest]
+        public IEnumerator ACardAtRestIsLeftAlone()
+        {
+            yield return new WaitForSeconds(0.2f);
+            var card = fan.FanCards[5];
+            var nudged = card.transform.position + Vector3.up;
+            card.transform.position = nudged;
+            yield return null;
+            yield return null;
+            Assert.That(card.transform.position, Is.EqualTo(nudged), "nothing rewrites a card whose springs are at rest");
+        }
+
+        // Phase 73 review: 78 prefabs (about 2,100 objects) in one frame hitch; they are made a few
+        // per frame ahead of the spread, out of sight under the cloth.
+        [UnityTest]
+        public IEnumerator PrepareMakesTheCardsAFewPerFrameAndSpreadUsesThem()
+        {
+            fan.StartCoroutine(fan.Prepare(origin));
+            yield return null;
+            Assert.That(fan.PreparedCount, Is.GreaterThan(0));
+            Assert.That(fan.PreparedCount, Is.LessThan(fan.CardCount), "spread over several frames");
+            while (fan.PreparedCount < fan.CardCount)
+            {
+                yield return null;
+            }
+
+            var fresh = new HashSet<CardView>(fan.GetComponentsInChildren<CardView>(true).Except(fan.FanCards));
+            Assert.That(fresh.Count, Is.EqualTo(fan.CardCount), "control: the prepared cards");
+            yield return fan.Spread(origin);
+            Assert.That(fan.FanCards.All(fresh.Contains), Is.True, "the spread uses the prepared cards");
+            Assert.That(fan.FanCards.Count, Is.EqualTo(fan.CardCount));
         }
 
         private static IEnumerator Deliver(List<(CardView, int)> log, CardView card, int index, float seconds = 0.1f)

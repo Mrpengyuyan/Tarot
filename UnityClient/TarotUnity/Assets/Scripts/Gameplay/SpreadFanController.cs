@@ -15,7 +15,9 @@ namespace TarotUnity.Gameplay
     /// Phase 73: the whole deck (78 cards) in concentric arcs around a pivot on the player's
     /// side, and a hover that picks the card up - it springs up, tips toward the camera and
     /// grows a little while its shadow stays on the cloth and spreads - and parts its
-    /// neighbours along the arc.
+    /// neighbours along the arc. The tilt and growth apply to a pivot the card's visuals hang
+    /// from while it is in the fan, never to the root that carries its pointer target, so a tipped
+    /// card cannot rise over its neighbours' strips and steal the pointer.
     /// </summary>
     public sealed class SpreadFanController : MonoBehaviour
     {
@@ -39,9 +41,11 @@ namespace TarotUnity.Gameplay
             new FanRow { count = 39, radius = 5.9f, arcDegrees = 78f },
         };
         [Tooltip("Each card lies this much above the one to its left, so a row layers left to right.")]
-        [SerializeField] private float layerStep = 0.004f;
+        [SerializeField] private float layerStep = 0.002f;
 
         [Header("Spread")]
+        [Tooltip("Cards made per frame ahead of the spread (Prepare), out of sight under the cloth.")]
+        [SerializeField] private int prepareBatch = 10;
         [Tooltip("Delay between neighbouring cards of a row; the rows spread together.")]
         [SerializeField] private float spreadStagger = 0.028f;
         [SerializeField] private float spreadCardSeconds = 0.3f;
@@ -82,6 +86,9 @@ namespace TarotUnity.Gameplay
         private sealed class FanCard
         {
             public int index;
+            public Transform pivot;
+            public readonly List<Transform> visuals = new();
+            public bool settled;
             public float hover;
             public float hoverVelocity;
             public float part;
@@ -98,6 +105,8 @@ namespace TarotUnity.Gameplay
 
         private readonly List<CardView> fanCards = new();
         private readonly Dictionary<CardView, FanCard> state = new();
+        private readonly List<CardView> prepared = new();
+        private bool preparing;
         private Coroutine lightFade;
         private Vector3 baseScale = Vector3.one;
         private bool spreadDone;
@@ -145,6 +154,35 @@ namespace TarotUnity.Gameplay
 
         public float RowArcDegrees(int row) => rows[row].arcDegrees;
 
+        public int PreparedCount => prepared.Count;
+
+        /// <summary>
+        /// Phase 73 review: makes the fan's cards a few per frame (the whole deck is about 2,100
+        /// objects), out of sight under the cloth, so the spread does not hitch. Runs during the
+        /// shuffle; <see cref="Spread"/> waits for it and uses what it made.
+        /// </summary>
+        public IEnumerator Prepare(Transform origin)
+        {
+            DestroyPrepared();
+            if (cardPrefab == null)
+            {
+                yield break;
+            }
+
+            preparing = true;
+            var hidden = (origin != null ? origin.position : transform.position) + Vector3.down * 2f;
+            for (var i = 0; i < CardCount; i++)
+            {
+                prepared.Add(Instantiate(cardPrefab, hidden, Quaternion.identity, transform));
+                if ((i + 1) % Mathf.Max(1, prepareBatch) == 0)
+                {
+                    yield return null;
+                }
+            }
+
+            preparing = false;
+        }
+
         public int RowOf(int index)
         {
             Locate(index, out var row, out _);
@@ -163,6 +201,7 @@ namespace TarotUnity.Gameplay
             spreadDone = false;
             busy = false;
             Clear();
+            DestroyPrepared();
             SetLight(0f);
         }
 
@@ -180,9 +219,14 @@ namespace TarotUnity.Gameplay
                 yield break;
             }
 
+            while (preparing)
+            {
+                yield return null;
+            }
+
             for (var i = 0; i < CardCount; i++)
             {
-                var card = Instantiate(cardPrefab, transform);
+                var card = i < prepared.Count && prepared[i] != null ? prepared[i] : Instantiate(cardPrefab, transform);
                 card.name = $"FanCard_{i:00}";
                 card.transform.SetPositionAndRotation(origin.position, origin.rotation);
                 card.SetFaceUp(false);
@@ -204,6 +248,8 @@ namespace TarotUnity.Gameplay
                 fanCards.Add(card);
                 state[card] = Track(card, i);
             }
+
+            prepared.Clear();
 
             baseScale = fanCards.Count > 0 ? fanCards[0].transform.localScale : Vector3.one;
             FadeLight(fanLightIntensity);
@@ -326,6 +372,11 @@ namespace TarotUnity.Gameplay
             spreadDone = false;
             hovered = null;
             FadeLight(0f);
+            foreach (var card in fanCards)
+            {
+                LetGoOfHover(card, state[card]);
+            }
+
             var cards = new List<CardView>(fanCards);
             if (origin == null || cards.Count == 0)
             {
@@ -409,6 +460,19 @@ namespace TarotUnity.Gameplay
             if (tracked.box != null)
             {
                 tracked.boxCenter = tracked.box.center;
+            }
+
+            // The visuals hang from a pivot while the card is in the fan; the root keeps the collider.
+            tracked.pivot = new GameObject("FanHoverPivot").transform;
+            foreach (Transform child in card.transform)
+            {
+                tracked.visuals.Add(child);
+            }
+
+            tracked.pivot.SetParent(card.transform, false);
+            foreach (var child in tracked.visuals)
+            {
+                child.SetParent(tracked.pivot, false);
             }
 
             foreach (var t in card.GetComponentsInChildren<Transform>(true))
@@ -499,18 +563,25 @@ namespace TarotUnity.Gameplay
                     tracked.box.center = tracked.boxCenter;
                 }
 
-                if (tracked.shadow != null)
+                RestoreShadow(tracked);
+
+                // The flight starts from the pose the hover left it in: the pivot's tilt and growth
+                // move onto the root (DealPickedCard eases them out), and the visuals go back home.
+                if (tracked.pivot != null)
                 {
-                    tracked.shadow.localPosition = tracked.shadowLocalPosition;
-                    tracked.shadow.localRotation = tracked.shadowLocalRotation;
-                    tracked.shadow.localScale = tracked.shadowLocalScale;
+                    card.transform.rotation = card.transform.rotation * tracked.pivot.localRotation;
+                    card.transform.localScale = Vector3.Scale(card.transform.localScale, tracked.pivot.localScale);
+                    foreach (var child in tracked.visuals)
+                    {
+                        child.SetParent(card.transform, false);
+                    }
+
+                    Destroy(tracked.pivot.gameObject);
                 }
 
                 state.Remove(card);
             }
 
-            // The flight starts from the pose the hover left it in, at its normal size.
-            card.transform.localScale = baseScale;
             fanCards.Remove(card);
             if (hovered == card)
             {
@@ -533,6 +604,46 @@ namespace TarotUnity.Gameplay
             hovered = null;
             pending = null;
             remainingPicks = 0;
+        }
+
+        private void DestroyPrepared()
+        {
+            foreach (var card in prepared)
+            {
+                if (card != null)
+                {
+                    Destroy(card.gameObject);
+                }
+            }
+
+            prepared.Clear();
+            preparing = false;
+        }
+
+        private static void RestoreShadow(FanCard tracked)
+        {
+            if (tracked.shadow != null)
+            {
+                tracked.shadow.localPosition = tracked.shadowLocalPosition;
+                tracked.shadow.localRotation = tracked.shadowLocalRotation;
+                tracked.shadow.localScale = tracked.shadowLocalScale;
+            }
+        }
+
+        /// <summary>Phase 73 review: the gather starts from the resting pose, not a frozen hover.</summary>
+        private void LetGoOfHover(CardView card, FanCard tracked)
+        {
+            tracked.hover = tracked.hoverVelocity = tracked.part = tracked.partVelocity = 0f;
+            if (tracked.pivot != null)
+            {
+                tracked.pivot.localRotation = Quaternion.identity;
+                tracked.pivot.localScale = Vector3.one;
+            }
+
+            RestoreShadow(tracked);
+            GetFanPose(tracked.index, out var p, out var r);
+            card.transform.SetPositionAndRotation(p, r);
+            card.transform.localScale = baseScale;
         }
 
         private void Update()
@@ -577,17 +688,33 @@ namespace TarotUnity.Gameplay
                     }
                 }
 
+                // A card whose springs are at rest is left alone (78 cards, most of them idle).
+                var atRest = hoverTarget == 0f && partTarget == 0f;
+                if (atRest && tracked.settled)
+                {
+                    continue;
+                }
+
                 Spring(ref tracked.hover, ref tracked.hoverVelocity, hoverTarget, omega, dt);
                 Spring(ref tracked.part, ref tracked.partVelocity, partTarget, omega, dt);
+                tracked.settled = false;
+                if (atRest && Mathf.Abs(tracked.hover) < 1e-4f && Mathf.Abs(tracked.hoverVelocity) < 1e-3f
+                    && Mathf.Abs(tracked.part) < 1e-4f && Mathf.Abs(tracked.partVelocity) < 1e-3f)
+                {
+                    tracked.hover = tracked.hoverVelocity = tracked.part = tracked.partVelocity = 0f;
+                    tracked.settled = true;
+                }
 
                 PoseOnArc(tracked.index, tracked.part, out var p, out var r);
                 var towardPlayer = -(r * Vector3.forward);
                 var slide = towardPlayer * (hoverSlide * tracked.hover);
                 var grow = 1f + (hoverScale - 1f) * tracked.hover;
-                card.transform.SetPositionAndRotation(
-                    p + Vector3.up * (hoverLift * tracked.hover) + slide,
-                    r * Quaternion.AngleAxis(-hoverTiltDegrees * tracked.hover, Vector3.right));
-                card.transform.localScale = baseScale * grow;
+                card.transform.SetPositionAndRotation(p + Vector3.up * (hoverLift * tracked.hover) + slide, r);
+                if (tracked.pivot != null)
+                {
+                    tracked.pivot.localRotation = Quaternion.AngleAxis(-hoverTiltDegrees * tracked.hover, Vector3.right);
+                    tracked.pivot.localScale = Vector3.one * grow;
+                }
 
                 // The shadow stays on the cloth under the card and spreads as the card rises.
                 if (tracked.shadow != null)

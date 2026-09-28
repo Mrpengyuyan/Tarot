@@ -196,6 +196,32 @@ namespace TarotUnity.Tests.EditMode
             }
         }
 
+        // Phase 73 review: the left-to-right layering stacked up to 0.15 over 39 cards, higher than
+        // the hover lift itself; the right end of each arc floated off the cloth.
+        [Test]
+        public void TheArcsLieOnTheCloth()
+        {
+            EditorSceneManager.OpenScene(ScenePath);
+            var fan = Object.FindFirstObjectByType<SpreadFanController>();
+            for (var i = 0; i < fan.CardCount; i++)
+            {
+                fan.GetFanPose(i, out var p, out _);
+                Assert.That(p.y - 0.13f, Is.LessThan(0.08f), $"card {i} lies on the cloth");
+            }
+        }
+
+        // Phase 73 review: the near cloth's tiling ran out of phase with the shared cloth at the seam.
+        [Test]
+        public void TheNearClothContinuesTheClothsPattern()
+        {
+            var material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Art/MidnightParlor/Materials/MP_TableClothNear.mat");
+            foreach (var property in new[] { "_BaseMap", "_BumpMap" })
+            {
+                var scale = material.GetTextureScale(property);
+                Assert.That(Mathf.Abs(scale.y - Mathf.Round(scale.y)), Is.LessThan(1e-3f), $"{property} tiles a whole number of times, so the seam lines up");
+            }
+        }
+
         [Test]
         public void TheFanLightCoversBothArcs()
         {

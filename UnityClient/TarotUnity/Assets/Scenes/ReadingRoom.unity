@@ -11801,8 +11801,8 @@ Transform:
   m_GameObject: {fileID: 288209808}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.05, z: -9.65}
-  m_LocalScale: {x: 24, y: 0.1, z: 6.7}
+  m_LocalPosition: {x: 0, y: -0.05, z: -13.799999}
+  m_LocalScale: {x: 24, y: 0.1, z: 15}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 750757745}
@@ -12867,7 +12867,8 @@ MonoBehaviour:
   - count: 39
     radius: 5.9
     arcDegrees: 78
-  layerStep: 0.004
+  layerStep: 0.002
+  prepareBatch: 10
   spreadStagger: 0.028
   spreadCardSeconds: 0.3
   spreadArcHeight: 0.12
@@ -19813,8 +19814,8 @@ Transform:
   m_GameObject: {fileID: 645540001}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 11.45, y: 0.1, z: -4.1000004}
-  m_LocalScale: {x: 1.1, y: 0.34, z: 17.8}
+  m_LocalPosition: {x: 11.45, y: 0.1, z: -8.25}
+  m_LocalScale: {x: 1.1, y: 0.34, z: 26.099998}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 750757745}
@@ -49706,8 +49707,8 @@ Transform:
   m_GameObject: {fileID: 2108078109}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -11.45, y: 0.1, z: -4.1000004}
-  m_LocalScale: {x: 1.1, y: 0.34, z: 17.8}
+  m_LocalPosition: {x: -11.45, y: 0.1, z: -8.25}
+  m_LocalScale: {x: 1.1, y: 0.34, z: 26.099998}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 750757745}
