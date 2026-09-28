@@ -20,18 +20,23 @@ namespace TarotUnity.Editor
         public const string CardPrefabPath = "Assets/Prefabs/Cards/PF_TarotCard.prefab";
         private const string WarmGlowPath = "Assets/Art/MidnightParlor/Materials/MP_WarmGlow.mat";
 
-        // The fan lies between the player and the lowest Celtic slot (z -1.2, bottom edge -1.75).
-        public static readonly Vector3 FanCenterPosition = new Vector3(0f, 0.13f, -2.45f);
-        public static readonly Vector3 NearPosePosition = new Vector3(0f, 5.0f, -6.3f);
-        public static readonly Vector3 NearPoseEuler = new Vector3(50f, 0f, 0f);
-        public const float NearPoseFov = 45f;
-        public static readonly Vector3 CelticPosePosition = new Vector3(0.7f, 6.8f, -7.0f);
-        public static readonly Vector3 CelticPoseEuler = new Vector3(45f, 0f, 0f);
-        public const float CelticPoseFov = 50f;
+        // Phase 73: FanCenter is the arcs' shared pivot on the player's side. The outer arc's middle
+        // card (a face-down card is 1.18 long) ends short of the lowest Celtic slot (bottom edge -1.96).
+        public static readonly Vector3 FanCenterPosition = new Vector3(0f, 0.13f, -8.6f);
+        // Solved so both arcs (at rest, hovered and risen), every slot of the spread and the deck
+        // stay in view at 16:9 and 4:3 with the cards as large as possible; one pose serves all
+        // three spreads, kept as two entries so they can be tuned apart.
+        public static readonly Vector3 NearPosePosition = new Vector3(0f, 8.0f, -11.0f);
+        public static readonly Vector3 NearPoseEuler = new Vector3(46f, 0f, 0f);
+        public const float NearPoseFov = 38f;
+        public static readonly Vector3 CelticPosePosition = new Vector3(0f, 8.0f, -11.0f);
+        public static readonly Vector3 CelticPoseEuler = new Vector3(46f, 0f, 0f);
+        public const float CelticPoseFov = 38f;
 
-        // The fan's own light pool, in the table pool's colour; the fan fades it in and out.
-        public static readonly Vector3 FanLightPosition = new Vector3(0f, 4.2f, -3.2f);
-        public static readonly Vector3 FanLightTarget = new Vector3(0f, 0.13f, -2.7f);
+        // The fan's own light over the whole table (Phase 73: the user wanted no black around the fan),
+        // in the table pool's colour; the fan fades it in and out.
+        public static readonly Vector3 FanLightPosition = new Vector3(0f, 10f, -5.5f);
+        public static readonly Vector3 FanLightTarget = new Vector3(0f, 0.13f, -3.5f);
 
         private static readonly string[] PickHiddenNames =
         {
@@ -139,6 +144,11 @@ namespace TarotUnity.Editor
 
             var center = Child(fanGo.transform, "FanCenter");
             center.SetPositionAndRotation(FanCenterPosition, Quaternion.identity);
+            // The knobs come from the code's defaults (Phase 73 reshaped the fan), so stale values
+            // serialized by an earlier version never linger; then the scene references are wired.
+            var defaults = new GameObject("Phase72_FanDefaults").AddComponent<SpreadFanController>();
+            EditorUtility.CopySerialized(defaults, fan);
+            Object.DestroyImmediate(defaults.gameObject);
             var fanSo = new SerializedObject(fan);
             fanSo.FindProperty("cardPrefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<CardView>(CardPrefabPath);
             fanSo.FindProperty("fanCenter").objectReferenceValue = center;
@@ -205,9 +215,9 @@ namespace TarotUnity.Editor
             light.type = LightType.Spot;
             light.color = new Color(1f, 0.8f, 0.58f);
             light.intensity = 0f;
-            light.range = 8f;
-            light.spotAngle = 70f;
-            light.innerSpotAngle = 36f;
+            light.range = 25f;
+            light.spotAngle = 140f;
+            light.innerSpotAngle = 70f;
             light.shadows = LightShadows.None;
             light.enabled = false;
             EditorUtility.SetDirty(light);

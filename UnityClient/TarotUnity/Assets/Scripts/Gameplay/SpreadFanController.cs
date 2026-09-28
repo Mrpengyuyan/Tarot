@@ -6,45 +6,69 @@ using UnityEngine;
 namespace TarotUnity.Gameplay
 {
     /// <summary>
-    /// Phase 72: after the shuffle the deck spreads into an arc on the table and the player
-    /// picks the cards. The fan owns its props - face-down PF_TarotCard instances with no
-    /// draw bound - and their motion: the spread, the hover wave that follows the pointer,
-    /// the pick queue (one pick waits while a card is in flight; further clicks are dropped),
-    /// and the gather back into the deck. A picked card leaves the fan and becomes the card
-    /// the player later flips; which card it is is decided by the backend or the local
-    /// simulator, never by where the player clicked.
+    /// Phase 72: after the shuffle the deck spreads out on the table and the player picks the
+    /// cards. The fan owns its props - face-down PF_TarotCard instances with no draw bound - and
+    /// their motion: the spread, the hover, the pick queue (one pick waits while a card is in
+    /// flight; further clicks are dropped), and the gather back into the deck. A picked card
+    /// leaves the fan and becomes the card the player later flips; which card it is is decided
+    /// by the backend or the local simulator, never by where the player clicked.
+    /// Phase 73: the whole deck (78 cards) in concentric arcs around a pivot on the player's
+    /// side, and a hover that picks the card up - it springs up, tips toward the camera and
+    /// grows a little while its shadow stays on the cloth and spreads - and parts its
+    /// neighbours along the arc.
     /// </summary>
     public sealed class SpreadFanController : MonoBehaviour
     {
+        [Serializable]
+        public sealed class FanRow
+        {
+            public int count = 39;
+            public float radius = 4.5f;
+            public float arcDegrees = 96f;
+        }
+
         [SerializeField] private CardView cardPrefab;
-        [Tooltip("The middle card's resting pose. Forward points from the player toward the slots.")]
+        [Tooltip("The arcs' shared pivot, on the player's side of the table. Forward points toward the slots.")]
         [SerializeField] private Transform fanCenter;
 
-        [Header("Arc")]
-        [SerializeField] private int cardCount = 22;
-        [SerializeField] private float radius = 3.4f;
-        [SerializeField] private float arcDegrees = 70f;
-        [Tooltip("Each card lies this much above the one to its left, so the fan layers left to right.")]
+        [Header("Arcs")]
+        [Tooltip("Nearest the player first. Each row spans its own angle at its own radius around the pivot.")]
+        [SerializeField] private FanRow[] rows =
+        {
+            new FanRow { count = 39, radius = 4.5f, arcDegrees = 96f },
+            new FanRow { count = 39, radius = 5.9f, arcDegrees = 78f },
+        };
+        [Tooltip("Each card lies this much above the one to its left, so a row layers left to right.")]
         [SerializeField] private float layerStep = 0.004f;
 
         [Header("Spread")]
-        [SerializeField] private float spreadStagger = 0.035f;
-        [SerializeField] private float spreadCardSeconds = 0.28f;
+        [Tooltip("Delay between neighbouring cards of a row; the rows spread together.")]
+        [SerializeField] private float spreadStagger = 0.028f;
+        [SerializeField] private float spreadCardSeconds = 0.3f;
         [SerializeField] private float spreadArcHeight = 0.12f;
         [SerializeField] private float settleSquash = 0.05f;
         [SerializeField] private float settleSeconds = 0.12f;
 
-        [Header("Hover wave")]
-        [SerializeField] private float hoverLift = 0.05f;
-        [Tooltip("How far the hovered card slides out toward the player.")]
-        [SerializeField] private float hoverSlide = 0.3f;
-        [Tooltip("How many neighbours on each side rise with the hovered card.")]
-        [SerializeField] private float waveRadius = 2.5f;
-        [SerializeField] private float hoverResponseSeconds = 0.08f;
+        [Header("Hover: pick up and part")]
+        [SerializeField] private float hoverLift = 0.12f;
+        [Tooltip("How far the hovered card comes out toward the player.")]
+        [SerializeField] private float hoverSlide = 0.18f;
+        [Tooltip("How far the hovered card tips its far edge up, toward the camera.")]
+        [SerializeField] private float hoverTiltDegrees = 14f;
+        [SerializeField] private float hoverScale = 1.06f;
+        [Tooltip("How far the nearest neighbours slide aside along the arc.")]
+        [SerializeField] private float partDistance = 0.14f;
+        [Tooltip("How many neighbours on each side make room, easing off with distance.")]
+        [SerializeField] private float waveRadius = 3f;
+        [Tooltip("How much the hovered card's shadow spreads on the cloth as the card rises.")]
+        [SerializeField] private float shadowSpread = 0.25f;
+        [Tooltip("Spring frequency (Hz) and damping of the hover; under 1 overshoots a little and settles.")]
+        [SerializeField] private float springFrequency = 2.8f;
+        [SerializeField] private float springDamping = 0.55f;
         [Tooltip("A pointer exit only drops the card after this long, so a card sliding out from under the pointer does not flicker.")]
         [SerializeField] private float hoverReleaseDelay = 0.12f;
-        [Tooltip("Hover glow scale for a fan card - restrained, the fan is crowded.")]
-        [SerializeField] private float fanHoverHaloScale = 1f;
+        [Tooltip("Hover glow scale for a fan card: small enough that only a thin warm rim shows past its edges.")]
+        [SerializeField] private float fanHoverHaloScale = 0.62f;
 
         [Header("Gather")]
         [SerializeField] private float gatherSeconds = 0.6f;
@@ -52,16 +76,30 @@ namespace TarotUnity.Gameplay
         [Header("Light")]
         [Tooltip("The fan lies nearer the player than the table's light pool, so it brings its own: faded in with the spread, out with the gather.")]
         [SerializeField] private Light fanLight;
-        [SerializeField] private float fanLightIntensity = 40f;
+        [SerializeField] private float fanLightIntensity = 260f;
         [SerializeField] private float fanLightFadeSeconds = 0.4f;
 
-        private Coroutine lightFade;
+        private sealed class FanCard
+        {
+            public int index;
+            public float hover;
+            public float hoverVelocity;
+            public float part;
+            public float partVelocity;
+            public BoxCollider box;
+            public Vector3 boxCenter;
+            public Transform shadow;
+            public Vector3 shadowLocalPosition;
+            public Quaternion shadowLocalRotation;
+            public Vector3 shadowLocalScale;
+            public Vector3 shadowRootOffset;
+            public Quaternion shadowRootRotation;
+        }
 
         private readonly List<CardView> fanCards = new();
-        private readonly Dictionary<CardView, int> slotOf = new();
-        private readonly Dictionary<CardView, float> lift = new();
-        private readonly Dictionary<CardView, float> slide = new();
-        private readonly Dictionary<CardView, (BoxCollider box, Vector3 center)> targets = new();
+        private readonly Dictionary<CardView, FanCard> state = new();
+        private Coroutine lightFade;
+        private Vector3 baseScale = Vector3.one;
         private bool spreadDone;
         private CardView hovered;
         private float hoverReleaseAt = -1f;
@@ -71,15 +109,52 @@ namespace TarotUnity.Gameplay
 
         public event Action<CardView> CardPicked;
 
-        public int CardCount => cardCount;
-        public float ArcDegrees => arcDegrees;
+        public int CardCount
+        {
+            get
+            {
+                var total = 0;
+                foreach (var row in rows)
+                {
+                    total += Mathf.Max(0, row.count);
+                }
+
+                return total;
+            }
+        }
+
+        public int RowCount => rows.Length;
+
+        /// <summary>The widest row's angle.</summary>
+        public float ArcDegrees
+        {
+            get
+            {
+                var widest = 0f;
+                foreach (var row in rows)
+                {
+                    widest = Mathf.Max(widest, row.arcDegrees);
+                }
+
+                return widest;
+            }
+        }
+
         public IReadOnlyList<CardView> FanCards => fanCards;
         public bool AcceptingPicks => remainingPicks > 0;
+
+        public float RowArcDegrees(int row) => rows[row].arcDegrees;
+
+        public int RowOf(int index)
+        {
+            Locate(index, out var row, out _);
+            return row;
+        }
 
         /// <summary>Phase 72 review: awake, wired, and holding at least as many cards as the spread needs.</summary>
         public bool CanSpread(int cardsNeeded)
         {
-            return isActiveAndEnabled && cardPrefab != null && cardCount >= cardsNeeded;
+            return isActiveAndEnabled && cardPrefab != null && CardCount >= cardsNeeded;
         }
 
         /// <summary>Phase 72 review: drop the fan at once (after a fault mid-pick) - no gather, the light off.</summary>
@@ -93,12 +168,7 @@ namespace TarotUnity.Gameplay
 
         public void GetFanPose(int index, out Vector3 position, out Quaternion rotation)
         {
-            var center = fanCenter != null ? fanCenter : transform;
-            var t = cardCount > 1 ? (float)index / (cardCount - 1) - 0.5f : 0f;
-            var turn = Quaternion.AngleAxis(t * arcDegrees, center.up);
-            var pivot = center.position - center.forward * radius;
-            position = pivot + turn * center.forward * radius + center.up * (index * layerStep);
-            rotation = turn * center.rotation;
+            PoseOnArc(index, 0f, out position, out rotation);
         }
 
         public IEnumerator Spread(Transform origin)
@@ -110,7 +180,7 @@ namespace TarotUnity.Gameplay
                 yield break;
             }
 
-            for (var i = 0; i < cardCount; i++)
+            for (var i = 0; i < CardCount; i++)
             {
                 var card = Instantiate(cardPrefab, transform);
                 card.name = $"FanCard_{i:00}";
@@ -132,28 +202,24 @@ namespace TarotUnity.Gameplay
                 click.Clicked += RequestPick;
                 click.HoverChanged += SetHovered;
                 fanCards.Add(card);
-                slotOf[card] = i;
-                lift[card] = 0f;
-                slide[card] = 0f;
-                var box = card.GetComponent<BoxCollider>();
-                if (box != null)
-                {
-                    targets[card] = (box, box.center);
-                }
+                state[card] = Track(card, i);
             }
 
+            baseScale = fanCards.Count > 0 ? fanCards[0].transform.localScale : Vector3.one;
             FadeLight(fanLightIntensity);
             var start = origin.position;
             var startRotation = origin.rotation;
-            var total = spreadCardSeconds + spreadStagger * (cardCount - 1);
+            var total = spreadCardSeconds + spreadStagger * (LongestRow() - 1);
             for (var elapsed = 0f; elapsed < total; elapsed += Time.deltaTime)
             {
-                for (var i = 0; i < fanCards.Count; i++)
+                foreach (var card in fanCards)
                 {
-                    var k = Mathf.Clamp01((elapsed - i * spreadStagger) / spreadCardSeconds);
+                    var i = state[card].index;
+                    Locate(i, out _, out var inRow);
+                    var k = Mathf.Clamp01((elapsed - inRow * spreadStagger) / spreadCardSeconds);
                     var e = 1f - (1f - k) * (1f - k);
                     GetFanPose(i, out var p, out var r);
-                    fanCards[i].transform.SetPositionAndRotation(
+                    card.transform.SetPositionAndRotation(
                         Vector3.Lerp(start, p, e) + Vector3.up * (Mathf.Sin(k * Mathf.PI) * spreadArcHeight),
                         Quaternion.Slerp(startRotation, r, e));
                 }
@@ -161,14 +227,13 @@ namespace TarotUnity.Gameplay
                 yield return null;
             }
 
-            for (var i = 0; i < fanCards.Count; i++)
+            foreach (var card in fanCards)
             {
-                GetFanPose(i, out var p, out var r);
-                fanCards[i].transform.SetPositionAndRotation(p, r);
+                GetFanPose(state[card].index, out var p, out var r);
+                card.transform.SetPositionAndRotation(p, r);
             }
 
-            // The whole row settles with one small squash.
-            var baseScale = fanCards.Count > 0 ? fanCards[0].transform.localScale : Vector3.one;
+            // The whole fan settles with one small squash.
             var squashed = new Vector3(baseScale.x * (1f + settleSquash * 0.6f), baseScale.y * (1f - settleSquash), baseScale.z);
             for (var elapsed = 0f; elapsed < settleSeconds; elapsed += Time.deltaTime)
             {
@@ -191,7 +256,7 @@ namespace TarotUnity.Gameplay
 
         public void SetHovered(CardView card, bool on)
         {
-            if (card == null || !slotOf.ContainsKey(card))
+            if (card == null || !state.ContainsKey(card))
             {
                 return;
             }
@@ -209,7 +274,7 @@ namespace TarotUnity.Gameplay
 
         public void RequestPick(CardView card)
         {
-            if (card == null || !slotOf.ContainsKey(card) || remainingPicks <= 0)
+            if (card == null || !state.ContainsKey(card) || remainingPicks <= 0)
             {
                 return;
             }
@@ -274,15 +339,17 @@ namespace TarotUnity.Gameplay
                 starts.Add(card.transform.position);
             }
 
-            // From both ends toward the middle.
-            var mid = (cards.Count - 1) / 2f;
+            // Each row gathers from both ends toward its middle.
+            var mid = (LongestRow() - 1) / 2f;
             var cardSeconds = gatherSeconds * 0.6f;
             var stagger = mid > 0f ? gatherSeconds * 0.4f / mid : 0f;
             for (var elapsed = 0f; elapsed < gatherSeconds; elapsed += Time.deltaTime)
             {
                 for (var i = 0; i < cards.Count; i++)
                 {
-                    var order = mid - Mathf.Abs(i - mid);
+                    Locate(state[cards[i]].index, out var row, out var inRow);
+                    var rowMid = (rows[row].count - 1) / 2f;
+                    var order = rowMid - Mathf.Abs(inRow - rowMid);
                     var k = Mathf.Clamp01((elapsed - order * stagger) / cardSeconds);
                     cards[i].transform.position = Vector3.Lerp(starts[i], origin.position, k * k);
                 }
@@ -292,6 +359,73 @@ namespace TarotUnity.Gameplay
 
             Clear();
             SetLight(0f);
+        }
+
+        private void Locate(int index, out int row, out int inRow)
+        {
+            var first = 0;
+            for (row = 0; row < rows.Length; row++)
+            {
+                if (index < first + rows[row].count)
+                {
+                    inRow = index - first;
+                    return;
+                }
+
+                first += rows[row].count;
+            }
+
+            row = rows.Length - 1;
+            inRow = Mathf.Max(0, rows[row].count - 1);
+        }
+
+        private int LongestRow()
+        {
+            var longest = 1;
+            foreach (var row in rows)
+            {
+                longest = Mathf.Max(longest, row.count);
+            }
+
+            return longest;
+        }
+
+        /// <summary>Where card <paramref name="index"/> lies on its arc, slid <paramref name="part"/> metres along it.</summary>
+        private void PoseOnArc(int index, float part, out Vector3 position, out Quaternion rotation)
+        {
+            Locate(index, out var r, out var inRow);
+            var row = rows[r];
+            var center = fanCenter != null ? fanCenter : transform;
+            var t = row.count > 1 ? (float)inRow / (row.count - 1) - 0.5f : 0f;
+            var angle = t * row.arcDegrees + part / Mathf.Max(0.01f, row.radius) * Mathf.Rad2Deg;
+            var turn = Quaternion.AngleAxis(angle, center.up);
+            position = center.position + turn * center.forward * row.radius + center.up * (inRow * layerStep);
+            rotation = turn * center.rotation;
+        }
+
+        private FanCard Track(CardView card, int index)
+        {
+            var tracked = new FanCard { index = index, box = card.GetComponent<BoxCollider>() };
+            if (tracked.box != null)
+            {
+                tracked.boxCenter = tracked.box.center;
+            }
+
+            foreach (var t in card.GetComponentsInChildren<Transform>(true))
+            {
+                if (t.name == "Phase15_CardDropShadow")
+                {
+                    tracked.shadow = t;
+                    tracked.shadowLocalPosition = t.localPosition;
+                    tracked.shadowLocalRotation = t.localRotation;
+                    tracked.shadowLocalScale = t.localScale;
+                    tracked.shadowRootOffset = card.transform.InverseTransformPoint(t.position);
+                    tracked.shadowRootRotation = Quaternion.Inverse(card.transform.rotation) * t.rotation;
+                    break;
+                }
+            }
+
+            return tracked;
         }
 
         private void FadeLight(float target)
@@ -358,16 +492,26 @@ namespace TarotUnity.Gameplay
 
             card.SetHovered(false);
             card.ClearHoverHaloScale();
-            if (targets.TryGetValue(card, out var target))
+            if (state.TryGetValue(card, out var tracked))
             {
-                target.box.center = target.center;
-                targets.Remove(card);
+                if (tracked.box != null)
+                {
+                    tracked.box.center = tracked.boxCenter;
+                }
+
+                if (tracked.shadow != null)
+                {
+                    tracked.shadow.localPosition = tracked.shadowLocalPosition;
+                    tracked.shadow.localRotation = tracked.shadowLocalRotation;
+                    tracked.shadow.localScale = tracked.shadowLocalScale;
+                }
+
+                state.Remove(card);
             }
 
+            // The flight starts from the pose the hover left it in, at its normal size.
+            card.transform.localScale = baseScale;
             fanCards.Remove(card);
-            slotOf.Remove(card);
-            lift.Remove(card);
-            slide.Remove(card);
             if (hovered == card)
             {
                 hovered = null;
@@ -385,10 +529,7 @@ namespace TarotUnity.Gameplay
             }
 
             fanCards.Clear();
-            targets.Clear();
-            slotOf.Clear();
-            lift.Clear();
-            slide.Clear();
+            state.Clear();
             hovered = null;
             pending = null;
             remainingPicks = 0;
@@ -407,27 +548,69 @@ namespace TarotUnity.Gameplay
                 hoverReleaseAt = -1f;
             }
 
-            var h = hovered != null && slotOf.TryGetValue(hovered, out var hs) ? hs : -1;
-            var blend = 1f - Mathf.Exp(-Time.deltaTime / Mathf.Max(0.01f, hoverResponseSeconds));
+            var hoveredIndex = -1;
+            var hoveredRow = -1;
+            var hoveredInRow = 0;
+            if (hovered != null && state.TryGetValue(hovered, out var h))
+            {
+                hoveredIndex = h.index;
+                Locate(h.index, out hoveredRow, out hoveredInRow);
+            }
+
+            var dt = Mathf.Min(Time.deltaTime, 1f / 30f);
+            var omega = 2f * Mathf.PI * Mathf.Max(0.1f, springFrequency);
             foreach (var card in fanCards)
             {
-                var i = slotOf[card];
-                var distance = h >= 0 ? Mathf.Abs(i - h) : float.MaxValue;
-                var weight = distance <= waveRadius ? 0.5f + 0.5f * Mathf.Cos(Mathf.PI * distance / (waveRadius + 1f)) : 0f;
-                lift[card] = Mathf.Lerp(lift[card], hoverLift * weight, blend);
-                slide[card] = Mathf.Lerp(slide[card], i == h ? hoverSlide : 0f, blend);
-                GetFanPose(i, out var p, out var r);
-                var towardPlayer = -(r * Vector3.forward);
-                var offset = Vector3.up * lift[card] + towardPlayer * slide[card];
-                card.transform.SetPositionAndRotation(p + offset, r);
+                var tracked = state[card];
+                Locate(tracked.index, out var row, out var inRow);
 
-                // The card moves but its pointer target stays on the resting rectangle; otherwise
-                // a card sliding out from under the pointer would drop back under it and loop.
-                if (targets.TryGetValue(card, out var target))
+                var hoverTarget = tracked.index == hoveredIndex ? 1f : 0f;
+                var partTarget = 0f;
+                if (row == hoveredRow && tracked.index != hoveredIndex)
                 {
-                    target.box.center = target.center - card.transform.InverseTransformVector(offset);
+                    var k = inRow - hoveredInRow;
+                    var d = Mathf.Abs(k);
+                    if (d <= waveRadius)
+                    {
+                        var ease = 0.5f + 0.5f * Mathf.Cos(Mathf.PI * (d - 1f) / waveRadius);
+                        partTarget = Mathf.Sign(k) * partDistance * ease;
+                    }
+                }
+
+                Spring(ref tracked.hover, ref tracked.hoverVelocity, hoverTarget, omega, dt);
+                Spring(ref tracked.part, ref tracked.partVelocity, partTarget, omega, dt);
+
+                PoseOnArc(tracked.index, tracked.part, out var p, out var r);
+                var towardPlayer = -(r * Vector3.forward);
+                var slide = towardPlayer * (hoverSlide * tracked.hover);
+                var grow = 1f + (hoverScale - 1f) * tracked.hover;
+                card.transform.SetPositionAndRotation(
+                    p + Vector3.up * (hoverLift * tracked.hover) + slide,
+                    r * Quaternion.AngleAxis(-hoverTiltDegrees * tracked.hover, Vector3.right));
+                card.transform.localScale = baseScale * grow;
+
+                // The shadow stays on the cloth under the card and spreads as the card rises.
+                if (tracked.shadow != null)
+                {
+                    var shadowRest = p + r * tracked.shadowRootOffset;
+                    tracked.shadow.SetPositionAndRotation(shadowRest + slide, r * tracked.shadowRootRotation);
+                    tracked.shadow.localScale = tracked.shadowLocalScale * ((1f + shadowSpread * tracked.hover) / grow);
+                }
+
+                // The card moves but its pointer target stays on its resting rectangle; otherwise
+                // a card moving out from under the pointer would fall back under it and loop.
+                if (tracked.box != null)
+                {
+                    GetFanPose(tracked.index, out var restPosition, out var restRotation);
+                    tracked.box.center = card.transform.InverseTransformPoint(restPosition + restRotation * tracked.boxCenter);
                 }
             }
+        }
+
+        private void Spring(ref float x, ref float v, float target, float omega, float dt)
+        {
+            v += (omega * omega * (target - x) - 2f * springDamping * omega * v) * dt;
+            x += v * dt;
         }
     }
 }

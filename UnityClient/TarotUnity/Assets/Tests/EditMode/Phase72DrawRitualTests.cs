@@ -158,21 +158,27 @@ namespace TarotUnity.Tests.EditMode
                 so.FindProperty("fanCenter").objectReferenceValue = center;
                 so.ApplyModifiedPropertiesWithoutUndo();
 
-                Assert.That(fan.CardCount, Is.EqualTo(22));
-                Assert.That(fan.ArcDegrees, Is.InRange(64f, 76f));
-
-                fan.GetFanPose(0, out var first, out var firstRot);
-                fan.GetFanPose(fan.CardCount - 1, out var last, out var lastRot);
-                fan.GetFanPose(fan.CardCount / 2, out var mid, out _);
-                Assert.That(first.x, Is.LessThan(0f));
-                Assert.That(last.x, Is.GreaterThan(0f));
-                Assert.That(mid.z, Is.GreaterThan(first.z), "the arc bows toward the slots");
-                Assert.That(last.y, Is.GreaterThan(first.y), "later cards lie on top");
-                Assert.That(Quaternion.Angle(firstRot, lastRot), Is.EqualTo(fan.ArcDegrees).Within(0.5f));
-
-                fan.GetFanPose(1, out var second, out _);
-                var gap = Vector3.Distance(new Vector3(first.x, 0, first.z), new Vector3(second.x, 0, second.z));
-                Assert.That(gap, Is.InRange(0.15f, 0.3f), "neighbours overlap by about two thirds of a 0.74 card");
+                // Phase 73: the whole deck in two arcs; each arc spans its angle and layers left to right.
+                Assert.That(fan.CardCount, Is.EqualTo(78));
+                var first = 0;
+                for (var row = 0; row < fan.RowCount; row++)
+                {
+                    var count = Enumerable.Range(0, fan.CardCount).Count(i => fan.RowOf(i) == row);
+                    var last = first + count - 1;
+                    fan.GetFanPose(first, out var a, out var aRot);
+                    fan.GetFanPose(last, out var b, out var bRot);
+                    fan.GetFanPose(first + count / 2, out var mid, out _);
+                    fan.GetFanPose(first + 1, out var second, out _);
+                    Assert.That(a.x, Is.LessThan(0f));
+                    Assert.That(b.x, Is.GreaterThan(0f));
+                    Assert.That(mid.z, Is.GreaterThan(a.z), "the arc bows toward the slots");
+                    Assert.That(b.y, Is.GreaterThan(a.y), "later cards lie on top");
+                    Assert.That(Quaternion.Angle(aRot, bRot), Is.EqualTo(fan.RowArcDegrees(row)).Within(0.5f));
+                    Assert.That(fan.RowArcDegrees(row), Is.InRange(60f, 110f));
+                    var gap = Vector3.Distance(new Vector3(a.x, 0, a.z), new Vector3(second.x, 0, second.z));
+                    Assert.That(gap, Is.InRange(0.17f, 0.3f), "each card shows a strip wide enough to pick");
+                    first = last + 1;
+                }
             }
             finally
             {
@@ -317,7 +323,7 @@ namespace TarotUnity.Tests.EditMode
                 cam.fieldOfView = fov;
                 cam.aspect = aspect;
 
-                var half = new Vector3(0.37f, 0f, 0.525f);
+                var half = new Vector3(0.39f, 0f, 0.59f);   // the face-down card: its Back is 0.78 x 1.18
                 void Check(Vector3 center, Quaternion rotation, string what)
                 {
                     foreach (var sx in new[] { -1f, 1f })

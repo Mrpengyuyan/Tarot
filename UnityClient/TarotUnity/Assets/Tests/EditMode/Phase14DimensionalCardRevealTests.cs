@@ -79,7 +79,10 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(cardRoot, Is.Not.Null);
             Assert.That(cardRoot.objectReferenceValue, Is.SameAs(dimensionalRoot));
             Assert.That(revealGlowRenderer, Is.Not.Null);
-            Assert.That(revealGlowRenderer.objectReferenceValue, Is.SameAs(revealGlow.GetComponent<MeshRenderer>()));
+            // Phase 73: the reveal glow was one of the panels that blew the face-up card out
+            // under the table pool; it stays in the prefab but nothing switches it on.
+            Assert.That(revealGlowRenderer.objectReferenceValue, Is.Null);
+            Assert.That(revealGlow.GetComponent<MeshRenderer>().enabled, Is.False);
         }
 
         [Test]

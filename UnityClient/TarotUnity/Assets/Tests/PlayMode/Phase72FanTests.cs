@@ -52,9 +52,9 @@ namespace TarotUnity.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator SpreadLaysTwentyTwoFaceDownCardsOnTheArc()
+        public IEnumerator SpreadLaysTheWholeDeckFaceDownOnTheArcs()
         {
-            Assert.That(fan.FanCards.Count, Is.EqualTo(22));
+            Assert.That(fan.FanCards.Count, Is.EqualTo(78), "Phase 73: the whole deck");
             for (var i = 0; i < fan.FanCards.Count; i++)
             {
                 fan.GetFanPose(i, out var pose, out _);
@@ -65,21 +65,74 @@ namespace TarotUnity.Tests.PlayMode
             yield return null;
         }
 
+        // Phase 73: the hover "picks up and parts" - the card under the pointer springs up, tips
+        // toward the camera and grows a little; its neighbours slide aside along the arc instead of
+        // bobbing; its shadow stays on the cloth and spreads.
         [UnityTest]
-        public IEnumerator HoverLiftsTheCardAndItsNeighboursLess()
+        public IEnumerator HoverPicksTheCardUpAndTipsItTowardTheCamera()
         {
-            var cards = fan.FanCards;
-            fan.SetHovered(cards[10], true);
-            yield return new WaitForSeconds(0.4f);
-            fan.GetFanPose(10, out var p10, out _);
-            fan.GetFanPose(11, out var p11, out _);
-            fan.GetFanPose(15, out var p15, out _);
-            var lift10 = cards[10].transform.position.y - p10.y;
-            var lift11 = cards[11].transform.position.y - p11.y;
-            var lift15 = cards[15].transform.position.y - p15.y;
-            Assert.That(lift10, Is.GreaterThan(0.02f));
-            Assert.That(lift11, Is.InRange(0.002f, lift10 - 0.001f), "a neighbour rises less");
-            Assert.That(lift15, Is.LessThan(0.001f), "the wave is local");
+            var card = fan.FanCards[19];
+            fan.GetFanPose(19, out var rest, out var restRotation);
+            var restScale = card.transform.localScale;
+            var peak = 0f;
+            fan.SetHovered(card, true);
+            for (var t = 0f; t < 0.6f; t += Time.deltaTime)
+            {
+                peak = Mathf.Max(peak, card.transform.position.y - rest.y);
+                yield return null;
+            }
+
+            var lift = card.transform.position.y - rest.y;
+            Assert.That(lift, Is.GreaterThan(0.08f), "picked up");
+            Assert.That(peak, Is.GreaterThan(lift * 1.02f), "a spring: it overshoots a little, then settles");
+            var tilt = Quaternion.Angle(card.transform.rotation, restRotation);
+            Assert.That(tilt, Is.InRange(8f, 20f), "tipped toward the camera");
+            var farEnd = card.transform.TransformPoint(Vector3.forward * 0.5f);
+            var nearEnd = card.transform.TransformPoint(Vector3.back * 0.5f);
+            Assert.That(farEnd.y, Is.GreaterThan(nearEnd.y), "the far edge rises, so the face turns to the player");
+            Assert.That(card.transform.localScale.x, Is.GreaterThan(restScale.x * 1.03f));
+        }
+
+        [UnityTest]
+        public IEnumerator NeighboursPartAlongTheArcInsteadOfBobbing()
+        {
+            fan.GetFanPose(19, out var hoveredRest, out _);
+            var restPositions = Enumerable.Range(0, fan.FanCards.Count).Select(i =>
+            {
+                fan.GetFanPose(i, out var p, out _);
+                return p;
+            }).ToArray();
+            fan.SetHovered(fan.FanCards[19], true);
+            yield return new WaitForSeconds(0.6f);
+
+            foreach (var neighbour in new[] { 18, 20 })
+            {
+                var now = fan.FanCards[neighbour].transform.position;
+                var before = Vector3.Distance(restPositions[neighbour], hoveredRest);
+                var after = Vector3.Distance(new Vector3(now.x, hoveredRest.y, now.z), hoveredRest);
+                Assert.That(after, Is.GreaterThan(before + 0.05f), $"card {neighbour} makes room");
+                Assert.That(now.y - restPositions[neighbour].y, Is.LessThan(0.01f), $"card {neighbour} stays on the cloth");
+            }
+
+            Assert.That(Vector3.Distance(fan.FanCards[26].transform.position, restPositions[26]), Is.LessThan(0.002f), "the parting is local");
+            Assert.That(Vector3.Distance(fan.FanCards[58].transform.position, restPositions[58]), Is.LessThan(0.002f), "the other arc is untouched");
+        }
+
+        [UnityTest]
+        public IEnumerator TheShadowStaysOnTheClothAndSpreads()
+        {
+            var card = fan.FanCards[19];
+            var shadow = card.GetComponentsInChildren<Transform>(true).First(t => t.name == "Phase15_CardDropShadow");
+            var restY = shadow.position.y;
+            var restSize = shadow.lossyScale.x;
+            fan.SetHovered(card, true);
+            yield return new WaitForSeconds(0.6f);
+            Assert.That(shadow.position.y, Is.EqualTo(restY).Within(0.005f), "the shadow does not lift with the card");
+            Assert.That(shadow.lossyScale.x, Is.GreaterThan(restSize * 1.1f), "it spreads as the card rises");
+
+            fan.SetHovered(card, false);
+            yield return new WaitForSeconds(0.8f);
+            Assert.That(shadow.lossyScale.x, Is.EqualTo(restSize).Within(restSize * 0.02f), "and settles back");
         }
 
         [UnityTest]
@@ -147,7 +200,7 @@ namespace TarotUnity.Tests.PlayMode
             yield return new WaitForSeconds(0.3f);
             Assert.That(delivered.Select(d => d.Item1), Is.EqualTo(picked));
             Assert.That(delivered.Select(d => d.Item2), Is.EqualTo(new[] { 0, 1, 2 }));
-            Assert.That(fan.FanCards.Count, Is.EqualTo(19));
+            Assert.That(fan.FanCards.Count, Is.EqualTo(fan.CardCount - 3));
             Assert.That(fan.AcceptingPicks, Is.False);
             Assert.That(picked.All(c => c.HoverHaloScale > 1.01f), "picked cards get their normal hover glow back");
         }

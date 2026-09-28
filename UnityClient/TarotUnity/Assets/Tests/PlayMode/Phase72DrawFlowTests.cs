@@ -48,7 +48,7 @@ namespace TarotUnity.Tests.PlayMode
 
             yield return Until(() => fan.AcceptingPicks, "the fan opens after the shuffle");
             Assert.That(flow.State, Is.EqualTo(ReadingFlowState.Drawing));
-            Assert.That(fan.FanCards.Count, Is.EqualTo(22));
+            Assert.That(fan.FanCards.Count, Is.EqualTo(78), "Phase 73: the whole deck");
             Assert.That(Get<CanvasGroup[]>("pickHiddenUi").All(g => g.alpha < 0.01f && !g.blocksRaycasts), Is.True,
                 "the dock steps aside while picking");
             Assert.That(Get<TMP_Text>("flowStatusText").text, Is.EqualTo(ReleaseUxCopy.FlowPickPrompt(3, 3)));

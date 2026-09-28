@@ -97,9 +97,11 @@ namespace TarotUnity.Tests.EditMode
         public void Phase18ParticleSystemsUseSafeVisualSettings()
         {
             EditorSceneManager.OpenScene(ReadingRoomScenePath);
-            AssertParticleSettings("Phase18_AmbientDustParticles", shouldLoop: true, maxRate: 12f);
-            AssertParticleSettings("Phase18_DeckFocusParticles", shouldLoop: true, maxRate: 10f);
-            AssertParticleSettings("Phase18_FlipSparkParticles", shouldLoop: false, maxRate: 1f);
+            // Phase 73: the reading room's sparks drifted through the whole reading as yellow dots;
+            // they stay configured but silent (no emission, no renderer).
+            AssertParticleSettings("Phase18_AmbientDustParticles", shouldLoop: true, maxRate: 12f, silent: true);
+            AssertParticleSettings("Phase18_DeckFocusParticles", shouldLoop: true, maxRate: 10f, silent: true);
+            AssertParticleSettings("Phase18_FlipSparkParticles", shouldLoop: false, maxRate: 1f, silent: true);
             AssertNoBlockingObjects("Phase16_RitualAuraRoot");
 
             EditorSceneManager.OpenScene(ResultScenePath);
@@ -186,7 +188,7 @@ namespace TarotUnity.Tests.EditMode
             return particles;
         }
 
-        private static void AssertParticleSettings(string particleName, bool shouldLoop, float maxRate)
+        private static void AssertParticleSettings(string particleName, bool shouldLoop, float maxRate, bool silent = false)
         {
             var particleObject = GameObject.Find(particleName);
             Assert.That(particleObject, Is.Not.Null, particleName);
@@ -201,7 +203,7 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(main.maxParticles, Is.InRange(12, 160), particleName);
 
             var emission = particles.emission;
-            Assert.That(emission.enabled, Is.True, particleName);
+            Assert.That(emission.enabled, Is.EqualTo(!silent), particleName);
             Assert.That(emission.rateOverTime.constantMax, Is.LessThanOrEqualTo(maxRate), particleName);
 
             var shape = particles.shape;
@@ -210,6 +212,7 @@ namespace TarotUnity.Tests.EditMode
             var renderer = particleObject.GetComponent<ParticleSystemRenderer>();
             Assert.That(renderer, Is.Not.Null, particleName);
             Assert.That(renderer.renderMode, Is.EqualTo(ParticleSystemRenderMode.Billboard), particleName);
+            Assert.That(renderer.enabled, Is.EqualTo(!silent), particleName);
         }
 
         private static void AssertNoBlockingObjects(string rootName)
