@@ -76,6 +76,21 @@ namespace TarotUnity.Gameplay
         public IReadOnlyList<CardView> FanCards => fanCards;
         public bool AcceptingPicks => remainingPicks > 0;
 
+        /// <summary>Phase 72 review: awake, wired, and holding at least as many cards as the spread needs.</summary>
+        public bool CanSpread(int cardsNeeded)
+        {
+            return isActiveAndEnabled && cardPrefab != null && cardCount >= cardsNeeded;
+        }
+
+        /// <summary>Phase 72 review: drop the fan at once (after a fault mid-pick) - no gather, the light off.</summary>
+        public void Abandon()
+        {
+            spreadDone = false;
+            busy = false;
+            Clear();
+            SetLight(0f);
+        }
+
         public void GetFanPose(int index, out Vector3 position, out Quaternion rotation)
         {
             var center = fanCenter != null ? fanCenter : transform;
@@ -283,6 +298,13 @@ namespace TarotUnity.Gameplay
         {
             if (fanLight == null)
             {
+                return;
+            }
+
+            // An inactive fan cannot run the fade; set the light outright instead of throwing.
+            if (!isActiveAndEnabled)
+            {
+                SetLight(target);
                 return;
             }
 

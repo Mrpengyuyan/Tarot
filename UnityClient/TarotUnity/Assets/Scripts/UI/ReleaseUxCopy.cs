@@ -10,6 +10,7 @@ namespace TarotUnity.UI
         public const string FlowShuffling = "正在洗牌……";
         public const string FlowDealing = "正在发牌……";
         public const string FlowReadingTheCards = "正在感应牌面……";
+        public const string FlowDrawInterrupted = "抽牌被打断了，请再试一次。";
 
         /// <summary>Phase 72: the prompt while the player picks from the fan.</summary>
         public static string FlowPickPrompt(int remaining, int total)

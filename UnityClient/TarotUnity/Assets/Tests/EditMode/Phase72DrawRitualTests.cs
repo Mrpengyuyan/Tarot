@@ -333,10 +333,24 @@ namespace TarotUnity.Tests.EditMode
                     }
                 }
 
+                // Review follow-up: the moving poses too - a hovered card slid toward the player,
+                // and a picked card pulled out and risen for its hover beat (turning to its slot).
+                var fanSo = new SerializedObject(fan);
+                var hoverLift = fanSo.FindProperty("hoverLift").floatValue;
+                var hoverSlide = fanSo.FindProperty("hoverSlide").floatValue;
+                var deckSo = new SerializedObject(Object.FindFirstObjectByType<DeckController>());
+                var pull = deckSo.FindProperty("pickPullDistance").floatValue;
+                var rise = deckSo.FindProperty("pickRise").floatValue + deckSo.FindProperty("pickHoverBob").floatValue;
                 for (var i = 0; i < fan.CardCount; i++)
                 {
                     fan.GetFanPose(i, out var p, out var r);
                     Check(p, r, $"fan card {i}");
+                    var towardPlayer = -(r * Vector3.forward);
+                    Check(p + Vector3.up * hoverLift + towardPlayer * hoverSlide, r, $"hovered fan card {i}");
+                    var flat = new Vector3(towardPlayer.x, 0f, towardPlayer.z).normalized;
+                    var risen = p + flat * pull + Vector3.up * rise;
+                    Check(risen, r, $"picked card {i} rising");
+                    Check(risen, Quaternion.identity, $"picked card {i} turned to its slot");
                 }
 
                 foreach (var slot in slots)

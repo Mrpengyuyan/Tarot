@@ -52,6 +52,16 @@
   - 不再固定等 `ShuffleBreathSeconds`，而是等洗牌动画实际播完。`RitualRhythmDirector` 的这个字段保留，因为 Phase 9 的测试引用它。
   - 选牌期间把 `pickHiddenUi`（动作坞、问题输入框、四个按钮）的透明度降到 0，并关闭点击。
 
+## 终审后的稳健性修复
+
+终审提出的 5 个小问题，按用户要求全部修复，每个都有先失败、后通过的测试（`Tests/PlayMode/Phase72RobustnessTests.cs`，以及扩展后的视锥测试）：
+
+1. **扇面缺失或没接好时会卡住。** `ReadingRoomController.FanCanDeal` 检查扇面是否存在、处于启用状态、已接好牌预制体、牌数够用（`SpreadFanController.CanSpread`）。不满足时报错（`Debug.LogError`），并退回 Phase 72 之前的自动发牌（`DeckController.DealCards`），流程照常走到翻牌。
+2. **选牌中途出错会让界面锁死。** 选牌段（摊开、点选、飞牌、收拢）通过 `Guarded` 运行：它逐层接管嵌套协程，捕获第一个异常并记录日志，然后 `RecoverFromDrawFault` 丢弃扇面（`SpreadFanController.Abandon`，关灯）、把桌上的牌飞回牌堆、恢复动作坞、流程回到可以抽牌、提示「抽牌被打断了，请再试一次」。
+3. **视锥测试只检查静止位置。** 现在也检查悬停滑出后的位置，以及抽起悬空时的位置（按扇面朝向和按牌位朝向各一次）。1、3、10 张牌阵在 16:9 和 4:3 下都在画面内，现有镜头参数不用改。
+4. **对 Unity 对象用了 `?.`。** `ReadingRoomController` 里对 Unity 对象的 `?.` 全部改为显式判空，包括牌阵选择、结果、目录这些原有代码。对象被销毁后会跳过调用，而不是报 `MissingReferenceException`。
+5. **扇面对象停用时会抛异常。** 停用的扇面会被判定为不可用，走第 1 条的自动发牌；`FadeLight` 在对象停用时直接设灯，不再尝试启动协程。
+
 ## 引导脚本
 
 `Editor/Phase72DrawRitualBootstrapper.cs`，菜单 `Tools/Tarot Unity/Run Phase 72 Draw Ritual Bootstrap`。可以重复运行，连续运行两次文件哈希不变。它负责：

@@ -48,6 +48,7 @@ namespace TarotUnity.UI
         private int selectedCardCount = 1;
         private string selectedSpreadName = "单牌抽取";
         private bool drawInProgress;
+        private System.Exception drawFault;
         private SpreadSummary[] backendSpreads;
         private InterpretationPoller subscribedPoller;
 
@@ -65,11 +66,30 @@ namespace TarotUnity.UI
 
         private void Awake()
         {
-            oneCardButton?.onClick.AddListener(SelectOneCard);
-            threeCardButton?.onClick.AddListener(SelectThreeCards);
-            celticCrossButton?.onClick.AddListener(SelectCelticCross);
-            drawButton?.onClick.AddListener(BeginDraw);
-            revealResultButton?.onClick.AddListener(LoadResult);
+            if (oneCardButton != null)
+            {
+                oneCardButton.onClick.AddListener(SelectOneCard);
+            }
+
+            if (threeCardButton != null)
+            {
+                threeCardButton.onClick.AddListener(SelectThreeCards);
+            }
+
+            if (celticCrossButton != null)
+            {
+                celticCrossButton.onClick.AddListener(SelectCelticCross);
+            }
+
+            if (drawButton != null)
+            {
+                drawButton.onClick.AddListener(BeginDraw);
+            }
+
+            if (revealResultButton != null)
+            {
+                revealResultButton.onClick.AddListener(LoadResult);
+            }
 
             if (flowController != null)
             {
@@ -90,7 +110,10 @@ namespace TarotUnity.UI
             SetResultButtonVisible(false);
             SetStatus("先选一个牌阵，写下你的问题，再抽牌。");
             SetReleaseStatus(ReleaseUxCopy.LocalModeReady);
-            cameraChoreography?.PlayOpening();
+            if (cameraChoreography != null)
+            {
+                cameraChoreography.PlayOpening();
+            }
 
             if (ShouldLoadBackendSpreads())
             {
@@ -100,11 +123,30 @@ namespace TarotUnity.UI
 
         private void OnDestroy()
         {
-            oneCardButton?.onClick.RemoveListener(SelectOneCard);
-            threeCardButton?.onClick.RemoveListener(SelectThreeCards);
-            celticCrossButton?.onClick.RemoveListener(SelectCelticCross);
-            drawButton?.onClick.RemoveListener(BeginDraw);
-            revealResultButton?.onClick.RemoveListener(LoadResult);
+            if (oneCardButton != null)
+            {
+                oneCardButton.onClick.RemoveListener(SelectOneCard);
+            }
+
+            if (threeCardButton != null)
+            {
+                threeCardButton.onClick.RemoveListener(SelectThreeCards);
+            }
+
+            if (celticCrossButton != null)
+            {
+                celticCrossButton.onClick.RemoveListener(SelectCelticCross);
+            }
+
+            if (drawButton != null)
+            {
+                drawButton.onClick.RemoveListener(BeginDraw);
+            }
+
+            if (revealResultButton != null)
+            {
+                revealResultButton.onClick.RemoveListener(LoadResult);
+            }
 
             if (flowController != null)
             {
@@ -139,7 +181,8 @@ namespace TarotUnity.UI
         // the literal is only the fallback for a missing or half-built catalog.
         private void SelectFromCatalog(int fallbackSpreadId, int cardCount, string fallbackName)
         {
-            var def = ResolveCatalog()?.GetByCardCount(cardCount);
+            var catalog = ResolveCatalog();
+            var def = catalog != null ? catalog.GetByCardCount(cardCount) : null;
             var name = def != null && !string.IsNullOrWhiteSpace(def.displayName) ? def.displayName : fallbackName;
             SelectSpread(def != null ? def.spreadId : fallbackSpreadId, cardCount, name);
         }
@@ -166,10 +209,25 @@ namespace TarotUnity.UI
             selectedSpreadName = spreadName;
             ApplySpreadEmphasis(cardCount);
 
-            flowController?.EnterSpreadSelect();
-            flowController?.SelectSpread(spreadId, cardCount);
-            cameraChoreography?.FocusSpread(cardCount);
-            ritualFeedback?.PlayCue(PresentationCueId.SpreadSelected);
+            if (flowController != null)
+            {
+                flowController.EnterSpreadSelect();
+            }
+
+            if (flowController != null)
+            {
+                flowController.SelectSpread(spreadId, cardCount);
+            }
+
+            if (cameraChoreography != null)
+            {
+                cameraChoreography.FocusSpread(cardCount);
+            }
+
+            if (ritualFeedback != null)
+            {
+                ritualFeedback.PlayCue(PresentationCueId.SpreadSelected);
+            }
 
             if (spreadStatusText != null)
             {
@@ -190,18 +248,37 @@ namespace TarotUnity.UI
         private IEnumerator DrawRoutine()
         {
             drawInProgress = true;
+            drawFault = null;
             SetResultButtonVisible(false);
             SetDrawControls(false);
 
-            var question = string.IsNullOrWhiteSpace(questionInput?.text)
+            var question = questionInput == null || string.IsNullOrWhiteSpace(questionInput.text)
                 ? ReleaseUxCopy.DefaultQuestion
                 : questionInput.text.Trim();
 
-            flowController?.SetQuestion(question, "general");
-            flowController?.BeginShuffle();
-            cameraChoreography?.FocusDeck();
-            ritualFeedback?.PlayCue(PresentationCueId.ShuffleStarted, deckController != null ? deckController.transform : null);
-            deckShuffle?.Play();
+            // Phase 72 review: explicit Unity null checks (not `?.`) so a destroyed reference
+            // is skipped instead of called.
+            if (flowController != null)
+            {
+                flowController.SetQuestion(question, "general");
+                flowController.BeginShuffle();
+            }
+
+            if (cameraChoreography != null)
+            {
+                cameraChoreography.FocusDeck();
+            }
+
+            if (ritualFeedback != null)
+            {
+                ritualFeedback.PlayCue(PresentationCueId.ShuffleStarted, deckController != null ? deckController.transform : null);
+            }
+
+            if (deckShuffle != null)
+            {
+                deckShuffle.Play();
+            }
+
             SetStatus(ReleaseUxCopy.FlowShuffling);
 
             // Phase 66: the online start (record + draw + cards, no AI) runs while the
@@ -224,23 +301,39 @@ namespace TarotUnity.UI
             }
 
             // The fan opens at once - the online start keeps running behind the picks.
-            flowController?.BeginDeal();
-            deckController?.Clear();
-            var slots = flowController != null ? flowController.GetSelectedSpreadSlots() : new List<Transform>();
-            var deckOrigin = deckShuffle != null ? deckShuffle.transform : deckController != null ? deckController.transform : transform;
-            cameraChoreography?.FocusDraw(selectedCardCount);
-            SetPickUiHidden(true);
-            if (spreadFan != null && deckController != null)
+            if (flowController != null)
             {
-                yield return spreadFan.Spread(deckOrigin);
-                stepIndicator?.FocusSocket(0);
-                SetStatus(ReleaseUxCopy.FlowPickPrompt(slots.Count, slots.Count));
-                yield return spreadFan.PickCards(slots.Count, (card, index) => DeliverPick(card, index, slots));
-                stepIndicator?.FocusSocket(-1);
-                yield return spreadFan.Gather(deckOrigin);
+                flowController.BeginDeal();
             }
 
-            SetPickUiHidden(false);
+            if (deckController != null)
+            {
+                deckController.Clear();
+            }
+
+            var slots = flowController != null ? flowController.GetSelectedSpreadSlots() : new List<Transform>();
+            var deckOrigin = deckShuffle != null ? deckShuffle.transform : deckController != null ? deckController.transform : transform;
+            if (FanCanDeal(slots.Count))
+            {
+                if (cameraChoreography != null)
+                {
+                    cameraChoreography.FocusDraw(selectedCardCount);
+                }
+
+                SetPickUiHidden(true);
+                yield return Guarded(PickFromFan(slots, deckOrigin));
+                SetPickUiHidden(false);
+                if (drawFault != null)
+                {
+                    yield return RecoverFromDrawFault(deckOrigin);
+                    yield break;
+                }
+            }
+            else
+            {
+                Debug.LogError("ReadingRoom: the spread fan is missing, inactive or unwired - dealing the cards automatically instead.");
+            }
+
             SetStatus(ReleaseUxCopy.FlowReadingTheCards);
 
             var onlineStartTimeoutSeconds = OnlineStartTimeoutSeconds();
@@ -262,8 +355,16 @@ namespace TarotUnity.UI
                     yield return deckController.ReturnDealtCards();
                 }
 
-                flowController?.AbortDraw();
-                cameraChoreography?.PlayOpening();
+                if (flowController != null)
+                {
+                    flowController.AbortDraw();
+                }
+
+                if (cameraChoreography != null)
+                {
+                    cameraChoreography.PlayOpening();
+                }
+
                 var message = ReleaseUxCopy.BackendOnlyFailure(attempt.RawError);
                 SetStatus(message);
                 SetReleaseStatus(message);
@@ -296,7 +397,16 @@ namespace TarotUnity.UI
             var draws = session.cardDraws ?? CreateLocalDraws();
             if (deckController != null)
             {
-                deckController.BindDealtCards(draws);
+                if (deckController.ActiveCards.Count == 0)
+                {
+                    // No fan (see the error above): the pre-Phase 72 automatic deal.
+                    yield return deckController.DealCards(draws, slots);
+                }
+                else
+                {
+                    deckController.BindDealtCards(draws);
+                }
+
                 if (rhythmDirector != null && rhythmDirector.DealSettleSeconds > 0f)
                 {
                     yield return new WaitForSeconds(rhythmDirector.DealSettleSeconds);
@@ -305,9 +415,105 @@ namespace TarotUnity.UI
                 WireActiveCards();
             }
 
-            flowController?.WaitForCardFlips();
-            cameraChoreography?.FocusSpread(selectedCardCount);
+            if (flowController != null)
+            {
+                flowController.WaitForCardFlips();
+            }
+
+            if (cameraChoreography != null)
+            {
+                cameraChoreography.FocusSpread(selectedCardCount);
+            }
+
             SetStatus(ReleaseUxCopy.FlowFlipPrompt);
+            drawInProgress = false;
+        }
+
+        /// <summary>Phase 72 review: the fan must be there, awake, wired and big enough, or the draw deals automatically.</summary>
+        private bool FanCanDeal(int cardCount)
+        {
+            return spreadFan != null && deckController != null && spreadFan.CanSpread(cardCount);
+        }
+
+        /// <summary>Phase 72: spread the fan, let the player pick, gather the rest.</summary>
+        private IEnumerator PickFromFan(IList<Transform> slots, Transform deckOrigin)
+        {
+            yield return spreadFan.Spread(deckOrigin);
+            FocusSocket(0);
+            SetStatus(ReleaseUxCopy.FlowPickPrompt(slots.Count, slots.Count));
+            yield return spreadFan.PickCards(slots.Count, (card, index) => DeliverPick(card, index, slots));
+            FocusSocket(-1);
+            yield return spreadFan.Gather(deckOrigin);
+        }
+
+        /// <summary>
+        /// Phase 72 review: an exception inside the pick (fan, flight, a cue handler) used to stop
+        /// the draw with the dock hidden and the draw locked. Runs a routine - and every routine it
+        /// yields - catching the first exception into <see cref="drawFault"/> and stopping there.
+        /// </summary>
+        private IEnumerator Guarded(IEnumerator routine)
+        {
+            while (true)
+            {
+                object current;
+                try
+                {
+                    if (!routine.MoveNext())
+                    {
+                        yield break;
+                    }
+
+                    current = routine.Current;
+                }
+                catch (System.Exception exception)
+                {
+                    drawFault = exception;
+                    Debug.LogException(exception);
+                    yield break;
+                }
+
+                if (current is IEnumerator nested)
+                {
+                    yield return Guarded(nested);
+                    if (drawFault != null)
+                    {
+                        yield break;
+                    }
+                }
+                else
+                {
+                    yield return current;
+                }
+            }
+        }
+
+        /// <summary>Phase 72 review: after a fault mid-pick, clear the table and give the player the draw back.</summary>
+        private IEnumerator RecoverFromDrawFault(Transform deckOrigin)
+        {
+            if (spreadFan != null)
+            {
+                spreadFan.Abandon();
+            }
+
+            if (deckController != null)
+            {
+                yield return Guarded(deckController.ReturnDealtCards());
+                deckController.Clear();
+            }
+
+            FocusSocket(-1);
+            if (flowController != null)
+            {
+                flowController.AbortDraw();
+            }
+
+            if (cameraChoreography != null)
+            {
+                cameraChoreography.PlayOpening();
+            }
+
+            SetStatus(ReleaseUxCopy.FlowDrawInterrupted);
+            SetDrawControls(true);
             drawInProgress = false;
         }
 
@@ -321,11 +527,19 @@ namespace TarotUnity.UI
 
             yield return deckController.DealPickedCard(card, slots[index]);
             var next = index + 1;
-            stepIndicator?.FocusSocket(next < slots.Count ? next : -1);
+            FocusSocket(next < slots.Count ? next : -1);
             var remaining = slots.Count - next;
             if (remaining > 0)
             {
                 SetStatus(ReleaseUxCopy.FlowPickPrompt(remaining, slots.Count));
+            }
+        }
+
+        private void FocusSocket(int index)
+        {
+            if (stepIndicator != null)
+            {
+                stepIndicator.FocusSocket(index);
             }
         }
 
@@ -347,7 +561,10 @@ namespace TarotUnity.UI
 
         private void HandleCardHovering(CardView card)
         {
-            stepIndicator?.FlashFocusedSocket();
+            if (stepIndicator != null)
+            {
+                stepIndicator.FlashFocusedSocket();
+            }
         }
 
         private sealed class OnlineStartAttempt
@@ -500,7 +717,10 @@ namespace TarotUnity.UI
 
         private void HandleCardDealt(CardView card)
         {
-            ritualFeedback?.PlayCue(PresentationCueId.CardDealt, card != null ? card.transform : null);
+            if (ritualFeedback != null)
+            {
+                ritualFeedback.PlayCue(PresentationCueId.CardDealt, card != null ? card.transform : null);
+            }
         }
 
         private void WireActiveCards()
@@ -548,7 +768,10 @@ namespace TarotUnity.UI
         {
             if (faceUp)
             {
-                flowController?.RegisterCardFlipped(card);
+                if (flowController != null)
+                {
+                    flowController.RegisterCardFlipped(card);
+                }
             }
         }
 
@@ -563,8 +786,16 @@ namespace TarotUnity.UI
         private IEnumerator ResultReadyRoutine()
         {
             SetStatus(ReleaseUxCopy.FlowAllRevealed);
-            cameraChoreography?.FocusResult();
-            ritualFeedback?.PlayCue(PresentationCueId.ResultReady);
+            if (cameraChoreography != null)
+            {
+                cameraChoreography.FocusResult();
+            }
+
+            if (ritualFeedback != null)
+            {
+                ritualFeedback.PlayCue(PresentationCueId.ResultReady);
+            }
+
             SetResultButtonVisible(true);
 
             if (rhythmDirector != null && rhythmDirector.ResultBreathSeconds > 0f)
@@ -731,9 +962,10 @@ namespace TarotUnity.UI
 
         private CardDrawData[] CreateLocalDraws()
         {
-            var def = ResolveCatalog()?.GetByCardCount(selectedCardCount);
+            var catalog = ResolveCatalog();
+            var def = catalog != null ? catalog.GetByCardCount(selectedCardCount) : null;
             return LocalReadingSimulator.CreatePlaceholderDraws(
-                selectedCardCount, def?.positionNames, def?.positionMeanings);
+                selectedCardCount, def != null ? def.positionNames : null, def != null ? def.positionMeanings : null);
         }
 
         private SpreadSummary FindBackendSpread(int cardCount)
