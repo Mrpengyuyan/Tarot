@@ -61,6 +61,7 @@ namespace TarotUnity.Gameplay
         private readonly Dictionary<CardView, int> slotOf = new();
         private readonly Dictionary<CardView, float> lift = new();
         private readonly Dictionary<CardView, float> slide = new();
+        private readonly Dictionary<CardView, (BoxCollider box, Vector3 center)> targets = new();
         private bool spreadDone;
         private CardView hovered;
         private float hoverReleaseAt = -1f;
@@ -119,6 +120,11 @@ namespace TarotUnity.Gameplay
                 slotOf[card] = i;
                 lift[card] = 0f;
                 slide[card] = 0f;
+                var box = card.GetComponent<BoxCollider>();
+                if (box != null)
+                {
+                    targets[card] = (box, box.center);
+                }
             }
 
             FadeLight(fanLightIntensity);
@@ -330,6 +336,12 @@ namespace TarotUnity.Gameplay
 
             card.SetHovered(false);
             card.ClearHoverHaloScale();
+            if (targets.TryGetValue(card, out var target))
+            {
+                target.box.center = target.center;
+                targets.Remove(card);
+            }
+
             fanCards.Remove(card);
             slotOf.Remove(card);
             lift.Remove(card);
@@ -351,6 +363,7 @@ namespace TarotUnity.Gameplay
             }
 
             fanCards.Clear();
+            targets.Clear();
             slotOf.Clear();
             lift.Clear();
             slide.Clear();
@@ -383,7 +396,15 @@ namespace TarotUnity.Gameplay
                 slide[card] = Mathf.Lerp(slide[card], i == h ? hoverSlide : 0f, blend);
                 GetFanPose(i, out var p, out var r);
                 var towardPlayer = -(r * Vector3.forward);
-                card.transform.SetPositionAndRotation(p + Vector3.up * lift[card] + towardPlayer * slide[card], r);
+                var offset = Vector3.up * lift[card] + towardPlayer * slide[card];
+                card.transform.SetPositionAndRotation(p + offset, r);
+
+                // The card moves but its pointer target stays on the resting rectangle; otherwise
+                // a card sliding out from under the pointer would drop back under it and loop.
+                if (targets.TryGetValue(card, out var target))
+                {
+                    target.box.center = target.center - card.transform.InverseTransformVector(offset);
+                }
             }
         }
     }

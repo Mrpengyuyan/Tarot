@@ -98,6 +98,37 @@ namespace TarotUnity.Tests.PlayMode
             Assert.That(card.transform.position.y - rest.y, Is.GreaterThan(lifted * 0.9f), "no flicker back down");
         }
 
+        // Review fix: a hovered card slides toward the player, but its pointer target must stay
+        // on the resting rectangle - otherwise the pointer falls off it (onto a neighbour or the
+        // cloth), the card drops back under the pointer, and the two swap forever.
+        [UnityTest]
+        public IEnumerator AHoveredCardKeepsItsPointerTargetWhereItRests()
+        {
+            var card = fan.FanCards[10];
+            var box = card.GetComponent<BoxCollider>();
+            fan.GetFanPose(10, out var rest, out _);
+            Assert.That(Vector3.Distance(box.bounds.center, rest), Is.LessThan(0.01f), "control: at rest the target is the card");
+
+            fan.SetHovered(card, true);
+            yield return new WaitForSeconds(0.4f);
+            Assert.That(Vector3.Distance(card.transform.position, rest), Is.GreaterThan(0.2f), "control: the card slid out");
+            Assert.That(Vector3.Distance(box.bounds.center, rest), Is.LessThan(0.01f), "the pointer target stays put");
+        }
+
+        [UnityTest]
+        public IEnumerator APickedCardGetsItsOwnPointerTargetBack()
+        {
+            var card = fan.FanCards[10];
+            var box = card.GetComponent<BoxCollider>();
+            var authored = box.center;
+            fan.SetHovered(card, true);
+            yield return new WaitForSeconds(0.4f);
+            fan.StartCoroutine(fan.PickCards(1, (c, i) => Deliver(new List<(CardView, int)>(), c, i)));
+            fan.RequestPick(card);
+            yield return new WaitForSeconds(0.2f);
+            Assert.That(Vector3.Distance(box.center, authored), Is.LessThan(1e-4f), "a dealt card is clicked where it lies");
+        }
+
         [UnityTest]
         public IEnumerator PicksDeliverInOrderAndLeaveAGap()
         {
