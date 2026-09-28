@@ -23,6 +23,11 @@ namespace TarotUnity.Presentation
         [SerializeField] private Transform threeCardPose;
         [SerializeField] private Transform resultPose;
         [SerializeField] private SpreadPose[] spreadPoses = new SpreadPose[0];
+
+        // Phase 72: where the camera looks while the player picks from the fan - high enough
+        // to hold the fan and every slot of the spread. Keyed by card count like spreadPoses;
+        // an unknown count uses the first entry.
+        [SerializeField] private SpreadPose[] drawPoses = new SpreadPose[0];
         [SerializeField] private float transitionDuration = 0.75f;
         [SerializeField] private AnimationCurve transitionCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
@@ -117,6 +122,49 @@ namespace TarotUnity.Presentation
             else
             {
                 MoveTo(threeCardPose, threeCardFov);
+            }
+        }
+
+        public bool TryGetDrawPose(int cardCount, out Transform pose, out float fov)
+        {
+            pose = null;
+            fov = defaultFov;
+            SpreadPose fallback = null;
+            foreach (var entry in drawPoses)
+            {
+                if (entry == null || entry.pose == null)
+                {
+                    continue;
+                }
+
+                fallback ??= entry;
+                if (entry.cardCount == cardCount)
+                {
+                    pose = entry.pose;
+                    fov = entry.fov;
+                    return true;
+                }
+            }
+
+            if (fallback == null)
+            {
+                return false;
+            }
+
+            pose = fallback.pose;
+            fov = fallback.fov;
+            return true;
+        }
+
+        public void FocusDraw(int cardCount)
+        {
+            if (TryGetDrawPose(cardCount, out var pose, out var fov))
+            {
+                MoveTo(pose, fov);
+            }
+            else
+            {
+                FocusDeck();
             }
         }
 

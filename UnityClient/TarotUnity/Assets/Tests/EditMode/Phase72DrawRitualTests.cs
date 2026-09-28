@@ -178,5 +178,85 @@ namespace TarotUnity.Tests.EditMode
                 Object.DestroyImmediate(root);
             }
         }
+        [Test]
+        public void DrawPoseFallsBackToTheFirstEntry()
+        {
+            var go = new GameObject("Phase72_CamProbe");
+            try
+            {
+                var cam = go.AddComponent<CameraChoreographyController>();
+                var near = new GameObject("Near").transform;
+                var far = new GameObject("Far").transform;
+                near.SetParent(go.transform);
+                far.SetParent(go.transform);
+                var so = new SerializedObject(cam);
+                var poses = so.FindProperty("drawPoses");
+                poses.arraySize = 2;
+                poses.GetArrayElementAtIndex(0).FindPropertyRelative("cardCount").intValue = 3;
+                poses.GetArrayElementAtIndex(0).FindPropertyRelative("pose").objectReferenceValue = near;
+                poses.GetArrayElementAtIndex(0).FindPropertyRelative("fov").floatValue = 45f;
+                poses.GetArrayElementAtIndex(1).FindPropertyRelative("cardCount").intValue = 10;
+                poses.GetArrayElementAtIndex(1).FindPropertyRelative("pose").objectReferenceValue = far;
+                poses.GetArrayElementAtIndex(1).FindPropertyRelative("fov").floatValue = 50f;
+                so.ApplyModifiedPropertiesWithoutUndo();
+
+                Assert.That(cam.TryGetDrawPose(10, out var p10, out var f10), Is.True);
+                Assert.That(p10, Is.SameAs(far));
+                Assert.That(f10, Is.EqualTo(50f));
+                Assert.That(cam.TryGetDrawPose(5, out var p5, out _), Is.True);
+                Assert.That(p5, Is.SameAs(near), "unknown counts use the first entry");
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
+        public void FocusSocketLightsOnlyThatSocket()
+        {
+            var go = new GameObject("Phase72_StepProbe");
+            try
+            {
+                var flowGo = new GameObject("Flow");
+                flowGo.transform.SetParent(go.transform);
+                var flow = flowGo.AddComponent<ReadingFlowController>();
+                flow.SelectSpread(1, 3);
+                var glows = Enumerable.Range(0, 3).Select(i => new GameObject($"Glow{i}")).ToArray();
+                foreach (var g in glows)
+                {
+                    g.transform.SetParent(go.transform);
+                }
+
+                var indicator = go.AddComponent<RitualStepIndicator>();
+                var so = new SerializedObject(indicator);
+                so.FindProperty("flowController").objectReferenceValue = flow;
+                var sets = so.FindProperty("socketGlowSets");
+                sets.arraySize = 1;
+                sets.GetArrayElementAtIndex(0).FindPropertyRelative("cardCount").intValue = 3;
+                var arr = sets.GetArrayElementAtIndex(0).FindPropertyRelative("glows");
+                arr.arraySize = 3;
+                for (var i = 0; i < 3; i++)
+                {
+                    arr.GetArrayElementAtIndex(i).objectReferenceValue = glows[i];
+                }
+
+                so.ApplyModifiedPropertiesWithoutUndo();
+
+                indicator.ApplyFlowState(ReadingFlowState.Drawing);
+                Assert.That(glows.All(g => g.activeSelf), Is.True, "control: the draw lights the spread");
+
+                indicator.FocusSocket(1);
+                Assert.That(glows.Select(g => g.activeSelf), Is.EqualTo(new[] { false, true, false }));
+                Assert.That(indicator.FocusedSocket, Is.EqualTo(1));
+
+                indicator.FocusSocket(-1);
+                Assert.That(glows.All(g => g.activeSelf), Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+            }
+        }
     }
 }

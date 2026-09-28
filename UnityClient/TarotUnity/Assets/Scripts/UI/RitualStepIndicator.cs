@@ -55,12 +55,21 @@ namespace TarotUnity.UI
         [SerializeField] private float glowScaleMin = 0.94f;
         [SerializeField] private float glowScaleMax = 1.08f;
 
+        [Header("Phase72 Pick focus")]
+        [SerializeField] private float flashSeconds = 0.25f;
+        [SerializeField] private float flashScale = 1.3f;
+
         private int currentStep = -1;
         private bool socketsLit;
+        private int focusedSocket = -1;
+        private float flashStartedAt = -10f;
         private readonly Dictionary<GameObject, Vector3> glowBaseScales = new();
 
         /// <summary>The highlighted step (0..4), or -1 before the ritual begins.</summary>
         public int CurrentStep => currentStep;
+
+        /// <summary>Phase 72: the one socket lit while the player picks, or -1 for the whole spread.</summary>
+        public int FocusedSocket => focusedSocket;
 
         /// <summary>Maps a flow state onto the step-bar index; -1 means "leave the bar as-is".</summary>
         public static int StepForState(ReadingFlowState state)
@@ -131,6 +140,19 @@ namespace TarotUnity.UI
             Refresh();
         }
 
+        /// <summary>Phase 72: while the player picks, only the next slot glows (-1 = the whole spread).</summary>
+        public void FocusSocket(int index)
+        {
+            focusedSocket = index;
+            SetSocketsLit(socketsLit);
+        }
+
+        /// <summary>Phase 72: the target slot answers the picked card with a brief swell.</summary>
+        public void FlashFocusedSocket()
+        {
+            flashStartedAt = Time.time;
+        }
+
         private void Refresh()
         {
             for (var i = 0; i < chips.Length; i++)
@@ -181,11 +203,12 @@ namespace TarotUnity.UI
                 }
 
                 var on = lit && set.cardCount == count;
-                foreach (var glow in set.glows)
+                for (var i = 0; i < set.glows.Length; i++)
                 {
+                    var glow = set.glows[i];
                     if (glow != null)
                     {
-                        glow.SetActive(on);
+                        glow.SetActive(on && (focusedSocket < 0 || i == focusedSocket));
                     }
                 }
             }
@@ -200,6 +223,11 @@ namespace TarotUnity.UI
 
             var t = Mathf.Lerp(glowScaleMin, glowScaleMax,
                 0.5f + 0.5f * Mathf.Sin(Time.time * glowPulseSpeed));
+            var flashK = (Time.time - flashStartedAt) / Mathf.Max(0.01f, flashSeconds);
+            if (flashK >= 0f && flashK < 1f)
+            {
+                t *= 1f + (flashScale - 1f) * Mathf.Sin(flashK * Mathf.PI);
+            }
 
             foreach (var set in socketGlowSets)
             {
