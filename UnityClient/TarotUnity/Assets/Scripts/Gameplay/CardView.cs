@@ -34,6 +34,19 @@ namespace TarotUnity.Gameplay
         private bool hovered;
         private bool haloScaleCaptured;
         private Vector3 haloRestScale;
+        private float haloBoost = 1f;
+        private float? hoverHaloScaleOverride;
+
+        /// <summary>Phase 72: the fan keeps its hover glow at rest size; landed cards use the serialized default.</summary>
+        public float HoverHaloScale
+        {
+            get => hoverHaloScaleOverride ?? hoverHaloScale;
+            set
+            {
+                hoverHaloScaleOverride = value;
+                ApplyHalo();
+            }
+        }
 
         public CardDrawData DrawData { get; private set; }
         public bool IsFaceUp { get; private set; }
@@ -187,9 +200,24 @@ namespace TarotUnity.Gameplay
             ApplyHalo();
         }
 
+        /// <summary>Phase 72: the pick's hover beat swells the glow (1 = none). A boost shows the glow on its own.</summary>
+        public void SetHaloBoost(float multiplier)
+        {
+            haloBoost = Mathf.Max(0f, multiplier);
+            ApplyHalo();
+        }
+
+        /// <summary>Phase 72: back to the serialized hover scale once a fan card has left the fan.</summary>
+        public void ClearHoverHaloScale()
+        {
+            hoverHaloScaleOverride = null;
+            ApplyHalo();
+        }
+
         private void ApplyHalo()
         {
-            var visible = !IsFaceUp && (awaitingFlip || hovered);
+            var boosted = haloBoost > 1.001f;
+            var visible = !IsFaceUp && (awaitingFlip || hovered || boosted);
             if (highlightRenderer != null)
             {
                 highlightRenderer.enabled = visible;
@@ -206,7 +234,8 @@ namespace TarotUnity.Gameplay
                 haloScaleCaptured = true;
             }
 
-            highlightRoot.transform.localScale = hovered ? haloRestScale * hoverHaloScale : haloRestScale;
+            var scale = (hovered ? HoverHaloScale : 1f) * haloBoost;
+            highlightRoot.transform.localScale = haloRestScale * scale;
             highlightRoot.SetActive(visible);
         }
     }

@@ -95,6 +95,20 @@ namespace TarotUnity.Gameplay
             ReleaseImmediate();
         }
 
+        /// <summary>
+        /// Phase 72: a fan card is suspended while the fan drives it; once it has landed on
+        /// its slot the tilt comes back and captures the slot as its new rest on the next hover.
+        /// </summary>
+        public void Resume()
+        {
+            suspended = false;
+            restCaptured = false;
+            hovering = false;
+            currentLift = 0f;
+            currentTilt = Vector2.zero;
+            targetTilt = Vector2.zero;
+        }
+
         public void ReleaseImmediate()
         {
             hovering = false;

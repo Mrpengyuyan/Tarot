@@ -11,6 +11,9 @@ namespace TarotUnity.Gameplay
 
         public event Action<CardView> Clicked;
 
+        // Phase 72: the fan follows the pointer across its cards.
+        public event Action<CardView, bool> HoverChanged;
+
         private void Awake()
         {
             cardView = GetComponent<CardView>();
@@ -20,11 +23,13 @@ namespace TarotUnity.Gameplay
         public void OnPointerEnter(PointerEventData eventData)
         {
             cardView.SetHovered(true);
+            HoverChanged?.Invoke(cardView, true);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             cardView.SetHovered(false);
+            HoverChanged?.Invoke(cardView, false);
         }
 
         public void OnPointerClick(PointerEventData eventData)
