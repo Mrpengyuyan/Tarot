@@ -49,6 +49,14 @@ namespace TarotUnity.Gameplay
         [Header("Gather")]
         [SerializeField] private float gatherSeconds = 0.6f;
 
+        [Header("Light")]
+        [Tooltip("The fan lies nearer the player than the table's light pool, so it brings its own: faded in with the spread, out with the gather.")]
+        [SerializeField] private Light fanLight;
+        [SerializeField] private float fanLightIntensity = 40f;
+        [SerializeField] private float fanLightFadeSeconds = 0.4f;
+
+        private Coroutine lightFade;
+
         private readonly List<CardView> fanCards = new();
         private readonly Dictionary<CardView, int> slotOf = new();
         private readonly Dictionary<CardView, float> lift = new();
@@ -113,6 +121,7 @@ namespace TarotUnity.Gameplay
                 slide[card] = 0f;
             }
 
+            FadeLight(fanLightIntensity);
             var start = origin.position;
             var startRotation = origin.rotation;
             var total = spreadCardSeconds + spreadStagger * (cardCount - 1);
@@ -230,6 +239,7 @@ namespace TarotUnity.Gameplay
         {
             spreadDone = false;
             hovered = null;
+            FadeLight(0f);
             var cards = new List<CardView>(fanCards);
             if (origin == null || cards.Count == 0)
             {
@@ -260,6 +270,53 @@ namespace TarotUnity.Gameplay
             }
 
             Clear();
+            SetLight(0f);
+        }
+
+        private void FadeLight(float target)
+        {
+            if (fanLight == null)
+            {
+                return;
+            }
+
+            if (lightFade != null)
+            {
+                StopCoroutine(lightFade);
+            }
+
+            lightFade = StartCoroutine(FadeLightRoutine(target));
+        }
+
+        private IEnumerator FadeLightRoutine(float target)
+        {
+            var from = fanLight.enabled ? fanLight.intensity : 0f;
+            fanLight.enabled = true;
+            for (var elapsed = 0f; elapsed < fanLightFadeSeconds; elapsed += Time.deltaTime)
+            {
+                fanLight.intensity = Mathf.Lerp(from, target, elapsed / fanLightFadeSeconds);
+                yield return null;
+            }
+
+            SetLight(target);
+            lightFade = null;
+        }
+
+        private void SetLight(float intensity)
+        {
+            if (fanLight == null)
+            {
+                return;
+            }
+
+            if (lightFade != null && intensity <= 0f)
+            {
+                StopCoroutine(lightFade);
+                lightFade = null;
+            }
+
+            fanLight.intensity = intensity;
+            fanLight.enabled = intensity > 0.001f;
         }
 
         private void Release(CardView card)

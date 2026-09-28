@@ -14,6 +14,7 @@ namespace TarotUnity.Tests.PlayMode
         private GameObject root;
         private SpreadFanController fan;
         private Transform origin;
+        private Light fanLight;
 
         [UnitySetUp]
         public IEnumerator SetUp()
@@ -26,11 +27,15 @@ namespace TarotUnity.Tests.PlayMode
             origin = new GameObject("Origin").transform;
             origin.SetParent(root.transform, false);
             origin.localPosition = new Vector3(-2f, 0f, 0f);
+            fanLight = new GameObject("FanLight").AddComponent<Light>();
+            fanLight.transform.SetParent(root.transform, false);
+            fanLight.enabled = false;
 #if UNITY_EDITOR
             var prefab = UnityEditor.AssetDatabase.LoadAssetAtPath<CardView>("Assets/Prefabs/Cards/PF_TarotCard.prefab");
             var so = new UnityEditor.SerializedObject(fan);
             so.FindProperty("fanCenter").objectReferenceValue = center;
             so.FindProperty("cardPrefab").objectReferenceValue = prefab;
+            so.FindProperty("fanLight").objectReferenceValue = fanLight;
             so.ApplyModifiedPropertiesWithoutUndo();
 #else
             Assert.Ignore("needs the editor to load the card prefab");
@@ -147,6 +152,15 @@ namespace TarotUnity.Tests.PlayMode
             yield return null;
             Assert.That(fan.FanCards.Count, Is.EqualTo(0));
             Assert.That(cards.All(c => c == null), "gathered cards are destroyed");
+        }
+
+        [UnityTest]
+        public IEnumerator ALightPoolBloomsOverTheFanAndFadesWithTheGather()
+        {
+            Assert.That(fanLight.enabled, Is.True, "the fan lies outside the table pool, so it brings its own light");
+            Assert.That(fanLight.intensity, Is.GreaterThan(1f));
+            yield return fan.Gather(origin);
+            Assert.That(fanLight.enabled, Is.False, "the table goes back to its usual light");
         }
 
         private static IEnumerator Deliver(List<(CardView, int)> log, CardView card, int index, float seconds = 0.1f)

@@ -287,6 +287,11 @@ namespace TarotUnity.Tests.EditMode
             var fanSo = new SerializedObject(fan);
             Assert.That(fanSo.FindProperty("cardPrefab").objectReferenceValue, Is.Not.Null);
             Assert.That(fanSo.FindProperty("fanCenter").objectReferenceValue, Is.Not.Null);
+            var light = (Light)fanSo.FindProperty("fanLight").objectReferenceValue;
+            Assert.That(light, Is.Not.Null, "the fan brings its own light pool");
+            Assert.That(light.type, Is.EqualTo(LightType.Spot));
+            Assert.That(light.enabled, Is.False, "off until the fan spreads");
+            Assert.That(Vector3.Dot(light.transform.forward, Vector3.down), Is.GreaterThan(0.8f), "it shines down on the fan");
         }
 
         [TestCase(1, 16f / 9f)]
@@ -343,6 +348,15 @@ namespace TarotUnity.Tests.EditMode
             {
                 Object.DestroyImmediate(go);
             }
+        }
+        [Test]
+        public void Phase72DocumentationExists()
+        {
+            const string path = "Docs/PHASE72_DRAW_RITUAL.md";
+            Assert.That(System.IO.File.Exists(path), Is.True);
+            var text = System.IO.File.ReadAllText(path);
+            Assert.That(text, Does.Contain("SpreadFanController"));
+            Assert.That(text, Does.Contain("DealPickedCard"));
         }
     }
 }

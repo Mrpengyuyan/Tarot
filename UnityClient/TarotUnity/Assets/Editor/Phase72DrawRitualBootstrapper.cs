@@ -29,6 +29,10 @@ namespace TarotUnity.Editor
         public static readonly Vector3 CelticPoseEuler = new Vector3(45f, 0f, 0f);
         public const float CelticPoseFov = 50f;
 
+        // The fan's own light pool, in the table pool's colour; the fan fades it in and out.
+        public static readonly Vector3 FanLightPosition = new Vector3(0f, 4.2f, -3.2f);
+        public static readonly Vector3 FanLightTarget = new Vector3(0f, 0.13f, -2.7f);
+
         private static readonly string[] PickHiddenNames =
         {
             "Phase11_ActionDock", "QuestionInput", "OneCardButton", "ThreeCardButton", "CelticCrossButton", "DrawButton",
@@ -138,6 +142,7 @@ namespace TarotUnity.Editor
             var fanSo = new SerializedObject(fan);
             fanSo.FindProperty("cardPrefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<CardView>(CardPrefabPath);
             fanSo.FindProperty("fanCenter").objectReferenceValue = center;
+            fanSo.FindProperty("fanLight").objectReferenceValue = FanLight(fanGo.transform);
             fanSo.ApplyModifiedPropertiesWithoutUndo();
 
             // The draw camera poses.
@@ -184,6 +189,29 @@ namespace TarotUnity.Editor
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
+        }
+
+        private static Light FanLight(Transform fan)
+        {
+            var t = Child(fan, "FanLight");
+            t.position = FanLightPosition;
+            t.rotation = Quaternion.LookRotation(FanLightTarget - FanLightPosition, Vector3.forward);
+            var light = t.GetComponent<Light>();
+            if (light == null)
+            {
+                light = t.gameObject.AddComponent<Light>();
+            }
+
+            light.type = LightType.Spot;
+            light.color = new Color(1f, 0.8f, 0.58f);
+            light.intensity = 0f;
+            light.range = 8f;
+            light.spotAngle = 70f;
+            light.innerSpotAngle = 36f;
+            light.shadows = LightShadows.None;
+            light.enabled = false;
+            EditorUtility.SetDirty(light);
+            return light;
         }
 
         private static void SetPose(SerializedProperty entry, int cardCount, Transform pose, float fov)
