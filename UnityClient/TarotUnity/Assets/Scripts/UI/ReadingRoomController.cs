@@ -79,6 +79,7 @@ namespace TarotUnity.UI
             if (deckController != null)
             {
                 deckController.CardDealt += HandleCardDealt;
+                deckController.CardHovering += HandleCardHovering;
             }
         }
 
@@ -113,6 +114,7 @@ namespace TarotUnity.UI
             if (deckController != null)
             {
                 deckController.CardDealt -= HandleCardDealt;
+                deckController.CardHovering -= HandleCardHovering;
             }
 
             UnsubscribePoller();
@@ -215,9 +217,31 @@ namespace TarotUnity.UI
                 attempt.Done = true;
             }
 
-            yield return new WaitForSeconds(rhythmDirector != null
-                ? rhythmDirector.ResolvePause(PresentationCueId.ShuffleStarted)
-                : 0.8f);
+            // Phase 72: wait for the shuffle itself, not a fixed breath.
+            while (deckShuffle != null && deckShuffle.IsPlaying)
+            {
+                yield return null;
+            }
+
+            // The fan opens at once - the online start keeps running behind the picks.
+            flowController?.BeginDeal();
+            deckController?.Clear();
+            var slots = flowController != null ? flowController.GetSelectedSpreadSlots() : new List<Transform>();
+            var deckOrigin = deckShuffle != null ? deckShuffle.transform : deckController != null ? deckController.transform : transform;
+            cameraChoreography?.FocusDraw(selectedCardCount);
+            SetPickUiHidden(true);
+            if (spreadFan != null && deckController != null)
+            {
+                yield return spreadFan.Spread(deckOrigin);
+                stepIndicator?.FocusSocket(0);
+                SetStatus(ReleaseUxCopy.FlowPickPrompt(slots.Count, slots.Count));
+                yield return spreadFan.PickCards(slots.Count, (card, index) => DeliverPick(card, index, slots));
+                stepIndicator?.FocusSocket(-1);
+                yield return spreadFan.Gather(deckOrigin);
+            }
+
+            SetPickUiHidden(false);
+            SetStatus(ReleaseUxCopy.FlowReadingTheCards);
 
             var onlineStartTimeoutSeconds = OnlineStartTimeoutSeconds();
             var giveUpAt = Time.realtimeSinceStartup + onlineStartTimeoutSeconds;
@@ -233,6 +257,13 @@ namespace TarotUnity.UI
             var session = attempt.Session;
             if (session == null && attempt.OfflineMessage != null && backendMode == BackendIntegrationMode.BackendOnly)
             {
+                if (deckController != null)
+                {
+                    yield return deckController.ReturnDealtCards();
+                }
+
+                flowController?.AbortDraw();
+                cameraChoreography?.PlayOpening();
                 var message = ReleaseUxCopy.BackendOnlyFailure(attempt.RawError);
                 SetStatus(message);
                 SetReleaseStatus(message);
@@ -262,14 +293,10 @@ namespace TarotUnity.UI
                 BeginInterpretation(session);
             }
 
-            flowController?.BeginDeal();
-            SetStatus(ReleaseUxCopy.FlowDealing);
-
             var draws = session.cardDraws ?? CreateLocalDraws();
-            var slots = flowController != null ? flowController.GetSelectedSpreadSlots() : new List<Transform>();
             if (deckController != null)
             {
-                yield return deckController.DealCards(draws, slots);
+                deckController.BindDealtCards(draws);
                 if (rhythmDirector != null && rhythmDirector.DealSettleSeconds > 0f)
                 {
                     yield return new WaitForSeconds(rhythmDirector.DealSettleSeconds);
@@ -282,6 +309,45 @@ namespace TarotUnity.UI
             cameraChoreography?.FocusSpread(selectedCardCount);
             SetStatus(ReleaseUxCopy.FlowFlipPrompt);
             drawInProgress = false;
+        }
+
+        /// <summary>Phase 72: one picked card flies to its slot; then the next slot lights and the prompt counts down.</summary>
+        private IEnumerator DeliverPick(CardView card, int index, IList<Transform> slots)
+        {
+            if (index >= slots.Count)
+            {
+                yield break;
+            }
+
+            yield return deckController.DealPickedCard(card, slots[index]);
+            var next = index + 1;
+            stepIndicator?.FocusSocket(next < slots.Count ? next : -1);
+            var remaining = slots.Count - next;
+            if (remaining > 0)
+            {
+                SetStatus(ReleaseUxCopy.FlowPickPrompt(remaining, slots.Count));
+            }
+        }
+
+        /// <summary>Phase 72: the dock sits over the fan's table, so it steps aside while the player picks.</summary>
+        private void SetPickUiHidden(bool hidden)
+        {
+            foreach (var group in pickHiddenUi)
+            {
+                if (group == null)
+                {
+                    continue;
+                }
+
+                group.alpha = hidden ? 0f : 1f;
+                group.interactable = !hidden;
+                group.blocksRaycasts = !hidden;
+            }
+        }
+
+        private void HandleCardHovering(CardView card)
+        {
+            stepIndicator?.FlashFocusedSocket();
         }
 
         private sealed class OnlineStartAttempt

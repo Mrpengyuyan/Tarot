@@ -45,6 +45,7 @@ namespace TarotUnity.Tests.PlayMode
             // Phase 50: the question field is a TMP_InputField now (same .text API).
             GetField<TMP_InputField>(room, "questionInput").text = SmokeQuestion;
             GetField<Button>(room, "drawButton").onClick.Invoke();
+            yield return DrawRitualTestDriver.PickAll();   // Phase 72: the player picks from the fan
 
             yield return WaitUntil(() => deck.ActiveCards.Count == 1, "Expected one dealt card.");
             yield return WaitUntil(

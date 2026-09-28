@@ -38,6 +38,7 @@ namespace TarotUnity.Tests.PlayMode
             Assert.That(reveal.gameObject.activeSelf, Is.False);
 
             draw.onClick.Invoke();
+            yield return DrawRitualTestDriver.PickAll();   // Phase 72: the player picks from the fan
             yield return WaitUntil(() => flow.State == ReadingFlowState.WaitingForFlip, "Expected the deal to finish.");
             Assert.That(draw.gameObject.activeSelf, Is.True, "洗牌抽取 stays (as glass) until the reading is ready");
 

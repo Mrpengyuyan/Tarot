@@ -9,6 +9,14 @@ namespace TarotUnity.UI
         public const string DefaultQuestion = "此刻我最需要留意什么？";
         public const string FlowShuffling = "正在洗牌……";
         public const string FlowDealing = "正在发牌……";
+        public const string FlowReadingTheCards = "正在感应牌面……";
+
+        /// <summary>Phase 72: the prompt while the player picks from the fan.</summary>
+        public static string FlowPickPrompt(int remaining, int total)
+        {
+            return remaining >= total ? $"凭直觉，选出 {total} 张牌。" : $"还要再选 {remaining} 张。";
+        }
+
         public const string FlowFlipPrompt = "点击每张牌，把它翻开。";
         public const string FlowAllRevealed = "牌已全部揭开。";
         public const string FlowResultReady = "可以查看结果了。";

@@ -66,8 +66,9 @@ namespace TarotUnity.Tests.PlayMode
 
             GetField<Button>(room, "oneCardButton").onClick.Invoke();
             GetField<Button>(room, "drawButton").onClick.Invoke();
+            yield return DrawRitualTestDriver.PickAll(120f);   // Phase 72: the player picks from the fan
             var deck = Object.FindFirstObjectByType<DeckController>();
-            yield return WaitUntil(() => deck.ActiveCards.Count == 1, 90f, "expected an offline card");
+            yield return WaitUntil(() => deck.ActiveCards.Count == 1 && Object.FindFirstObjectByType<ReadingFlowController>().State == ReadingFlowState.WaitingForFlip, 90f, "expected an offline card");
 
             var release = GetField<TMP_Text>(room, "releaseStatusText").text;
             Report($"drill1 source={ReadingSessionStore.Current.source} release={release}");
@@ -88,8 +89,9 @@ namespace TarotUnity.Tests.PlayMode
 
             GetField<Button>(room, "threeCardButton").onClick.Invoke();
             GetField<Button>(room, "drawButton").onClick.Invoke();
+            yield return DrawRitualTestDriver.PickAll(120f);   // Phase 72: the player picks from the fan
             var deck = Object.FindFirstObjectByType<DeckController>();
-            yield return WaitUntil(() => deck.ActiveCards.Count >= 1, 60f, "expected the first card");
+            yield return WaitUntil(() => deck.ActiveCards.Count >= 1 && Object.FindFirstObjectByType<ReadingFlowController>().State == ReadingFlowState.WaitingForFlip, 60f, "expected the first card");
 
             var session = ReadingSessionStore.Current;
             Assert.That(session.source, Is.EqualTo(ReadingSource.Online), "control: the drill needs an online reading");
@@ -142,9 +144,10 @@ namespace TarotUnity.Tests.PlayMode
                 GetField<TMP_InputField>(room, "questionInput").text = $"联调 {cardCount} 张：此刻我最需要留意什么？";
                 var clickedAt = Time.realtimeSinceStartup;
                 GetField<Button>(room, "drawButton").onClick.Invoke();
+                yield return DrawRitualTestDriver.PickAll(120f);   // Phase 72: the player picks from the fan
 
                 var deck = Object.FindFirstObjectByType<DeckController>();
-                yield return WaitUntil(() => deck.ActiveCards.Count >= 1, 60f, "expected the first card to be dealt");
+                yield return WaitUntil(() => deck.ActiveCards.Count >= 1 && Object.FindFirstObjectByType<ReadingFlowController>().State == ReadingFlowState.WaitingForFlip, 60f, "expected the first card to be dealt");
                 var firstCardSeconds = Time.realtimeSinceStartup - clickedAt;
 
                 var session = ReadingSessionStore.Current;

@@ -72,6 +72,7 @@ namespace TarotUnity.Tests.PlayMode
             GetField<Button>(room, "threeCardButton").onClick.Invoke();
             GetField<TMP_InputField>(room, "questionInput").text = string.Empty;
             GetField<Button>(room, "drawButton").onClick.Invoke();
+            yield return DrawRitualTestDriver.PickAll();   // Phase 72: the player picks from the fan
 
             yield return WaitUntil(
                 () => deck.ActiveCards.Count == 3 && flow.State == ReadingFlowState.WaitingForFlip,
@@ -112,7 +113,8 @@ namespace TarotUnity.Tests.PlayMode
 
             GetField<Button>(room, "oneCardButton").onClick.Invoke();
             GetField<Button>(room, "drawButton").onClick.Invoke();
-            yield return WaitUntil(() => deck.ActiveCards.Count == 1, 20f, "expected one dealt card");
+            yield return DrawRitualTestDriver.PickAll();   // Phase 72: the player picks from the fan
+            yield return WaitUntil(() => deck.ActiveCards.Count == 1 && Object.FindFirstObjectByType<ReadingFlowController>().State == ReadingFlowState.WaitingForFlip, 20f, "expected one dealt card");
 
             var session = ReadingSessionStore.Current;
             Assert.That(server.Count("POST", "/api/v1/records/"), Is.EqualTo(1), "control: the online start was attempted");
@@ -137,7 +139,8 @@ namespace TarotUnity.Tests.PlayMode
 
             GetField<Button>(room, "celticCrossButton").onClick.Invoke();
             GetField<Button>(room, "drawButton").onClick.Invoke();
-            yield return WaitUntil(() => deck.ActiveCards.Count == 10, 30f, "expected ten dealt cards");
+            yield return DrawRitualTestDriver.PickAll();   // Phase 72: the player picks from the fan
+            yield return WaitUntil(() => deck.ActiveCards.Count == 10 && Object.FindFirstObjectByType<ReadingFlowController>().State == ReadingFlowState.WaitingForFlip, 30f, "expected ten dealt cards");
 
             Assert.That(ReadingSessionStore.Current.source, Is.EqualTo(ReadingSource.Offline));
             Assert.That(ReadingSessionStore.Current.cardDraws, Has.Length.EqualTo(10));
@@ -160,7 +163,8 @@ namespace TarotUnity.Tests.PlayMode
 
             GetField<Button>(room, "threeCardButton").onClick.Invoke();
             GetField<Button>(room, "drawButton").onClick.Invoke();
-            yield return WaitUntil(() => deck.ActiveCards.Count == 3, 20f, "expected three dealt cards");
+            yield return DrawRitualTestDriver.PickAll();   // Phase 72: the player picks from the fan
+            yield return WaitUntil(() => deck.ActiveCards.Count == 3 && Object.FindFirstObjectByType<ReadingFlowController>().State == ReadingFlowState.WaitingForFlip, 20f, "expected three dealt cards");
 
             Assert.That(server.Count("GET", "/api/v1/records/702/cards"), Is.EqualTo(1), "control: the backend dealt five");
             Assert.That(ReadingSessionStore.Current.source, Is.EqualTo(ReadingSource.Offline));
@@ -182,7 +186,8 @@ namespace TarotUnity.Tests.PlayMode
 
             GetField<Button>(room, "oneCardButton").onClick.Invoke();
             GetField<Button>(room, "drawButton").onClick.Invoke();
-            yield return WaitUntil(() => deck.ActiveCards.Count == 1, 20f, "expected one dealt card");
+            yield return DrawRitualTestDriver.PickAll();   // Phase 72: the player picks from the fan
+            yield return WaitUntil(() => deck.ActiveCards.Count == 1 && Object.FindFirstObjectByType<ReadingFlowController>().State == ReadingFlowState.WaitingForFlip, 20f, "expected one dealt card");
 
             Assert.That(ReadingSessionStore.Current.source, Is.EqualTo(ReadingSource.Offline));
             Assert.That(GetField<TMP_Text>(room, "releaseStatusText").text, Is.EqualTo(ReleaseUxCopy.OfflineBecauseNetwork));
@@ -202,7 +207,8 @@ namespace TarotUnity.Tests.PlayMode
 
             GetField<Button>(room, "oneCardButton").onClick.Invoke();
             GetField<Button>(room, "drawButton").onClick.Invoke();
-            yield return WaitUntil(() => deck.ActiveCards.Count == 1, 20f, "expected one dealt card");
+            yield return DrawRitualTestDriver.PickAll();   // Phase 72: the player picks from the fan
+            yield return WaitUntil(() => deck.ActiveCards.Count == 1 && Object.FindFirstObjectByType<ReadingFlowController>().State == ReadingFlowState.WaitingForFlip, 20f, "expected one dealt card");
 
             Assert.That(ReadingSessionStore.Current.source, Is.EqualTo(ReadingSource.Offline));
             Assert.That(GetField<TMP_Text>(room, "releaseStatusText").text, Is.EqualTo(ReleaseUxCopy.OfflineBecauseNetwork));
@@ -220,6 +226,7 @@ namespace TarotUnity.Tests.PlayMode
 
             GetField<Button>(room, "oneCardButton").onClick.Invoke();
             GetField<Button>(room, "drawButton").onClick.Invoke();
+            yield return DrawRitualTestDriver.PickAll();   // Phase 72: the player picks from the fan
             yield return WaitUntil(
                 () => deck.ActiveCards.Count == 1 && flow.State == ReadingFlowState.WaitingForFlip,
                 20f,
@@ -229,6 +236,36 @@ namespace TarotUnity.Tests.PlayMode
             Assert.That(GetField<Button>(room, "threeCardButton").interactable, Is.False);
             Assert.That(GetField<Button>(room, "celticCrossButton").interactable, Is.False,
                 "凯尔特十字 must not re-open spread selection over dealt cards");
+        }
+
+        // Phase 72: the cards are picked before the online start is known; a BackendOnly failure
+        // sends them back to the deck and the player can draw again straight away.
+        [UnityTest]
+        public IEnumerator BackendOnlyFailureReturnsCardsAndAllowsARetry()
+        {
+            server.Script("POST", "/api/v1/records/", MockTarotBackend.Json(500, "{\"detail\":\"boom\"}"));
+
+            yield return LoadReadingRoom();
+            var room = Object.FindFirstObjectByType<ReadingRoomController>();
+            var flow = Object.FindFirstObjectByType<ReadingFlowController>();
+            var deck = Object.FindFirstObjectByType<DeckController>();
+            typeof(ReadingRoomController).GetField("backendMode", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(room, BackendIntegrationMode.BackendOnly);
+            yield return WaitForBackendSpreads(room);
+
+            GetField<Button>(room, "oneCardButton").onClick.Invoke();
+            GetField<Button>(room, "drawButton").onClick.Invoke();
+            yield return DrawRitualTestDriver.PickAll();
+            yield return WaitUntil(() => GetField<Button>(room, "drawButton").interactable, 30f, "the draw comes back");
+
+            Assert.That(server.Count("POST", "/api/v1/records/"), Is.GreaterThanOrEqualTo(1), "control: the online start was attempted");
+            Assert.That(deck.ActiveCards.Count, Is.EqualTo(0), "the picked card went back to the deck");
+            Assert.That(GetField<TMP_Text>(room, "flowStatusText").text, Does.StartWith("后端连接失败"));
+            Assert.That(flow.State, Is.EqualTo(ReadingFlowState.ReadyToDraw), "ready to try again");
+
+            GetField<Button>(room, "drawButton").onClick.Invoke();
+            yield return null;
+            Assert.That(flow.State, Is.EqualTo(ReadingFlowState.Shuffling), "a retry starts a new shuffle");
         }
 
         private static IEnumerator LoadReadingRoom()

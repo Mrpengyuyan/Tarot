@@ -89,6 +89,19 @@ namespace TarotUnity.Gameplay
             SetState(ReadingFlowState.Drawing);
         }
 
+        /// <summary>
+        /// Phase 72: a BackendOnly start that failed leaves the draw; the question and spread
+        /// still stand, so the player can press 洗牌抽取 again.
+        /// </summary>
+        public void AbortDraw()
+        {
+            if (State == ReadingFlowState.Shuffling || State == ReadingFlowState.Drawing)
+            {
+                flippedCards.Clear();
+                SetState(ReadingFlowState.ReadyToDraw);
+            }
+        }
+
         public void WaitForCardFlips()
         {
             if (State == ReadingFlowState.Drawing)

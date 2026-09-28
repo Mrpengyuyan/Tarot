@@ -31,6 +31,7 @@ namespace TarotUnity.Tests.PlayMode
             var flow = UnityEngine.Object.FindFirstObjectByType<ReadingFlowController>();
             var deck = UnityEngine.Object.FindFirstObjectByType<DeckController>();
             GameObject.Find("ReadingRoomCanvas").transform.Find("DrawButton").GetComponent<Button>().onClick.Invoke();
+            yield return DrawRitualTestDriver.PickAll();   // Phase 72: the player picks from the fan
             yield return WaitUntil(() => flow.State == ReadingFlowState.WaitingForFlip, "Expected the deal to finish.");
 
             var card = deck.ActiveCards.First();
