@@ -87,7 +87,7 @@ namespace TarotUnity.Tests.PlayMode
             Assert.That(halo.gameObject.activeSelf, Is.True, "a landed card waits to be flipped");
             Assert.That(card.GetComponent<CardHoverTiltController>().IsSuspended, Is.False, "the tilt comes back");
 
-            Assume.That(trail, Is.Not.Null, "the flight trail arrives with the Phase 72 bootstrap");
+            Assert.That(trail, Is.Not.Null, "the card prefab carries a flight trail");
             Assert.That(trailSeen, Is.True, "a light trail follows the flight");
             Assert.That(trail.emitting, Is.False);
         }

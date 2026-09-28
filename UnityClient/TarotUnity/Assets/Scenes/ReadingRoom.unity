@@ -727,6 +727,15 @@ MonoBehaviour:
   apiClient: {fileID: 1615814164}
   backendReadingService: {fileID: 1615814163}
   backendMode: 2
+  spreadFan: {fileID: 420223997}
+  stepIndicator: {fileID: 168761572}
+  pickHiddenUi:
+  - {fileID: 1944720306}
+  - {fileID: 346330851}
+  - {fileID: 422059091}
+  - {fileID: 1241351101}
+  - {fileID: 1953446529}
+  - {fileID: 1308119981}
 --- !u!114 &168761567
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -916,6 +925,8 @@ MonoBehaviour:
   glowPulseSpeed: 2.2
   glowScaleMin: 0.94
   glowScaleMax: 1.08
+  flashSeconds: 0.25
+  flashScale: 1.3
 --- !u!114 &168761573
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12061,6 +12072,7 @@ GameObject:
   - component: {fileID: 346330848}
   - component: {fileID: 346330846}
   - component: {fileID: 346330850}
+  - component: {fileID: 346330851}
   m_Layer: 0
   m_Name: QuestionInput
   m_TagString: Untagged
@@ -12240,6 +12252,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c5220ad95567240d59b242b2a1714674, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TarotUnity.Runtime::TarotUnity.UI.TarotUiPreserveColor
+--- !u!225 &346330851
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 346330845}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &358355901
 GameObject:
   m_ObjectHideFlags: 0
@@ -12715,6 +12739,69 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &420223996
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 420223998}
+  - component: {fileID: 420223997}
+  m_Layer: 0
+  m_Name: MP_SpreadFan
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &420223997
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 420223996}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2360c630761e2491cb9357c33b594b7b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TarotUnity.Runtime::TarotUnity.Gameplay.SpreadFanController
+  cardPrefab: {fileID: 7924547083698562009, guid: b46c6e3835bb14b619aa75cadd94ac56, type: 3}
+  fanCenter: {fileID: 1250364102}
+  cardCount: 22
+  radius: 3.4
+  arcDegrees: 70
+  layerStep: 0.004
+  spreadStagger: 0.035
+  spreadCardSeconds: 0.28
+  spreadArcHeight: 0.12
+  settleSquash: 0.05
+  settleSeconds: 0.12
+  hoverLift: 0.05
+  hoverSlide: 0.3
+  waveRadius: 2.5
+  hoverResponseSeconds: 0.08
+  hoverReleaseDelay: 0.12
+  fanHoverHaloScale: 1
+  gatherSeconds: 0.6
+--- !u!4 &420223998
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 420223996}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1250364102}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &421705754
 GameObject:
   m_ObjectHideFlags: 0
@@ -12818,6 +12905,7 @@ GameObject:
   - component: {fileID: 422059087}
   - component: {fileID: 422059086}
   - component: {fileID: 422059090}
+  - component: {fileID: 422059091}
   m_Layer: 0
   m_Name: OneCardButton
   m_TagString: Untagged
@@ -12945,6 +13033,18 @@ MonoBehaviour:
   cardStock: {fileID: 21300000, guid: ef415264ef4ac470182eace0ac95adc6, type: 3}
   driveLabelColor: 1
   emphasized: 1
+--- !u!225 &422059091
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 422059085}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &449133892
 GameObject:
   m_ObjectHideFlags: 0
@@ -13090,12 +13190,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: TarotUnity.Runtime::TarotUnity.Presentation.DeckShuffleChoreographer
   anticipationDip: 0.015
   anticipationSeconds: 0.12
+  cutSpread: 0.42
+  cutSeconds: 0.33
+  recutSeconds: 0.2
+  cutYawDegrees: 6
   riffleLift: 0.055
   riffleCardSeconds: 0.16
   riffleStagger: 0.025
   riffleYawDegrees: 4
+  riffleBendDegrees: 10
+  secondRiffleSpeedup: 1.25
   contactSquash: 0.06
   settleSeconds: 0.15
+  squareHoldSeconds: 0.18
   contactCameraKick: 0.03
 --- !u!1 &472250669
 GameObject:
@@ -32652,6 +32759,7 @@ GameObject:
   - component: {fileID: 1241351097}
   - component: {fileID: 1241351096}
   - component: {fileID: 1241351100}
+  - component: {fileID: 1241351101}
   m_Layer: 0
   m_Name: ThreeCardButton
   m_TagString: Untagged
@@ -32779,6 +32887,49 @@ MonoBehaviour:
   cardStock: {fileID: 21300000, guid: ef415264ef4ac470182eace0ac95adc6, type: 3}
   driveLabelColor: 1
   emphasized: 0
+--- !u!225 &1241351101
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1241351095}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!1 &1250364101
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1250364102}
+  m_Layer: 0
+  m_Name: FanCenter
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1250364102
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1250364101}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.13, z: -2.45}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 420223998}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1251589886
 GameObject:
   m_ObjectHideFlags: 0
@@ -38406,6 +38557,7 @@ GameObject:
   - component: {fileID: 1308119977}
   - component: {fileID: 1308119976}
   - component: {fileID: 1308119980}
+  - component: {fileID: 1308119981}
   m_Layer: 0
   m_Name: DrawButton
   m_TagString: Untagged
@@ -38535,6 +38687,18 @@ MonoBehaviour:
   cardStock: {fileID: 21300000, guid: ef415264ef4ac470182eace0ac95adc6, type: 3}
   driveLabelColor: 1
   emphasized: 1
+--- !u!225 &1308119981
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1308119975}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &1308504162
 GameObject:
   m_ObjectHideFlags: 0
@@ -39476,6 +39640,37 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1416645850}
   m_CullTransparentMesh: 1
+--- !u!1 &1416867672
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1416867673}
+  m_Layer: 0
+  m_Name: DrawPoseCeltic
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1416867673
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1416867672}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.38268346, y: -0, z: -0, w: 0.9238795}
+  m_LocalPosition: {x: 0.7, y: 6.8, z: -7}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1499204521}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1421754918
 GameObject:
   m_ObjectHideFlags: 0
@@ -39767,6 +39962,16 @@ MonoBehaviour:
   - cardCount: 10
     pose: {fileID: 1986904977}
     fov: 50
+  drawPoses:
+  - cardCount: 1
+    pose: {fileID: 2119320436}
+    fov: 45
+  - cardCount: 3
+    pose: {fileID: 2119320436}
+    fov: 45
+  - cardCount: 10
+    pose: {fileID: 1416867673}
+    fov: 50
   transitionDuration: 0.9
   transitionCurve:
     serializedVersion: 2
@@ -39826,6 +40031,8 @@ Transform:
   - {fileID: 219229177}
   - {fileID: 364858375}
   - {fileID: 502602223}
+  - {fileID: 2119320436}
+  - {fileID: 1416867673}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1501109372
@@ -48041,6 +48248,7 @@ GameObject:
   - component: {fileID: 1944720303}
   - component: {fileID: 1944720305}
   - component: {fileID: 1944720304}
+  - component: {fileID: 1944720306}
   m_Layer: 0
   m_Name: Phase11_ActionDock
   m_TagString: Untagged
@@ -48107,6 +48315,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1944720302}
   m_CullTransparentMesh: 1
+--- !u!225 &1944720306
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1944720302}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &1948669869
 GameObject:
   m_ObjectHideFlags: 0
@@ -48347,6 +48567,7 @@ GameObject:
   - component: {fileID: 1953446525}
   - component: {fileID: 1953446524}
   - component: {fileID: 1953446528}
+  - component: {fileID: 1953446529}
   m_Layer: 0
   m_Name: CelticCrossButton
   m_TagString: Untagged
@@ -48474,6 +48695,18 @@ MonoBehaviour:
   cardStock: {fileID: 21300000, guid: ef415264ef4ac470182eace0ac95adc6, type: 3}
   driveLabelColor: 1
   emphasized: 0
+--- !u!225 &1953446529
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1953446523}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &1967319946
 GameObject:
   m_ObjectHideFlags: 0
@@ -49335,6 +49568,37 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2108078109}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &2119320435
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2119320436}
+  m_Layer: 0
+  m_Name: DrawPoseNear
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2119320436
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2119320435}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.4226183, y: -0, z: -0, w: 0.9063078}
+  m_LocalPosition: {x: 0, y: 5, z: -6.3}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1499204521}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2119746008
 GameObject:
   m_ObjectHideFlags: 0
@@ -49466,3 +49730,4 @@ SceneRoots:
   - {fileID: 1835340309}
   - {fileID: 750757745}
   - {fileID: 1986904977}
+  - {fileID: 420223998}

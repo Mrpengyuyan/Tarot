@@ -4,6 +4,7 @@ using TarotUnity.Gameplay;
 using TarotUnity.Presentation;
 using TarotUnity.UI;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 
 namespace TarotUnity.Tests.EditMode
@@ -252,6 +253,91 @@ namespace TarotUnity.Tests.EditMode
 
                 indicator.FocusSocket(-1);
                 Assert.That(glows.All(g => g.activeSelf), Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+            }
+        }
+        private const string ScenePath = "Assets/Scenes/ReadingRoom.unity";
+
+        [Test]
+        public void TheCardCarriesAQuietFlightTrail()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CardPrefabPath);
+            var trail = prefab.GetComponentInChildren<TrailRenderer>(true);
+            Assert.That(trail, Is.Not.Null);
+            Assert.That(trail.emitting, Is.False, "only the flight emits");
+            Assert.That(trail.sharedMaterial.name, Is.EqualTo("MP_WarmGlow"));
+            Assert.That(trail.time, Is.InRange(0.2f, 0.4f));
+            Assert.That(trail.widthCurve.Evaluate(1f), Is.LessThan(trail.widthCurve.Evaluate(0f)), "it tapers");
+        }
+
+        [Test]
+        public void TheRoomHasAFanWiredToTheController()
+        {
+            EditorSceneManager.OpenScene(ScenePath);
+            var fan = Object.FindFirstObjectByType<SpreadFanController>();
+            Assert.That(fan, Is.Not.Null);
+            var room = Object.FindFirstObjectByType<ReadingRoomController>();
+            var so = new SerializedObject(room);
+            Assert.That(so.FindProperty("spreadFan").objectReferenceValue, Is.SameAs(fan));
+            Assert.That(so.FindProperty("stepIndicator").objectReferenceValue, Is.Not.Null);
+            Assert.That(so.FindProperty("pickHiddenUi").arraySize, Is.EqualTo(6));
+            var fanSo = new SerializedObject(fan);
+            Assert.That(fanSo.FindProperty("cardPrefab").objectReferenceValue, Is.Not.Null);
+            Assert.That(fanSo.FindProperty("fanCenter").objectReferenceValue, Is.Not.Null);
+        }
+
+        [TestCase(1, 16f / 9f)]
+        [TestCase(3, 16f / 9f)]
+        [TestCase(10, 16f / 9f)]
+        [TestCase(1, 4f / 3f)]
+        [TestCase(3, 4f / 3f)]
+        [TestCase(10, 4f / 3f)]
+        public void TheDrawCameraHoldsTheFanAndEverySlot(int cardCount, float aspect)
+        {
+            EditorSceneManager.OpenScene(ScenePath);
+            var choreography = Object.FindFirstObjectByType<CameraChoreographyController>();
+            Assert.That(choreography.TryGetDrawPose(cardCount, out var pose, out var fov), Is.True);
+            var fan = Object.FindFirstObjectByType<SpreadFanController>();
+            var slots = Object.FindFirstObjectByType<SpreadLayoutController>().GetSlots(cardCount);
+            Assert.That(slots.Count, Is.EqualTo(cardCount), "control: the spread's slots");
+
+            var go = new GameObject("Phase72_FrustumProbe");
+            try
+            {
+                var cam = go.AddComponent<Camera>();
+                cam.transform.SetPositionAndRotation(pose.position, pose.rotation);
+                cam.fieldOfView = fov;
+                cam.aspect = aspect;
+
+                var half = new Vector3(0.37f, 0f, 0.525f);
+                void Check(Vector3 center, Quaternion rotation, string what)
+                {
+                    foreach (var sx in new[] { -1f, 1f })
+                    {
+                        foreach (var sz in new[] { -1f, 1f })
+                        {
+                            var corner = center + rotation * new Vector3(half.x * sx, 0f, half.z * sz);
+                            var v = cam.WorldToViewportPoint(corner);
+                            Assert.That(v.z, Is.GreaterThan(0f), $"{what} in front");
+                            Assert.That(v.x, Is.InRange(0.02f, 0.98f), $"{what} x at {cardCount} cards, aspect {aspect:0.00}");
+                            Assert.That(v.y, Is.InRange(0.02f, 0.98f), $"{what} y at {cardCount} cards, aspect {aspect:0.00}");
+                        }
+                    }
+                }
+
+                for (var i = 0; i < fan.CardCount; i++)
+                {
+                    fan.GetFanPose(i, out var p, out var r);
+                    Check(p, r, $"fan card {i}");
+                }
+
+                foreach (var slot in slots)
+                {
+                    Check(slot.position, slot.rotation, slot.name);
+                }
             }
             finally
             {

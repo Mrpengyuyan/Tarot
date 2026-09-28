@@ -38,6 +38,12 @@ namespace TarotUnity.UI
         [SerializeField] private BackendReadingService backendReadingService;
         [SerializeField] private BackendIntegrationMode backendMode = BackendIntegrationMode.LocalSimulation;
 
+        [Header("Phase72 Draw ritual")]
+        [SerializeField] private SpreadFanController spreadFan;
+        [SerializeField] private RitualStepIndicator stepIndicator;
+        [Tooltip("Hidden while the player picks from the fan - the dock sits over the fan's table.")]
+        [SerializeField] private CanvasGroup[] pickHiddenUi = System.Array.Empty<CanvasGroup>();
+
         private int selectedSpreadId = 1;
         private int selectedCardCount = 1;
         private string selectedSpreadName = "单牌抽取";
