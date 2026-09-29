@@ -173,7 +173,12 @@ namespace TarotUnity.Gameplay
             var hidden = (origin != null ? origin.position : transform.position) + Vector3.down * 2f;
             for (var i = 0; i < CardCount; i++)
             {
-                prepared.Add(Instantiate(cardPrefab, hidden, Quaternion.identity, transform));
+                // Phase 74: face down and switched off until the spread - a fresh prefab shows its
+                // face and its back at once, and nothing of it should show through the shuffle.
+                var card = Instantiate(cardPrefab, hidden, Quaternion.identity, transform);
+                card.SetFaceUp(false);
+                card.gameObject.SetActive(false);
+                prepared.Add(card);
                 if ((i + 1) % Mathf.Max(1, prepareBatch) == 0)
                 {
                     yield return null;
@@ -229,6 +234,7 @@ namespace TarotUnity.Gameplay
                 var card = i < prepared.Count && prepared[i] != null ? prepared[i] : Instantiate(cardPrefab, transform);
                 card.name = $"FanCard_{i:00}";
                 card.transform.SetPositionAndRotation(origin.position, origin.rotation);
+                card.gameObject.SetActive(true);
                 card.SetFaceUp(false);
                 card.HoverHaloScale = fanHoverHaloScale;
                 var tilt = card.GetComponent<CardHoverTiltController>();

@@ -106,22 +106,28 @@ namespace TarotUnity.Presentation
 
         public void FocusSpread(int cardCount)
         {
+            FocusSpread(cardCount, transitionDuration);
+        }
+
+        /// <summary>Phase 74: the same move over <paramref name="seconds"/> - the last pick's flight carries the camera down with it.</summary>
+        public void FocusSpread(int cardCount, float seconds)
+        {
             foreach (var entry in spreadPoses)
             {
                 if (entry != null && entry.cardCount == cardCount && entry.pose != null)
                 {
-                    MoveTo(entry.pose, entry.fov);
+                    MoveTo(entry.pose, entry.fov, seconds);
                     return;
                 }
             }
 
             if (cardCount == 1)
             {
-                MoveTo(oneCardPose, oneCardFov);
+                MoveTo(oneCardPose, oneCardFov, seconds);
             }
             else
             {
-                MoveTo(threeCardPose, threeCardFov);
+                MoveTo(threeCardPose, threeCardFov, seconds);
             }
         }
 
@@ -201,6 +207,11 @@ namespace TarotUnity.Presentation
 
         private void MoveTo(Transform pose, float fov)
         {
+            MoveTo(pose, fov, transitionDuration);
+        }
+
+        private void MoveTo(Transform pose, float fov, float seconds)
+        {
             if (pose == null)
             {
                 return;
@@ -229,10 +240,10 @@ namespace TarotUnity.Presentation
                 StopCoroutine(activeMove);
             }
 
-            activeMove = StartCoroutine(MoveRoutine(pose, fov));
+            activeMove = StartCoroutine(MoveRoutine(pose, fov, seconds));
         }
 
-        private IEnumerator MoveRoutine(Transform pose, float fov)
+        private IEnumerator MoveRoutine(Transform pose, float fov, float seconds)
         {
             IsMoving = true;
             if (!baseInitialized)
@@ -243,7 +254,7 @@ namespace TarotUnity.Presentation
             var startPosition = basePosition;
             var startRotation = baseRotation;
             var startFov = baseFov;
-            var duration = Mathf.Max(0.01f, transitionDuration);
+            var duration = Mathf.Max(0.01f, seconds);
 
             for (var elapsed = 0f; elapsed < duration; elapsed += Time.deltaTime)
             {

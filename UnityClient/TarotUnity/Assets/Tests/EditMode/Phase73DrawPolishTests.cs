@@ -130,11 +130,12 @@ namespace TarotUnity.Tests.EditMode
         }
 
         [Test]
-        public void TheShuffleTakesAboutTwoSeconds()
+        public void TheShuffleTakesAtLeastTwoSeconds()
         {
+            // Phase 74 stretched it again, to about three (Phase74DrawFeelTests).
             EditorSceneManager.OpenScene(ScenePath);
             var shuffle = Object.FindFirstObjectByType<DeckShuffleChoreographer>();
-            Assert.That(shuffle.PlannedSeconds, Is.InRange(1.9f, 2.1f));
+            Assert.That(shuffle.PlannedSeconds, Is.GreaterThanOrEqualTo(1.9f));
         }
 
         [Test]

@@ -42,6 +42,19 @@ namespace TarotUnity.Gameplay
         [SerializeField] private float pickGlowBoost = 1.6f;
         [SerializeField] private float returnSeconds = 0.45f;
 
+        // Phase 74: the fan lies 3-6 m from the slots; one fixed 0.35 s deal hop made the long
+        // flights read as a jump cut. A picked card now takes longer and arcs higher the farther
+        // it goes, and says how long, so the camera can travel with it.
+        [Header("Phase74 Pick Flight")]
+        [Tooltip("Flight seconds before distance is added.")]
+        [SerializeField] private float pickFlightBaseSeconds = 0.4f;
+        [Tooltip("Extra flight seconds per metre between the hover and the slot.")]
+        [SerializeField] private float pickFlightSecondsPerMetre = 0.09f;
+        [Tooltip("The longest a pick's flight may take.")]
+        [SerializeField] private float pickFlightMaxSeconds = 1f;
+        [Tooltip("Extra arc height per metre of flight, on top of the deal arc.")]
+        [SerializeField] private float pickArcPerMetre = 0.06f;
+
         private readonly List<CardView> activeCards = new();
         private CardArtworkCatalog defaultArtworkCatalog;
         private CameraChoreographyController cameraChoreography;
@@ -66,6 +79,15 @@ namespace TarotUnity.Gameplay
 
         /// <summary>Phase 72: raised when a picked card starts its hover beat, so its slot can answer.</summary>
         public event Action<CardView> CardHovering;
+
+        /// <summary>Phase 74: raised as a picked card leaves its hover for the slot, with the flight's seconds.</summary>
+        public event Action<CardView, float> CardFlightStarted;
+
+        /// <summary>Phase 74: how long a picked card takes to fly <paramref name="metres"/>.</summary>
+        public float PickFlightSeconds(float metres)
+        {
+            return Mathf.Min(pickFlightMaxSeconds, pickFlightBaseSeconds + pickFlightSecondsPerMetre * Mathf.Max(0f, metres));
+        }
 
         public IReadOnlyList<CardView> ActiveCards => activeCards;
 
@@ -173,7 +195,10 @@ namespace TarotUnity.Gameplay
                 trail.emitting = true;
             }
 
-            yield return MoveCardToSlot(t, slot);
+            var metres = Vector3.Distance(pulled, slot.position);
+            var flightSeconds = PickFlightSeconds(metres);
+            CardFlightStarted?.Invoke(card, flightSeconds);
+            yield return MoveCardToSlot(t, slot, flightSeconds, dealArcHeight + pickArcPerMetre * metres);
             if (trail != null)
             {
                 trail.emitting = false;
@@ -243,6 +268,11 @@ namespace TarotUnity.Gameplay
 
         private IEnumerator MoveCardToSlot(Transform cardTransform, Transform slot)
         {
+            return MoveCardToSlot(cardTransform, slot, dealDuration, dealArcHeight);
+        }
+
+        private IEnumerator MoveCardToSlot(Transform cardTransform, Transform slot, float seconds, float arcHeight)
+        {
             if (cardTransform == null || slot == null)
             {
                 yield break;
@@ -252,10 +282,10 @@ namespace TarotUnity.Gameplay
             var startRotation = cardTransform.rotation;
             var elapsed = 0f;
 
-            while (elapsed < dealDuration)
+            while (elapsed < seconds)
             {
-                var t = dealCurve.Evaluate(elapsed / Mathf.Max(0.01f, dealDuration));
-                var arc = Vector3.up * (Mathf.Sin(t * Mathf.PI) * dealArcHeight);
+                var t = dealCurve.Evaluate(elapsed / Mathf.Max(0.01f, seconds));
+                var arc = Vector3.up * (Mathf.Sin(t * Mathf.PI) * arcHeight);
                 cardTransform.position = Vector3.Lerp(startPosition, slot.position, t) + arc;
                 var tilt = Quaternion.Euler(0f, Mathf.Sin(t * Mathf.PI) * dealTiltDegrees, -Mathf.Sin(t * Mathf.PI) * dealTiltDegrees * 0.45f);
                 cardTransform.rotation = Quaternion.Slerp(startRotation, slot.rotation, t) * tilt;

@@ -33,7 +33,39 @@ namespace TarotUnity.Gameplay
         [Tooltip("Camera shake fired exactly on the reveal so the punch lands with the face, not before it.")]
         [SerializeField] private float revealCameraShake = 0.05f;
 
+        // Phase 74: the flip used to spin the card flat on the table (a yaw to 90 degrees and
+        // back) and swap its face mid-spin - it never turned over. Now it is lifted off its slot
+        // and tipped toward the player, turned over its long edge (the face swaps edge-on), held
+        // while a light sweeps across the face, and set down with a small squash.
+        // The beats reuse the older knobs: anticipationPause is the lift, flipDuration the turn,
+        // faceRevealPause the hold, settleSeconds the set-down.
+        [Header("Phase74 Lift, Turn and Sheen")]
+        [Tooltip("How high the card is lifted before it turns - clear of the cloth when it stands on its edge.")]
+        [SerializeField] private float raiseHeight = 0.42f;
+        [Tooltip("How far the card's far end tips up toward the player while it is lifted.")]
+        [SerializeField] private float raiseTiltDegrees = 10f;
+        [Tooltip("Push the camera in toward the card as it flips (Phase 21). Off: the lifted card now comes toward the camera itself, and both together carried it out of the one-card close-up.")]
+        [SerializeField] private bool pushInOnFlip;
+        [Tooltip("How far the card drifts sideways while it turns, as if rolling over its edge.")]
+        [SerializeField] private float turnSway = 0.08f;
+        [Tooltip("Squash as the card touches down (0.05 = -5% height), then recovers.")]
+        [SerializeField] private float setDownSquash = 0.05f;
+        [Tooltip("Seconds the set-down squash takes to recover.")]
+        [SerializeField] private float setDownSquashSeconds = 0.1f;
+        [Tooltip("The light that sweeps across the face after the turn (a quad over the face, off until then).")]
+        [SerializeField] private Renderer revealSheen;
+        [Tooltip("Seconds the sweep takes to cross the face.")]
+        [SerializeField] private float sheenSeconds = 0.55f;
+        [Tooltip("The sweep's peak strength (its material adds light).")]
+        [SerializeField] private float sheenIntensity = 0.85f;
+        [Tooltip("Where the sweep starts and ends, as a texture offset - far enough that the band is off the face.")]
+        [SerializeField] private float sheenTravel = 0.9f;
+
+        private static readonly int BaseMapSt = Shader.PropertyToID("_BaseMap_ST");
+        private static readonly int BaseColor = Shader.PropertyToID("_BaseColor");
+
         private bool isFlipping;
+        private MaterialPropertyBlock sheenBlock;
         private CameraChoreographyController cameraChoreography;
         private RitualFeedbackController ritualFeedback;
 
@@ -89,44 +121,61 @@ namespace TarotUnity.Gameplay
             card.GetComponent<CardHoverTiltController>()?.Suspend();
 
             var t = card.transform;
-            var startPosition = t.localPosition;
-            var startScale = t.localScale;
+            var restPosition = t.localPosition;
+            var restRotation = t.localRotation;
+            var restScale = t.localScale;
+            var side = restRotation * Vector3.right;
 
-            var restRotation = Quaternion.identity;
-            var woundRotation = Quaternion.Euler(0f, -windBackAngle, 0f);
-            var edgeRotation = Quaternion.Euler(0f, 90f, 0f);
-            var overshootRotation = Quaternion.Euler(0f, -settleOvershootAngle, 0f);
+            void Pose(float lift, float sway, float tilt, float roll)
+            {
+                t.localPosition = restPosition + Vector3.up * lift + side * sway;
+                t.localRotation = restRotation
+                    * Quaternion.AngleAxis(-tilt, Vector3.right)
+                    * Quaternion.AngleAxis(roll, Vector3.forward);
+            }
 
-            if (cameraPunchEnabled)
+            if (cameraPunchEnabled && pushInOnFlip)
             {
                 CameraChoreography?.PunchToward(card.transform);
             }
 
-            // 1) Anticipation - wind back and dip, easing out so the card settles
-            // cocked and ready instead of just sitting still for the beat.
-            for (var elapsed = 0f; elapsed < anticipationPause; elapsed += Time.deltaTime)
+            // 1) Lift - a small press straight down (the Phase 52 wind-up dip; the card stays flat
+            // so no edge digs into the cloth), then the card rises off its slot, tipping its far
+            // end up toward the player and cocking back against the turn as it goes.
+            var raise = Mathf.Max(0.01f, anticipationPause);
+            var press = raise * 0.3f;
+            for (var elapsed = 0f; elapsed < press; elapsed += Time.deltaTime)
             {
-                var k = EaseOut(elapsed / Mathf.Max(0.01f, anticipationPause));
-                t.localRotation = Quaternion.Slerp(restRotation, woundRotation, k);
-                t.localPosition = startPosition + Vector3.down * (windBackDip * k);
+                Pose(-windBackDip * EaseOut(elapsed / press), 0f, 0f, 0f);
                 yield return null;
             }
 
-            var halfDuration = Mathf.Max(0.01f, flipDuration * 0.5f);
+            Pose(-windBackDip, 0f, 0f, 0f);
+            yield return null;
 
-            // 2) Whip up to edge-on - accelerate so the reveal happens at full speed,
-            // not at the old ease-out crawl. The lift rises to meet the reveal.
-            for (var elapsed = 0f; elapsed < halfDuration; elapsed += Time.deltaTime)
+            var rise = raise - press;
+            for (var elapsed = 0f; elapsed < rise; elapsed += Time.deltaTime)
             {
-                var k = elapsed / halfDuration;
-                t.localRotation = Quaternion.Slerp(woundRotation, edgeRotation, EaseIn(k));
-                var lift = Mathf.Sin(k * Mathf.PI * 0.5f) * liftDuringFlip;
-                t.localPosition = startPosition + Vector3.up * (lift - windBackDip * (1f - k));
+                var k = SmoothStep(elapsed / rise);
+                Pose(Mathf.Lerp(-windBackDip, raiseHeight, k), 0f, raiseTiltDegrees * k, -windBackAngle * k);
                 yield return null;
             }
 
-            // 3) The reveal at the edge-on seam: swap the face, sound it, and land
-            // the camera shake on this instant so the impact reads with the face.
+            // 2) Turn over the long edge. It accelerates up to edge-on, where the face swaps -
+            // at full speed, with the cue and the camera kick - then swings down past flat into
+            // a small overshoot while the reveal's scale pop fades. The light starts its sweep
+            // as the face comes round.
+            var turn = Mathf.Max(0.02f, flipDuration);
+            var half = turn * 0.5f;
+            for (var elapsed = 0f; elapsed < half; elapsed += Time.deltaTime)
+            {
+                var k = elapsed / half;
+                var whole = elapsed / turn;
+                Pose(raiseHeight + liftDuringFlip * Mathf.Sin(Mathf.PI * whole), -turnSway * Mathf.Sin(Mathf.PI * whole),
+                    raiseTiltDegrees, Mathf.Lerp(-windBackAngle, 90f, EaseIn(k)));
+                yield return null;
+            }
+
             card.SetFaceUp(faceUp);
             RitualFeedback?.PlayCue(flipCue, card.transform);
             if (cameraPunchEnabled)
@@ -134,39 +183,118 @@ namespace TarotUnity.Gameplay
                 CameraChoreography?.Kick(revealCameraShake);
             }
 
-            if (faceRevealPause > 0f)
+            var sweeping = false;
+            for (var elapsed = 0f; elapsed < half; elapsed += Time.deltaTime)
             {
-                yield return new WaitForSeconds(faceRevealPause);
-            }
+                var k = elapsed / half;
+                var whole = 0.5f + k * 0.5f;
+                Pose(raiseHeight + liftDuringFlip * Mathf.Sin(Mathf.PI * whole), -turnSway * Mathf.Sin(Mathf.PI * whole),
+                    raiseTiltDegrees, Mathf.Lerp(-90f, settleOvershootAngle, EaseOut(k)));
+                t.localScale = restScale * (1f + revealScalePunch * (1f - k));
+                if (!sweeping && k >= 0.5f && faceUp)
+                {
+                    sweeping = true;
+                    StartCoroutine(SweepSheen(card));
+                }
 
-            // 4) Swing into view with a scale pop, decelerating past flat into a
-            // small overshoot so the card arrives with weight.
-            for (var elapsed = 0f; elapsed < halfDuration; elapsed += Time.deltaTime)
-            {
-                var k = EaseOut(elapsed / halfDuration);
-                t.localRotation = Quaternion.Slerp(edgeRotation, overshootRotation, k);
-                var lift = Mathf.Sin((1f - k) * Mathf.PI * 0.5f) * liftDuringFlip;
-                t.localPosition = startPosition + Vector3.up * lift;
-                t.localScale = startScale * (1f + revealScalePunch * (1f - k));
                 yield return null;
             }
 
-            // 5) Damped settle - the overshoot rotation and any residual scale ease
-            // back to an exact rest so the card never drifts from where it started.
-            for (var elapsed = 0f; elapsed < settleSeconds; elapsed += Time.deltaTime)
+            t.localScale = restScale;
+            if (!sweeping && faceUp)
             {
-                var k = EaseOut(elapsed / Mathf.Max(0.01f, settleSeconds));
-                t.localRotation = Quaternion.Slerp(overshootRotation, restRotation, k);
-                t.localPosition = startPosition;
-                t.localScale = startScale;
+                StartCoroutine(SweepSheen(card));
+            }
+
+            // 3) Hold - the face is shown to the player, lifted and tipped toward them, while
+            // the overshoot settles and the light crosses it.
+            var hold = Mathf.Max(0.01f, faceRevealPause);
+            for (var elapsed = 0f; elapsed < hold; elapsed += Time.deltaTime)
+            {
+                Pose(raiseHeight, 0f, raiseTiltDegrees, Mathf.Lerp(settleOvershootAngle, 0f, EaseOut(elapsed / hold)));
                 yield return null;
             }
 
+            // 4) Set down - back onto the slot, accelerating to the touch, then a small squash
+            // that recovers to the exact rest the card was dealt to.
+            var down = Mathf.Max(0.01f, settleSeconds);
+            for (var elapsed = 0f; elapsed < down; elapsed += Time.deltaTime)
+            {
+                var k = elapsed / down;
+                Pose(raiseHeight * (1f - EaseIn(k)), 0f, raiseTiltDegrees * (1f - SmoothStep(k)), 0f);
+                yield return null;
+            }
+
+            t.localPosition = restPosition;
             t.localRotation = restRotation;
-            t.localPosition = startPosition;
-            t.localScale = startScale;
+            if (cameraPunchEnabled)
+            {
+                CameraChoreography?.Kick(revealCameraShake * 0.4f);
+            }
+
+            var squashed = new Vector3(
+                restScale.x * (1f + setDownSquash * 0.6f),
+                restScale.y * (1f - setDownSquash),
+                restScale.z);
+            for (var elapsed = 0f; elapsed < setDownSquashSeconds; elapsed += Time.deltaTime)
+            {
+                t.localScale = Vector3.Lerp(squashed, restScale, EaseOut(elapsed / setDownSquashSeconds));
+                yield return null;
+            }
+
+            t.localPosition = restPosition;
+            t.localRotation = restRotation;
+            t.localScale = restScale;
             card.SetHighlighted(false);
             isFlipping = false;
+        }
+
+        /// <summary>
+        /// Phase 74: a soft band of light crosses the face once, fading in and out. The sheen is a
+        /// child of the artwork; it is sized to the sprite now on it, so it lies exactly over the
+        /// picture and never over the card body around it.
+        /// </summary>
+        private IEnumerator SweepSheen(CardView card)
+        {
+            if (revealSheen == null)
+            {
+                yield break;
+            }
+
+            var art = card != null ? card.FaceArtwork : null;
+            if (art == null || art.sprite == null)
+            {
+                yield break;   // no picture on the face: nothing to catch the light
+            }
+
+            if (revealSheen.transform.parent == art.transform)
+            {
+                var bounds = art.sprite.bounds;
+                var sheenTransform = revealSheen.transform;
+                sheenTransform.localPosition = new Vector3(bounds.center.x, bounds.center.y, sheenTransform.localPosition.z);
+                sheenTransform.localScale = new Vector3(bounds.size.x, bounds.size.y, 1f);
+            }
+
+            sheenBlock ??= new MaterialPropertyBlock();
+            revealSheen.enabled = true;
+            var seconds = Mathf.Max(0.01f, sheenSeconds);
+            for (var elapsed = 0f; elapsed < seconds; elapsed += Time.deltaTime)
+            {
+                var k = elapsed / seconds;
+                revealSheen.GetPropertyBlock(sheenBlock);
+                sheenBlock.SetVector(BaseMapSt, new Vector4(1f, 1f, Mathf.Lerp(sheenTravel, -sheenTravel, SmoothStep(k)), 0f));
+                sheenBlock.SetColor(BaseColor, new Color(1f, 1f, 1f, sheenIntensity * Mathf.Sin(Mathf.PI * k)));
+                revealSheen.SetPropertyBlock(sheenBlock);
+                yield return null;
+            }
+
+            revealSheen.enabled = false;
+        }
+
+        private static float SmoothStep(float t)
+        {
+            t = Mathf.Clamp01(t);
+            return t * t * (3f - 2f * t);
         }
 
         private static float EaseIn(float t) => t * t;

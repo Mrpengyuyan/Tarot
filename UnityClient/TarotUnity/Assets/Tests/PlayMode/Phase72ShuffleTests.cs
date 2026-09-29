@@ -7,11 +7,11 @@ using UnityEngine.TestTools;
 
 namespace TarotUnity.Tests.PlayMode
 {
-    /// <summary>Phase 72: the shuffle is three beats - cut, two riffles, square - about 1.8 s.</summary>
+    /// <summary>Phase 72: the shuffle is three beats - cut, two riffles, square. Phase 74 stretched it to about 3 s.</summary>
     public sealed class Phase72ShuffleTests
     {
         [UnityTest]
-        public IEnumerator ShuffleCutsTheDeckIntoTwoPilesAndLastsAboutOnePointEightSeconds()
+        public IEnumerator ShuffleCutsTheDeckIntoTwoPilesAndLastsAboutThreeSeconds()
         {
             SceneManager.LoadScene("ReadingRoom");
             yield return null;
@@ -39,10 +39,10 @@ namespace TarotUnity.Tests.PlayMode
             }
 
             var seconds = Time.time - started;
-            Assert.That(seconds, Is.InRange(1.5f, 2.2f), "three beats, not a single shiver");
+            Assert.That(seconds, Is.InRange(2.7f, 3.4f), "three beats, not a single shiver");
             Assert.That(minX, Is.LessThan(-0.15f), "one pile goes left");
             Assert.That(maxX, Is.GreaterThan(0.15f), "the other goes right");
-            Assert.That(choreographer.PlannedSeconds, Is.InRange(1.5f, 2.2f));
+            Assert.That(choreographer.PlannedSeconds, Is.InRange(2.7f, 3.4f));
         }
     }
 }

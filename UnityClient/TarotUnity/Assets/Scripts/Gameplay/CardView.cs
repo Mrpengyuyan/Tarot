@@ -48,6 +48,9 @@ namespace TarotUnity.Gameplay
             }
         }
 
+        /// <summary>Phase 74: the face artwork, so the flip's light sweep can lie exactly over it.</summary>
+        public SpriteRenderer FaceArtwork => faceArtworkRenderer;
+
         public CardDrawData DrawData { get; private set; }
         public bool IsFaceUp { get; private set; }
 

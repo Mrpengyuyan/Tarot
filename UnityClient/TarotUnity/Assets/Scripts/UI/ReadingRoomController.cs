@@ -49,6 +49,14 @@ namespace TarotUnity.UI
         private string selectedSpreadName = "单牌抽取";
         private bool drawInProgress;
         private System.Exception drawFault;
+
+        // Phase 74: the last pick's flight carries the camera to the spread and gathers the fan.
+        [Tooltip("Seconds the camera arrives after the last picked card lands.")]
+        [SerializeField] private float pickCameraLagSeconds = 0.35f;
+        private bool followLastPick;
+        private bool cameraFollowedPick;
+        private Coroutine gatherRoutine;
+        private Transform pickDeckOrigin;
         private SpreadSummary[] backendSpreads;
         private InterpretationPoller subscribedPoller;
 
@@ -100,6 +108,7 @@ namespace TarotUnity.UI
             {
                 deckController.CardDealt += HandleCardDealt;
                 deckController.CardHovering += HandleCardHovering;
+                deckController.CardFlightStarted += HandleCardFlightStarted;
             }
         }
 
@@ -157,6 +166,7 @@ namespace TarotUnity.UI
             {
                 deckController.CardDealt -= HandleCardDealt;
                 deckController.CardHovering -= HandleCardHovering;
+                deckController.CardFlightStarted -= HandleCardFlightStarted;
             }
 
             UnsubscribePoller();
@@ -249,6 +259,8 @@ namespace TarotUnity.UI
         {
             drawInProgress = true;
             drawFault = null;
+            followLastPick = false;
+            cameraFollowedPick = false;
             SetResultButtonVisible(false);
             SetDrawControls(false);
 
@@ -426,7 +438,8 @@ namespace TarotUnity.UI
                 flowController.WaitForCardFlips();
             }
 
-            if (cameraChoreography != null)
+            // Phase 74: when the last pick already carried the camera here, don't restart the move.
+            if (cameraChoreography != null && !cameraFollowedPick)
             {
                 cameraChoreography.FocusSpread(selectedCardCount);
             }
@@ -444,12 +457,22 @@ namespace TarotUnity.UI
         /// <summary>Phase 72: spread the fan, let the player pick, gather the rest.</summary>
         private IEnumerator PickFromFan(IList<Transform> slots, Transform deckOrigin)
         {
+            pickDeckOrigin = deckOrigin;
             yield return spreadFan.Spread(deckOrigin);
             FocusSocket(0);
             SetStatus(ReleaseUxCopy.FlowPickPrompt(slots.Count, slots.Count));
             yield return spreadFan.PickCards(slots.Count, (card, index) => DeliverPick(card, index, slots));
             FocusSocket(-1);
-            yield return spreadFan.Gather(deckOrigin);
+            if (gatherRoutine == null && spreadFan.FanCards.Count > 0)
+            {
+                // No flight carried the gather (a delivery without one): gather now.
+                yield return spreadFan.Gather(deckOrigin);
+            }
+
+            while (gatherRoutine != null)
+            {
+                yield return null;
+            }
         }
 
         /// <summary>
@@ -496,6 +519,12 @@ namespace TarotUnity.UI
         /// <summary>Phase 72 review: after a fault mid-pick, clear the table and give the player the draw back.</summary>
         private IEnumerator RecoverFromDrawFault(Transform deckOrigin)
         {
+            if (gatherRoutine != null)
+            {
+                StopCoroutine(gatherRoutine);
+                gatherRoutine = null;
+            }
+
             if (spreadFan != null)
             {
                 spreadFan.Abandon();
@@ -531,7 +560,9 @@ namespace TarotUnity.UI
                 yield break;
             }
 
+            followLastPick = index == slots.Count - 1;
             yield return deckController.DealPickedCard(card, slots[index]);
+            followLastPick = false;
             var next = index + 1;
             FocusSocket(next < slots.Count ? next : -1);
             var remaining = slots.Count - next;
@@ -571,6 +602,37 @@ namespace TarotUnity.UI
             {
                 stepIndicator.FlashFocusedSocket();
             }
+        }
+
+        /// <summary>
+        /// Phase 74: the last pick's flight takes the camera down to the spread with it (arriving
+        /// just after the card lands), and the rest of the fan gathers home while it flies, so the
+        /// pick flows into the flip without a wait and a cut.
+        /// </summary>
+        private void HandleCardFlightStarted(CardView card, float seconds)
+        {
+            if (!followLastPick)
+            {
+                return;
+            }
+
+            followLastPick = false;
+            if (cameraChoreography != null)
+            {
+                cameraChoreography.FocusSpread(selectedCardCount, seconds + pickCameraLagSeconds);
+                cameraFollowedPick = true;
+            }
+
+            if (spreadFan != null && gatherRoutine == null)
+            {
+                gatherRoutine = StartCoroutine(GatherBehindLastPick());
+            }
+        }
+
+        private IEnumerator GatherBehindLastPick()
+        {
+            yield return Guarded(spreadFan.Gather(pickDeckOrigin));
+            gatherRoutine = null;
         }
 
         private sealed class OnlineStartAttempt
