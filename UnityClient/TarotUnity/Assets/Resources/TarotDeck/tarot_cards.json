@@ -1,0 +1,1740 @@
+{
+    "cards": [
+        {
+            "id": 1,
+            "nameEn": "The Fool",
+            "nameZh": "愚者",
+            "cardNumber": 0,
+            "type": "major",
+            "suit": "",
+            "uprightMeaning": "新的开始、冒险精神、天真无邪、信任、自发性",
+            "reversedMeaning": "鲁莽、轻率、缺乏方向、愚蠢的冒险",
+            "keywordsUpright": [
+                "新开始",
+                "冒险",
+                "信任",
+                "自发性",
+                "天真"
+            ],
+            "keywordsReversed": [
+                "鲁莽",
+                "轻率",
+                "缺乏方向",
+                "愚蠢"
+            ]
+        },
+        {
+            "id": 2,
+            "nameEn": "The Magician",
+            "nameZh": "魔术师",
+            "cardNumber": 1,
+            "type": "major",
+            "suit": "",
+            "uprightMeaning": "意志力、创造力、技能、集中注意力、行动力",
+            "reversedMeaning": "缺乏意志力、欺骗、滥用力量、缺乏技能",
+            "keywordsUpright": [
+                "意志力",
+                "创造力",
+                "技能",
+                "行动力",
+                "集中"
+            ],
+            "keywordsReversed": [
+                "欺骗",
+                "滥用力量",
+                "缺乏技能",
+                "意志力不足"
+            ]
+        },
+        {
+            "id": 3,
+            "nameEn": "The High Priestess",
+            "nameZh": "女祭司",
+            "cardNumber": 2,
+            "type": "major",
+            "suit": "",
+            "uprightMeaning": "直觉、潜意识、神秘知识、内在智慧、静默",
+            "reversedMeaning": "缺乏直觉、表面知识、压抑的感觉",
+            "keywordsUpright": [
+                "直觉",
+                "潜意识",
+                "内在智慧",
+                "神秘",
+                "静默"
+            ],
+            "keywordsReversed": [
+                "缺乏直觉",
+                "表面知识",
+                "压抑感觉"
+            ]
+        },
+        {
+            "id": 4,
+            "nameEn": "The Empress",
+            "nameZh": "皇后",
+            "cardNumber": 3,
+            "type": "major",
+            "suit": "",
+            "uprightMeaning": "母性、丰饶、创造力、美丽、自然",
+            "reversedMeaning": "依赖、窒息的关怀、缺乏创造力、不孕",
+            "keywordsUpright": [
+                "母性",
+                "丰饶",
+                "创造力",
+                "美丽",
+                "自然"
+            ],
+            "keywordsReversed": [
+                "依赖",
+                "窒息关怀",
+                "缺乏创造力",
+                "不孕"
+            ]
+        },
+        {
+            "id": 5,
+            "nameEn": "The Emperor",
+            "nameZh": "皇帝",
+            "cardNumber": 4,
+            "type": "major",
+            "suit": "",
+            "uprightMeaning": "权威、稳定、控制、领导力、父性",
+            "reversedMeaning": "专制、缺乏纪律、不负责任、权力滥用",
+            "keywordsUpright": [
+                "权威",
+                "稳定",
+                "控制",
+                "领导力",
+                "父性"
+            ],
+            "keywordsReversed": [
+                "专制",
+                "缺乏纪律",
+                "不负责任",
+                "权力滥用"
+            ]
+        },
+        {
+            "id": 6,
+            "nameEn": "The Hierophant",
+            "nameZh": "教皇",
+            "cardNumber": 5,
+            "type": "major",
+            "suit": "",
+            "uprightMeaning": "传统、宗教、道德、教育、集体价值观",
+            "reversedMeaning": "反叛、非传统、自由思考、质疑权威",
+            "keywordsUpright": [
+                "传统",
+                "宗教",
+                "道德",
+                "教育",
+                "集体价值"
+            ],
+            "keywordsReversed": [
+                "反叛",
+                "非传统",
+                "自由思考",
+                "质疑权威"
+            ]
+        },
+        {
+            "id": 7,
+            "nameEn": "The Lovers",
+            "nameZh": "恋人",
+            "cardNumber": 6,
+            "type": "major",
+            "suit": "",
+            "uprightMeaning": "爱情、关系、选择、价值观、灵魂伴侣",
+            "reversedMeaning": "关系失衡、价值观冲突、错误选择、分离",
+            "keywordsUpright": [
+                "爱情",
+                "关系",
+                "选择",
+                "和谐",
+                "灵魂伴侣"
+            ],
+            "keywordsReversed": [
+                "失衡",
+                "冲突",
+                "分离",
+                "错误选择"
+            ]
+        },
+        {
+            "id": 8,
+            "nameEn": "The Chariot",
+            "nameZh": "战车",
+            "cardNumber": 7,
+            "type": "major",
+            "suit": "",
+            "uprightMeaning": "胜利、意志力、决心、控制、成功",
+            "reversedMeaning": "缺乏方向、失去控制、挫败、内在冲突",
+            "keywordsUpright": [
+                "胜利",
+                "意志力",
+                "决心",
+                "控制",
+                "成功"
+            ],
+            "keywordsReversed": [
+                "失控",
+                "挫败",
+                "缺乏方向",
+                "内在冲突"
+            ]
+        },
+        {
+            "id": 9,
+            "nameEn": "Strength",
+            "nameZh": "力量",
+            "cardNumber": 8,
+            "type": "major",
+            "suit": "",
+            "uprightMeaning": "内在力量、勇气、坚持、自制力、温柔的力量",
+            "reversedMeaning": "软弱、缺乏自信、失去控制、恐惧",
+            "keywordsUpright": [
+                "内在力量",
+                "勇气",
+                "坚持",
+                "自制力",
+                "温柔"
+            ],
+            "keywordsReversed": [
+                "软弱",
+                "恐惧",
+                "失控",
+                "缺乏自信"
+            ]
+        },
+        {
+            "id": 10,
+            "nameEn": "The Hermit",
+            "nameZh": "隐者",
+            "cardNumber": 9,
+            "type": "major",
+            "suit": "",
+            "uprightMeaning": "内省、寻找真理、独处、智慧、指导",
+            "reversedMeaning": "孤立、拒绝帮助、迷失方向、过度内向",
+            "keywordsUpright": [
+                "内省",
+                "智慧",
+                "寻找",
+                "指导",
+                "独处"
+            ],
+            "keywordsReversed": [
+                "孤立",
+                "迷失",
+                "拒绝",
+                "过度内向"
+            ]
+        },
+        {
+            "id": 11,
+            "nameEn": "Wheel of Fortune",
+            "nameZh": "命运之轮",
+            "cardNumber": 10,
+            "type": "major",
+            "suit": "",
+            "uprightMeaning": "命运、机遇、变化、循环、好运",
+            "reversedMeaning": "厄运、失控、阻滞、恶性循环",
+            "keywordsUpright": [
+                "命运",
+                "机遇",
+                "变化",
+                "好运",
+                "循环"
+            ],
+            "keywordsReversed": [
+                "厄运",
+                "阻滞",
+                "失控",
+                "恶性循环"
+            ]
+        },
+        {
+            "id": 12,
+            "nameEn": "Justice",
+            "nameZh": "正义",
+            "cardNumber": 11,
+            "type": "major",
+            "suit": "",
+            "uprightMeaning": "公正、平衡、真理、法律、因果报应",
+            "reversedMeaning": "不公、偏见、逃避责任、法律问题",
+            "keywordsUpright": [
+                "公正",
+                "平衡",
+                "真理",
+                "法律",
+                "因果"
+            ],
+            "keywordsReversed": [
+                "不公",
+                "偏见",
+                "失衡",
+                "逃避责任"
+            ]
+        },
+        {
+            "id": 13,
+            "nameEn": "The Hanged Man",
+            "nameZh": "倒吊人",
+            "cardNumber": 12,
+            "type": "major",
+            "suit": "",
+            "uprightMeaning": "牺牲、等待、换位思考、暂停、新视角",
+            "reversedMeaning": "徒劳牺牲、不愿等待、固执己见、拖延",
+            "keywordsUpright": [
+                "牺牲",
+                "等待",
+                "新视角",
+                "暂停",
+                "反思"
+            ],
+            "keywordsReversed": [
+                "徒劳",
+                "拖延",
+                "固执",
+                "不愿改变"
+            ]
+        },
+        {
+            "id": 14,
+            "nameEn": "Death",
+            "nameZh": "死神",
+            "cardNumber": 13,
+            "type": "major",
+            "suit": "",
+            "uprightMeaning": "转变、结束、重生、蜕变、新开始",
+            "reversedMeaning": "抗拒改变、停滞、腐朽、恐惧转变",
+            "keywordsUpright": [
+                "转变",
+                "结束",
+                "重生",
+                "蜕变",
+                "新开始"
+            ],
+            "keywordsReversed": [
+                "抗拒",
+                "停滞",
+                "恐惧",
+                "腐朽"
+            ]
+        },
+        {
+            "id": 15,
+            "nameEn": "Temperance",
+            "nameZh": "节制",
+            "cardNumber": 14,
+            "type": "major",
+            "suit": "",
+            "uprightMeaning": "平衡、节制、和谐、耐心、中庸之道",
+            "reversedMeaning": "过度、失衡、缺乏耐心、极端、冲突",
+            "keywordsUpright": [
+                "平衡",
+                "节制",
+                "和谐",
+                "耐心",
+                "中庸"
+            ],
+            "keywordsReversed": [
+                "过度",
+                "失衡",
+                "极端",
+                "冲突"
+            ]
+        },
+        {
+            "id": 16,
+            "nameEn": "The Devil",
+            "nameZh": "恶魔",
+            "cardNumber": 15,
+            "type": "major",
+            "suit": "",
+            "uprightMeaning": "束缚、诱惑、物质主义、依赖、黑暗面",
+            "reversedMeaning": "解脱、觉醒、摆脱束缚、战胜诱惑",
+            "keywordsUpright": [
+                "束缚",
+                "诱惑",
+                "依赖",
+                "物质主义",
+                "黑暗"
+            ],
+            "keywordsReversed": [
+                "解脱",
+                "觉醒",
+                "自由",
+                "战胜诱惑"
+            ]
+        },
+        {
+            "id": 17,
+            "nameEn": "The Tower",
+            "nameZh": "塔",
+            "cardNumber": 16,
+            "type": "major",
+            "suit": "",
+            "uprightMeaning": "突然变化、破坏、启示、解放、觉醒",
+            "reversedMeaning": "抗拒改变、内在动荡、逃避现实、缓慢变化",
+            "keywordsUpright": [
+                "突变",
+                "破坏",
+                "启示",
+                "解放",
+                "觉醒"
+            ],
+            "keywordsReversed": [
+                "抗拒",
+                "逃避",
+                "内在动荡",
+                "缓慢变化"
+            ]
+        },
+        {
+            "id": 18,
+            "nameEn": "The Star",
+            "nameZh": "星星",
+            "cardNumber": 17,
+            "type": "major",
+            "suit": "",
+            "uprightMeaning": "希望、灵感、治愈、指引、精神启发",
+            "reversedMeaning": "失望、缺乏信念、精神枯竭、失去方向",
+            "keywordsUpright": [
+                "希望",
+                "灵感",
+                "治愈",
+                "指引",
+                "精神启发"
+            ],
+            "keywordsReversed": [
+                "失望",
+                "枯竭",
+                "失去信念",
+                "缺乏方向"
+            ]
+        },
+        {
+            "id": 19,
+            "nameEn": "The Moon",
+            "nameZh": "月亮",
+            "cardNumber": 18,
+            "type": "major",
+            "suit": "",
+            "uprightMeaning": "幻觉、恐惧、潜意识、直觉、隐藏的真相",
+            "reversedMeaning": "真相显露、恐惧消散、觉醒、理性思考",
+            "keywordsUpright": [
+                "幻觉",
+                "恐惧",
+                "潜意识",
+                "直觉",
+                "隐藏"
+            ],
+            "keywordsReversed": [
+                "真相",
+                "觉醒",
+                "理性",
+                "恐惧消散"
+            ]
+        },
+        {
+            "id": 20,
+            "nameEn": "The Sun",
+            "nameZh": "太阳",
+            "cardNumber": 19,
+            "type": "major",
+            "suit": "",
+            "uprightMeaning": "成功、喜悦、活力、乐观、成就",
+            "reversedMeaning": "过度乐观、延迟成功、缺乏活力、自负",
+            "keywordsUpright": [
+                "成功",
+                "喜悦",
+                "活力",
+                "乐观",
+                "成就"
+            ],
+            "keywordsReversed": [
+                "过度乐观",
+                "延迟",
+                "自负",
+                "缺乏活力"
+            ]
+        },
+        {
+            "id": 21,
+            "nameEn": "Judgement",
+            "nameZh": "审判",
+            "cardNumber": 20,
+            "type": "major",
+            "suit": "",
+            "uprightMeaning": "重生、觉醒、宽恕、内在召唤、最终判断",
+            "reversedMeaning": "自我怀疑、逃避审判、缺乏宽恕、内在批判",
+            "keywordsUpright": [
+                "重生",
+                "觉醒",
+                "宽恕",
+                "召唤",
+                "最终判断"
+            ],
+            "keywordsReversed": [
+                "自我怀疑",
+                "逃避",
+                "缺乏宽恕",
+                "内在批判"
+            ]
+        },
+        {
+            "id": 22,
+            "nameEn": "The World",
+            "nameZh": "世界",
+            "cardNumber": 21,
+            "type": "major",
+            "suit": "",
+            "uprightMeaning": "完成、成就、圆满、统一、世界性成功",
+            "reversedMeaning": "未完成、缺乏成就感、拖延、寻求外在认可",
+            "keywordsUpright": [
+                "完成",
+                "成就",
+                "圆满",
+                "统一",
+                "成功"
+            ],
+            "keywordsReversed": [
+                "未完成",
+                "缺乏成就",
+                "拖延",
+                "寻求认可"
+            ]
+        },
+        {
+            "id": 23,
+            "nameEn": "Ace of Wands",
+            "nameZh": "权杖A",
+            "cardNumber": 1,
+            "type": "minor",
+            "suit": "wands",
+            "uprightMeaning": "创新、创造力、新项目、启发、潜能",
+            "reversedMeaning": "缺乏方向、创造力受阻、延迟的项目",
+            "keywordsUpright": [
+                "创新",
+                "创造力",
+                "新项目",
+                "启发",
+                "潜能"
+            ],
+            "keywordsReversed": [
+                "缺乏方向",
+                "创造力受阻",
+                "延迟项目"
+            ]
+        },
+        {
+            "id": 24,
+            "nameEn": "Two of Wands",
+            "nameZh": "权杖二",
+            "cardNumber": 2,
+            "type": "minor",
+            "suit": "wands",
+            "uprightMeaning": "规划、决策、个人力量、控制",
+            "reversedMeaning": "缺乏规划、恐惧、缺乏控制",
+            "keywordsUpright": [
+                "规划",
+                "决策",
+                "个人力量",
+                "控制"
+            ],
+            "keywordsReversed": [
+                "缺乏规划",
+                "恐惧",
+                "缺乏控制"
+            ]
+        },
+        {
+            "id": 25,
+            "nameEn": "Three of Wands",
+            "nameZh": "权杖三",
+            "cardNumber": 3,
+            "type": "minor",
+            "suit": "wands",
+            "uprightMeaning": "扩展、远见、海外机会、长期规划",
+            "reversedMeaning": "缺乏远见、计划受阻、国内专注",
+            "keywordsUpright": [
+                "扩展",
+                "远见",
+                "机会",
+                "规划"
+            ],
+            "keywordsReversed": [
+                "局限",
+                "短视",
+                "受阻",
+                "失败"
+            ]
+        },
+        {
+            "id": 26,
+            "nameEn": "Four of Wands",
+            "nameZh": "权杖四",
+            "cardNumber": 4,
+            "type": "minor",
+            "suit": "wands",
+            "uprightMeaning": "庆祝、和谐、里程碑、稳定基础",
+            "reversedMeaning": "不稳定、冲突、庆祝推迟、基础薄弱",
+            "keywordsUpright": [
+                "庆祝",
+                "和谐",
+                "里程碑",
+                "稳定"
+            ],
+            "keywordsReversed": [
+                "不稳定",
+                "冲突",
+                "推迟",
+                "薄弱"
+            ]
+        },
+        {
+            "id": 27,
+            "nameEn": "Five of Wands",
+            "nameZh": "权杖五",
+            "cardNumber": 5,
+            "type": "minor",
+            "suit": "wands",
+            "uprightMeaning": "竞争、冲突、挑战、意见分歧",
+            "reversedMeaning": "避免冲突、合作、解决分歧、和解",
+            "keywordsUpright": [
+                "竞争",
+                "冲突",
+                "挑战",
+                "分歧"
+            ],
+            "keywordsReversed": [
+                "合作",
+                "和解",
+                "避免冲突",
+                "团结"
+            ]
+        },
+        {
+            "id": 28,
+            "nameEn": "Six of Wands",
+            "nameZh": "权杖六",
+            "cardNumber": 6,
+            "type": "minor",
+            "suit": "wands",
+            "uprightMeaning": "胜利、成功、公众认可、领导力",
+            "reversedMeaning": "失败、缺乏认可、自我怀疑、私人成功",
+            "keywordsUpright": [
+                "胜利",
+                "成功",
+                "认可",
+                "领导"
+            ],
+            "keywordsReversed": [
+                "失败",
+                "缺乏认可",
+                "怀疑",
+                "私密"
+            ]
+        },
+        {
+            "id": 29,
+            "nameEn": "Seven of Wands",
+            "nameZh": "权杖七",
+            "cardNumber": 7,
+            "type": "minor",
+            "suit": "wands",
+            "uprightMeaning": "防御、坚持立场、竞争压力、勇气",
+            "reversedMeaning": "放弃、屈服、缺乏信心、逃避挑战",
+            "keywordsUpright": [
+                "防御",
+                "坚持",
+                "勇气",
+                "竞争"
+            ],
+            "keywordsReversed": [
+                "放弃",
+                "屈服",
+                "逃避",
+                "缺乏信心"
+            ]
+        },
+        {
+            "id": 30,
+            "nameEn": "Eight of Wands",
+            "nameZh": "权杖八",
+            "cardNumber": 8,
+            "type": "minor",
+            "suit": "wands",
+            "uprightMeaning": "快速行动、急速发展、消息、旅行",
+            "reversedMeaning": "延迟、缺乏进展、内急、等待",
+            "keywordsUpright": [
+                "快速",
+                "急速",
+                "行动",
+                "消息"
+            ],
+            "keywordsReversed": [
+                "延迟",
+                "缓慢",
+                "等待",
+                "停滞"
+            ]
+        },
+        {
+            "id": 31,
+            "nameEn": "Nine of Wands",
+            "nameZh": "权杖九",
+            "cardNumber": 9,
+            "type": "minor",
+            "suit": "wands",
+            "uprightMeaning": "坚韧、毅力、最后防线、警觉",
+            "reversedMeaning": "疲惫、放弃、偏执、缺乏耐力",
+            "keywordsUpright": [
+                "坚韧",
+                "毅力",
+                "警觉",
+                "防线"
+            ],
+            "keywordsReversed": [
+                "疲惫",
+                "放弃",
+                "偏执",
+                "缺乏耐力"
+            ]
+        },
+        {
+            "id": 32,
+            "nameEn": "Ten of Wands",
+            "nameZh": "权杖十",
+            "cardNumber": 10,
+            "type": "minor",
+            "suit": "wands",
+            "uprightMeaning": "负担、压力、责任、努力工作",
+            "reversedMeaning": "释放负担、委派责任、减轻压力",
+            "keywordsUpright": [
+                "负担",
+                "压力",
+                "责任",
+                "努力"
+            ],
+            "keywordsReversed": [
+                "释放",
+                "委派",
+                "减压",
+                "放下"
+            ]
+        },
+        {
+            "id": 33,
+            "nameEn": "Page of Wands",
+            "nameZh": "权杖侍者",
+            "cardNumber": 11,
+            "type": "minor",
+            "suit": "wands",
+            "uprightMeaning": "热情、探索、学习、消息传递",
+            "reversedMeaning": "缺乏方向、冲动、坏消息、学习困难",
+            "keywordsUpright": [
+                "热情",
+                "探索",
+                "学习",
+                "消息"
+            ],
+            "keywordsReversed": [
+                "冲动",
+                "困惑",
+                "困难",
+                "坏消息"
+            ]
+        },
+        {
+            "id": 34,
+            "nameEn": "Knight of Wands",
+            "nameZh": "权杖骑士",
+            "cardNumber": 12,
+            "type": "minor",
+            "suit": "wands",
+            "uprightMeaning": "行动、冒险、冲动、勇敢",
+            "reversedMeaning": "鲁莽、不耐烦、缺乏计划、冲动行为",
+            "keywordsUpright": [
+                "行动",
+                "冒险",
+                "勇敢",
+                "冲劲"
+            ],
+            "keywordsReversed": [
+                "鲁莽",
+                "不耐烦",
+                "冲动",
+                "缺乏计划"
+            ]
+        },
+        {
+            "id": 35,
+            "nameEn": "Queen of Wands",
+            "nameZh": "权杖王后",
+            "cardNumber": 13,
+            "type": "minor",
+            "suit": "wands",
+            "uprightMeaning": "自信、热情、独立、领导力",
+            "reversedMeaning": "嫉妒、自私、缺乏自信、控制欲",
+            "keywordsUpright": [
+                "自信",
+                "热情",
+                "独立",
+                "领导"
+            ],
+            "keywordsReversed": [
+                "嫉妒",
+                "自私",
+                "控制",
+                "缺乏自信"
+            ]
+        },
+        {
+            "id": 36,
+            "nameEn": "King of Wands",
+            "nameZh": "权杖国王",
+            "cardNumber": 14,
+            "type": "minor",
+            "suit": "wands",
+            "uprightMeaning": "领导力、远见、企业家精神、天然领袖",
+            "reversedMeaning": "专制、冲动、缺乏远见、滥用权力",
+            "keywordsUpright": [
+                "领导力",
+                "远见",
+                "企业家",
+                "天然领袖"
+            ],
+            "keywordsReversed": [
+                "专制",
+                "冲动",
+                "滥用权力",
+                "缺乏远见"
+            ]
+        },
+        {
+            "id": 37,
+            "nameEn": "Ace of Cups",
+            "nameZh": "圣杯A",
+            "cardNumber": 1,
+            "type": "minor",
+            "suit": "cups",
+            "uprightMeaning": "新的爱情、情感觉醒、直觉、精神成长",
+            "reversedMeaning": "情感封闭、爱情受阻、直觉迟钝、精神空虚",
+            "keywordsUpright": [
+                "新爱情",
+                "情感觉醒",
+                "直觉",
+                "精神成长"
+            ],
+            "keywordsReversed": [
+                "情感封闭",
+                "爱情受阻",
+                "精神空虚",
+                "直觉迟钝"
+            ]
+        },
+        {
+            "id": 38,
+            "nameEn": "Two of Cups",
+            "nameZh": "圣杯二",
+            "cardNumber": 2,
+            "type": "minor",
+            "suit": "cups",
+            "uprightMeaning": "伙伴关系、爱情、和谐、相互吸引",
+            "reversedMeaning": "关系失衡、分离、缺乏和谐、误解",
+            "keywordsUpright": [
+                "伙伴关系",
+                "爱情",
+                "和谐",
+                "相互吸引"
+            ],
+            "keywordsReversed": [
+                "失衡",
+                "分离",
+                "误解",
+                "缺乏和谐"
+            ]
+        },
+        {
+            "id": 39,
+            "nameEn": "Three of Cups",
+            "nameZh": "圣杯三",
+            "cardNumber": 3,
+            "type": "minor",
+            "suit": "cups",
+            "uprightMeaning": "友谊、庆祝、社交、团体和谐",
+            "reversedMeaning": "社交问题、友谊冲突、过度放纵、孤立",
+            "keywordsUpright": [
+                "友谊",
+                "庆祝",
+                "社交",
+                "团体和谐"
+            ],
+            "keywordsReversed": [
+                "冲突",
+                "孤立",
+                "过度放纵",
+                "社交问题"
+            ]
+        },
+        {
+            "id": 40,
+            "nameEn": "Four of Cups",
+            "nameZh": "圣杯四",
+            "cardNumber": 4,
+            "type": "minor",
+            "suit": "cups",
+            "uprightMeaning": "冷漠、无聊、错失机会、内省",
+            "reversedMeaning": "重新参与、抓住机会、觉醒、动机恢复",
+            "keywordsUpright": [
+                "冷漠",
+                "无聊",
+                "错失机会",
+                "内省"
+            ],
+            "keywordsReversed": [
+                "重新参与",
+                "抓住机会",
+                "觉醒",
+                "恢复动机"
+            ]
+        },
+        {
+            "id": 41,
+            "nameEn": "Five of Cups",
+            "nameZh": "圣杯五",
+            "cardNumber": 5,
+            "type": "minor",
+            "suit": "cups",
+            "uprightMeaning": "失望、悲伤、后悔、专注于损失",
+            "reversedMeaning": "从失望中恢复、宽恕、向前看、接受帮助",
+            "keywordsUpright": [
+                "失望",
+                "悲伤",
+                "后悔",
+                "专注损失"
+            ],
+            "keywordsReversed": [
+                "恢复",
+                "宽恕",
+                "向前看",
+                "接受帮助"
+            ]
+        },
+        {
+            "id": 42,
+            "nameEn": "Six of Cups",
+            "nameZh": "圣杯六",
+            "cardNumber": 6,
+            "type": "minor",
+            "suit": "cups",
+            "uprightMeaning": "怀旧、童真、过去、纯真、重逢",
+            "reversedMeaning": "活在过去、幼稚、缺乏现实感、拒绝成长",
+            "keywordsUpright": [
+                "怀旧",
+                "童真",
+                "过去",
+                "纯真"
+            ],
+            "keywordsReversed": [
+                "活在过去",
+                "幼稚",
+                "拒绝成长",
+                "缺乏现实感"
+            ]
+        },
+        {
+            "id": 43,
+            "nameEn": "Seven of Cups",
+            "nameZh": "圣杯七",
+            "cardNumber": 7,
+            "type": "minor",
+            "suit": "cups",
+            "uprightMeaning": "幻想、选择过多、缺乏现实感、白日梦",
+            "reversedMeaning": "现实感恢复、明确目标、做出决定、清醒",
+            "keywordsUpright": [
+                "幻想",
+                "选择过多",
+                "白日梦",
+                "缺乏现实感"
+            ],
+            "keywordsReversed": [
+                "现实感",
+                "明确目标",
+                "做出决定",
+                "清醒"
+            ]
+        },
+        {
+            "id": 44,
+            "nameEn": "Eight of Cups",
+            "nameZh": "圣杯八",
+            "cardNumber": 8,
+            "type": "minor",
+            "suit": "cups",
+            "uprightMeaning": "离开、寻找更高意义、失望、精神追求",
+            "reversedMeaning": "恐惧改变、逃避现实、缺乏勇气、停滞不前",
+            "keywordsUpright": [
+                "离开",
+                "寻找意义",
+                "精神追求",
+                "失望"
+            ],
+            "keywordsReversed": [
+                "恐惧改变",
+                "逃避现实",
+                "缺乏勇气",
+                "停滞"
+            ]
+        },
+        {
+            "id": 45,
+            "nameEn": "Nine of Cups",
+            "nameZh": "圣杯九",
+            "cardNumber": 9,
+            "type": "minor",
+            "suit": "cups",
+            "uprightMeaning": "满足、愿望实现、快乐、感恩",
+            "reversedMeaning": "内在不满、贪婪、自满、缺乏感恩",
+            "keywordsUpright": [
+                "满足",
+                "愿望实现",
+                "快乐",
+                "感恩"
+            ],
+            "keywordsReversed": [
+                "内在不满",
+                "贪婪",
+                "自满",
+                "缺乏感恩"
+            ]
+        },
+        {
+            "id": 46,
+            "nameEn": "Ten of Cups",
+            "nameZh": "圣杯十",
+            "cardNumber": 10,
+            "type": "minor",
+            "suit": "cups",
+            "uprightMeaning": "家庭幸福、情感圆满、和谐、快乐结局",
+            "reversedMeaning": "家庭冲突、价值观分歧、关系破裂、表面和谐",
+            "keywordsUpright": [
+                "家庭幸福",
+                "情感圆满",
+                "和谐",
+                "快乐结局"
+            ],
+            "keywordsReversed": [
+                "家庭冲突",
+                "价值观分歧",
+                "关系破裂",
+                "表面和谐"
+            ]
+        },
+        {
+            "id": 47,
+            "nameEn": "Page of Cups",
+            "nameZh": "圣杯侍者",
+            "cardNumber": 11,
+            "type": "minor",
+            "suit": "cups",
+            "uprightMeaning": "情感消息、直觉、创意、学习爱情",
+            "reversedMeaning": "情感幼稚、创意受阻、直觉迟钝、情感欺骗",
+            "keywordsUpright": [
+                "情感消息",
+                "直觉",
+                "创意",
+                "学习爱情"
+            ],
+            "keywordsReversed": [
+                "情感幼稚",
+                "创意受阻",
+                "直觉迟钝",
+                "情感欺骗"
+            ]
+        },
+        {
+            "id": 48,
+            "nameEn": "Knight of Cups",
+            "nameZh": "圣杯骑士",
+            "cardNumber": 12,
+            "type": "minor",
+            "suit": "cups",
+            "uprightMeaning": "浪漫、理想主义、追求梦想、情感行动",
+            "reversedMeaning": "不切实际、情绪化、幻想过度、缺乏行动",
+            "keywordsUpright": [
+                "浪漫",
+                "理想主义",
+                "追求梦想",
+                "情感行动"
+            ],
+            "keywordsReversed": [
+                "不切实际",
+                "情绪化",
+                "幻想过度",
+                "缺乏行动"
+            ]
+        },
+        {
+            "id": 49,
+            "nameEn": "Queen of Cups",
+            "nameZh": "圣杯王后",
+            "cardNumber": 13,
+            "type": "minor",
+            "suit": "cups",
+            "uprightMeaning": "同情心、直觉、情感成熟、关怀他人",
+            "reversedMeaning": "情感不稳、依赖、情绪过敏、缺乏界限",
+            "keywordsUpright": [
+                "同情心",
+                "直觉",
+                "情感成熟",
+                "关怀他人"
+            ],
+            "keywordsReversed": [
+                "情感不稳",
+                "依赖",
+                "情绪过敏",
+                "缺乏界限"
+            ]
+        },
+        {
+            "id": 50,
+            "nameEn": "King of Cups",
+            "nameZh": "圣杯国王",
+            "cardNumber": 14,
+            "type": "minor",
+            "suit": "cups",
+            "uprightMeaning": "情感平衡、同情心、外交、情感控制",
+            "reversedMeaning": "情感操控、压抑情感、缺乏同情、情绪不稳",
+            "keywordsUpright": [
+                "情感平衡",
+                "同情心",
+                "外交",
+                "情感控制"
+            ],
+            "keywordsReversed": [
+                "情感操控",
+                "压抑情感",
+                "缺乏同情",
+                "情绪不稳"
+            ]
+        },
+        {
+            "id": 51,
+            "nameEn": "Ace of Swords",
+            "nameZh": "宝剑A",
+            "cardNumber": 1,
+            "type": "minor",
+            "suit": "swords",
+            "uprightMeaning": "新想法、心智清晰、突破、真理",
+            "reversedMeaning": "思维混乱、错误信息、缺乏清晰度、心智阻塞",
+            "keywordsUpright": [
+                "新想法",
+                "心智清晰",
+                "突破",
+                "真理"
+            ],
+            "keywordsReversed": [
+                "思维混乱",
+                "错误信息",
+                "心智阻塞",
+                "缺乏清晰"
+            ]
+        },
+        {
+            "id": 52,
+            "nameEn": "Two of Swords",
+            "nameZh": "宝剑二",
+            "cardNumber": 2,
+            "type": "minor",
+            "suit": "swords",
+            "uprightMeaning": "艰难决定、僵局、平衡、避免冲突",
+            "reversedMeaning": "做出决定、信息显露、解除僵局、冲突解决",
+            "keywordsUpright": [
+                "艰难决定",
+                "僵局",
+                "平衡",
+                "避免冲突"
+            ],
+            "keywordsReversed": [
+                "做出决定",
+                "信息显露",
+                "解除僵局",
+                "冲突解决"
+            ]
+        },
+        {
+            "id": 53,
+            "nameEn": "Three of Swords",
+            "nameZh": "宝剑三",
+            "cardNumber": 3,
+            "type": "minor",
+            "suit": "swords",
+            "uprightMeaning": "心碎、痛苦、分离、背叛",
+            "reversedMeaning": "治愈、宽恕、从痛苦中恢复、和解",
+            "keywordsUpright": [
+                "心碎",
+                "痛苦",
+                "分离",
+                "背叛"
+            ],
+            "keywordsReversed": [
+                "治愈",
+                "宽恕",
+                "恢复",
+                "和解"
+            ]
+        },
+        {
+            "id": 54,
+            "nameEn": "Four of Swords",
+            "nameZh": "宝剑四",
+            "cardNumber": 4,
+            "type": "minor",
+            "suit": "swords",
+            "uprightMeaning": "休息、冥想、和平、心智恢复",
+            "reversedMeaning": "焦虑、失眠、心智疲惫、缺乏休息",
+            "keywordsUpright": [
+                "休息",
+                "冥想",
+                "和平",
+                "心智恢复"
+            ],
+            "keywordsReversed": [
+                "焦虑",
+                "失眠",
+                "心智疲惫",
+                "缺乏休息"
+            ]
+        },
+        {
+            "id": 55,
+            "nameEn": "Five of Swords",
+            "nameZh": "宝剑五",
+            "cardNumber": 5,
+            "type": "minor",
+            "suit": "swords",
+            "uprightMeaning": "冲突、失败、羞辱、不公平胜利",
+            "reversedMeaning": "和解、宽恕、从冲突中学习、寻求和平",
+            "keywordsUpright": [
+                "冲突",
+                "失败",
+                "羞辱",
+                "不公平胜利"
+            ],
+            "keywordsReversed": [
+                "和解",
+                "宽恕",
+                "学习",
+                "寻求和平"
+            ]
+        },
+        {
+            "id": 56,
+            "nameEn": "Six of Swords",
+            "nameZh": "宝剑六",
+            "cardNumber": 6,
+            "type": "minor",
+            "suit": "swords",
+            "uprightMeaning": "过渡、从困难中前进、寻求平静、旅行",
+            "reversedMeaning": "抗拒改变、困在过去、无法前进、内在动荡",
+            "keywordsUpright": [
+                "过渡",
+                "前进",
+                "寻求平静",
+                "旅行"
+            ],
+            "keywordsReversed": [
+                "抗拒改变",
+                "困在过去",
+                "无法前进",
+                "内在动荡"
+            ]
+        },
+        {
+            "id": 57,
+            "nameEn": "Seven of Swords",
+            "nameZh": "宝剑七",
+            "cardNumber": 7,
+            "type": "minor",
+            "suit": "swords",
+            "uprightMeaning": "欺骗、策略、逃避、独自行动",
+            "reversedMeaning": "诚实、团队合作、寻求帮助、承担责任",
+            "keywordsUpright": [
+                "欺骗",
+                "策略",
+                "逃避",
+                "独自行动"
+            ],
+            "keywordsReversed": [
+                "诚实",
+                "团队合作",
+                "寻求帮助",
+                "承担责任"
+            ]
+        },
+        {
+            "id": 58,
+            "nameEn": "Eight of Swords",
+            "nameZh": "宝剑八",
+            "cardNumber": 8,
+            "type": "minor",
+            "suit": "swords",
+            "uprightMeaning": "束缚、限制、受害者心态、自我设限",
+            "reversedMeaning": "解脱、自由、克服限制、新视角",
+            "keywordsUpright": [
+                "束缚",
+                "限制",
+                "受害者心态",
+                "自我设限"
+            ],
+            "keywordsReversed": [
+                "解脱",
+                "自由",
+                "克服限制",
+                "新视角"
+            ]
+        },
+        {
+            "id": 59,
+            "nameEn": "Nine of Swords",
+            "nameZh": "宝剑九",
+            "cardNumber": 9,
+            "type": "minor",
+            "suit": "swords",
+            "uprightMeaning": "焦虑、噩梦、担忧、精神痛苦",
+            "reversedMeaning": "释放恐惧、希望、从焦虑中恢复、寻求帮助",
+            "keywordsUpright": [
+                "焦虑",
+                "噩梦",
+                "担忧",
+                "精神痛苦"
+            ],
+            "keywordsReversed": [
+                "释放恐惧",
+                "希望",
+                "恢复",
+                "寻求帮助"
+            ]
+        },
+        {
+            "id": 60,
+            "nameEn": "Ten of Swords",
+            "nameZh": "宝剑十",
+            "cardNumber": 10,
+            "type": "minor",
+            "suit": "swords",
+            "uprightMeaning": "结束、背叛、痛苦结束、新的开始",
+            "reversedMeaning": "从痛苦中恢复、治愈、重新开始、复原",
+            "keywordsUpright": [
+                "结束",
+                "背叛",
+                "痛苦结束",
+                "新的开始"
+            ],
+            "keywordsReversed": [
+                "恢复",
+                "治愈",
+                "重新开始",
+                "复原"
+            ]
+        },
+        {
+            "id": 61,
+            "nameEn": "Page of Swords",
+            "nameZh": "宝剑侍者",
+            "cardNumber": 11,
+            "type": "minor",
+            "suit": "swords",
+            "uprightMeaning": "好奇心、学习、消息、新想法",
+            "reversedMeaning": "八卦、谎言、缺乏思考、信息混乱",
+            "keywordsUpright": [
+                "好奇心",
+                "学习",
+                "消息",
+                "新想法"
+            ],
+            "keywordsReversed": [
+                "八卦",
+                "谎言",
+                "缺乏思考",
+                "信息混乱"
+            ]
+        },
+        {
+            "id": 62,
+            "nameEn": "Knight of Swords",
+            "nameZh": "宝剑骑士",
+            "cardNumber": 12,
+            "type": "minor",
+            "suit": "swords",
+            "uprightMeaning": "行动迅速、冲动、勇敢、直言不讳",
+            "reversedMeaning": "鲁莽、缺乏方向、攻击性、言语伤害",
+            "keywordsUpright": [
+                "行动迅速",
+                "冲动",
+                "勇敢",
+                "直言不讳"
+            ],
+            "keywordsReversed": [
+                "鲁莽",
+                "缺乏方向",
+                "攻击性",
+                "言语伤害"
+            ]
+        },
+        {
+            "id": 63,
+            "nameEn": "Queen of Swords",
+            "nameZh": "宝剑王后",
+            "cardNumber": 13,
+            "type": "minor",
+            "suit": "swords",
+            "uprightMeaning": "智慧、独立、清晰思考、直接沟通",
+            "reversedMeaning": "冷酷、批判、情感疏离、尖刻言辞",
+            "keywordsUpright": [
+                "智慧",
+                "独立",
+                "清晰思考",
+                "直接沟通"
+            ],
+            "keywordsReversed": [
+                "冷酷",
+                "批判",
+                "情感疏离",
+                "尖刻言辞"
+            ]
+        },
+        {
+            "id": 64,
+            "nameEn": "King of Swords",
+            "nameZh": "宝剑国王",
+            "cardNumber": 14,
+            "type": "minor",
+            "suit": "swords",
+            "uprightMeaning": "智慧权威、公正、理性思考、领导智慧",
+            "reversedMeaning": "独断专行、滥用权力、缺乏同情心、专制",
+            "keywordsUpright": [
+                "智慧权威",
+                "公正",
+                "理性思考",
+                "领导智慧"
+            ],
+            "keywordsReversed": [
+                "独断专行",
+                "滥用权力",
+                "缺乏同情心",
+                "专制"
+            ]
+        },
+        {
+            "id": 65,
+            "nameEn": "Ace of Pentacles",
+            "nameZh": "星币A",
+            "cardNumber": 1,
+            "type": "minor",
+            "suit": "pentacles",
+            "uprightMeaning": "新机会、财务开始、物质繁荣、实用性",
+            "reversedMeaning": "错失机会、财务不稳、缺乏计划、贪婪",
+            "keywordsUpright": [
+                "新机会",
+                "财务开始",
+                "物质繁荣",
+                "实用性"
+            ],
+            "keywordsReversed": [
+                "错失机会",
+                "财务不稳",
+                "缺乏计划",
+                "贪婪"
+            ]
+        },
+        {
+            "id": 66,
+            "nameEn": "Two of Pentacles",
+            "nameZh": "星币二",
+            "cardNumber": 2,
+            "type": "minor",
+            "suit": "pentacles",
+            "uprightMeaning": "平衡、适应性、优先级、多任务处理",
+            "reversedMeaning": "失衡、混乱、优先级错误、承担过多",
+            "keywordsUpright": [
+                "平衡",
+                "适应性",
+                "优先级",
+                "多任务处理"
+            ],
+            "keywordsReversed": [
+                "失衡",
+                "混乱",
+                "优先级错误",
+                "承担过多"
+            ]
+        },
+        {
+            "id": 67,
+            "nameEn": "Three of Pentacles",
+            "nameZh": "星币三",
+            "cardNumber": 3,
+            "type": "minor",
+            "suit": "pentacles",
+            "uprightMeaning": "团队合作、技能、学习、建设",
+            "reversedMeaning": "缺乏团队合作、技能不足、质量问题、竞争",
+            "keywordsUpright": [
+                "团队合作",
+                "技能",
+                "学习",
+                "建设"
+            ],
+            "keywordsReversed": [
+                "缺乏合作",
+                "技能不足",
+                "质量问题",
+                "竞争"
+            ]
+        },
+        {
+            "id": 68,
+            "nameEn": "Four of Pentacles",
+            "nameZh": "星币四",
+            "cardNumber": 4,
+            "type": "minor",
+            "suit": "pentacles",
+            "uprightMeaning": "安全、保守、物质主义、囤积",
+            "reversedMeaning": "慷慨、放手、分享、财务自由",
+            "keywordsUpright": [
+                "安全",
+                "保守",
+                "物质主义",
+                "囤积"
+            ],
+            "keywordsReversed": [
+                "慷慨",
+                "放手",
+                "分享",
+                "财务自由"
+            ]
+        },
+        {
+            "id": 69,
+            "nameEn": "Five of Pentacles",
+            "nameZh": "星币五",
+            "cardNumber": 5,
+            "type": "minor",
+            "suit": "pentacles",
+            "uprightMeaning": "贫困、失业、孤立、财务困难",
+            "reversedMeaning": "财务恢复、寻求帮助、改善状况、新机会",
+            "keywordsUpright": [
+                "贫困",
+                "失业",
+                "孤立",
+                "财务困难"
+            ],
+            "keywordsReversed": [
+                "财务恢复",
+                "寻求帮助",
+                "改善状况",
+                "新机会"
+            ]
+        },
+        {
+            "id": 70,
+            "nameEn": "Six of Pentacles",
+            "nameZh": "星币六",
+            "cardNumber": 6,
+            "type": "minor",
+            "suit": "pentacles",
+            "uprightMeaning": "慷慨、分享、互助、公平交换",
+            "reversedMeaning": "自私、不公平交换、依赖、债务",
+            "keywordsUpright": [
+                "慷慨",
+                "分享",
+                "互助",
+                "公平交换"
+            ],
+            "keywordsReversed": [
+                "自私",
+                "不公平交换",
+                "依赖",
+                "债务"
+            ]
+        },
+        {
+            "id": 71,
+            "nameEn": "Seven of Pentacles",
+            "nameZh": "星币七",
+            "cardNumber": 7,
+            "type": "minor",
+            "suit": "pentacles",
+            "uprightMeaning": "耐心、长期投资、持续努力、评估进展",
+            "reversedMeaning": "缺乏耐心、短期思维、放弃、投资失败",
+            "keywordsUpright": [
+                "耐心",
+                "长期投资",
+                "持续努力",
+                "评估进展"
+            ],
+            "keywordsReversed": [
+                "缺乏耐心",
+                "短期思维",
+                "放弃",
+                "投资失败"
+            ]
+        },
+        {
+            "id": 72,
+            "nameEn": "Eight of Pentacles",
+            "nameZh": "星币八",
+            "cardNumber": 8,
+            "type": "minor",
+            "suit": "pentacles",
+            "uprightMeaning": "技艺精进、专注工作、学徒精神、完善技能",
+            "reversedMeaning": "缺乏专注、质量低下、完美主义、浪费才能",
+            "keywordsUpright": [
+                "技艺精进",
+                "专注工作",
+                "学徒精神",
+                "完善技能"
+            ],
+            "keywordsReversed": [
+                "缺乏专注",
+                "质量低下",
+                "完美主义",
+                "浪费才能"
+            ]
+        },
+        {
+            "id": 73,
+            "nameEn": "Nine of Pentacles",
+            "nameZh": "星币九",
+            "cardNumber": 9,
+            "type": "minor",
+            "suit": "pentacles",
+            "uprightMeaning": "独立成功、物质享受、自给自足、优雅生活",
+            "reversedMeaning": "缺乏独立、过度依赖、财务不安、虚荣",
+            "keywordsUpright": [
+                "独立成功",
+                "物质享受",
+                "自给自足",
+                "优雅生活"
+            ],
+            "keywordsReversed": [
+                "缺乏独立",
+                "过度依赖",
+                "财务不安",
+                "虚荣"
+            ]
+        },
+        {
+            "id": 74,
+            "nameEn": "Ten of Pentacles",
+            "nameZh": "星币十",
+            "cardNumber": 10,
+            "type": "minor",
+            "suit": "pentacles",
+            "uprightMeaning": "家族财富、传承、长期成功、物质圆满",
+            "reversedMeaning": "财务不稳、家族争议、短期思维、财富流失",
+            "keywordsUpright": [
+                "家族财富",
+                "传承",
+                "长期成功",
+                "物质圆满"
+            ],
+            "keywordsReversed": [
+                "财务不稳",
+                "家族争议",
+                "短期思维",
+                "财富流失"
+            ]
+        },
+        {
+            "id": 75,
+            "nameEn": "Page of Pentacles",
+            "nameZh": "星币侍者",
+            "cardNumber": 11,
+            "type": "minor",
+            "suit": "pentacles",
+            "uprightMeaning": "学习机会、新技能、实用知识、财务消息",
+            "reversedMeaning": "缺乏进步、懒惰、不切实际、坏财务消息",
+            "keywordsUpright": [
+                "学习机会",
+                "新技能",
+                "实用知识",
+                "财务消息"
+            ],
+            "keywordsReversed": [
+                "缺乏进步",
+                "懒惰",
+                "不切实际",
+                "坏财务消息"
+            ]
+        },
+        {
+            "id": 76,
+            "nameEn": "Knight of Pentacles",
+            "nameZh": "星币骑士",
+            "cardNumber": 12,
+            "type": "minor",
+            "suit": "pentacles",
+            "uprightMeaning": "勤奋、可靠、谨慎、务实",
+            "reversedMeaning": "懒惰、不可靠、过度谨慎、停滞不前",
+            "keywordsUpright": [
+                "勤奋",
+                "可靠",
+                "谨慎",
+                "务实"
+            ],
+            "keywordsReversed": [
+                "懒惰",
+                "不可靠",
+                "过度谨慎",
+                "停滞不前"
+            ]
+        },
+        {
+            "id": 77,
+            "nameEn": "Queen of Pentacles",
+            "nameZh": "星币王后",
+            "cardNumber": 13,
+            "type": "minor",
+            "suit": "pentacles",
+            "uprightMeaning": "实用智慧、关怀他人、资源管理、母性",
+            "reversedMeaning": "自私、嫉妒、缺乏关怀、财务混乱",
+            "keywordsUpright": [
+                "实用智慧",
+                "关怀他人",
+                "资源管理",
+                "母性"
+            ],
+            "keywordsReversed": [
+                "自私",
+                "嫉妒",
+                "缺乏关怀",
+                "财务混乱"
+            ]
+        },
+        {
+            "id": 78,
+            "nameEn": "King of Pentacles",
+            "nameZh": "星币国王",
+            "cardNumber": 14,
+            "type": "minor",
+            "suit": "pentacles",
+            "uprightMeaning": "财务成功、企业领导、慷慨、可靠",
+            "reversedMeaning": "贪婪、物质主义、财务失败、不可靠",
+            "keywordsUpright": [
+                "财务成功",
+                "企业领导",
+                "慷慨",
+                "可靠"
+            ],
+            "keywordsReversed": [
+                "贪婪",
+                "物质主义",
+                "财务失败",
+                "不可靠"
+            ]
+        }
+    ]
+}

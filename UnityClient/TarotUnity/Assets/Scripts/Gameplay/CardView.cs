@@ -36,6 +36,8 @@ namespace TarotUnity.Gameplay
         private Vector3 haloRestScale;
         private float haloBoost = 1f;
         private float? hoverHaloScaleOverride;
+        private bool artRotationCaptured;
+        private Quaternion artRestRotation;
 
         /// <summary>Phase 72: the fan keeps its hover glow at rest size; landed cards use the serialized default.</summary>
         public float HoverHaloScale
@@ -71,6 +73,28 @@ namespace TarotUnity.Gameplay
 
             SetFaceArtwork(null);
             SetFaceUp(false);
+            ApplyArtOrientation();
+        }
+
+        /// <summary>Phase 75: a reversed card's picture lies upside down on the table, as the card was dealt.</summary>
+        public bool ShowsReversed => DrawData != null && DrawData.is_reversed;
+
+        private void ApplyArtOrientation()
+        {
+            if (faceArtworkRenderer == null)
+            {
+                return;
+            }
+
+            var art = faceArtworkRenderer.transform;
+            if (!artRotationCaptured)
+            {
+                artRestRotation = art.localRotation;
+                artRotationCaptured = true;
+            }
+
+            // The sprite lies in the art's XY plane; half a turn about its normal turns it upside down.
+            art.localRotation = ShowsReversed ? artRestRotation * Quaternion.Euler(0f, 0f, 180f) : artRestRotation;
         }
 
         public void SetFaceArtwork(Sprite sprite)

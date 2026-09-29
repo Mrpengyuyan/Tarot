@@ -268,6 +268,15 @@ def delete_prediction(
     return {"message": "Record deleted"}
 
 
+# A shuffled deck turns about half its cards over; the Unity client's offline draw uses the same odds.
+REVERSED_PROBABILITY = 0.5
+
+
+def draw_orientations(count: int, rng) -> List[bool]:
+    """Whether each of ``count`` drawn cards lies reversed."""
+    return [rng.random() < REVERSED_PROBABILITY for _ in range(count)]
+
+
 @router.post("/{prediction_id:int}/draw", response_model=DrawCardsResponse, summary="Draw cards for record")
 def draw_cards_for_prediction(
     prediction_id: int,
@@ -300,11 +309,12 @@ def draw_cards_for_prediction(
         raise HTTPException(status_code=500, detail="Not enough tarot cards in database") from exc
 
     rng = random.Random(seed) if seed is not None else random
+    orientations = draw_orientations(len(cards), rng)
     card_draws_data = [
         CardDrawCreate(
             tarot_card_id=card.id,
             position=i + 1,
-            is_reversed=(rng.random() < 0.3),
+            is_reversed=orientations[i],
         )
         for i, card in enumerate(cards)
     ]

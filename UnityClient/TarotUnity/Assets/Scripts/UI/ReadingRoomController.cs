@@ -1032,7 +1032,8 @@ namespace TarotUnity.UI
         {
             var catalog = ResolveCatalog();
             var def = catalog != null ? catalog.GetByCardCount(selectedCardCount) : null;
-            return LocalReadingSimulator.CreatePlaceholderDraws(
+            // Phase 75: a real draw from the shuffled 78-card deck - no repeats, half reversed.
+            return LocalReadingSimulator.DrawFromDeck(
                 selectedCardCount, def != null ? def.positionNames : null, def != null ? def.positionMeanings : null);
         }
 

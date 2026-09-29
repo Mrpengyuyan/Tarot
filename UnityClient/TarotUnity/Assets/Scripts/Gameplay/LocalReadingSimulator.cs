@@ -85,6 +85,87 @@ namespace TarotUnity.Gameplay
             return draws;
         }
 
+        /// <summary>Phase 75: the backend's odds (records.py REVERSED_PROBABILITY) - a shuffled deck turns about half its cards over.</summary>
+        public const double ReversedProbability = 0.5;
+
+        /// <summary>
+        /// Phase 75: the offline reading's real draw. The whole 78-card deck is shuffled and the
+        /// first <paramref name="cardCount"/> cards dealt - so no card comes up twice - and each
+        /// lies reversed with <see cref="ReversedProbability"/>, carrying that orientation's
+        /// meaning. (<see cref="CreatePlaceholderDraws(int)"/> stays the fixed test fixture.)
+        /// Falls back to the placeholders if the deck data is missing.
+        /// </summary>
+        public static CardDrawData[] DrawFromDeck(
+            int cardCount, IReadOnlyList<string> positionNames, IReadOnlyList<string> positionMeanings, Random rng = null)
+        {
+            var deck = TarotDeck.Cards;
+            var safeCount = Math.Max(1, cardCount);
+            if (deck.Count < safeCount)
+            {
+                return CreatePlaceholderDraws(cardCount, positionNames, positionMeanings);
+            }
+
+            rng ??= new Random();
+            var order = new int[deck.Count];
+            for (var i = 0; i < order.Length; i++)
+            {
+                order[i] = i;
+            }
+
+            for (var i = order.Length - 1; i > 0; i--)
+            {
+                var j = rng.Next(i + 1);
+                (order[i], order[j]) = (order[j], order[i]);
+            }
+
+            var now = DateTime.UtcNow.ToString("O");
+            var draws = new CardDrawData[safeCount];
+            for (var i = 0; i < safeCount; i++)
+            {
+                var card = deck[order[i]];
+                var reversed = rng.NextDouble() < ReversedProbability;
+                var name = ResolveName(i, safeCount, positionNames);
+                var meaning = ResolveMeaning(i, safeCount, positionMeanings);
+                var cardMeaning = reversed ? card.reversedMeaning : card.uprightMeaning;
+                var keywords = reversed ? card.keywordsReversed : card.keywordsUpright;
+                draws[i] = new CardDrawData
+                {
+                    id = i + 1,
+                    prediction_id = 1,
+                    tarot_card_id = card.id,
+                    position = i + 1,
+                    is_reversed = reversed,
+                    drawn_at = now,
+                    tarot_card = new TarotCardSimple
+                    {
+                        id = card.id,
+                        name_zh = card.nameZh,
+                        name_en = card.nameEn,
+                        arcana = card.type,
+                        suit = card.suit ?? string.Empty,
+                        number = card.cardNumber,
+                        image_url = string.Empty,
+                    },
+                    card_meaning = new TarotCardMeaningData
+                    {
+                        id = card.id,
+                        name_zh = card.nameZh,
+                        name_en = card.nameEn,
+                        is_reversed = reversed,
+                        meaning = cardMeaning,
+                        keywords = keywords ?? Array.Empty<string>(),
+                        position = i + 1,
+                        position_name = name,
+                        position_meaning = meaning,
+                    },
+                    position_name = name,
+                    position_meaning = meaning,
+                };
+            }
+
+            return draws;
+        }
+
         public static ReadingSessionSnapshot CreateSession(
             int spreadId,
             string spreadName,

@@ -13387,20 +13387,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TarotUnity.Runtime::TarotUnity.Presentation.DeckShuffleChoreographer
   anticipationDip: 0.015
-  anticipationSeconds: 0.2
+  anticipationSeconds: 0.25
   cutSpread: 0.42
-  cutSeconds: 0.55
-  recutSeconds: 0.4
+  cutSeconds: 0.72
+  recutSeconds: 0.52
   cutYawDegrees: 6
   riffleLift: 0.055
-  riffleCardSeconds: 0.2
-  riffleStagger: 0.065
+  riffleCardSeconds: 0.26
+  riffleStagger: 0.088
   riffleYawDegrees: 4
   riffleBendDegrees: 10
   secondRiffleSpeedup: 1.25
   contactSquash: 0.06
-  settleSeconds: 0.18
-  squareHoldSeconds: 0.35
+  settleSeconds: 0.22
+  squareHoldSeconds: 0.55
   contactCameraKick: 0.03
 --- !u!1 &472250669
 GameObject:

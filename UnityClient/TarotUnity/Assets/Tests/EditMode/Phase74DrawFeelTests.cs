@@ -20,11 +20,12 @@ namespace TarotUnity.Tests.EditMode
         private const string DocPath = "Docs/PHASE74_DRAW_FEEL.md";
 
         [Test]
-        public void TheShuffleTakesAboutThreeSeconds()
+        public void TheShuffleTakesAtLeastThreeSeconds()
         {
+            // Phase 75 stretched it again, to about four (Phase75DrawTruthTests).
             EditorSceneManager.OpenScene(ScenePath);
             var shuffle = Object.FindFirstObjectByType<DeckShuffleChoreographer>();
-            Assert.That(shuffle.PlannedSeconds, Is.InRange(2.9f, 3.1f));
+            Assert.That(shuffle.PlannedSeconds, Is.GreaterThanOrEqualTo(2.9f));
         }
 
         // The deck is eight blocks in the tan paper-edge material; a cut used to bare a tan top on each pile.

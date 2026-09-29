@@ -106,6 +106,7 @@ namespace TarotUnity.Gameplay
         private readonly List<CardView> fanCards = new();
         private readonly Dictionary<CardView, FanCard> state = new();
         private readonly List<CardView> prepared = new();
+        private readonly List<List<Renderer>> deckLayers = new();
         private bool preparing;
         private Coroutine lightFade;
         private Vector3 baseScale = Vector3.one;
@@ -208,6 +209,7 @@ namespace TarotUnity.Gameplay
             Clear();
             DestroyPrepared();
             SetLight(0f);
+            ShowDeck(1f);
         }
 
         public void GetFanPose(int index, out Vector3 position, out Quaternion rotation)
@@ -259,6 +261,7 @@ namespace TarotUnity.Gameplay
 
             baseScale = fanCards.Count > 0 ? fanCards[0].transform.localScale : Vector3.one;
             FadeLight(fanLightIntensity);
+            CaptureDeck(origin);
             var start = origin.position;
             var startRotation = origin.rotation;
             var total = spreadCardSeconds + spreadStagger * (LongestRow() - 1);
@@ -276,9 +279,11 @@ namespace TarotUnity.Gameplay
                         Quaternion.Slerp(startRotation, r, e));
                 }
 
+                ShowDeck(1f - elapsed / total);
                 yield return null;
             }
 
+            ShowDeck(0f);
             foreach (var card in fanCards)
             {
                 GetFanPose(state[card].index, out var p, out var r);
@@ -373,6 +378,80 @@ namespace TarotUnity.Gameplay
             pending = null;
         }
 
+        /// <summary>
+        /// Phase 75: the fan is the whole deck, so the deck on the table empties as the fan
+        /// spreads - its layers go from the top down as the cards leave - and fills again as
+        /// they gather. Remembers which of the deck's renderers were on, and only touches those.
+        /// </summary>
+        private void CaptureDeck(Transform origin)
+        {
+            deckLayers.Clear();
+            if (origin == null)
+            {
+                return;
+            }
+
+            var layers = new List<Transform>();
+            foreach (Transform child in origin)
+            {
+                layers.Add(child);
+            }
+
+            layers.Sort((a, b) => a.localPosition.y.CompareTo(b.localPosition.y));
+            foreach (var layer in layers)
+            {
+                var shown = new List<Renderer>();
+                foreach (var renderer in layer.GetComponentsInChildren<Renderer>(true))
+                {
+                    if (renderer.enabled)
+                    {
+                        shown.Add(renderer);
+                    }
+                }
+
+                deckLayers.Add(shown);
+            }
+        }
+
+        /// <summary>Shows the bottom <paramref name="fraction"/> of the deck's layers.</summary>
+        private void ShowDeck(float fraction)
+        {
+            var visible = Mathf.RoundToInt(deckLayers.Count * Mathf.Clamp01(fraction));
+            for (var i = 0; i < deckLayers.Count; i++)
+            {
+                foreach (var renderer in deckLayers[i])
+                {
+                    if (renderer != null)
+                    {
+                        renderer.enabled = i < visible;
+                    }
+                }
+            }
+        }
+
+        /// <summary>Phase 75: how much of the deck on the table is showing, 0 to 1 (1 when there is none to track).</summary>
+        public float DeckShowing
+        {
+            get
+            {
+                if (deckLayers.Count == 0)
+                {
+                    return 1f;
+                }
+
+                var shown = 0;
+                foreach (var layer in deckLayers)
+                {
+                    if (layer.Count > 0 && layer[0] != null && layer[0].enabled)
+                    {
+                        shown++;
+                    }
+                }
+
+                return (float)shown / deckLayers.Count;
+            }
+        }
+
         public IEnumerator Gather(Transform origin)
         {
             spreadDone = false;
@@ -387,6 +466,7 @@ namespace TarotUnity.Gameplay
             if (origin == null || cards.Count == 0)
             {
                 Clear();
+                ShowDeck(1f);
                 yield break;
             }
 
@@ -411,10 +491,12 @@ namespace TarotUnity.Gameplay
                     cards[i].transform.position = Vector3.Lerp(starts[i], origin.position, k * k);
                 }
 
+                ShowDeck(elapsed / gatherSeconds);
                 yield return null;
             }
 
             Clear();
+            ShowDeck(1f);
             SetLight(0f);
         }
 
