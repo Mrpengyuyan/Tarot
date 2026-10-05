@@ -23,23 +23,23 @@ setup(
         "pydantic-settings==2.2.1",
         
         # Security
-        "python-jose[cryptography]==3.3.0",
+        "python-jose[cryptography]==3.5.0",
         "passlib[bcrypt]==1.7.4",
+        "bcrypt<4.0.0",
         
         # API Client
         "httpx==0.27.0",
+        "python-multipart==0.0.32",
         
         # Email validation
         "email-validator==2.1.0"
     ],
-    python_requires=">=3.8",
+    python_requires=">=3.10",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
     ],
-) 
+)
