@@ -247,12 +247,16 @@ def update_prediction_status(db: Session, prediction_id: int, status: Prediction
     """更新预测状态"""
     db_prediction = get_prediction_by_id(db, prediction_id)
     if db_prediction:
-        db_prediction.status = status
-        if status == PredictionStatus.COMPLETED:
-            db_prediction.completed_at = datetime.now(timezone.utc)
+        _set_prediction_status(db_prediction, status)
         db.commit()
         return True
     return False
+
+
+def _set_prediction_status(prediction: Prediction, status: PredictionStatus) -> None:
+    prediction.status = status
+    if status == PredictionStatus.COMPLETED:
+        prediction.completed_at = datetime.now(timezone.utc)
 
 def claim_interpretation_generation(
     db: Session,
@@ -344,7 +348,13 @@ def create_card_draw(db: Session, prediction_id: int, card_draw_create: CardDraw
     db.refresh(db_card_draw)
     return db_card_draw
 
-def batch_create_card_draws(db: Session, prediction_id: int, card_draws_data: List[CardDrawCreate]) -> List[CardDraw]:
+def batch_create_card_draws(
+    db: Session,
+    prediction_id: int,
+    card_draws_data: List[CardDrawCreate],
+    *,
+    prediction_status: PredictionStatus | None = None,
+) -> List[CardDraw]:
     """批量创建抽牌记录"""
     db_card_draws = []
     for card_draw_data in card_draws_data:
@@ -354,6 +364,12 @@ def batch_create_card_draws(db: Session, prediction_id: int, card_draws_data: Li
         )
         db.add(db_card_draw)
         db_card_draws.append(db_card_draw)
+
+    if prediction_status is not None:
+        prediction = get_prediction_by_id(db, prediction_id)
+        if prediction is None:
+            raise ValueError("Prediction not found")
+        _set_prediction_status(prediction, prediction_status)
     
     db.commit()
     for db_card_draw in db_card_draws:
@@ -389,13 +405,24 @@ def get_prediction_interpretation(db: Session, prediction_id: int) -> Optional[I
     """获取预测的解读结果"""
     return db.query(Interpretation).filter(Interpretation.prediction_id == prediction_id).first()
 
-def create_interpretation(db: Session, prediction_id: int, interpretation_create: InterpretationCreate) -> Interpretation:
+def create_interpretation(
+    db: Session,
+    prediction_id: int,
+    interpretation_create: InterpretationCreate,
+    *,
+    prediction_status: PredictionStatus | None = None,
+) -> Interpretation:
     """创建解读结果"""
     db_interpretation = Interpretation(
         prediction_id=prediction_id,
         **interpretation_create.model_dump()
     )
     db.add(db_interpretation)
+    if prediction_status is not None:
+        prediction = get_prediction_by_id(db, prediction_id)
+        if prediction is None:
+            raise ValueError("Prediction not found")
+        _set_prediction_status(prediction, prediction_status)
     db.commit()
     db.refresh(db_interpretation)
     return db_interpretation

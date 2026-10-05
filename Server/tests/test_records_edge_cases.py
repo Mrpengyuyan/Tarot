@@ -45,8 +45,8 @@ def test_draw_cards_returns_409_when_batch_insert_conflicts(client, seeded_sprea
     _register_and_login(client, username="draw_conflict_user")
     prediction_id = _create_prediction(client, seeded_spread_and_cards["spread_id"])
 
-    def fake_batch_create_card_draws(db, prediction_id, card_draws_data):  # noqa: ANN001
-        del db, prediction_id, card_draws_data
+    def fake_batch_create_card_draws(db, prediction_id, card_draws_data, *, prediction_status):  # noqa: ANN001
+        del db, prediction_id, card_draws_data, prediction_status
         raise IntegrityError("insert", {}, Exception("duplicate key"))
 
     monkeypatch.setattr(
@@ -113,8 +113,8 @@ def test_interpretation_conflict_returns_existing_record(client, seeded_spread_a
             return None
         return fake_existing
 
-    def fake_create_interpretation(db, prediction_id, interpretation_create):  # noqa: ANN001
-        del db, prediction_id, interpretation_create
+    def fake_create_interpretation(db, prediction_id, interpretation_create, *, prediction_status):  # noqa: ANN001
+        del db, prediction_id, interpretation_create, prediction_status
         raise IntegrityError("insert", {}, Exception("duplicate key"))
 
     monkeypatch.setattr(

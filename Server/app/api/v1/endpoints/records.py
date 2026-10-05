@@ -317,11 +317,7 @@ def draw_cards_for_prediction(
             db,
             prediction_id=prediction_id,
             card_draws_data=card_draws_data,
-        )
-        prediction_crud.update_prediction_status(
-            db,
-            prediction_id=prediction_id,
-            status=PredictionStatus.PROCESSING,
+            prediction_status=PredictionStatus.PROCESSING,
         )
     except IntegrityError:
         db.rollback()
@@ -524,20 +520,24 @@ def _store_interpretation(
             db,
             prediction_id=prediction_id,
             interpretation_create=interpretation_create,
+            prediction_status=PredictionStatus.COMPLETED,
         )
     except IntegrityError:
         db.rollback()
         interpretation = prediction_crud.get_prediction_interpretation(db, prediction_id=prediction_id)
         if interpretation:
+            prediction = prediction_crud.get_prediction_by_id(db, prediction_id=prediction_id)
+            if prediction:
+                _complete_existing_interpretation(db, prediction)
             return interpretation
         raise
 
-    prediction_crud.update_prediction_status(
-        db,
-        prediction_id=prediction_id,
-        status=PredictionStatus.COMPLETED,
-    )
     return interpretation
+
+
+def _complete_existing_interpretation(db: Session, prediction: PredictionModel) -> None:
+    if prediction.status != PredictionStatus.COMPLETED or prediction.completed_at is None:
+        prediction_crud.update_prediction_status(db, prediction_id=prediction.id, status=PredictionStatus.COMPLETED)
 
 
 @router.post("/{prediction_id:int}/interpret", response_model=Interpretation, summary="Create AI interpretation")
@@ -562,12 +562,7 @@ async def create_ai_interpretation(
 
     existing_interpretation = prediction_crud.get_prediction_interpretation(db, prediction_id=prediction_id)
     if existing_interpretation:
-        if prediction.status != PredictionStatus.COMPLETED or prediction.completed_at is None:
-            prediction_crud.update_prediction_status(
-                db,
-                prediction_id=prediction_id,
-                status=PredictionStatus.COMPLETED,
-            )
+        _complete_existing_interpretation(db, prediction)
         return existing_interpretation
 
     if not interpretation_create or force_ai:
@@ -618,7 +613,11 @@ async def run_interpretation_job(
     user_context: Optional[str],
 ) -> None:
     """Background task. Opens its own session because the request session is already closed."""
-    db = session_factory()
+    try:
+        db = session_factory()
+    except Exception:  # noqa: BLE001 - a lost task can be reclaimed after the stale timeout
+        logger.exception("Background interpretation for record %s failed to open a session", prediction_id)
+        return
     try:
         prediction = prediction_crud.get_prediction_by_id(db, prediction_id=prediction_id)
         if prediction is None:
@@ -627,14 +626,20 @@ async def run_interpretation_job(
         await generate_and_store_interpretation(db, prediction, user_context)
     except Exception as exc:  # noqa: BLE001 - background work must never raise into the event loop
         logger.error("Background interpretation for record %s failed: %s", prediction_id, exc)
-        db.rollback()
-        prediction_crud.update_prediction_status(
-            db,
-            prediction_id=prediction_id,
-            status=PredictionStatus.FAILED,
-        )
+        try:
+            db.rollback()
+            prediction_crud.update_prediction_status(
+                db,
+                prediction_id=prediction_id,
+                status=PredictionStatus.FAILED,
+            )
+        except Exception:  # noqa: BLE001 - stale claims remain retryable if the database is unavailable
+            logger.exception("Background interpretation for record %s could not be marked failed", prediction_id)
     finally:
-        db.close()
+        try:
+            db.close()
+        except Exception:  # noqa: BLE001 - closing a broken connection must not mask the task failure
+            logger.exception("Background interpretation for record %s could not close its session", prediction_id)
 
 
 def _interpretation_json(interpretation) -> JSONResponse:  # noqa: ANN001
@@ -687,6 +692,7 @@ async def start_ai_interpretation_async(
 
     existing_interpretation = prediction_crud.get_prediction_interpretation(db, prediction_id=prediction_id)
     if existing_interpretation:
+        _complete_existing_interpretation(db, prediction)
         return _interpretation_json(existing_interpretation)
 
     if not prediction_crud.get_prediction_card_draws(db, prediction_id=prediction_id):
@@ -708,6 +714,7 @@ async def start_ai_interpretation_async(
     db.refresh(prediction)
     existing_interpretation = prediction_crud.get_prediction_interpretation(db, prediction_id=prediction_id)
     if existing_interpretation:
+        _complete_existing_interpretation(db, prediction)
         return _interpretation_json(existing_interpretation)
 
     started_at = _as_utc(prediction.interpretation_started_at)
