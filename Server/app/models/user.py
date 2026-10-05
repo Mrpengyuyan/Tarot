@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, Integer, String, Text, func
+from sqlalchemy import Boolean, Date, DateTime, Integer, String, Text, false, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base_class import Base
@@ -28,6 +28,9 @@ class User(Base):
     bio: Mapped[str | None] = mapped_column(Text, nullable=True, comment="个人简介")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False, comment="账号是否激活")
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, comment="是否为超级用户")
+    is_guest: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false(), nullable=False)
+    reading_quota_day: Mapped[date | None] = mapped_column(Date, nullable=True)
+    reading_quota_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False, comment="创建时间")
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,

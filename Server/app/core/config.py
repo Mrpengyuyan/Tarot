@@ -82,9 +82,9 @@ class Settings(BaseSettings):
     AI_CHAT_TEMPERATURE: float = 0.6
     AI_REASONER_TEMPERATURE: float = 0.5
 
-    AI_BUDGET_GUARD_ENABLED: bool = False
-    AI_DAILY_BUDGET_USD: float = 0.0
-    AI_MONTHLY_BUDGET_USD: float = 0.0
+    AI_BUDGET_GUARD_ENABLED: bool = True
+    AI_DAILY_BUDGET_USD: float = 5.0
+    AI_MONTHLY_BUDGET_USD: float = 120.0
     AI_REQUEST_SOFT_CAP_USD: float = 0.0
     AI_REASONER_MAX_PERCENT: float = 0.2
     AI_REASONER_RATIO_WARMUP_CALLS: int = 20
@@ -117,6 +117,7 @@ class Settings(BaseSettings):
     AUTO_BOOTSTRAP_REFERENCE_DATA_ON_STARTUP: bool = False
     AUTO_REPAIR_PREDICTION_QUESTIONS_ON_STARTUP: bool = False
     GUEST_DAILY_READING_LIMIT: int = 3
+    USER_DAILY_READING_LIMIT: int = 3
     # Background interpretation generation (POST /records/{id}/interpret/async).
     # Unity's InterpretationPoller gives up after STALE_SECONDS + 30s; keep the two in sync.
     AI_INTERPRETATION_STALE_SECONDS: int = 300

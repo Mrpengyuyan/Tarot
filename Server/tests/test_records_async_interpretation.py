@@ -7,7 +7,7 @@ import pytest
 from app.api.v1.endpoints import records as records_endpoint
 from app.core.config import settings
 from app.crud import prediction as prediction_crud
-from app.services.coze_service import CozeTimeoutError
+from app.services.coze_service import CozeBudgetExceededError, CozeTimeoutError
 
 
 def _register_and_login(client, username: str) -> None:
@@ -199,3 +199,104 @@ def test_async_interpretation_reclaims_stale_processing(client, db_session, seed
     assert resp.status_code == 202
     assert _record(client, prediction_id)["status"] == "completed"
     assert fake_ai["count"] == 1
+
+
+def test_sync_interpretation_does_not_race_active_async_claim(
+    client, db_session, seeded_spread_and_cards, fake_ai
+):
+    _register_and_login(client, "sync_busy")
+    prediction_id = _create_drawn_prediction(client, seeded_spread_and_cards["spread_id"])
+    now = datetime.now(timezone.utc)
+    assert prediction_crud.claim_interpretation_generation(
+        db_session,
+        prediction_id=prediction_id,
+        now=now,
+        stale_before=now - timedelta(seconds=300),
+        max_attempts=3,
+    )
+
+    resp = client.post(f"/api/v1/records/{prediction_id}/interpret?force_ai=true")
+
+    assert resp.status_code == 409
+    assert fake_ai["count"] == 0
+
+
+def test_sync_final_attempt_still_reports_generation_in_progress(
+    client, db_session, seeded_spread_and_cards, fake_ai, monkeypatch
+):
+    monkeypatch.setattr(settings, "AI_INTERPRETATION_MAX_ATTEMPTS", 1)
+    _register_and_login(client, "sync_final_busy")
+    prediction_id = _create_drawn_prediction(client, seeded_spread_and_cards["spread_id"])
+    now = datetime.now(timezone.utc)
+    assert prediction_crud.claim_interpretation_generation(
+        db_session,
+        prediction_id=prediction_id,
+        now=now,
+        stale_before=now - timedelta(seconds=300),
+        max_attempts=1,
+    )
+
+    assert client.post(f"/api/v1/records/{prediction_id}/interpret?force_ai=true").status_code == 409
+    assert fake_ai["count"] == 0
+
+
+def test_sync_interpretation_honors_attempt_limit(
+    client, seeded_spread_and_cards, fake_ai, monkeypatch
+):
+    monkeypatch.setattr(settings, "AI_INTERPRETATION_MAX_ATTEMPTS", 1)
+    _register_and_login(client, "sync_exhausted")
+    prediction_id = _create_drawn_prediction(client, seeded_spread_and_cards["spread_id"])
+    fake_ai["error"] = CozeTimeoutError("simulated timeout")
+
+    assert client.post(f"/api/v1/records/{prediction_id}/interpret?force_ai=true").status_code == 504
+    resp = client.post(f"/api/v1/records/{prediction_id}/interpret?force_ai=true")
+
+    assert resp.status_code == 429
+    assert fake_ai["count"] == 1
+
+
+def test_sync_budget_denial_does_not_consume_interpretation_attempt(
+    client, db_session, seeded_spread_and_cards, fake_ai
+):
+    _register_and_login(client, "sync_budget_denied")
+    prediction_id = _create_drawn_prediction(client, seeded_spread_and_cards["spread_id"])
+    fake_ai["error"] = CozeBudgetExceededError("daily budget exhausted")
+
+    for _ in range(2):
+        response = client.post(f"/api/v1/records/{prediction_id}/interpret?force_ai=true")
+        assert response.status_code == 429
+        db_session.expire_all()
+        assert prediction_crud.get_prediction_by_id(db_session, prediction_id).interpretation_attempts == 0
+
+    fake_ai["error"] = None
+    assert client.post(f"/api/v1/records/{prediction_id}/interpret?force_ai=true").status_code == 200
+    assert fake_ai["count"] == 3
+
+
+def test_async_budget_denial_can_retry_after_budget_resets(
+    client, db_session, seeded_spread_and_cards, fake_ai
+):
+    _register_and_login(client, "async_budget_denied")
+    prediction_id = _create_drawn_prediction(client, seeded_spread_and_cards["spread_id"])
+    fake_ai["error"] = CozeBudgetExceededError("daily budget exhausted")
+
+    assert _start_async(client, prediction_id).status_code == 202
+    assert _record(client, prediction_id)["status"] == "failed"
+    db_session.expire_all()
+    assert prediction_crud.get_prediction_by_id(db_session, prediction_id).interpretation_attempts == 0
+
+    fake_ai["error"] = None
+    assert _start_async(client, prediction_id).status_code == 202
+    assert _record(client, prediction_id)["status"] == "completed"
+
+
+def test_budget_denial_after_upstream_attempt_keeps_interpretation_attempt(
+    client, db_session, seeded_spread_and_cards, fake_ai
+):
+    _register_and_login(client, "sync_budget_after_request")
+    prediction_id = _create_drawn_prediction(client, seeded_spread_and_cards["spread_id"])
+    fake_ai["error"] = CozeBudgetExceededError("budget exhausted", request_started=True)
+
+    assert client.post(f"/api/v1/records/{prediction_id}/interpret?force_ai=true").status_code == 429
+    db_session.expire_all()
+    assert prediction_crud.get_prediction_by_id(db_session, prediction_id).interpretation_attempts == 1

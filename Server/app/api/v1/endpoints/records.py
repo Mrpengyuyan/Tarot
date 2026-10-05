@@ -20,6 +20,7 @@ from app.crud import spread as spread_crud
 from app.db.session import get_db, get_session_factory
 from app.models.record import Prediction as PredictionModel
 from app.models.record import PredictionStatus, QuestionType
+from app.models.user import User
 from app.schemas.prediction import (
     CardDraw as CardDrawSchema,
     CardDrawCreate,
@@ -38,8 +39,7 @@ from app.schemas.prediction import (
     PredictionUpdate,
     QuestionTypeEnum,
 )
-from app.schemas.user import User
-from app.services.coze_service import CozeError, CozeHttpStatusError, CozeRequestError, CozeTimeoutError
+from app.services.coze_service import CozeBudgetExceededError, CozeError, CozeHttpStatusError, CozeRequestError, CozeTimeoutError
 from app.services.tarot_service import tarot_interpretation_service
 
 logger = logging.getLogger(__name__)
@@ -47,30 +47,16 @@ router = APIRouter()
 
 
 def _is_guest_account(current_user: User) -> bool:
-    username = str(current_user.username or "")
-    email = str(current_user.email or "")
-    return username.startswith("guest_") and email.endswith("@guest.tarot.game")
+    return bool(current_user.is_guest)
 
 
-def _enforce_guest_daily_reading_limit(db: Session, current_user: User) -> None:
-    limit = max(0, int(settings.GUEST_DAILY_READING_LIMIT or 0))
-    if limit == 0 or not _is_guest_account(current_user):
-        return
-
+def _daily_reading_limit_error(*, is_guest: bool) -> HTTPException:
     now = datetime.now(timezone.utc)
     day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    used = prediction_crud.count_predictions_created_since(
-        db,
-        user_id=current_user.id,
-        since=day_start,
-    )
-    if used < limit:
-        return
-
     seconds_until_reset = max(1, ceil((day_start + timedelta(days=1) - now).total_seconds()))
-    raise HTTPException(
+    return HTTPException(
         status_code=429,
-        detail="Guest daily reading limit reached. Please try again tomorrow.",
+        detail=("Guest" if is_guest else "User") + " daily reading limit reached. Please try again tomorrow.",
         headers={"Retry-After": str(seconds_until_reset)},
     )
 
@@ -215,13 +201,20 @@ def create_prediction(
     if not spread_crud.validate_spread_exists(db, spread_id=prediction_create.spread_type_id):
         raise HTTPException(status_code=400, detail="Spread does not exist or is inactive")
 
-    _enforce_guest_daily_reading_limit(db, current_user)
-
-    return prediction_crud.create_prediction_with_stats(
-        db,
-        user_id=current_user.id,
-        prediction_create=prediction_create,
+    is_guest = _is_guest_account(current_user)
+    daily_limit = 0 if current_user.is_superuser else max(
+        0,
+        int(settings.GUEST_DAILY_READING_LIMIT if is_guest else settings.USER_DAILY_READING_LIMIT),
     )
+    try:
+        return prediction_crud.create_prediction_with_stats(
+            db,
+            user_id=current_user.id,
+            prediction_create=prediction_create,
+            daily_limit=daily_limit,
+        )
+    except prediction_crud.DailyReadingLimitExceeded as exc:
+        raise _daily_reading_limit_error(is_guest=is_guest) from exc
 
 
 @router.put("/{prediction_id:int}", response_model=Prediction, summary="Update record")
@@ -476,6 +469,16 @@ async def _build_ai_interpretation_create(
         )
     except HTTPException:
         raise
+    except CozeBudgetExceededError as exc:
+        if exc.request_started:
+            prediction_crud.update_prediction_status(db, prediction_id=prediction_id, status=PredictionStatus.FAILED)
+        else:
+            prediction_crud.release_interpretation_generation(
+                db,
+                prediction_id=prediction_id,
+                started_at=prediction.interpretation_started_at,
+            )
+        raise HTTPException(status_code=429, detail="AI budget exhausted. Please try again later.") from exc
     except CozeTimeoutError as exc:
         logger.error("AI interpretation timed out: %s", exc)
         prediction_crud.update_prediction_status(
@@ -568,6 +571,32 @@ async def create_ai_interpretation(
         return existing_interpretation
 
     if not interpretation_create or force_ai:
+        if not prediction_crud.get_prediction_card_draws(db, prediction_id=prediction_id):
+            raise HTTPException(status_code=400, detail="Cards must be drawn before interpretation")
+
+        now = datetime.now(timezone.utc)
+        stale_before = now - timedelta(seconds=max(1, int(settings.AI_INTERPRETATION_STALE_SECONDS)))
+        max_attempts = max(1, int(settings.AI_INTERPRETATION_MAX_ATTEMPTS))
+        claimed = prediction_crud.claim_interpretation_generation(
+            db,
+            prediction_id=prediction_id,
+            now=now,
+            stale_before=stale_before,
+            max_attempts=max_attempts,
+        )
+        if not claimed:
+            existing_interpretation = prediction_crud.get_prediction_interpretation(db, prediction_id=prediction_id)
+            if existing_interpretation:
+                return existing_interpretation
+            db.refresh(prediction)
+            started_at = _as_utc(prediction.interpretation_started_at)
+            if prediction.status == PredictionStatus.PROCESSING and started_at is not None and started_at >= stale_before:
+                raise HTTPException(status_code=409, detail="Interpretation generation is already in progress")
+            if prediction.interpretation_attempts >= max_attempts:
+                raise HTTPException(status_code=429, detail="Interpretation attempts exhausted")
+            raise HTTPException(status_code=409, detail="Interpretation generation is already in progress")
+
+        db.refresh(prediction)
         interpretation_create = await _build_ai_interpretation_create(db, prediction, user_context)
 
     return _store_interpretation(db, prediction_id, interpretation_create)

@@ -1,7 +1,7 @@
 from typing import List, Optional
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import and_, or_, desc, asc, func, select, update
+from sqlalchemy import and_, or_, case, desc, asc, func, select, update
 from app.models.record import Prediction, CardDraw, Interpretation, QuestionType, PredictionStatus
 from app.models.user import User
 from app.models.tarot_card import TarotCard
@@ -13,6 +13,10 @@ from app.schemas.prediction import (
 )
 
 # ======= 预测记录相关 =======
+
+
+class DailyReadingLimitExceeded(Exception):
+    pass
 
 def _apply_prediction_filters(
     query,
@@ -170,8 +174,40 @@ def create_prediction(db: Session, user_id: int, prediction_create: PredictionCr
     return db_prediction
 
 
-def create_prediction_with_stats(db: Session, user_id: int, prediction_create: PredictionCreate) -> Prediction:
+def create_prediction_with_stats(
+    db: Session,
+    user_id: int,
+    prediction_create: PredictionCreate,
+    *,
+    daily_limit: int = 0,
+    quota_day: date | None = None,
+) -> Prediction:
     """Create prediction and update related counters in one transaction."""
+    if daily_limit > 0:
+        quota_day = quota_day or datetime.now(timezone.utc).date()
+        claimed = db.execute(
+            update(User)
+            .where(User.id == user_id)
+            .where(
+                or_(
+                    User.reading_quota_day.is_(None),
+                    User.reading_quota_day != quota_day,
+                    User.reading_quota_count < daily_limit,
+                )
+            )
+            .values(
+                reading_quota_day=quota_day,
+                reading_quota_count=case(
+                    (User.reading_quota_day == quota_day, User.reading_quota_count + 1),
+                    else_=1,
+                ),
+            )
+            .execution_options(synchronize_session=False)
+        )
+        if claimed.rowcount != 1:
+            db.rollback()
+            raise DailyReadingLimitExceeded
+
     prediction_data = prediction_create.model_dump()
     prediction_data["question_type"] = QuestionType(prediction_create.question_type.value)
     db_prediction = Prediction(
@@ -254,6 +290,27 @@ def claim_interpretation_generation(
     result = db.execute(statement)
     db.commit()
     return result.rowcount == 1
+
+
+def release_interpretation_generation(db: Session, prediction_id: int, started_at: datetime | None) -> bool:
+    """Return an unused claim when budget admission refused before any paid request."""
+    if started_at is None:
+        return False
+    released = db.execute(
+        update(Prediction)
+        .where(Prediction.id == prediction_id)
+        .where(Prediction.status == PredictionStatus.PROCESSING)
+        .where(Prediction.interpretation_started_at == started_at)
+        .where(Prediction.interpretation_attempts > 0)
+        .values(
+            status=PredictionStatus.FAILED,
+            interpretation_started_at=None,
+            interpretation_attempts=Prediction.interpretation_attempts - 1,
+        )
+        .execution_options(synchronize_session=False)
+    )
+    db.commit()
+    return released.rowcount == 1
 
 def delete_prediction(db: Session, prediction_id: int) -> bool:
     """删除预测记录"""

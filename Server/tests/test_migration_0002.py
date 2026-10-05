@@ -47,10 +47,10 @@ def migration_db(tmp_path, monkeypatch):
     return db_path, database_url
 
 
-def test_upgrade_head_on_fresh_database_has_generation_tracking(migration_db):
+def test_upgrade_0002_on_fresh_database_has_generation_tracking(migration_db):
     _, database_url = migration_db
 
-    command.upgrade(_alembic_config(), "head")
+    command.upgrade(_alembic_config(), HEAD_REVISION)
 
     assert NEW_COLUMNS <= _prediction_columns(database_url)
     assert _current_revision(database_url) == HEAD_REVISION
@@ -72,7 +72,7 @@ def test_upgrade_adds_missing_columns_to_legacy_predictions_table(migration_db):
         connection.close()
     assert not NEW_COLUMNS & _prediction_columns(database_url)
 
-    command.upgrade(config, "head")
+    command.upgrade(config, HEAD_REVISION)
 
     assert NEW_COLUMNS <= _prediction_columns(database_url)
     assert _current_revision(database_url) == HEAD_REVISION

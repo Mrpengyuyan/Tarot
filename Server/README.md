@@ -46,6 +46,7 @@ python -m app.scripts.init_tarot_data
 ```
 
 第一条命令建表。第二条命令从 `data/tarotCards.json` 和 `data/spreads.json` 导入 78 张牌和 6 个牌阵。
+已有数据库升级到此版本时也必须先运行 `alembic upgrade head`，否则账号额度和 AI 预算表不可用。
 
 ## 启动
 
@@ -70,12 +71,17 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 | 变量 | `.env.example` 中的值 | 说明 |
 | --- | --- | --- |
 | `DATABASE_URL` | `sqlite:///./tarot_game.db` | 生产环境请换成 PostgreSQL 地址（依赖中已包含 `psycopg2-binary`） |
-| `GUEST_DAILY_READING_LIMIT` | `3` | 访客每日阅读上限，超出后返回 `429` 和 `Retry-After` |
-| `AI_BUDGET_GUARD_ENABLED` | `true` | AI 预算保护。计数器保存在进程内存中，多实例部署时需要集中存储 |
+| `GUEST_DAILY_READING_LIMIT` | `3` | 访客每日阅读上限，删除阅读记录不退还次数 |
+| `USER_DAILY_READING_LIMIT` | `3` | 普通注册账号每日阅读上限；管理员不受玩家上限约束 |
+| `AI_BUDGET_GUARD_ENABLED` | `true` | AI 预算保护；每次向模型服务请求前在数据库中预留额度 |
 | `AUTO_CREATE_TABLES_ON_STARTUP` | `false` | 设为 `true` 后，启动时自动建表 |
 | `AUTO_BOOTSTRAP_REFERENCE_DATA_ON_STARTUP` | `false` | 设为 `true` 后，启动时自动导入牌和牌阵数据 |
 | `AI_INTERPRETATION_STALE_SECONDS` | `300` | 解读处于生成中超过这个秒数，视为卡住，可以重新开始生成 |
 | `AI_INTERPRETATION_MAX_ATTEMPTS` | `3` | 每条记录最多开始生成解读的次数，超出后异步接口返回 `429` |
+
+同步与异步 AI 解读共用生成次数和生成权；同步请求遇到正在生成中的解读返回 `409`，次数耗尽返回 `429`。普通账号和访客的次数按 UTC 日计算，删除记录不会退还次数。匿名访客可以重新申请账号，因此这些玩家额度不是可靠的“每个真人”限额；全局 AI 预算是最后一道成本保护。
+
+预算会在每次上游请求前按输入字节数、输出 token 上限及配置价格预留，收到可靠的用量后结算。网络超时或上游不提供用量时，预留额会继续占用额度，避免不确定费用被重复使用。此机制不能保证与模型服务商的实际账单完全一致；请同时在服务商后台设置消费上限。
 
 ## 测试
 

@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import math
 import threading
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
@@ -8,6 +9,8 @@ from typing import Any, Dict, List, Optional
 import httpx
 
 from app.core.config import settings
+from app.db.session import SessionLocal
+from app.services.budget_store import BudgetLimitExceeded, DatabaseBudgetStore
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +38,10 @@ class CozeHttpStatusError(CozeError):
 class CozeBudgetExceededError(CozeError):
     """Raised when budget guard blocks a request."""
 
+    def __init__(self, message: str, *, request_started: bool = False) -> None:
+        super().__init__(message)
+        self.request_started = request_started
+
 
 class CozeService:
     """
@@ -48,7 +55,8 @@ class CozeService:
     - Conditional fallback: deepseek-reasoner
     """
 
-    def __init__(self) -> None:
+    def __init__(self, budget_store: Optional[DatabaseBudgetStore] = None) -> None:
+        self.budget_store = budget_store
         self.provider_name = "deepseek"
         # Prefer DeepSeek vars; allow legacy COZE_API_KEY as a temporary fallback.
         self.api_key = settings.DEEPSEEK_API_KEY or settings.COZE_API_KEY
@@ -108,10 +116,10 @@ class CozeService:
             "last_model_used": None,
             "last_request_cost_usd": 0.0,
         }
-        if self.budget_guard_enabled:
+        if self.budget_guard_enabled and self.budget_store is None:
             logger.warning(
                 "AI budget guard is enabled with process-local counters. "
-                "Use a centralized budget store or disable this in multi-instance deployments."
+                "Pass a database budget store before making paid requests."
             )
 
     def is_configured(self) -> bool:
@@ -189,7 +197,34 @@ class CozeService:
     def budget_status(self) -> Dict[str, Any]:
         with self._budget_lock:
             self._reset_budget_windows_if_needed_locked()
-            return self._budget_snapshot_locked()
+            status = self._budget_snapshot_locked()
+        if self.budget_guard_enabled and self.budget_store is not None:
+            persisted = self.budget_store.snapshot()
+            daily_used = (persisted["daily_spent_micros"] + persisted["daily_reserved_micros"]) / 1_000_000
+            monthly_used = (persisted["monthly_spent_micros"] + persisted["monthly_reserved_micros"]) / 1_000_000
+            status["daily_spend_usd"] = persisted["daily_spent_micros"] / 1_000_000
+            status["monthly_spend_usd"] = persisted["monthly_spent_micros"] / 1_000_000
+            status["daily_reserved_usd"] = persisted["daily_reserved_micros"] / 1_000_000
+            status["monthly_reserved_usd"] = persisted["monthly_reserved_micros"] / 1_000_000
+            status["daily_remaining_usd"] = max(0.0, self.daily_budget_usd - daily_used) if self.daily_budget_usd else None
+            status["monthly_remaining_usd"] = max(0.0, self.monthly_budget_usd - monthly_used) if self.monthly_budget_usd else None
+        return status
+
+    def _estimate_max_request_cost_micros(self, payload: Dict[str, Any]) -> int:
+        output_cap = int(payload.get("max_tokens") or 0)
+        if output_cap <= 0:
+            raise CozeBudgetExceededError("AI_MAX_OUTPUT_TOKENS must be positive when budget guard is enabled")
+        model = str(payload.get("model") or "")
+        if model == self.reasoner_model:
+            input_price = self.reasoner_input_cost_per_m
+            output_price = self.reasoner_output_cost_per_m
+        else:
+            input_price = self.chat_input_cost_per_m
+            output_price = self.chat_output_cost_per_m
+        if input_price <= 0 or output_price <= 0:
+            raise CozeBudgetExceededError("AI cost prices must be positive when budget guard is enabled")
+        input_bound = len(json.dumps(payload.get("messages") or [], ensure_ascii=False).encode("utf-8")) + 1024
+        return max(1, math.ceil(input_bound * input_price + output_cap * output_price))
 
     def _is_hard_budget_exhausted_locked(self) -> Optional[str]:
         if self.daily_budget_usd > 0 and float(self._budget_state["daily_spend_usd"]) >= self.daily_budget_usd:
@@ -315,18 +350,33 @@ class CozeService:
     ) -> Dict[str, Any]:
         if not self.is_configured():
             raise CozeError("DeepSeek is not configured. Please set DEEPSEEK_API_KEY.")
+        if self.budget_guard_enabled and self.budget_store is None:
+            raise CozeBudgetExceededError("Persistent AI budget store is required for paid requests")
 
         request_timeout = float(timeout) if timeout else self.timeout
         last_error: Optional[Exception] = None
+        request_started = False
 
         for endpoint in self._candidate_chat_endpoints():
             url = f"{self.base_url}/{endpoint}"
+            reservation_id = None
+            if self.budget_guard_enabled and self.budget_store is not None:
+                try:
+                    reservation_id = self.budget_store.reserve(
+                        model=str(payload.get("model") or ""),
+                        estimated_micros=self._estimate_max_request_cost_micros(payload),
+                        daily_limit_micros=math.floor(self.daily_budget_usd * 1_000_000),
+                        monthly_limit_micros=math.floor(self.monthly_budget_usd * 1_000_000),
+                    )
+                except BudgetLimitExceeded as exc:
+                    raise CozeBudgetExceededError(str(exc), request_started=request_started) from exc
             try:
                 async with httpx.AsyncClient(
                     timeout=request_timeout,
                     follow_redirects=True,
                     trust_env=self.trust_env_proxy,
                 ) as client:
+                    request_started = True
                     response = await client.post(url, headers=self._headers(), json=payload)
             except httpx.TimeoutException as exc:
                 last_error = CozeTimeoutError(
@@ -341,6 +391,8 @@ class CozeService:
                 continue
 
             if response.status_code >= 400:
+                if reservation_id is not None and response.status_code < 500:
+                    self.budget_store.settle(reservation_id, actual_micros=0)
                 detail = response.text[:500]
                 last_error = CozeHttpStatusError(
                     int(response.status_code),
@@ -349,7 +401,16 @@ class CozeService:
                 continue
 
             try:
-                return response.json()
+                result = response.json()
+                if reservation_id is not None and isinstance(result, dict) and isinstance(result.get("usage"), dict):
+                    usage = self._extract_usage(result)
+                    if usage["prompt_tokens"] + usage["completion_tokens"] > 0:
+                        actual_cost = self._estimate_cost_usd(model=str(payload.get("model") or ""), usage=usage)
+                        self.budget_store.settle(
+                            reservation_id,
+                            actual_micros=math.ceil(actual_cost * 1_000_000),
+                        )
+                return result
             except json.JSONDecodeError:
                 last_error = CozeError(
                     f"DeepSeek returned non-JSON response on endpoint '{endpoint}': {response.text[:200]}"
@@ -498,6 +559,8 @@ class CozeService:
                     "cost_usd": cost_usd,
                 }
             except CozeError as exc:
+                if isinstance(exc, CozeBudgetExceededError) and last_error is not None:
+                    exc.request_started = True
                 if expect_json and "response_format" in str(exc).lower() and "response_format" in payload:
                     payload.pop("response_format", None)
                     continue
@@ -573,6 +636,8 @@ class CozeService:
                 expect_json=expect_json,
             )
             chat_text = str(chat_result.get("text", ""))
+        except CozeBudgetExceededError:
+            raise
         except Exception as exc:
             chat_error = exc
             logger.warning("DeepSeek primary model '%s' failed: %s", self.chat_model, exc)
@@ -787,4 +852,4 @@ class CozeService:
             }
 
 
-coze_service = CozeService()
+coze_service = CozeService(budget_store=DatabaseBudgetStore(SessionLocal))

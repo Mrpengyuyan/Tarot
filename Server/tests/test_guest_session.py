@@ -1,5 +1,6 @@
 from app.api.v1.endpoints import records as records_endpoint
 from app.core.config import settings
+from concurrent.futures import ThreadPoolExecutor
 
 
 def test_guest_session_returns_bearer_token_and_authenticated_profile(client):
@@ -159,6 +160,75 @@ def test_guest_session_enforces_configured_daily_reading_limit(
     assert second_record.status_code == 429
     assert "daily reading limit" in second_record.json()["detail"].lower()
     assert int(second_record.headers["retry-after"]) > 0
+
+
+def test_guest_deleting_record_does_not_refund_daily_reading(client, seeded_spread_and_cards, monkeypatch):
+    monkeypatch.setattr(settings, "GUEST_DAILY_READING_LIMIT", 1)
+    token = client.post("/api/v1/guest-session").json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    payload = {
+        "question": "Will this still count after deletion?",
+        "question_type": "general",
+        "spread_type_id": seeded_spread_and_cards["spread_id"],
+    }
+
+    record = client.post("/api/v1/records/", headers=headers, json=payload)
+    assert record.status_code == 200
+    assert client.delete(f"/api/v1/records/{record.json()['id']}", headers=headers).status_code == 200
+    assert client.post("/api/v1/records/", headers=headers, json=payload).status_code == 429
+
+
+def test_guest_changing_email_does_not_remove_guest_limit(client, seeded_spread_and_cards, monkeypatch):
+    monkeypatch.setattr(settings, "GUEST_DAILY_READING_LIMIT", 1)
+    token = client.post("/api/v1/guest-session").json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    update = client.put("/api/v1/users/me", headers=headers, json={"email": "guest-now-registered@example.com"})
+    assert update.status_code == 200
+    payload = {
+        "question": "Does my original guest status still apply?",
+        "question_type": "general",
+        "spread_type_id": seeded_spread_and_cards["spread_id"],
+    }
+
+    assert client.post("/api/v1/records/", headers=headers, json=payload).status_code == 200
+    assert client.post("/api/v1/records/", headers=headers, json=payload).status_code == 429
+
+
+def test_registered_account_has_its_own_daily_reading_limit(client, seeded_spread_and_cards):
+    assert client.post(
+        "/api/v1/register",
+        json={"username": "limited_player", "email": "limited@example.com", "password": "password123"},
+    ).status_code == 200
+    token = client.post(
+        "/api/v1/login",
+        data={"username": "limited_player", "password": "password123"},
+    ).json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    payload = {
+        "question": "How many readings can I create?",
+        "question_type": "general",
+        "spread_type_id": seeded_spread_and_cards["spread_id"],
+    }
+
+    for _ in range(3):
+        assert client.post("/api/v1/records/", headers=headers, json=payload).status_code == 200
+    assert client.post("/api/v1/records/", headers=headers, json=payload).status_code == 429
+
+
+def test_parallel_guest_record_creation_claims_only_one_slot(client, seeded_spread_and_cards, monkeypatch):
+    monkeypatch.setattr(settings, "GUEST_DAILY_READING_LIMIT", 1)
+    token = client.post("/api/v1/guest-session").json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    payload = {
+        "question": "Can two requests use the same slot?",
+        "question_type": "general",
+        "spread_type_id": seeded_spread_and_cards["spread_id"],
+    }
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        responses = list(pool.map(lambda _: client.post("/api/v1/records/", headers=headers, json=payload), range(2)))
+
+    assert sorted(response.status_code for response in responses) == [200, 429]
 
 
 def test_guest_session_refresh_keeps_access_to_own_record(client, seeded_spread_and_cards):

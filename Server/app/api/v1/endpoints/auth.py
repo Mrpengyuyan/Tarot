@@ -115,6 +115,7 @@ def _create_guest_user(db: Session) -> UserModel:
             nickname="访客",
             is_active=True,
             is_superuser=False,
+            is_guest=True,
         )
         db.add(guest_user)
         try:
