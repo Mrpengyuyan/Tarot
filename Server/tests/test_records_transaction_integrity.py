@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime, timezone
 
 import pytest
 from sqlalchemy import event
@@ -58,15 +59,16 @@ def test_background_completion_failure_does_not_leave_saved_interpretation(
 
     monkeypatch.setattr(records_endpoint.tarot_interpretation_service, "create_interpretation", fake_interpretation)
 
-    def fail_completion_status(mapper, connection, target):  # noqa: ANN001
-        if target.id == prediction_id and target.status == PredictionStatus.COMPLETED:
+    def fail_completion_status(connection, cursor, statement, parameters, context, executemany):  # noqa: ANN001
+        if statement.startswith("UPDATE predictions") and "completed" in parameters:
             raise RuntimeError("completion update failed")
 
-    event.listen(Prediction, "before_update", fail_completion_status)
+    engine = db_session.get_bind()
+    event.listen(engine, "before_cursor_execute", fail_completion_status)
     try:
         response = client.post(f"/api/v1/records/{prediction_id}/interpret/async")
     finally:
-        event.remove(Prediction, "before_update", fail_completion_status)
+        event.remove(engine, "before_cursor_execute", fail_completion_status)
 
     assert response.status_code == 202
     db_session.expire_all()
@@ -78,7 +80,7 @@ def test_background_session_open_failure_does_not_escape(caplog):
     def unavailable_session():
         raise RuntimeError("database unavailable")
 
-    asyncio.run(records_endpoint.run_interpretation_job(unavailable_session, 42, None))
+    asyncio.run(records_endpoint.run_interpretation_job(unavailable_session, 42, None, datetime.now(timezone.utc)))
 
     assert "Background interpretation for record 42 failed" in caplog.text
     assert "database unavailable" in caplog.text
@@ -95,15 +97,16 @@ def test_background_failure_status_write_error_waits_for_stale_retry(
 
     monkeypatch.setattr(records_endpoint.tarot_interpretation_service, "create_interpretation", failing_interpretation)
 
-    def fail_status_write(mapper, connection, target):  # noqa: ANN001
-        if target.id == prediction_id and target.status == PredictionStatus.FAILED:
+    def fail_status_write(connection, cursor, statement, parameters, context, executemany):  # noqa: ANN001
+        if statement.startswith("UPDATE predictions") and "failed" in parameters:
             raise RuntimeError("status write unavailable")
 
-    event.listen(Prediction, "before_update", fail_status_write)
+    engine = db_session.get_bind()
+    event.listen(engine, "before_cursor_execute", fail_status_write)
     try:
         response = client.post(f"/api/v1/records/{prediction_id}/interpret/async")
     finally:
-        event.remove(Prediction, "before_update", fail_status_write)
+        event.remove(engine, "before_cursor_execute", fail_status_write)
 
     assert response.status_code == 202
     db_session.expire_all()

@@ -409,6 +409,7 @@ async def _build_ai_interpretation_create(
     which is the behavior the synchronous endpoint has always had.
     """
     prediction_id = prediction.id
+    started_at = prediction.interpretation_started_at
     try:
         card_draws = prediction_crud.get_prediction_card_draws(db, prediction_id=prediction_id)
         if not card_draws:
@@ -434,6 +435,9 @@ async def _build_ai_interpretation_create(
                 status_code=500,
                 detail="Card data is incomplete; please redraw cards",
             )
+
+        if not prediction_crud.interpretation_claim_is_current(db, prediction_id, started_at):
+            raise HTTPException(status_code=409, detail="Interpretation generation was superseded")
 
         ai_payload = await tarot_interpretation_service.create_interpretation(
             db=db,
@@ -467,45 +471,29 @@ async def _build_ai_interpretation_create(
         raise
     except CozeBudgetExceededError as exc:
         if exc.request_started:
-            prediction_crud.update_prediction_status(db, prediction_id=prediction_id, status=PredictionStatus.FAILED)
+            prediction_crud.fail_interpretation_generation(db, prediction_id=prediction_id, started_at=started_at)
         else:
             prediction_crud.release_interpretation_generation(
                 db,
                 prediction_id=prediction_id,
-                started_at=prediction.interpretation_started_at,
+                started_at=started_at,
             )
         raise HTTPException(status_code=429, detail="AI budget exhausted. Please try again later.") from exc
     except CozeTimeoutError as exc:
         logger.error("AI interpretation timed out: %s", exc)
-        prediction_crud.update_prediction_status(
-            db,
-            prediction_id=prediction_id,
-            status=PredictionStatus.FAILED,
-        )
+        prediction_crud.fail_interpretation_generation(db, prediction_id=prediction_id, started_at=started_at)
         raise HTTPException(status_code=504, detail="AI interpretation request timed out") from exc
     except CozeHttpStatusError as exc:
         logger.error("AI interpretation provider HTTP error: %s", exc)
-        prediction_crud.update_prediction_status(
-            db,
-            prediction_id=prediction_id,
-            status=PredictionStatus.FAILED,
-        )
+        prediction_crud.fail_interpretation_generation(db, prediction_id=prediction_id, started_at=started_at)
         raise HTTPException(status_code=502, detail="AI interpretation upstream service error") from exc
     except (CozeRequestError, CozeError) as exc:
         logger.error("AI interpretation upstream request failed: %s", exc)
-        prediction_crud.update_prediction_status(
-            db,
-            prediction_id=prediction_id,
-            status=PredictionStatus.FAILED,
-        )
+        prediction_crud.fail_interpretation_generation(db, prediction_id=prediction_id, started_at=started_at)
         raise HTTPException(status_code=502, detail="AI interpretation request failed") from exc
     except Exception as exc:
         logger.error("AI interpretation generation failed: %s", exc)
-        prediction_crud.update_prediction_status(
-            db,
-            prediction_id=prediction_id,
-            status=PredictionStatus.FAILED,
-        )
+        prediction_crud.fail_interpretation_generation(db, prediction_id=prediction_id, started_at=started_at)
         raise HTTPException(status_code=502, detail="AI interpretation service unavailable") from exc
 
 
@@ -513,6 +501,7 @@ def _store_interpretation(
     db: Session,
     prediction_id: int,
     interpretation_create: InterpretationCreate,
+    expected_started_at: datetime | None = None,
 ):
     """Persist an interpretation and mark the prediction COMPLETED; return the existing one on a race."""
     try:
@@ -521,7 +510,16 @@ def _store_interpretation(
             prediction_id=prediction_id,
             interpretation_create=interpretation_create,
             prediction_status=PredictionStatus.COMPLETED,
+            expected_started_at=expected_started_at,
         )
+    except prediction_crud.InterpretationClaimLost as exc:
+        existing = prediction_crud.get_prediction_interpretation(db, prediction_id=prediction_id)
+        if existing:
+            prediction = prediction_crud.get_prediction_by_id(db, prediction_id=prediction_id)
+            if prediction:
+                _complete_existing_interpretation(db, prediction)
+            return existing
+        raise HTTPException(status_code=409, detail="Interpretation generation was superseded") from exc
     except IntegrityError:
         db.rollback()
         interpretation = prediction_crud.get_prediction_interpretation(db, prediction_id=prediction_id)
@@ -565,6 +563,7 @@ async def create_ai_interpretation(
         _complete_existing_interpretation(db, prediction)
         return existing_interpretation
 
+    expected_started_at = None
     if not interpretation_create or force_ai:
         if not prediction_crud.get_prediction_card_draws(db, prediction_id=prediction_id):
             raise HTTPException(status_code=400, detail="Cards must be drawn before interpretation")
@@ -592,9 +591,10 @@ async def create_ai_interpretation(
             raise HTTPException(status_code=409, detail="Interpretation generation is already in progress")
 
         db.refresh(prediction)
+        expected_started_at = prediction.interpretation_started_at
         interpretation_create = await _build_ai_interpretation_create(db, prediction, user_context)
 
-    return _store_interpretation(db, prediction_id, interpretation_create)
+    return _store_interpretation(db, prediction_id, interpretation_create, expected_started_at)
 
 
 async def generate_and_store_interpretation(
@@ -603,14 +603,16 @@ async def generate_and_store_interpretation(
     user_context: Optional[str],
 ):
     """Generate with AI and persist; the entry point used by background generation."""
+    expected_started_at = prediction.interpretation_started_at
     interpretation_create = await _build_ai_interpretation_create(db, prediction, user_context)
-    return _store_interpretation(db, prediction.id, interpretation_create)
+    return _store_interpretation(db, prediction.id, interpretation_create, expected_started_at)
 
 
 async def run_interpretation_job(
     session_factory: Callable[[], Session],
     prediction_id: int,
     user_context: Optional[str],
+    claimed_at: datetime,
 ) -> None:
     """Background task. Opens its own session because the request session is already closed."""
     try:
@@ -623,16 +625,15 @@ async def run_interpretation_job(
         if prediction is None:
             logger.warning("Background interpretation skipped: record %s not found", prediction_id)
             return
+        if prediction.status != PredictionStatus.PROCESSING or _as_utc(prediction.interpretation_started_at) != _as_utc(claimed_at):
+            logger.info("Background interpretation skipped: record %s claim was superseded", prediction_id)
+            return
         await generate_and_store_interpretation(db, prediction, user_context)
     except Exception as exc:  # noqa: BLE001 - background work must never raise into the event loop
         logger.error("Background interpretation for record %s failed: %s", prediction_id, exc)
         try:
             db.rollback()
-            prediction_crud.update_prediction_status(
-                db,
-                prediction_id=prediction_id,
-                status=PredictionStatus.FAILED,
-            )
+            prediction_crud.fail_interpretation_generation(db, prediction_id=prediction_id, started_at=claimed_at)
         except Exception:  # noqa: BLE001 - stale claims remain retryable if the database is unavailable
             logger.exception("Background interpretation for record %s could not be marked failed", prediction_id)
     finally:
@@ -708,7 +709,7 @@ async def start_ai_interpretation_async(
         stale_before=stale_before,
         max_attempts=max_attempts,
     ):
-        background_tasks.add_task(run_interpretation_job, session_factory, prediction_id, user_context)
+        background_tasks.add_task(run_interpretation_job, session_factory, prediction_id, user_context, now)
         return _processing_json(prediction_id)
 
     db.refresh(prediction)

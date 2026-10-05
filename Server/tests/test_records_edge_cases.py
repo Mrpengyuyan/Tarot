@@ -113,8 +113,10 @@ def test_interpretation_conflict_returns_existing_record(client, seeded_spread_a
             return None
         return fake_existing
 
-    def fake_create_interpretation(db, prediction_id, interpretation_create, *, prediction_status):  # noqa: ANN001
-        del db, prediction_id, interpretation_create, prediction_status
+    def fake_create_interpretation(
+        db, prediction_id, interpretation_create, *, prediction_status, expected_started_at
+    ):  # noqa: ANN001
+        del db, prediction_id, interpretation_create, prediction_status, expected_started_at
         raise IntegrityError("insert", {}, Exception("duplicate key"))
 
     monkeypatch.setattr(

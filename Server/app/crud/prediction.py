@@ -18,6 +18,10 @@ from app.schemas.prediction import (
 class DailyReadingLimitExceeded(Exception):
     pass
 
+
+class InterpretationClaimLost(Exception):
+    pass
+
 def _apply_prediction_filters(
     query,
     user_id: int,
@@ -316,6 +320,38 @@ def release_interpretation_generation(db: Session, prediction_id: int, started_a
     db.commit()
     return released.rowcount == 1
 
+
+def fail_interpretation_generation(db: Session, prediction_id: int, started_at: datetime | None) -> bool:
+    """Only the active claim may mark a reading failed."""
+    if started_at is None:
+        return False
+    has_interpretation = select(Interpretation.id).where(Interpretation.prediction_id == prediction_id).exists()
+    failed = db.execute(
+        update(Prediction)
+        .where(Prediction.id == prediction_id)
+        .where(Prediction.status == PredictionStatus.PROCESSING)
+        .where(Prediction.interpretation_started_at == started_at)
+        .where(~has_interpretation)
+        .values(status=PredictionStatus.FAILED)
+        .execution_options(synchronize_session=False)
+    )
+    db.commit()
+    return failed.rowcount == 1
+
+
+def interpretation_claim_is_current(db: Session, prediction_id: int, started_at: datetime | None) -> bool:
+    """Read the claim directly so a cached ORM prediction cannot authorize an AI call."""
+    if started_at is None:
+        return False
+    has_interpretation = select(Interpretation.id).where(Interpretation.prediction_id == prediction_id).exists()
+    return db.execute(
+        select(Prediction.id)
+        .where(Prediction.id == prediction_id)
+        .where(Prediction.status == PredictionStatus.PROCESSING)
+        .where(Prediction.interpretation_started_at == started_at)
+        .where(~has_interpretation)
+    ).first() is not None
+
 def delete_prediction(db: Session, prediction_id: int) -> bool:
     """删除预测记录"""
     db_prediction = get_prediction_by_id(db, prediction_id)
@@ -411,6 +447,7 @@ def create_interpretation(
     interpretation_create: InterpretationCreate,
     *,
     prediction_status: PredictionStatus | None = None,
+    expected_started_at: datetime | None = None,
 ) -> Interpretation:
     """创建解读结果"""
     db_interpretation = Interpretation(
@@ -418,7 +455,21 @@ def create_interpretation(
         **interpretation_create.model_dump()
     )
     db.add(db_interpretation)
-    if prediction_status is not None:
+    if expected_started_at is not None:
+        if prediction_status != PredictionStatus.COMPLETED:
+            raise ValueError("A claimed interpretation must complete the prediction")
+        updated = db.execute(
+            update(Prediction)
+            .where(Prediction.id == prediction_id)
+            .where(Prediction.status == PredictionStatus.PROCESSING)
+            .where(Prediction.interpretation_started_at == expected_started_at)
+            .values(status=PredictionStatus.COMPLETED, completed_at=datetime.now(timezone.utc))
+            .execution_options(synchronize_session=False)
+        )
+        if updated.rowcount != 1:
+            db.rollback()
+            raise InterpretationClaimLost
+    elif prediction_status is not None:
         prediction = get_prediction_by_id(db, prediction_id)
         if prediction is None:
             raise ValueError("Prediction not found")
