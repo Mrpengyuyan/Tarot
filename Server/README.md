@@ -103,4 +103,4 @@ docker run --rm -p 8000:8000 --env-file .env tarot-server
 
 容器启动时不会执行 `alembic upgrade head`。需要建表和导入数据时，在 `.env` 中把 `AUTO_CREATE_TABLES_ON_STARTUP` 和 `AUTO_BOOTSTRAP_REFERENCE_DATA_ON_STARTUP` 设为 `true`。
 
-目前没有 `docker-compose.yml`：旧版编排包含已废弃的 React 前端，等部署方式确定后再重写，见 [`PROJECT_COMPLETION_PLAN.md`](../PROJECT_COMPLETION_PLAN.md) Phase 5。
+目前没有 `docker-compose.yml`：旧版编排包含已废弃的 React 前端，等部署方式确定后再重写。

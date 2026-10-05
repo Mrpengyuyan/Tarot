@@ -26,6 +26,8 @@
 **/.superpowers/
 # Local design and implementation notes; public guidance belongs in README files.
 docs/superpowers/
+PROJECT_COMPLETION_PLAN.md
+UNITY_FRONTEND_PLAN.md
 **/__pycache__/
 **/*.pyc
 **/mono_crash.*.json

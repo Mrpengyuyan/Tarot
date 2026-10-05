@@ -10,8 +10,6 @@ Tarot 3D 塔罗牌仪式游戏的产品仓库，包含 Unity 桌面客户端和 
 ```text
 Tarot/
 ├── README.md                     本文件
-├── PROJECT_COMPLETION_PLAN.md    1.0 完结路线
-├── UNITY_FRONTEND_PLAN.md        Unity 前端方向和后端边界
 ├── UnityClient/
 │   ├── README.md
 │   └── TarotUnity/               Unity 工程
@@ -21,9 +19,8 @@ Tarot/
 │   ├── tests/                    后端测试
 │   ├── alembic/                  数据库迁移
 │   └── data/                     78 张牌和 6 个牌阵的参考数据
-├── .github/workflows/
+└── .github/workflows/
 │   └── backend-tests.yml         只在 Server/ 变动时运行
-└── docs/superpowers/             设计与实施文档
 ```
 
 Unity 工程位于 `UnityClient/TarotUnity/`。构建场景包括：
@@ -68,15 +65,11 @@ GitHub Releases 下载并解压运行；在线模式必须指向部署后的 HTT
 - 从 2026-09-11 起，本仓库是唯一的提交入口。后端以一次提交并入 `Server/`：除 `Server/README.md` 外的 80 个文件与旧后端仓库提交 `f19c7cd` 逐字节一致。
 - 旧后端仓库的 16 个提交保留在远端分支 `backend-main`（`f19c7cd`）。查看方法：先执行 `git fetch origin backend-main`，再执行 `git log origin/backend-main`。
 - 已废弃的 React Web 前端（`src/`、`public/`）和旧的 `docker-compose.yml` 只保留在 `backend-main`，不在 `main` 中维护。
-- 设计依据：[`docs/superpowers/specs/2026-09-11-repo-unification-design.md`](docs/superpowers/specs/2026-09-11-repo-unification-design.md)。
 
 ## 文档入口
 
-- [`PROJECT_COMPLETION_PLAN.md`](PROJECT_COMPLETION_PLAN.md)：1.0 完结路线、阶段任务和验收标准。
-- [`UNITY_FRONTEND_PLAN.md`](UNITY_FRONTEND_PLAN.md)：Unity 前端方向和后端边界。
 - [`UnityClient/README.md`](UnityClient/README.md)：Unity 工程目录、运行和发行说明。
 - [`Server/README.md`](Server/README.md)：后端启动、配置和测试。
-- [`UnityClient/TarotUnity/Docs/PROJECT_CHRONICLE.md`](UnityClient/TarotUnity/Docs/PROJECT_CHRONICLE.md)：Phase 1-64 的整理记录。
 - [`UnityClient/TarotUnity/Docs/THIRD_PARTY_ASSETS.md`](UnityClient/TarotUnity/Docs/THIRD_PARTY_ASSETS.md)：资源来源和授权记录。
 
 ## 当前下一步

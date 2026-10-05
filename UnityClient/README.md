@@ -10,11 +10,7 @@ UnityClient/
   TarotUnity/
 ```
 
-The Unity project lives at:
-
-```text
-/Users/maochuandou/BUPT/Game/UnityTarot/UnityClient/TarotUnity
-```
+The Unity project lives in `TarotUnity/`.
 
 Open the project with Unity `6000.3.16f1` and start from
 `TarotUnity/Assets/Scenes/Boot.unity`.
@@ -28,9 +24,5 @@ security.
 
 ## Main References
 
-- [`PROJECT_COMPLETION_PLAN.md`](../PROJECT_COMPLETION_PLAN.md) — current
-  project completion and release plan.
-- [`UNITY_FRONTEND_PLAN.md`](../UNITY_FRONTEND_PLAN.md) — frontend direction and
-  backend boundary.
 - [`TarotUnity/README.md`](TarotUnity/README.md) — Unity project setup and play
   instructions.

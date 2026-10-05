@@ -43,16 +43,8 @@ final client acceptance.
 
 ## Documentation
 
-- [`PROJECT_COMPLETION_PLAN.md`](../../PROJECT_COMPLETION_PLAN.md) — current
-  completion roadmap, release scope, and acceptance checklist.
-- [`UNITY_FRONTEND_PLAN.md`](../../UNITY_FRONTEND_PLAN.md) — original product
-  direction and frontend/backend boundary.
-- `Docs/PROJECT_CHRONICLE.md` — condensed history for Phases 1-64.
-- `Docs/UI_COMPLETION_MAINLINE.md` — visual completion registry and tuning notes.
-- `Docs/THIRD_PARTY_ASSETS.md` — asset provenance and license record.
-- `Docs/PHASE37_VISUAL_REDESIGN_BLUEPRINT.md` — Midnight Parlor visual north-star.
-- `Docs/PHASE60_RESULT_SPREAD.md` through `Docs/PHASE64_RESULT_BACKDROP.md` —
-  latest standalone implementation notes.
+- [`Docs/THIRD_PARTY_ASSETS.md`](Docs/THIRD_PARTY_ASSETS.md) — asset provenance
+  and license record.
 
 ## Local Development
 
