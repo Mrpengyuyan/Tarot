@@ -24,6 +24,8 @@
 
 # Superpowers brainstorm server state (local tooling cache)
 **/.superpowers/
+# Local design and implementation notes; public guidance belongs in README files.
+docs/superpowers/
 **/__pycache__/
 **/*.pyc
 **/mono_crash.*.json
