@@ -52,6 +52,7 @@ def _record(client, prediction_id: int) -> dict:
 @pytest.fixture()
 def fake_ai(monkeypatch):
     state = {"count": 0, "error": None}
+    monkeypatch.setattr(records_endpoint.tarot_interpretation_service.ai_service, "is_configured", lambda: True)
 
     async def fake_create_interpretation(db, prediction, cards_data, user_context=None, before_send=None):  # noqa: ANN001
         state["count"] += 1

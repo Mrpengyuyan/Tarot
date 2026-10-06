@@ -74,6 +74,43 @@ def test_single_attempt_timeout_does_not_try_fallback_endpoint(monkeypatch):
     assert len(posts) == 1
 
 
+def test_single_attempt_works_without_python_311_timeout(monkeypatch):
+    service = CozeService(budget_store=_NoopBudget())
+    service.api_key = "test-key"
+
+    async def chat_once(**kwargs):
+        return {"text": "answer", "usage": {}, "cost_usd": 0.0}
+
+    monkeypatch.setattr(service, "_chat_once", chat_once)
+    monkeypatch.delattr(asyncio, "timeout", raising=False)
+
+    result = asyncio.run(service.send_messages_and_wait(
+        messages=[{"role": "user", "content": "hello"}], single_attempt=True,
+    ))
+    assert result["text"] == "answer"
+
+
+def test_single_attempt_wall_clock_timeout_is_reported(monkeypatch):
+    service = CozeService(budget_store=_NoopBudget())
+    service.api_key = "test-key"
+
+    async def chat_once(**kwargs):
+        return {"text": "answer", "usage": {}, "cost_usd": 0.0}
+
+    async def expire(awaitable, *, timeout):
+        assert timeout == 90
+        awaitable.close()
+        raise asyncio.TimeoutError
+
+    monkeypatch.setattr(service, "_chat_once", chat_once)
+    monkeypatch.setattr(asyncio, "wait_for", expire)
+
+    with pytest.raises(CozeTimeoutError, match="90-second wall-clock limit"):
+        asyncio.run(service.send_messages_and_wait(
+            messages=[{"role": "user", "content": "hello"}], single_attempt=True,
+        ))
+
+
 def test_single_attempt_rejects_redirect_without_following(monkeypatch):
     posts = []
 

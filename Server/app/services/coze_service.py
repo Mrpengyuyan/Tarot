@@ -645,16 +645,18 @@ class CozeService:
         self._ensure_budget_allows_request(self.chat_model)
         if single_attempt:
             try:
-                async with asyncio.timeout(90):
-                    result = await self._chat_once(
+                result = await asyncio.wait_for(
+                    self._chat_once(
                         model=self.chat_model,
                         messages=messages,
                         max_wait_time=85,
                         expect_json=expect_json,
                         single_attempt=True,
                         before_send=before_send,
-                    )
-            except TimeoutError as exc:
+                    ),
+                    timeout=90,
+                )
+            except asyncio.TimeoutError as exc:
                 raise CozeTimeoutError("DeepSeek request exceeded the 90-second wall-clock limit") from exc
             try:
                 self._register_usage_and_cost(
