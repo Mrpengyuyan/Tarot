@@ -54,7 +54,7 @@ def test_background_completion_failure_does_not_leave_saved_interpretation(
     prediction_id = _create_drawable_record(client, seeded_spread_and_cards["spread_id"], "interpret_atomic")
     assert client.post(f"/api/v1/records/{prediction_id}/draw").status_code == 200
 
-    async def fake_interpretation(db, prediction, cards_data, user_context=None):  # noqa: ANN001
+    async def fake_interpretation(db, prediction, cards_data, user_context=None, before_send=None):  # noqa: ANN001
         return {"overall_interpretation": "A clear answer", "model_used": "test_ai"}
 
     monkeypatch.setattr(records_endpoint.tarot_interpretation_service, "create_interpretation", fake_interpretation)
@@ -92,7 +92,7 @@ def test_background_failure_status_write_error_waits_for_stale_retry(
     prediction_id = _create_drawable_record(client, seeded_spread_and_cards["spread_id"], "failed_status")
     assert client.post(f"/api/v1/records/{prediction_id}/draw").status_code == 200
 
-    async def failing_interpretation(db, prediction, cards_data, user_context=None):  # noqa: ANN001
+    async def failing_interpretation(db, prediction, cards_data, user_context=None, before_send=None):  # noqa: ANN001
         raise RuntimeError("AI unavailable")
 
     monkeypatch.setattr(records_endpoint.tarot_interpretation_service, "create_interpretation", failing_interpretation)

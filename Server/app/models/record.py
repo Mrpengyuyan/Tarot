@@ -30,6 +30,16 @@ class PredictionStatus(enum.Enum):
     FAILED = "failed"
 
 
+class InterpretationRunState(str, enum.Enum):
+    NOT_STARTED = "not_started"
+    SCHEDULED = "scheduled"
+    SENDING = "sending"
+    RETRY_REQUIRED = "retry_required"
+    BUDGET_BLOCKED = "budget_blocked"
+    COMPLETED = "completed"
+    EXHAUSTED = "exhausted"
+
+
 def enum_values(enum_cls: type[enum.Enum]) -> list[str]:
     return [member.value for member in enum_cls]
 
@@ -78,6 +88,14 @@ class Prediction(Base):
         nullable=False,
         comment="已开始生成解读的次数",
     )
+    ai_run_state: Mapped[str] = mapped_column(
+        String(32), default=InterpretationRunState.NOT_STARTED.value,
+        server_default=InterpretationRunState.NOT_STARTED.value, nullable=False,
+    )
+    ai_requests_started: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
+    ai_request_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    ai_budget_retry_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    ai_last_error: Mapped[str | None] = mapped_column(String(32), nullable=True)
 
     is_favorite: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, comment="是否收藏")
     user_rating: Mapped[int | None] = mapped_column(Integer, nullable=True, comment="用户评分（1-5）")

@@ -160,7 +160,19 @@ class PredictionDetail(Prediction):
     spread_type: Optional[SpreadTypeSimple] = None
     card_draws: List[CardDrawWithMeaning] = Field(default_factory=list)
     interpretation: Optional[InterpretationWithThemes] = None
+    interpretation_run: Optional["InterpretationRunSummary"] = None
     model_config = ConfigDict(from_attributes=True)
+
+
+class InterpretationRunSummary(BaseModel):
+    state: str
+    can_retry: bool
+    requests_started: int
+    max_requests: int = 2
+    retry_after: Optional[datetime] = None
+
+
+PredictionDetail.model_rebuild()
 
 # ======= 预测统计 =======
 

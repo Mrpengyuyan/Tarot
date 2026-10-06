@@ -86,7 +86,7 @@ def test_recent_overview_returns_spread_name_and_interpretation_summary(client, 
     draw_resp = client.post(f"/api/v1/records/{prediction_id}/draw")
     assert draw_resp.status_code == 200
 
-    async def fake_ai_create_interpretation(db, prediction, cards_data, user_context=None):  # noqa: ANN001
+    async def fake_ai_create_interpretation(db, prediction, cards_data, user_context=None, before_send=None):  # noqa: ANN001
         del db, prediction, cards_data, user_context
         return {
             "overall_interpretation": "Focus on steady progress and practical execution.",

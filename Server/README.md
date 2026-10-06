@@ -46,7 +46,7 @@ python -m app.scripts.init_tarot_data
 ```
 
 第一条命令建表。第二条命令从 `data/tarotCards.json` 和 `data/spreads.json` 导入 78 张牌和 6 个牌阵。
-已有数据库升级到此版本时也必须先运行 `alembic upgrade head`，否则账号额度和 AI 预算表不可用。
+已有数据库升级到此版本时也必须先停止旧后端进程，再运行 `alembic upgrade head`，最后启动新后端。迁移会把历史 AI 生成尝试保守地视为可能已经发送，避免部署后自动再次计费。
 
 ## 启动
 
@@ -61,7 +61,9 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 - `GET http://localhost:8000/api/v1/health/`：基础健康检查，Unity 启动时首先访问它。
 - `POST http://localhost:8000/api/v1/guest-session`：申请访客会话。
-- `POST http://localhost:8000/api/v1/records/{id}/interpret/async`：在后台生成 AI 解读，返回 202 后轮询 `GET /api/v1/records/{id}` 获取结果（Unity 使用这条路径）。
+- `POST http://localhost:8000/api/v1/records/{id}/interpret/async`：仅启动首次 AI 解读；重复调用不会自动重新发送付费请求。
+- `GET http://localhost:8000/api/v1/records/{id}`：读取 `interpretation_run` 中的状态、已发送次数和是否可手动重试。
+- `POST http://localhost:8000/api/v1/records/{id}/interpret/retry`：仅由玩家主动触发一次失败后的重试；同一局最多两次可能计费的请求。
 - `http://localhost:8000/docs`：OpenAPI 文档，仅在 `DEBUG=true` 时可用。
 
 ## 关键配置
@@ -76,12 +78,12 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 | `AI_BUDGET_GUARD_ENABLED` | `true` | AI 预算保护；每次向模型服务请求前在数据库中预留额度 |
 | `AUTO_CREATE_TABLES_ON_STARTUP` | `false` | 设为 `true` 后，启动时自动建表 |
 | `AUTO_BOOTSTRAP_REFERENCE_DATA_ON_STARTUP` | `false` | 设为 `true` 后，启动时自动导入牌和牌阵数据 |
-| `AI_INTERPRETATION_STALE_SECONDS` | `300` | 解读处于生成中超过这个秒数，视为卡住，可以重新开始生成 |
-| `AI_INTERPRETATION_MAX_ATTEMPTS` | `3` | 每条记录最多开始生成解读的次数，超出后异步接口返回 `429` |
+| `AI_INTERPRETATION_STALE_SECONDS` | `300` | 旧领取参数；已发送请求不会因超时被自动重新发送 |
+| `AI_INTERPRETATION_MAX_ATTEMPTS` | `3` | 首次任务领取保护；可能计费的 HTTP 请求另有固定的每局两次上限 |
 
-同步与异步 AI 解读共用生成次数和生成权；同步请求遇到正在生成中的解读返回 `409`，次数耗尽返回 `429`。普通账号和访客的次数按 UTC 日计算，删除记录不会退还次数。匿名访客可以重新申请账号，因此这些玩家额度不是可靠的“每个真人”限额；全局 AI 预算是最后一道成本保护。
+在线解读每次只调用一个模型地址，不自动重试、跟随重定向或切换备用模型。首次失败后，初始接口和同步 `force_ai=true` 接口都不会再次联网；只有玩家明确调用 `/interpret/retry` 才能尝试第二次。旧客户端尚需接入这个新接口及状态提示。普通账号和访客的次数按 UTC 日计算，删除记录不会退还次数。匿名访客可以重新申请账号，因此这些玩家额度不是可靠的“每个真人”限额；全局 AI 预算是最后一道成本保护。
 
-预算会在每次上游请求前按输入字节数、输出 token 上限及配置价格预留，收到可靠的用量后结算。网络超时或上游不提供用量时，预留额会继续占用额度，避免不确定费用被重复使用。此机制不能保证与模型服务商的实际账单完全一致；请同时在服务商后台设置消费上限。
+预算会在每次上游请求前按输入字节数、输出 token 上限及配置价格预留。网络超时或上游不提供用量时，预留额会继续占用额度，避免不确定费用被重复使用。在线解读如果没有启用持久预算保护，会直接拒绝付费请求。此机制不能保证与模型服务商的实际账单完全一致；请同时在服务商后台设置消费上限。
 
 ## 测试
 

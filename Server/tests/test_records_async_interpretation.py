@@ -53,8 +53,12 @@ def _record(client, prediction_id: int) -> dict:
 def fake_ai(monkeypatch):
     state = {"count": 0, "error": None}
 
-    async def fake_create_interpretation(db, prediction, cards_data, user_context=None):  # noqa: ANN001
+    async def fake_create_interpretation(db, prediction, cards_data, user_context=None, before_send=None):  # noqa: ANN001
         state["count"] += 1
+        if before_send is not None and (
+            not isinstance(state["error"], CozeBudgetExceededError) or state["error"].request_started
+        ):
+            before_send()
         if state["error"] is not None:
             raise state["error"]
         return {
@@ -157,7 +161,8 @@ def test_async_interpretation_failure_marks_failed_and_retry_succeeds(client, se
     assert _record(client, prediction_id)["status"] == "failed"
 
     fake_ai["error"] = None
-    assert _start_async(client, prediction_id).status_code == 202
+    assert _start_async(client, prediction_id).status_code == 409
+    assert client.post(f"/api/v1/records/{prediction_id}/interpret/retry").status_code == 202
 
     detail = _record(client, prediction_id)
     assert detail["status"] == "completed"
@@ -174,15 +179,16 @@ def test_async_interpretation_returns_429_after_max_attempts(
     fake_ai["error"] = RuntimeError("simulated failure")
 
     assert _start_async(client, prediction_id).status_code == 202
-    assert _start_async(client, prediction_id).status_code == 202
-    resp = _start_async(client, prediction_id)
+    assert _start_async(client, prediction_id).status_code == 409
+    assert client.post(f"/api/v1/records/{prediction_id}/interpret/retry").status_code == 202
+    resp = client.post(f"/api/v1/records/{prediction_id}/interpret/retry")
 
     assert resp.status_code == 429
-    assert resp.json()["detail"] == "Interpretation attempts exhausted"
+    assert resp.json()["detail"] == "Interpretation requests exhausted"
     assert fake_ai["count"] == 2
 
 
-def test_async_interpretation_reclaims_stale_processing(client, db_session, seeded_spread_and_cards, fake_ai):
+def test_async_interpretation_requires_manual_retry_after_stale_scheduled_job(client, db_session, seeded_spread_and_cards, fake_ai):
     _register_and_login(client, "async_stale")
     prediction_id = _create_drawn_prediction(client, seeded_spread_and_cards["spread_id"])
     stale_start = datetime.now(timezone.utc) - timedelta(seconds=settings.AI_INTERPRETATION_STALE_SECONDS + 60)
@@ -196,7 +202,9 @@ def test_async_interpretation_reclaims_stale_processing(client, db_session, seed
 
     resp = _start_async(client, prediction_id)
 
-    assert resp.status_code == 202
+    assert resp.status_code == 409
+    assert _record(client, prediction_id)["interpretation_run"]["state"] == "retry_required"
+    assert client.post(f"/api/v1/records/{prediction_id}/interpret/retry").status_code == 202
     assert _record(client, prediction_id)["status"] == "completed"
     assert fake_ai["count"] == 1
 
@@ -251,7 +259,8 @@ def test_sync_interpretation_honors_attempt_limit(
     assert client.post(f"/api/v1/records/{prediction_id}/interpret?force_ai=true").status_code == 504
     resp = client.post(f"/api/v1/records/{prediction_id}/interpret?force_ai=true")
 
-    assert resp.status_code == 429
+    assert resp.status_code == 409
+    assert resp.json()["detail"] == "Manual retry required"
     assert fake_ai["count"] == 1
 
 
@@ -262,15 +271,19 @@ def test_sync_budget_denial_does_not_consume_interpretation_attempt(
     prediction_id = _create_drawn_prediction(client, seeded_spread_and_cards["spread_id"])
     fake_ai["error"] = CozeBudgetExceededError("daily budget exhausted")
 
-    for _ in range(2):
-        response = client.post(f"/api/v1/records/{prediction_id}/interpret?force_ai=true")
-        assert response.status_code == 429
-        db_session.expire_all()
-        assert prediction_crud.get_prediction_by_id(db_session, prediction_id).interpretation_attempts == 0
+    response = client.post(f"/api/v1/records/{prediction_id}/interpret?force_ai=true")
+    assert response.status_code == 429
+    db_session.expire_all()
+    prediction = prediction_crud.get_prediction_by_id(db_session, prediction_id)
+    assert prediction.interpretation_attempts == 0
+    assert prediction.ai_requests_started == 0
+    prediction.ai_budget_retry_at = datetime.now(timezone.utc) - timedelta(seconds=1)
+    db_session.commit()
 
     fake_ai["error"] = None
-    assert client.post(f"/api/v1/records/{prediction_id}/interpret?force_ai=true").status_code == 200
-    assert fake_ai["count"] == 3
+    assert client.post(f"/api/v1/records/{prediction_id}/interpret/retry").status_code == 202
+    assert _record(client, prediction_id)["status"] == "completed"
+    assert fake_ai["count"] == 2
 
 
 def test_async_budget_denial_can_retry_after_budget_resets(
@@ -283,10 +296,15 @@ def test_async_budget_denial_can_retry_after_budget_resets(
     assert _start_async(client, prediction_id).status_code == 202
     assert _record(client, prediction_id)["status"] == "failed"
     db_session.expire_all()
-    assert prediction_crud.get_prediction_by_id(db_session, prediction_id).interpretation_attempts == 0
+    prediction = prediction_crud.get_prediction_by_id(db_session, prediction_id)
+    assert prediction.interpretation_attempts == 0
+    assert prediction.ai_requests_started == 0
+    prediction.ai_budget_retry_at = datetime.now(timezone.utc) - timedelta(seconds=1)
+    db_session.commit()
 
     fake_ai["error"] = None
-    assert _start_async(client, prediction_id).status_code == 202
+    assert _start_async(client, prediction_id).status_code == 429
+    assert client.post(f"/api/v1/records/{prediction_id}/interpret/retry").status_code == 202
     assert _record(client, prediction_id)["status"] == "completed"
 
 

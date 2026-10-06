@@ -4,7 +4,7 @@ import logging
 import math
 import threading
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import httpx
 
@@ -347,9 +347,13 @@ class CozeService:
         *,
         payload: Dict[str, Any],
         timeout: Optional[float] = None,
+        single_attempt: bool = False,
+        before_send: Optional[Callable[[], None]] = None,
     ) -> Dict[str, Any]:
         if not self.is_configured():
             raise CozeError("DeepSeek is not configured. Please set DEEPSEEK_API_KEY.")
+        if single_attempt and not self.budget_guard_enabled:
+            raise CozeBudgetExceededError("Persistent AI budget guard is required for paid interpretations")
         if self.budget_guard_enabled and self.budget_store is None:
             raise CozeBudgetExceededError("Persistent AI budget store is required for paid requests")
 
@@ -357,7 +361,8 @@ class CozeService:
         last_error: Optional[Exception] = None
         request_started = False
 
-        for endpoint in self._candidate_chat_endpoints():
+        endpoints = [self.chat_endpoint] if single_attempt else self._candidate_chat_endpoints()
+        for endpoint in endpoints:
             url = f"{self.base_url}/{endpoint}"
             reservation_id = None
             if self.budget_guard_enabled and self.budget_store is not None:
@@ -371,26 +376,36 @@ class CozeService:
                 except BudgetLimitExceeded as exc:
                     raise CozeBudgetExceededError(str(exc), request_started=request_started) from exc
             try:
+                if before_send is not None:
+                    before_send()
                 async with httpx.AsyncClient(
                     timeout=request_timeout,
-                    follow_redirects=True,
+                    follow_redirects=not single_attempt,
                     trust_env=self.trust_env_proxy,
                 ) as client:
                     request_started = True
                     response = await client.post(url, headers=self._headers(), json=payload)
-            except httpx.TimeoutException as exc:
-                last_error = CozeTimeoutError(
-                    f"DeepSeek request timeout ({request_timeout}s) on endpoint '{endpoint}'"
-                )
-                continue
-            except httpx.RequestError as exc:
-                detail = self._exception_text(exc)
-                last_error = CozeRequestError(
-                    f"DeepSeek request error on endpoint '{endpoint}' ({type(exc).__name__}): {detail}"
-                )
+            except Exception as exc:
+                if not isinstance(exc, httpx.HTTPError):
+                    if reservation_id is not None:
+                        self.budget_store.settle(reservation_id, actual_micros=0)
+                    raise
+                if isinstance(exc, httpx.TimeoutException):
+                    last_error = CozeTimeoutError(
+                        f"DeepSeek request timeout ({request_timeout}s) on endpoint '{endpoint}'"
+                    )
+                elif isinstance(exc, httpx.RequestError):
+                    detail = self._exception_text(exc)
+                    last_error = CozeRequestError(
+                        f"DeepSeek request error on endpoint '{endpoint}' ({type(exc).__name__}): {detail}"
+                    )
+                else:
+                    raise
+                if single_attempt:
+                    raise last_error from exc
                 continue
 
-            if response.status_code >= 400:
+            if response.status_code >= 400 or (single_attempt and response.status_code >= 300):
                 if reservation_id is not None and response.status_code < 500:
                     self.budget_store.settle(reservation_id, actual_micros=0)
                 detail = response.text[:500]
@@ -398,6 +413,8 @@ class CozeService:
                     int(response.status_code),
                     f"DeepSeek HTTP {response.status_code} on endpoint '{endpoint}': {detail}",
                 )
+                if single_attempt:
+                    raise last_error
                 continue
 
             try:
@@ -406,15 +423,20 @@ class CozeService:
                     usage = self._extract_usage(result)
                     if usage["prompt_tokens"] + usage["completion_tokens"] > 0:
                         actual_cost = self._estimate_cost_usd(model=str(payload.get("model") or ""), usage=usage)
-                        self.budget_store.settle(
-                            reservation_id,
-                            actual_micros=math.ceil(actual_cost * 1_000_000),
-                        )
+                        try:
+                            self.budget_store.settle(
+                                reservation_id,
+                                actual_micros=math.ceil(actual_cost * 1_000_000),
+                            )
+                        except Exception:
+                            logger.exception("AI budget settlement failed; retaining the reserved amount")
                 return result
             except json.JSONDecodeError:
                 last_error = CozeError(
                     f"DeepSeek returned non-JSON response on endpoint '{endpoint}': {response.text[:200]}"
                 )
+                if single_attempt:
+                    raise last_error
                 continue
 
         if last_error:
@@ -528,6 +550,8 @@ class CozeService:
         messages: List[Dict[str, Any]],
         max_wait_time: int,
         expect_json: bool,
+        single_attempt: bool = False,
+        before_send: Optional[Callable[[], None]] = None,
     ) -> Dict[str, Any]:
         payload: Dict[str, Any] = {
             "model": model,
@@ -540,15 +564,15 @@ class CozeService:
         if expect_json and self.force_json_output:
             payload["response_format"] = {"type": "json_object"}
 
-        max_attempts = self.max_retries + 1
+        max_attempts = 1 if single_attempt else self.max_retries + 1
         last_error: Optional[Exception] = None
 
         for attempt in range(max_attempts):
             try:
-                result = await self._request_chat_completion(
-                    payload=payload,
-                    timeout=max_wait_time + 5,
-                )
+                request_kwargs = {"payload": payload, "timeout": max_wait_time + 5}
+                if single_attempt:
+                    request_kwargs.update(single_attempt=True, before_send=before_send)
+                result = await self._request_chat_completion(**request_kwargs)
                 usage = self._extract_usage(result)
                 cost_usd = self._estimate_cost_usd(model=model, usage=usage)
                 text = self._extract_answer_text(result)
@@ -561,7 +585,7 @@ class CozeService:
             except CozeError as exc:
                 if isinstance(exc, CozeBudgetExceededError) and last_error is not None:
                     exc.request_started = True
-                if expect_json and "response_format" in str(exc).lower() and "response_format" in payload:
+                if not single_attempt and expect_json and "response_format" in str(exc).lower() and "response_format" in payload:
                     payload.pop("response_format", None)
                     continue
 
@@ -610,6 +634,8 @@ class CozeService:
         question: Optional[str] = None,
         user_context: Optional[str] = None,
         expect_json: bool = False,
+        single_attempt: bool = False,
+        before_send: Optional[Callable[[], None]] = None,
     ) -> Dict[str, Any]:
         del user_id  # reserved for compatibility and future trace fields
 
@@ -617,6 +643,43 @@ class CozeService:
             raise CozeError("DeepSeek is not configured. Please set DEEPSEEK_API_KEY.")
 
         self._ensure_budget_allows_request(self.chat_model)
+        if single_attempt:
+            try:
+                async with asyncio.timeout(90):
+                    result = await self._chat_once(
+                        model=self.chat_model,
+                        messages=messages,
+                        max_wait_time=85,
+                        expect_json=expect_json,
+                        single_attempt=True,
+                        before_send=before_send,
+                    )
+            except TimeoutError as exc:
+                raise CozeTimeoutError("DeepSeek request exceeded the 90-second wall-clock limit") from exc
+            try:
+                self._register_usage_and_cost(
+                    model=self.chat_model,
+                    usage=result.get("usage") or {},
+                    cost_usd=float(result.get("cost_usd") or 0.0),
+                )
+            except CozeBudgetExceededError as exc:
+                logger.warning("Budget threshold exceeded after paid response; preserving result: %s", exc)
+            if not result["text"]:
+                raise CozeError("DeepSeek primary request returned empty content.")
+            try:
+                budget = self.budget_status()
+            except Exception:
+                logger.exception("AI budget snapshot unavailable after paid response")
+                budget = {}
+            return {
+                "text": result["text"],
+                "model_used": self.chat_model,
+                "model_version": None,
+                "fallback_used": False,
+                "usage": result["usage"],
+                "cost_usd": result["cost_usd"],
+                "budget": budget,
+            }
         is_complex = self._is_complex_request(
             question=question,
             user_context=user_context,

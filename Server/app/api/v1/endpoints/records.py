@@ -19,7 +19,7 @@ from app.crud import prediction as prediction_crud
 from app.crud import spread as spread_crud
 from app.db.session import get_db, get_session_factory
 from app.models.record import Prediction as PredictionModel
-from app.models.record import PredictionStatus, QuestionType
+from app.models.record import InterpretationRunState, PredictionStatus, QuestionType
 from app.models.user import User
 from app.schemas.prediction import (
     CardDraw as CardDrawSchema,
@@ -28,6 +28,7 @@ from app.schemas.prediction import (
     DrawCardsResponse,
     Interpretation,
     InterpretationCreate,
+    InterpretationRunSummary,
     InterpretationUpdate,
     Prediction,
     PredictionCreate,
@@ -189,7 +190,22 @@ def get_prediction_detail(
     prediction = prediction_crud.get_prediction_with_details(db, prediction_id=prediction_id)
     if not prediction:
         raise HTTPException(status_code=404, detail="Record not found")
-    return prediction
+    prediction_crud.expire_stale_interpretation_run(db, prediction_id, datetime.now(timezone.utc))
+    db.refresh(prediction)
+    now = datetime.now(timezone.utc)
+    retry_after = _as_utc(prediction.ai_budget_retry_at)
+    can_retry = prediction.ai_run_state == InterpretationRunState.RETRY_REQUIRED.value or (
+        prediction.ai_run_state == InterpretationRunState.BUDGET_BLOCKED.value
+        and (retry_after is None or retry_after <= now)
+    )
+    return PredictionDetail.model_validate(prediction).model_copy(update={
+        "interpretation_run": InterpretationRunSummary(
+            state=prediction.ai_run_state,
+            can_retry=can_retry and prediction.ai_requests_started < 2,
+            requests_started=prediction.ai_requests_started,
+            retry_after=retry_after,
+        )
+    })
 
 
 @router.post("/", response_model=Prediction, summary="Create record")
@@ -439,12 +455,14 @@ async def _build_ai_interpretation_create(
         if not prediction_crud.interpretation_claim_is_current(db, prediction_id, started_at):
             raise HTTPException(status_code=409, detail="Interpretation generation was superseded")
 
-        ai_payload = await tarot_interpretation_service.create_interpretation(
-            db=db,
-            prediction=prediction,
-            cards_data=cards_data,
-            user_context=user_context,
-        )
+        ai_kwargs = {"db": db, "prediction": prediction, "cards_data": cards_data, "user_context": user_context}
+        if tarot_interpretation_service.ai_service.is_configured():
+            def before_send() -> None:
+                if not prediction_crud.mark_interpretation_request_sending(db, prediction_id, started_at):
+                    raise prediction_crud.InterpretationClaimLost
+
+            ai_kwargs["before_send"] = before_send
+        ai_payload = await tarot_interpretation_service.create_interpretation(**ai_kwargs)
 
         return InterpretationCreate(
             overall_interpretation=ai_payload.get("overall_interpretation", ""),
@@ -469,19 +487,22 @@ async def _build_ai_interpretation_create(
         )
     except HTTPException:
         raise
+    except prediction_crud.InterpretationClaimLost as exc:
+        raise HTTPException(status_code=409, detail="Interpretation generation was superseded") from exc
     except CozeBudgetExceededError as exc:
         if exc.request_started:
-            prediction_crud.fail_interpretation_generation(db, prediction_id=prediction_id, started_at=started_at)
+            prediction_crud.fail_interpretation_generation(db, prediction_id=prediction_id, started_at=started_at, error="budget_after_send")
         else:
             prediction_crud.release_interpretation_generation(
                 db,
                 prediction_id=prediction_id,
                 started_at=started_at,
+                budget_retry_at=_budget_retry_time(exc),
             )
         raise HTTPException(status_code=429, detail="AI budget exhausted. Please try again later.") from exc
     except CozeTimeoutError as exc:
         logger.error("AI interpretation timed out: %s", exc)
-        prediction_crud.fail_interpretation_generation(db, prediction_id=prediction_id, started_at=started_at)
+        prediction_crud.fail_interpretation_generation(db, prediction_id=prediction_id, started_at=started_at, error="timeout")
         raise HTTPException(status_code=504, detail="AI interpretation request timed out") from exc
     except CozeHttpStatusError as exc:
         logger.error("AI interpretation provider HTTP error: %s", exc)
@@ -536,6 +557,9 @@ def _store_interpretation(
 def _complete_existing_interpretation(db: Session, prediction: PredictionModel) -> None:
     if prediction.status != PredictionStatus.COMPLETED or prediction.completed_at is None:
         prediction_crud.update_prediction_status(db, prediction_id=prediction.id, status=PredictionStatus.COMPLETED)
+    if prediction.ai_run_state != InterpretationRunState.COMPLETED.value:
+        prediction.ai_run_state = InterpretationRunState.COMPLETED.value
+        db.commit()
 
 
 @router.post("/{prediction_id:int}/interpret", response_model=Interpretation, summary="Create AI interpretation")
@@ -569,6 +593,16 @@ async def create_ai_interpretation(
             raise HTTPException(status_code=400, detail="Cards must be drawn before interpretation")
 
         now = datetime.now(timezone.utc)
+        prediction_crud.expire_stale_interpretation_run(db, prediction_id, now)
+        db.refresh(prediction)
+        if prediction.ai_run_state != InterpretationRunState.NOT_STARTED.value:
+            if prediction.ai_run_state in (InterpretationRunState.SCHEDULED.value, InterpretationRunState.SENDING.value):
+                raise HTTPException(status_code=409, detail="Interpretation generation is already in progress")
+            if prediction.ai_run_state == InterpretationRunState.BUDGET_BLOCKED.value:
+                raise HTTPException(status_code=429, detail="AI budget exhausted. Please try again later.")
+            if prediction.ai_requests_started >= 2:
+                raise HTTPException(status_code=429, detail="Interpretation requests exhausted")
+            raise HTTPException(status_code=409, detail="Manual retry required")
         stale_before = now - timedelta(seconds=max(1, int(settings.AI_INTERPRETATION_STALE_SECONDS)))
         max_attempts = max(1, int(settings.AI_INTERPRETATION_MAX_ATTEMPTS))
         claimed = prediction_crud.claim_interpretation_generation(
@@ -663,6 +697,15 @@ def _as_utc(value: Optional[datetime]) -> Optional[datetime]:
     return value.replace(tzinfo=timezone.utc)
 
 
+def _budget_retry_time(exc: CozeBudgetExceededError) -> datetime:
+    now = datetime.now(timezone.utc)
+    if "month" in str(exc).lower():
+        if now.month == 12:
+            return now.replace(year=now.year + 1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        return now.replace(month=now.month + 1, day=1, hour=0, minute=0, second=0, microsecond=0)
+    return now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+
+
 @router.post(
     "/{prediction_id:int}/interpret/async",
     summary="Start AI interpretation in the background",
@@ -700,6 +743,16 @@ async def start_ai_interpretation_async(
         raise HTTPException(status_code=400, detail="Cards must be drawn before interpretation")
 
     now = datetime.now(timezone.utc)
+    prediction_crud.expire_stale_interpretation_run(db, prediction_id, now)
+    db.refresh(prediction)
+    if prediction.ai_run_state != InterpretationRunState.NOT_STARTED.value:
+        if prediction.ai_run_state in (InterpretationRunState.SCHEDULED.value, InterpretationRunState.SENDING.value):
+            return _processing_json(prediction_id)
+        if prediction.ai_run_state == InterpretationRunState.BUDGET_BLOCKED.value:
+            raise HTTPException(status_code=429, detail="AI budget exhausted. Please try again later.")
+        if prediction.ai_requests_started >= 2:
+            raise HTTPException(status_code=429, detail="Interpretation requests exhausted")
+        raise HTTPException(status_code=409, detail="Manual retry required")
     stale_before = now - timedelta(seconds=max(1, int(settings.AI_INTERPRETATION_STALE_SECONDS)))
     max_attempts = max(1, int(settings.AI_INTERPRETATION_MAX_ATTEMPTS))
     if prediction_crud.claim_interpretation_generation(
@@ -725,6 +778,51 @@ async def start_ai_interpretation_async(
     if prediction.interpretation_attempts >= max_attempts:
         raise HTTPException(status_code=429, detail="Interpretation attempts exhausted")
 
+    return _processing_json(prediction_id)
+
+
+@router.post(
+    "/{prediction_id:int}/interpret/retry",
+    summary="Explicitly retry a failed AI interpretation once",
+    responses={200: {"model": Interpretation}, 202: {"description": "Manual retry started"}},
+)
+async def retry_ai_interpretation(
+    prediction_id: int,
+    background_tasks: BackgroundTasks,
+    user_context: Optional[str] = Query(None, description="Additional user context"),
+    db: Session = Depends(get_db),
+    session_factory: Callable[[], Session] = Depends(get_session_factory),
+    current_user: User = Depends(get_current_active_user),
+):
+    if not current_user.is_superuser and not prediction_crud.validate_prediction_ownership(
+        db, prediction_id=prediction_id, user_id=current_user.id,
+    ):
+        raise HTTPException(status_code=404, detail="Record not found")
+    prediction = prediction_crud.get_prediction_by_id(db, prediction_id=prediction_id)
+    if prediction is None:
+        raise HTTPException(status_code=404, detail="Record not found")
+    existing = prediction_crud.get_prediction_interpretation(db, prediction_id=prediction_id)
+    if existing:
+        return _interpretation_json(existing)
+    if not prediction_crud.get_prediction_card_draws(db, prediction_id=prediction_id):
+        raise HTTPException(status_code=400, detail="Cards must be drawn before interpretation")
+
+    now = datetime.now(timezone.utc)
+    prediction_crud.expire_stale_interpretation_run(db, prediction_id, now)
+    db.refresh(prediction)
+    if prediction.ai_run_state == InterpretationRunState.BUDGET_BLOCKED.value:
+        retry_at = _as_utc(prediction.ai_budget_retry_at)
+        if retry_at is not None and retry_at > now:
+            raise HTTPException(status_code=429, detail="AI budget exhausted. Please try again later.")
+    if prediction.ai_requests_started >= 2:
+        raise HTTPException(status_code=429, detail="Interpretation requests exhausted")
+    if prediction.ai_run_state not in (
+        InterpretationRunState.RETRY_REQUIRED.value, InterpretationRunState.BUDGET_BLOCKED.value,
+    ):
+        raise HTTPException(status_code=409, detail="Interpretation is not ready for manual retry")
+    if not prediction_crud.claim_manual_interpretation_retry(db, prediction_id, now):
+        raise HTTPException(status_code=409, detail="Interpretation generation is already in progress")
+    background_tasks.add_task(run_interpretation_job, session_factory, prediction_id, user_context, now)
     return _processing_json(prediction_id)
 
 

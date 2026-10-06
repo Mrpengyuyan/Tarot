@@ -67,7 +67,7 @@ def test_interpretation_conflict_returns_existing_record(client, seeded_spread_a
     draw_resp = client.post(f"/api/v1/records/{prediction_id}/draw")
     assert draw_resp.status_code == 200
 
-    async def fake_ai_create_interpretation(db, prediction, cards_data, user_context=None):  # noqa: ANN001
+    async def fake_ai_create_interpretation(db, prediction, cards_data, user_context=None, before_send=None):  # noqa: ANN001
         del db, prediction, cards_data, user_context
         return {
             "overall_interpretation": "AI payload before conflict",

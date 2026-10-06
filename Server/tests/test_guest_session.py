@@ -100,7 +100,7 @@ def test_guest_session_completes_full_reading_lifecycle(client, seeded_spread_an
     assert draw_response.status_code == 200
     assert len(draw_response.json()["card_draws"]) == 3
 
-    async def fake_create_interpretation(db, prediction, cards_data, user_context=None):  # noqa: ANN001
+    async def fake_create_interpretation(db, prediction, cards_data, user_context=None, before_send=None):  # noqa: ANN001
         return {
             "overall_interpretation": "Steady focus creates room for meaningful progress.",
             "card_analysis": "The spread favors deliberate action.",
@@ -282,7 +282,7 @@ def test_guest_session_can_run_async_interpretation(client, seeded_spread_and_ca
     prediction_id = record_response.json()["id"]
     assert client.post(f"/api/v1/records/{prediction_id}/draw", headers=headers).status_code == 200
 
-    async def fake_create_interpretation(db, prediction, cards_data, user_context=None):  # noqa: ANN001
+    async def fake_create_interpretation(db, prediction, cards_data, user_context=None, before_send=None):  # noqa: ANN001
         return {
             "overall_interpretation": "访客的后台解读已经生成。",
             "summary": "可以继续。",

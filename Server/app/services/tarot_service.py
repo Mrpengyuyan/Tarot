@@ -14,7 +14,7 @@ import json
 import logging
 import re
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
@@ -114,6 +114,7 @@ class TarotInterpretationService:
         prediction: Prediction,
         cards_data: List[Dict[str, Any]],
         user_context: Optional[str] = None,
+        before_send: Optional[Callable[[], None]] = None,
     ) -> Dict[str, Any]:
         del db  # currently unused, preserved for endpoint compatibility
 
@@ -150,10 +151,12 @@ class TarotInterpretationService:
             model_result = await self.ai_service.send_messages_and_wait(
                 messages=messages,
                 user_id=str(prediction.user_id),
-                max_wait_time=60,
+                max_wait_time=85,
                 question=prediction.question,
                 user_context=user_context,
                 expect_json=True,
+                single_attempt=True,
+                before_send=before_send,
             )
             response_text = str(model_result.get("text", "")).strip()
             parsed = self._parse_interpretation_payload(response_text)
@@ -163,12 +166,6 @@ class TarotInterpretationService:
             return parsed
         except Exception as exc:
             logger.error("AI interpretation generation failed: %s", exc)
-            if settings.ALLOW_MOCK_AI_FALLBACK:
-                return self._create_mock_interpretation(
-                    prediction,
-                    formatted_cards,
-                    reason=f"AI call failed: {exc}",
-                )
             raise
 
     @staticmethod

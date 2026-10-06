@@ -155,7 +155,7 @@ def test_stale_worker_failure_does_not_fail_newer_claim(
     db_session.refresh(prediction)
     db_session.expunge(prediction)
 
-    async def failing_ai(db, prediction, cards_data, user_context=None):  # noqa: ANN001
+    async def failing_ai(db, prediction, cards_data, user_context=None, before_send=None):  # noqa: ANN001
         assert _claim(db_session, prediction.id, _now())
         raise CozeTimeoutError("old request timed out")
 
@@ -180,7 +180,7 @@ def test_stale_worker_success_does_not_store_outdated_answer(
     db_session.refresh(prediction)
     db_session.expunge(prediction)
 
-    async def successful_ai(db, prediction, cards_data, user_context=None):  # noqa: ANN001
+    async def successful_ai(db, prediction, cards_data, user_context=None, before_send=None):  # noqa: ANN001
         assert _claim(db_session, prediction.id, _now())
         return {"overall_interpretation": "Outdated answer", "model_used": "test_ai"}
 
@@ -230,7 +230,7 @@ def test_worker_rechecks_claim_before_calling_ai(
         assert _claim(db_session, prediction_id, _now())
         return draws
 
-    async def unexpected_ai(db, prediction, cards_data, user_context=None):  # noqa: ANN001
+    async def unexpected_ai(db, prediction, cards_data, user_context=None, before_send=None):  # noqa: ANN001
         nonlocal calls
         calls += 1
         return {"overall_interpretation": "Outdated answer"}

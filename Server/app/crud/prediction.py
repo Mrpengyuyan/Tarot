@@ -2,7 +2,7 @@ from typing import List, Optional
 from datetime import date, datetime, timedelta, timezone
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, or_, case, desc, asc, func, select, update
-from app.models.record import Prediction, CardDraw, Interpretation, QuestionType, PredictionStatus
+from app.models.record import Prediction, CardDraw, Interpretation, InterpretationRunState, QuestionType, PredictionStatus
 from app.models.user import User
 from app.models.tarot_card import TarotCard
 from app.models.spread import SpreadType
@@ -280,6 +280,11 @@ def claim_interpretation_generation(
         update(Prediction)
         .where(Prediction.id == prediction_id)
         .where(Prediction.interpretation_attempts < max_attempts)
+        .where(Prediction.ai_requests_started == 0)
+        .where(Prediction.ai_run_state.in_((
+            InterpretationRunState.NOT_STARTED.value,
+            InterpretationRunState.SCHEDULED.value,
+        )))
         .where(~has_interpretation)
         .where(
             or_(
@@ -290,6 +295,8 @@ def claim_interpretation_generation(
         )
         .values(
             status=PredictionStatus.PROCESSING,
+            ai_run_state=InterpretationRunState.SCHEDULED.value,
+            ai_last_error=None,
             interpretation_started_at=now,
             interpretation_attempts=Prediction.interpretation_attempts + 1,
         )
@@ -300,7 +307,107 @@ def claim_interpretation_generation(
     return result.rowcount == 1
 
 
-def release_interpretation_generation(db: Session, prediction_id: int, started_at: datetime | None) -> bool:
+def claim_manual_interpretation_retry(db: Session, prediction_id: int, now: datetime) -> bool:
+    has_interpretation = select(Interpretation.id).where(Interpretation.prediction_id == prediction_id).exists()
+    claimed = db.execute(
+        update(Prediction)
+        .where(Prediction.id == prediction_id)
+        .where(Prediction.ai_run_state.in_((
+            InterpretationRunState.RETRY_REQUIRED.value,
+            InterpretationRunState.BUDGET_BLOCKED.value,
+        )))
+        .where(Prediction.ai_requests_started < 2)
+        .where(~has_interpretation)
+        .values(
+            status=PredictionStatus.PROCESSING,
+            ai_run_state=InterpretationRunState.SCHEDULED.value,
+            ai_last_error=None,
+            ai_budget_retry_at=None,
+            interpretation_started_at=now,
+            interpretation_attempts=Prediction.interpretation_attempts + 1,
+        )
+        .execution_options(synchronize_session=False)
+    )
+    db.commit()
+    return claimed.rowcount == 1
+
+
+def mark_interpretation_request_sending(db: Session, prediction_id: int, started_at: datetime) -> bool:
+    """Consume one possible-send slot durably before the outbound HTTP POST."""
+    has_interpretation = select(Interpretation.id).where(Interpretation.prediction_id == prediction_id).exists()
+    marked = db.execute(
+        update(Prediction)
+        .where(Prediction.id == prediction_id)
+        .where(Prediction.status == PredictionStatus.PROCESSING)
+        .where(Prediction.interpretation_started_at == started_at)
+        .where(Prediction.ai_run_state == InterpretationRunState.SCHEDULED.value)
+        .where(Prediction.ai_requests_started < 2)
+        .where(~has_interpretation)
+        .values(
+            ai_run_state=InterpretationRunState.SENDING.value,
+            ai_requests_started=Prediction.ai_requests_started + 1,
+            ai_request_started_at=datetime.now(timezone.utc),
+        )
+        .execution_options(synchronize_session=False)
+    )
+    db.commit()
+    return marked.rowcount == 1
+
+
+def expire_stale_interpretation_run(
+    db: Session, prediction_id: int, now: datetime, *, sending_seconds: int = 120,
+    scheduled_seconds: int = 300,
+) -> bool:
+    current = db.execute(
+        select(Prediction.ai_run_state, Prediction.ai_request_started_at, Prediction.interpretation_started_at)
+        .where(Prediction.id == prediction_id)
+    ).first()
+    if current is None:
+        return False
+    state, sent_at, scheduled_at = current
+    if sent_at is not None and sent_at.tzinfo is None:
+        sent_at = sent_at.replace(tzinfo=timezone.utc)
+    if scheduled_at is not None and scheduled_at.tzinfo is None:
+        scheduled_at = scheduled_at.replace(tzinfo=timezone.utc)
+    if not (
+        state == InterpretationRunState.SENDING.value
+        and sent_at is not None and sent_at < now - timedelta(seconds=sending_seconds)
+        or state == InterpretationRunState.SCHEDULED.value
+        and scheduled_at is not None and scheduled_at < now - timedelta(seconds=scheduled_seconds)
+    ):
+        return False
+    has_interpretation = select(Interpretation.id).where(Interpretation.prediction_id == prediction_id).exists()
+    stale_sending = and_(
+        Prediction.ai_run_state == InterpretationRunState.SENDING.value,
+        Prediction.ai_request_started_at < now - timedelta(seconds=sending_seconds),
+    )
+    stale_scheduled = and_(
+        Prediction.ai_run_state == InterpretationRunState.SCHEDULED.value,
+        Prediction.interpretation_started_at < now - timedelta(seconds=scheduled_seconds),
+    )
+    expired = db.execute(
+        update(Prediction)
+        .where(Prediction.id == prediction_id)
+        .where(or_(stale_sending, stale_scheduled))
+        .where(~has_interpretation)
+        .values(
+            status=PredictionStatus.FAILED,
+            ai_run_state=case(
+                (Prediction.ai_requests_started >= 2, InterpretationRunState.EXHAUSTED.value),
+                else_=InterpretationRunState.RETRY_REQUIRED.value,
+            ),
+            ai_last_error="worker_timeout",
+        )
+        .execution_options(synchronize_session=False)
+    )
+    db.commit()
+    return expired.rowcount == 1
+
+
+def release_interpretation_generation(
+    db: Session, prediction_id: int, started_at: datetime | None,
+    *, budget_retry_at: datetime | None = None,
+) -> bool:
     """Return an unused claim when budget admission refused before any paid request."""
     if started_at is None:
         return False
@@ -308,10 +415,14 @@ def release_interpretation_generation(db: Session, prediction_id: int, started_a
         update(Prediction)
         .where(Prediction.id == prediction_id)
         .where(Prediction.status == PredictionStatus.PROCESSING)
+        .where(Prediction.ai_run_state == InterpretationRunState.SCHEDULED.value)
         .where(Prediction.interpretation_started_at == started_at)
         .where(Prediction.interpretation_attempts > 0)
         .values(
             status=PredictionStatus.FAILED,
+            ai_run_state=InterpretationRunState.BUDGET_BLOCKED.value,
+            ai_last_error="budget",
+            ai_budget_retry_at=budget_retry_at,
             interpretation_started_at=None,
             interpretation_attempts=Prediction.interpretation_attempts - 1,
         )
@@ -321,7 +432,9 @@ def release_interpretation_generation(db: Session, prediction_id: int, started_a
     return released.rowcount == 1
 
 
-def fail_interpretation_generation(db: Session, prediction_id: int, started_at: datetime | None) -> bool:
+def fail_interpretation_generation(
+    db: Session, prediction_id: int, started_at: datetime | None, *, error: str = "upstream",
+) -> bool:
     """Only the active claim may mark a reading failed."""
     if started_at is None:
         return False
@@ -332,7 +445,14 @@ def fail_interpretation_generation(db: Session, prediction_id: int, started_at: 
         .where(Prediction.status == PredictionStatus.PROCESSING)
         .where(Prediction.interpretation_started_at == started_at)
         .where(~has_interpretation)
-        .values(status=PredictionStatus.FAILED)
+        .values(
+            status=PredictionStatus.FAILED,
+            ai_run_state=case(
+                (Prediction.ai_requests_started >= 2, InterpretationRunState.EXHAUSTED.value),
+                else_=InterpretationRunState.RETRY_REQUIRED.value,
+            ),
+            ai_last_error=error,
+        )
         .execution_options(synchronize_session=False)
     )
     db.commit()
@@ -463,7 +583,16 @@ def create_interpretation(
             .where(Prediction.id == prediction_id)
             .where(Prediction.status == PredictionStatus.PROCESSING)
             .where(Prediction.interpretation_started_at == expected_started_at)
-            .values(status=PredictionStatus.COMPLETED, completed_at=datetime.now(timezone.utc))
+            .where(Prediction.ai_run_state.in_((
+                InterpretationRunState.SCHEDULED.value,
+                InterpretationRunState.SENDING.value,
+            )))
+            .values(
+                status=PredictionStatus.COMPLETED,
+                ai_run_state=InterpretationRunState.COMPLETED.value,
+                ai_last_error=None,
+                completed_at=datetime.now(timezone.utc),
+            )
             .execution_options(synchronize_session=False)
         )
         if updated.rowcount != 1:
@@ -474,6 +603,8 @@ def create_interpretation(
         if prediction is None:
             raise ValueError("Prediction not found")
         _set_prediction_status(prediction, prediction_status)
+        if prediction_status == PredictionStatus.COMPLETED:
+            prediction.ai_run_state = InterpretationRunState.COMPLETED.value
     db.commit()
     db.refresh(db_interpretation)
     return db_interpretation

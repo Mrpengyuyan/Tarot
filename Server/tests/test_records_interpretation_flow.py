@@ -46,7 +46,7 @@ def test_interpretation_flow_persists_and_is_idempotent(client, seeded_spread_an
 
     calls = {"count": 0}
 
-    async def fake_create_interpretation(db, prediction, cards_data, user_context=None):  # noqa: ANN001
+    async def fake_create_interpretation(db, prediction, cards_data, user_context=None, before_send=None):  # noqa: ANN001
         calls["count"] += 1
         return {
             "overall_interpretation": "Momentum is positive, maintain a steady pace.",
@@ -91,7 +91,7 @@ def test_interpretation_requires_cards_drawn(client, seeded_spread_and_cards, mo
 
     calls = {"count": 0}
 
-    async def fake_create_interpretation(db, prediction, cards_data, user_context=None):  # noqa: ANN001
+    async def fake_create_interpretation(db, prediction, cards_data, user_context=None, before_send=None):  # noqa: ANN001
         calls["count"] += 1
         return {"overall_interpretation": "should not be used"}
 
@@ -113,7 +113,7 @@ def test_interpretation_failure_sets_prediction_failed(client, seeded_spread_and
     draw_resp = client.post(f"/api/v1/records/{prediction_id}/draw")
     assert draw_resp.status_code == 200
 
-    async def fake_create_interpretation(db, prediction, cards_data, user_context=None):  # noqa: ANN001
+    async def fake_create_interpretation(db, prediction, cards_data, user_context=None, before_send=None):  # noqa: ANN001
         raise RuntimeError("simulated ai failure")
 
     monkeypatch.setattr(
@@ -137,7 +137,7 @@ def test_interpretation_update_accepts_partial_payload(client, seeded_spread_and
     draw_resp = client.post(f"/api/v1/records/{prediction_id}/draw")
     assert draw_resp.status_code == 200
 
-    async def fake_create_interpretation(db, prediction, cards_data, user_context=None):  # noqa: ANN001
+    async def fake_create_interpretation(db, prediction, cards_data, user_context=None, before_send=None):  # noqa: ANN001
         return {
             "overall_interpretation": "Original interpretation",
             "summary": "Original summary",

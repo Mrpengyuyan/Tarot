@@ -71,7 +71,7 @@ def test_full_reading_lifecycle(client, seeded_spread_and_cards, monkeypatch):
     assert len(draw_body["card_draws"]) == 3  # spread has 3 positions
 
     # ── 3. Mock AI interpretation ──
-    async def fake_ai(db, prediction, cards_data, user_context=None):
+    async def fake_ai(db, prediction, cards_data, user_context=None, before_send=None):
         return {
             "overall_interpretation": "Career growth requires patience and strategic planning.",
             "card_analysis": "Each card points to incremental progress.",
