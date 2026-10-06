@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing import List, Optional
 from datetime import datetime
 from enum import Enum
@@ -29,7 +29,13 @@ class PredictionBase(BaseModel):
 
 class PredictionCreate(PredictionBase):
     """创建预测记录数据模型"""
+    question: str = Field(min_length=1, max_length=2000)
     spread_type_id: int
+
+    @field_validator("question", mode="before")
+    @classmethod
+    def strip_question(cls, value):
+        return value.strip() if isinstance(value, str) else value
 
 class PredictionUpdate(BaseModel):
     """更新预测记录数据模型"""

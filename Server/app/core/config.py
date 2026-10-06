@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 from typing import Any, List, Literal, Optional, cast
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -22,6 +22,7 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 DEFAULT_SQLITE_PATH = (BASE_DIR / "tarot_game.db").resolve()
 DEFAULT_DATABASE_URL = f"sqlite:///{DEFAULT_SQLITE_PATH.as_posix()}"
 DEFAULT_DEV_SECRET_KEY = "dev-local-secret-key-change-me-before-production"
+EXAMPLE_SECRET_KEY = "replace-with-a-long-random-secret-at-least-32-chars"
 
 
 class Settings(BaseSettings):
@@ -117,6 +118,7 @@ class Settings(BaseSettings):
     AUTO_BOOTSTRAP_REFERENCE_DATA_ON_STARTUP: bool = False
     AUTO_REPAIR_PREDICTION_QUESTIONS_ON_STARTUP: bool = False
     GUEST_DAILY_READING_LIMIT: int = 3
+    GUEST_SESSIONS_PER_HOUR: int = Field(default=10, ge=1)
     USER_DAILY_READING_LIMIT: int = 3
     # Background interpretation generation (POST /records/{id}/interpret/async).
     # Unity's InterpretationPoller gives up after STALE_SECONDS + 30s; keep the two in sync.
@@ -197,6 +199,7 @@ class Settings(BaseSettings):
             "change-this-secret-key-in-production",
             "your-super-secret-key-here-change-in-production",
             DEFAULT_DEV_SECRET_KEY,
+            EXAMPLE_SECRET_KEY,
         }
         secret_too_short = len(self.SECRET_KEY or "") < 32
         environment = str(self.ENVIRONMENT).strip().lower()

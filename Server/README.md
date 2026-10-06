@@ -31,10 +31,10 @@ Copy-Item .env.example .env
 
 然后编辑 `.env`：
 
-- `SECRET_KEY`：`.env.example` 开启了 `REQUIRE_STRONG_SECRET=true`，示例值不能直接使用。可以用下面的命令生成：
+- `SECRET_KEY`：`.env.example` 开启了 `REQUIRE_STRONG_SECRET=true`，服务会拒绝公开的示例值。可以用下面的命令生成：
   `python -c "import secrets; print(secrets.token_urlsafe(48))"`
 - `DEEPSEEK_API_KEY`：需要真实 AI 解读时，替换成真实 Key。
-- `DEBUG`：示例值为 `true`，此时 `/docs` 可以访问；部署时改为 `false`。
+- 正式部署时设置 `ENVIRONMENT=production`、`AUTH_COOKIE_SECURE=true` 和 `DEBUG=false`；开发环境即使关闭 `DEBUG`，仍会开放 `/docs`。
 
 `.env` 已被仓库的 `.gitignore` 忽略，不要提交。
 
@@ -74,6 +74,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 | --- | --- | --- |
 | `DATABASE_URL` | `sqlite:///./tarot_game.db` | 生产环境请换成 PostgreSQL 地址（依赖中已包含 `psycopg2-binary`） |
 | `GUEST_DAILY_READING_LIMIT` | `3` | 访客每日阅读上限，删除阅读记录不退还次数 |
+| `GUEST_SESSIONS_PER_HOUR` | `10` | 同一访问来源每 UTC 小时最多申请的访客会话数；超限返回 `429` 和 `Retry-After` |
 | `USER_DAILY_READING_LIMIT` | `3` | 普通注册账号每日阅读上限；管理员不受玩家上限约束 |
 | `AI_BUDGET_GUARD_ENABLED` | `true` | AI 预算保护；每次向模型服务请求前在数据库中预留额度 |
 | `AUTO_CREATE_TABLES_ON_STARTUP` | `false` | 设为 `true` 后，启动时自动建表 |
@@ -81,7 +82,9 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 | `AI_INTERPRETATION_STALE_SECONDS` | `300` | 旧领取参数；已发送请求不会因超时被自动重新发送 |
 | `AI_INTERPRETATION_MAX_ATTEMPTS` | `3` | 首次任务领取保护；可能计费的 HTTP 请求另有固定的每局两次上限 |
 
-在线解读每次只调用一个模型地址，不自动重试、跟随重定向或切换备用模型。首次失败后，初始接口和同步 `force_ai=true` 接口都不会再次联网；只有玩家明确调用 `/interpret/retry` 才能尝试第二次。旧客户端尚需接入这个新接口及状态提示。普通账号和访客的次数按 UTC 日计算，删除记录不会退还次数。匿名访客可以重新申请账号，因此这些玩家额度不是可靠的“每个真人”限额；全局 AI 预算是最后一道成本保护。
+在线解读每次只调用一个模型地址，不自动重试、跟随重定向或切换备用模型。首次失败后，初始接口和同步 `force_ai=true` 接口都不会再次联网；只有玩家明确调用 `/interpret/retry` 才能尝试第二次。旧客户端尚需接入这个新接口及状态提示。普通账号和访客的次数按 UTC 日计算，删除记录不会退还次数。问题和额外解读上下文各最多 2000 字符。
+
+访客会话按服务端看到的连接来源计数，数据库只保存来源地址的密钥散列，旧计数会清理。它不是“每个真人”限额：共用网络的玩家可能共用额度，切换网络也可能绕过。应用不直接信任客户端提交的 `X-Forwarded-For`；经 HTTPS 代理部署时必须只信任代理本身转发的地址，并在入口另设限流。全局 AI 预算仍是成本保护的最后一道边界。
 
 预算会在每次上游请求前按输入字节数、输出 token 上限及配置价格预留。网络超时或上游不提供用量时，预留额会继续占用额度，避免不确定费用被重复使用。在线解读如果没有启用持久预算保护，会直接拒绝付费请求。此机制不能保证与模型服务商的实际账单完全一致；请同时在服务商后台设置消费上限。
 

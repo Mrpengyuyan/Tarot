@@ -566,7 +566,7 @@ def _complete_existing_interpretation(db: Session, prediction: PredictionModel) 
 async def create_ai_interpretation(
     prediction_id: int,
     interpretation_create: Optional[InterpretationCreate] = None,
-    user_context: Optional[str] = Query(None, description="Additional user context"),
+    user_context: Optional[str] = Query(None, max_length=2000, description="Additional user context"),
     force_ai: bool = Query(False, description="Force AI generation even when manual payload is provided"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -718,7 +718,7 @@ def _budget_retry_time(exc: CozeBudgetExceededError) -> datetime:
 async def start_ai_interpretation_async(
     prediction_id: int,
     background_tasks: BackgroundTasks,
-    user_context: Optional[str] = Query(None, description="Additional user context"),
+    user_context: Optional[str] = Query(None, max_length=2000, description="Additional user context"),
     db: Session = Depends(get_db),
     session_factory: Callable[[], Session] = Depends(get_session_factory),
     current_user: User = Depends(get_current_active_user),
@@ -789,7 +789,7 @@ async def start_ai_interpretation_async(
 async def retry_ai_interpretation(
     prediction_id: int,
     background_tasks: BackgroundTasks,
-    user_context: Optional[str] = Query(None, description="Additional user context"),
+    user_context: Optional[str] = Query(None, max_length=2000, description="Additional user context"),
     db: Session = Depends(get_db),
     session_factory: Callable[[], Session] = Depends(get_session_factory),
     current_user: User = Depends(get_current_active_user),

@@ -1,6 +1,51 @@
+from concurrent.futures import ThreadPoolExecutor
+
+import pytest
+from sqlalchemy import func, select, text
+
 from app.api.v1.endpoints import records as records_endpoint
 from app.core.config import settings
-from concurrent.futures import ThreadPoolExecutor
+from app.models.user import User
+from app.services.guest_session_limiter import GuestSessionLimitReached, claim_guest_session
+
+
+def test_guest_session_creation_is_limited_per_source(client, db_session):
+    responses = [client.post("/api/v1/guest-session") for _ in range(11)]
+
+    assert [response.status_code for response in responses] == [200] * 10 + [429]
+    assert 1 <= int(responses[-1].headers["Retry-After"]) <= 3600
+    assert db_session.scalar(select(func.count(User.id)).where(User.is_guest.is_(True))) == 10
+    source_hash = db_session.execute(text("SELECT source_hash FROM guest_session_windows")).scalar_one()
+    assert len(source_hash) == 64
+    assert "testclient" not in source_hash
+
+
+def test_guest_session_limit_is_atomic_under_parallel_requests(client):
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        responses = list(executor.map(lambda _: client.post("/api/v1/guest-session"), range(12)))
+
+    assert sorted(response.status_code for response in responses) == [200] * 10 + [429] * 2
+
+
+def test_forwarded_for_header_does_not_bypass_guest_session_limit(client, monkeypatch):
+    monkeypatch.setattr(settings, "GUEST_SESSIONS_PER_HOUR", 1)
+
+    first = client.post("/api/v1/guest-session", headers={"X-Forwarded-For": "198.51.100.1"})
+    second = client.post("/api/v1/guest-session", headers={"X-Forwarded-For": "198.51.100.2"})
+
+    assert first.status_code == 200
+    assert second.status_code == 429
+
+
+def test_guest_session_limits_are_independent_between_sources(db_session, monkeypatch):
+    monkeypatch.setattr(settings, "GUEST_SESSIONS_PER_HOUR", 1)
+
+    claim_guest_session(db_session, "198.51.100.1")
+    with pytest.raises(GuestSessionLimitReached):
+        claim_guest_session(db_session, "198.51.100.1")
+    claim_guest_session(db_session, "198.51.100.2")
+
+    assert db_session.execute(text("SELECT COUNT(*) FROM guest_session_windows")).scalar_one() == 2
 
 
 def test_guest_session_returns_bearer_token_and_authenticated_profile(client):
