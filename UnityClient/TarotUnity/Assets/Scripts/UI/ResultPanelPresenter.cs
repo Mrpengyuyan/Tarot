@@ -180,7 +180,17 @@ namespace TarotUnity.UI
             SetReadingVisible(false);
             SetStatus(session.failureMessage);
             SetText(modeLabelText, string.Empty);
-            SetInterpretationButtons(session.canRetry, true);
+            SetInterpretationButtons(session.canRetry || session.canCheckStatus, true);
+            if (retryInterpretationButton != null)
+            {
+                var label = retryInterpretationButton.transform.Find("Label");
+                if (label != null && label.TryGetComponent<TMP_Text>(out var text))
+                {
+                    text.text = session.canRetry
+                        ? ReleaseUxCopy.RetryButtonLabel
+                        : ReleaseUxCopy.CheckStatusButtonLabel;
+                }
+            }
             SetNavigatorInteractive(false);
             isPending = false;
         }

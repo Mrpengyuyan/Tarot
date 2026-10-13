@@ -32,12 +32,14 @@ namespace TarotUnity.UI
         public const string OfflineBecauseSpread = "这个牌阵暂时无法在线占卜，这一局使用离线解读。";
 
         // Phase 66: interpretation failures (spec 7.3, interpretation rows).
-        public const string InterpretationBackendFailed = "这次解读没有顺利生成，可以再试一次。";
-        public const string InterpretationTimedOut = "解读花的时间比预期长，可以再试一次。";
-        public const string InterpretationConnectionLost = "与占卜服务的连接中断了，可以再试一次。";
+        public const string InterpretationBackendFailed = "这次解读没有顺利生成，先看看离线解读吧。";
+        public const string InterpretationRetryMayCost = "这次在线解读未能确认结果，再试一次可能再次调用 AI。";
+        public const string InterpretationTimedOut = "在线解读仍可能在处理中，可先查看离线解读。";
+        public const string InterpretationConnectionLost = "连接中断，解读是否完成尚不确定，可先查看离线解读。";
         public const string InterpretationAttemptsExhausted = "这一局已经尝试多次仍未成功，先看看离线解读吧。";
         public const string InterpretationSessionExpired = "连接已过期，这次解读无法取回。";
         public const string InterpretationUnavailable = "这次解读无法生成，先看看离线解读吧。";
+        public const string InterpretationBudgetBlocked = "在线解读额度暂时不足，请稍后再试或查看离线解读。";
 
         // Phase 66: Result screen (spec 7.1).
         public const string ResultPending = "牌意正在汇聚……";
@@ -45,6 +47,7 @@ namespace TarotUnity.UI
         public const string ModeOffline = "离线解读";
         public const string ModeMock = "模拟解读";
         public const string RetryButtonLabel = "重新解读";
+        public const string CheckStatusButtonLabel = "检查解读状态";
         public const string OfflineButtonLabel = "查看离线解读";
         public const string OfflineWarning = "这是离线解读，由本地牌义生成，未经过 AI。";
 
@@ -110,16 +113,11 @@ namespace TarotUnity.UI
                     return InterpretationAttemptsExhausted;
                 case InterpretationFailure.SessionExpired:
                     return InterpretationSessionExpired;
+                case InterpretationFailure.BudgetBlocked:
+                    return InterpretationBudgetBlocked;
                 default:
                     return InterpretationUnavailable;
             }
-        }
-
-        public static bool CanRetry(InterpretationFailure failure)
-        {
-            return failure == InterpretationFailure.BackendFailed
-                || failure == InterpretationFailure.TimedOut
-                || failure == InterpretationFailure.ConnectionLost;
         }
 
 

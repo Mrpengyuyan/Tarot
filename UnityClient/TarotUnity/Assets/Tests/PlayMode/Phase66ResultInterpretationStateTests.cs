@@ -21,6 +21,7 @@ namespace TarotUnity.Tests.PlayMode
     {
         private const int PredictionId = 801;
         private const string AsyncPath = "/api/v1/records/801/interpret/async";
+        private const string RetryPath = "/api/v1/records/801/interpret/retry";
         private const string DetailPath = "/api/v1/records/801";
 
         private MockTarotBackend server;
@@ -85,11 +86,11 @@ namespace TarotUnity.Tests.PlayMode
         [UnityTest]
         public IEnumerator FailedReadingOffersRetryAndOfflineText()
         {
-            server.Script("POST", AsyncPath,
-                MockTarotBackend.Json(202, MockTarotJson.Accepted(PredictionId)),
-                MockTarotBackend.Json(202, MockTarotJson.Accepted(PredictionId)));
+            server.Script("POST", AsyncPath, MockTarotBackend.Json(202, MockTarotJson.Accepted(PredictionId)));
+            server.Script("POST", RetryPath, MockTarotBackend.Json(202, MockTarotJson.Accepted(PredictionId)));
             server.Script("GET", DetailPath,
-                MockTarotBackend.Json(200, MockTarotJson.Detail(PredictionId, "failed", 3, null)));
+                MockTarotBackend.Json(200, MockTarotJson.Detail(PredictionId, "failed", 3, null)),
+                MockTarotBackend.Json(200, MockTarotJson.DetailWithRun(PredictionId, "failed", 3, null, "exhausted", false)));
             var session = StartOnlineSession(3);
 
             yield return LoadResult();
@@ -100,7 +101,7 @@ namespace TarotUnity.Tests.PlayMode
 
             var retry = GetField<Button>(controller, "retryInterpretationButton");
             var offline = GetField<Button>(controller, "offlineInterpretationButton");
-            Assert.That(status.text, Is.EqualTo(ReleaseUxCopy.InterpretationBackendFailed));
+            Assert.That(status.text, Is.EqualTo(ReleaseUxCopy.InterpretationRetryMayCost));
             Assert.That(retry.gameObject.activeInHierarchy, Is.True);
             Assert.That(offline.gameObject.activeInHierarchy, Is.True);
 
@@ -108,7 +109,9 @@ namespace TarotUnity.Tests.PlayMode
             Assert.That(session.interpretationState, Is.EqualTo(InterpretationState.Pending), "retry restarts the poll");
             yield return WaitUntil(() => session.interpretationState == InterpretationState.Failed, 10f,
                 "expected the retry to fail again");
-            Assert.That(server.Count("POST", AsyncPath), Is.EqualTo(2));
+            Assert.That(server.Count("POST", AsyncPath), Is.EqualTo(1));
+            Assert.That(server.Count("POST", RetryPath), Is.EqualTo(1));
+            Assert.That(retry.gameObject.activeInHierarchy, Is.False, "the second failed request has no paid retry left");
 
             offline.onClick.Invoke();
             Assert.That(session.source, Is.EqualTo(ReadingSource.Offline));
@@ -116,6 +119,34 @@ namespace TarotUnity.Tests.PlayMode
             Assert.That(GetField<TMP_Text>(presenter, "warningText").text, Is.EqualTo(ReleaseUxCopy.OfflineWarning));
             Assert.That(status.gameObject.activeSelf, Is.False);
             Assert.That(retry.gameObject.activeSelf || offline.gameObject.activeSelf, Is.False);
+        }
+
+        [UnityTest]
+        public IEnumerator BudgetBlockedButtonChecksStatusBeforeOfferingPaidRetry()
+        {
+            server.Script("POST", AsyncPath, MockTarotBackend.Json(202, MockTarotJson.Accepted(PredictionId)));
+            server.Script("GET", DetailPath, MockTarotBackend.Json(200,
+                MockTarotJson.DetailWithRun(PredictionId, "failed", 1, null, "budget_blocked", false)));
+            var session = StartOnlineSession(1);
+
+            yield return LoadResult();
+            var controller = Object.FindFirstObjectByType<ResultSceneController>();
+            var retry = GetField<Button>(controller, "retryInterpretationButton");
+            yield return WaitUntil(() => session.interpretationState == InterpretationState.Failed, 10f,
+                "expected budget-blocked result");
+
+            Assert.That(session.canRetry, Is.False);
+            Assert.That(retry.gameObject.activeInHierarchy, Is.True);
+            Assert.That(retry.transform.Find("Label").GetComponent<TMP_Text>().text, Is.EqualTo("检查解读状态"));
+
+            server.Replace("GET", DetailPath, MockTarotBackend.Json(200,
+                MockTarotJson.DetailWithRun(PredictionId, "failed", 1, null, "retry_required", true)));
+            retry.onClick.Invoke();
+            yield return WaitUntil(() => session.canRetry, 10f, "expected a fresh server-authorized retry");
+
+            Assert.That(server.Count("POST", AsyncPath), Is.EqualTo(1));
+            Assert.That(server.Count("POST", RetryPath), Is.EqualTo(0));
+            Assert.That(retry.transform.Find("Label").GetComponent<TMP_Text>().text, Is.EqualTo(ReleaseUxCopy.RetryButtonLabel));
         }
 
         private ReadingSessionSnapshot StartOnlineSession(int cardCount)

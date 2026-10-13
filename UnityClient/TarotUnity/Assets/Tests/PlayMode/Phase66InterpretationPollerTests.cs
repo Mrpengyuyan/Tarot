@@ -19,6 +19,7 @@ namespace TarotUnity.Tests.PlayMode
     {
         private const int PredictionId = 601;
         private const string AsyncPath = "/api/v1/records/601/interpret/async";
+        private const string RetryPath = "/api/v1/records/601/interpret/retry";
         private const string DetailPath = "/api/v1/records/601";
         private const string RefreshPath = "/api/v1/refresh";
 
@@ -97,19 +98,22 @@ namespace TarotUnity.Tests.PlayMode
         [UnityTest]
         public IEnumerator FailedThenRetrySucceeds()
         {
-            server.Script("POST", AsyncPath, Accepted(), Accepted());
+            server.Script("POST", AsyncPath, Accepted());
+            server.Script("POST", RetryPath, Accepted());
             server.Script("GET", DetailPath, Failed(), Completed("deepseek-chat"));
             var snapshot = OnlineSnapshot(1);
 
             poller.Begin(snapshot);
             yield return WaitUntil(() => snapshot.interpretationState == InterpretationState.Failed, 10f, "expected Failed");
-            Assert.That(snapshot.failureMessage, Is.EqualTo(ReleaseUxCopy.InterpretationBackendFailed));
+            Assert.That(snapshot.failureMessage, Is.EqualTo(ReleaseUxCopy.InterpretationRetryMayCost));
             Assert.That(snapshot.canRetry, Is.True);
 
             poller.Retry();
+            poller.Retry();
             yield return WaitUntil(() => snapshot.interpretationState == InterpretationState.Ready, 10f, "expected Ready after Retry");
 
-            Assert.That(server.Count("POST", AsyncPath), Is.EqualTo(2));
+            Assert.That(server.Count("POST", AsyncPath), Is.EqualTo(1));
+            Assert.That(server.Count("POST", RetryPath), Is.EqualTo(1));
             Assert.That(observed, Is.EqualTo(new[]
             {
                 InterpretationState.Pending, InterpretationState.Failed, InterpretationState.Pending, InterpretationState.Ready,
@@ -117,9 +121,66 @@ namespace TarotUnity.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator LostInitialResponseChecksRecordWithoutAnotherPost()
+        {
+            server.Script("POST", AsyncPath, ServiceUnavailable());
+            server.Script("GET", DetailPath, Processing(), Completed("deepseek-chat"));
+            var snapshot = OnlineSnapshot(1);
+
+            poller.Begin(snapshot);
+            yield return WaitUntil(() => snapshot.interpretationState == InterpretationState.Ready, 10f,
+                "expected the stored result after an ambiguous start response");
+
+            Assert.That(server.Count("POST", AsyncPath), Is.EqualTo(1));
+            Assert.That(server.Count("GET", DetailPath), Is.GreaterThanOrEqualTo(2));
+        }
+
+        [UnityTest]
+        public IEnumerator SendingStateDoesNotOfferManualRetryEvenWhenLegacyStatusIsFailed()
+        {
+            server.Script("POST", AsyncPath, Accepted());
+            server.Script("GET", DetailPath,
+                MockTarotBackend.Json(200, MockTarotJson.DetailWithRun(PredictionId, "failed", 1, null, "sending", false)),
+                Completed("deepseek-chat"));
+            var snapshot = OnlineSnapshot(1);
+
+            poller.Begin(snapshot);
+            yield return WaitUntil(() => snapshot.interpretationState == InterpretationState.Ready, 10f,
+                "a sending AI run should keep polling despite the legacy status");
+
+            Assert.That(server.Count("POST", RetryPath), Is.EqualTo(0));
+            Assert.That(snapshot.canRetry, Is.False);
+        }
+
+        [UnityTest]
+        public IEnumerator BudgetBlockedStateDoesNotOfferManualRetry()
+        {
+            server.Script("POST", AsyncPath, Accepted());
+            server.Script("GET", DetailPath,
+                MockTarotBackend.Json(200, MockTarotJson.DetailWithRun(PredictionId, "failed", 1, null, "budget_blocked", false)));
+            var snapshot = OnlineSnapshot(1);
+
+            poller.Begin(snapshot);
+            yield return WaitUntil(() => snapshot.interpretationState == InterpretationState.Failed, 10f,
+                "expected a budget-blocked result");
+
+            Assert.That(snapshot.canRetry, Is.False);
+            server.Replace("GET", DetailPath,
+                MockTarotBackend.Json(200, MockTarotJson.DetailWithRun(PredictionId, "failed", 1, null, "budget_blocked", true)));
+            poller.Retry();
+            yield return WaitUntil(() => snapshot.canRetry, 10f, "a read-only check should see the restored retry allowance");
+            Assert.That(snapshot.failureMessage, Is.EqualTo(ReleaseUxCopy.InterpretationRetryMayCost));
+            Assert.That(server.Count("POST", RetryPath), Is.EqualTo(0));
+            Assert.That(server.Count("POST", AsyncPath), Is.EqualTo(1));
+            Assert.That(server.Count("GET", DetailPath), Is.EqualTo(2));
+        }
+
+        [UnityTest]
         public IEnumerator ExhaustedAttemptsCannotBeRetried()
         {
             server.Script("POST", AsyncPath, MockTarotBackend.Json(429, MockTarotJson.AttemptsExhaustedDetail));
+            server.Script("GET", DetailPath,
+                MockTarotBackend.Json(200, MockTarotJson.DetailWithRun(PredictionId, "failed", 1, null, "exhausted", false)));
             var snapshot = OnlineSnapshot(1);
 
             poller.Begin(snapshot);
@@ -127,7 +188,7 @@ namespace TarotUnity.Tests.PlayMode
 
             Assert.That(snapshot.failureMessage, Is.EqualTo(ReleaseUxCopy.InterpretationAttemptsExhausted));
             Assert.That(snapshot.canRetry, Is.False);
-            Assert.That(server.Count("GET", DetailPath), Is.EqualTo(0));
+            Assert.That(server.Count("GET", DetailPath), Is.EqualTo(1));
         }
 
         [UnityTest]
@@ -189,8 +250,16 @@ namespace TarotUnity.Tests.PlayMode
             yield return WaitUntil(() => snapshot.interpretationState == InterpretationState.Failed, 15f, "expected Failed");
 
             Assert.That(snapshot.failureMessage, Is.EqualTo(ReleaseUxCopy.InterpretationConnectionLost));
-            Assert.That(snapshot.canRetry, Is.True);
+            Assert.That(snapshot.canRetry, Is.False);
+            Assert.That(snapshot.canCheckStatus, Is.True);
             Assert.That(server.Count("GET", DetailPath), Is.EqualTo(3));
+
+            server.Replace("GET", DetailPath, Completed("deepseek-chat"));
+            poller.Retry();
+            yield return WaitUntil(() => snapshot.interpretationState == InterpretationState.Ready, 10f,
+                "read-only recovery should find the saved interpretation");
+            Assert.That(server.Count("POST", AsyncPath), Is.EqualTo(1));
+            Assert.That(server.Count("POST", RetryPath), Is.EqualTo(0));
         }
 
         [UnityTest]
@@ -223,7 +292,8 @@ namespace TarotUnity.Tests.PlayMode
             yield return WaitUntil(() => snapshot.interpretationState == InterpretationState.Failed, 10f, "expected Failed");
 
             Assert.That(snapshot.failureMessage, Is.EqualTo(ReleaseUxCopy.InterpretationTimedOut));
-            Assert.That(snapshot.canRetry, Is.True);
+            Assert.That(snapshot.canRetry, Is.False);
+            Assert.That(snapshot.canCheckStatus, Is.True);
             Assert.That(Time.realtimeSinceStartup - startedAt, Is.LessThan(5f));
             Assert.That(server.Count("GET", DetailPath), Is.GreaterThan(0), "control: it polled before timing out");
         }

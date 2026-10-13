@@ -27,6 +27,7 @@ namespace TarotUnity.Data
         AttemptsExhausted,
         SessionExpired,
         Unavailable,
+        BudgetBlocked,
     }
 
     [Serializable]
@@ -52,6 +53,7 @@ namespace TarotUnity.Data
         public string modelUsed = string.Empty;
         public string failureMessage = string.Empty;
         public bool canRetry;
+        public bool canCheckStatus;
     }
 
     public static class ReadingSessionStore
@@ -71,4 +73,3 @@ namespace TarotUnity.Data
         }
     }
 }
-

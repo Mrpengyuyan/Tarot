@@ -102,6 +102,7 @@ namespace TarotUnity.Data
             target.interpretationState = InterpretationState.Ready;
             target.failureMessage = string.Empty;
             target.canRetry = false;
+            target.canCheckStatus = false;
         }
 
         public static ReadingSessionSnapshot FromBackendParts(

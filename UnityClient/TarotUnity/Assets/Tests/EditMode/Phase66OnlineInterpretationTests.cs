@@ -146,16 +146,16 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(ReleaseUxCopy.ForStartReadingFailure(error), Is.EqualTo(expected));
         }
 
-        [TestCase(InterpretationFailure.BackendFailed, "这次解读没有顺利生成，可以再试一次。", true)]
-        [TestCase(InterpretationFailure.TimedOut, "解读花的时间比预期长，可以再试一次。", true)]
-        [TestCase(InterpretationFailure.ConnectionLost, "与占卜服务的连接中断了，可以再试一次。", true)]
-        [TestCase(InterpretationFailure.AttemptsExhausted, "这一局已经尝试多次仍未成功，先看看离线解读吧。", false)]
-        [TestCase(InterpretationFailure.SessionExpired, "连接已过期，这次解读无法取回。", false)]
-        [TestCase(InterpretationFailure.Unavailable, "这次解读无法生成，先看看离线解读吧。", false)]
-        public void InterpretationFailuresMapToCopyAndRetryability(InterpretationFailure failure, string expected, bool canRetry)
+        [TestCase(InterpretationFailure.BackendFailed, "这次解读没有顺利生成，先看看离线解读吧。")]
+        [TestCase(InterpretationFailure.TimedOut, "在线解读仍可能在处理中，可先查看离线解读。")]
+        [TestCase(InterpretationFailure.ConnectionLost, "连接中断，解读是否完成尚不确定，可先查看离线解读。")]
+        [TestCase(InterpretationFailure.AttemptsExhausted, "这一局已经尝试多次仍未成功，先看看离线解读吧。")]
+        [TestCase(InterpretationFailure.SessionExpired, "连接已过期，这次解读无法取回。")]
+        [TestCase(InterpretationFailure.Unavailable, "这次解读无法生成，先看看离线解读吧。")]
+        [TestCase(InterpretationFailure.BudgetBlocked, "在线解读额度暂时不足，请稍后再试或查看离线解读。")]
+        public void InterpretationFailuresMapToCopy(InterpretationFailure failure, string expected)
         {
             Assert.That(ReleaseUxCopy.ForInterpretationFailure(failure), Is.EqualTo(expected));
-            Assert.That(ReleaseUxCopy.CanRetry(failure), Is.EqualTo(canRetry));
         }
 
         [Test]
@@ -256,6 +256,7 @@ namespace TarotUnity.Tests.EditMode
             snapshot.interpretationState = InterpretationState.Failed;
             snapshot.failureMessage = "旧的失败原因";
             snapshot.canRetry = true;
+            snapshot.canCheckStatus = true;
 
             ReadingSessionMapper.ApplyInterpretation(snapshot, new InterpretationResponse
             {
@@ -278,6 +279,7 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(snapshot.modelUsed, Is.EqualTo("deepseek-chat"));
             Assert.That(snapshot.failureMessage, Is.Empty);
             Assert.That(snapshot.canRetry, Is.False);
+            Assert.That(snapshot.canCheckStatus, Is.False);
         }
 
         [Test]
@@ -316,7 +318,7 @@ namespace TarotUnity.Tests.EditMode
         }
 
         [Test]
-        public void ApplyingAFailureRecordsCopyAndRetryability()
+        public void LocalFailureDoesNotAuthorizeAnotherAiRequest()
         {
             var snapshot = ReadingSessionMapper.FromBackendStart(
                 new PredictionResponse { id = 601 }, LocalReadingSimulator.CreatePlaceholderDraws(1));
@@ -324,7 +326,7 @@ namespace TarotUnity.Tests.EditMode
             InterpretationPoller.ApplyFailure(snapshot, InterpretationFailure.ConnectionLost);
             Assert.That(snapshot.interpretationState, Is.EqualTo(InterpretationState.Failed));
             Assert.That(snapshot.failureMessage, Is.EqualTo(ReleaseUxCopy.InterpretationConnectionLost));
-            Assert.That(snapshot.canRetry, Is.True);
+            Assert.That(snapshot.canRetry, Is.False);
 
             InterpretationPoller.ApplyFailure(snapshot, InterpretationFailure.SessionExpired);
             Assert.That(snapshot.failureMessage, Is.EqualTo(ReleaseUxCopy.InterpretationSessionExpired));
@@ -530,6 +532,12 @@ namespace TarotUnity.Tests.EditMode
             InterpretationPoller.ApplyFailure(online, InterpretationFailure.ConnectionLost);
             presenter.PresentSession(online);
             Assert.That(status.text, Is.EqualTo(ReleaseUxCopy.InterpretationConnectionLost));
+            Assert.That(retry.gameObject.activeSelf, Is.False);
+            Assert.That(offline.gameObject.activeSelf, Is.True);
+
+            InterpretationPoller.ApplyFailure(online, InterpretationFailure.BackendFailed, true);
+            presenter.PresentSession(online);
+            Assert.That(status.text, Is.EqualTo(ReleaseUxCopy.InterpretationRetryMayCost));
             Assert.That(retry.gameObject.activeSelf, Is.True);
             Assert.That(offline.gameObject.activeSelf, Is.True);
 

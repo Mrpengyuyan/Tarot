@@ -302,11 +302,20 @@ namespace TarotUnity.Tests.PlayMode
 
         public static string Detail(int predictionId, string status, int cardCount, string interpretationJson)
         {
+            var state = interpretationJson != null ? "completed" : status == "failed" ? "retry_required" : "sending";
+            return DetailWithRun(predictionId, status, cardCount, interpretationJson, state, state == "retry_required");
+        }
+
+        public static string DetailWithRun(
+            int predictionId, string status, int cardCount, string interpretationJson, string runState, bool canRetry)
+        {
             return "{\"id\":" + predictionId + ",\"user_id\":7,\"spread_type_id\":2,"
                 + "\"question\":\"此刻我最需要留意什么？\",\"question_type\":\"general\",\"status\":\"" + status
                 + "\",\"created_at\":\"2026-09-12T00:00:00Z\",\"completed_at\":null,\"is_favorite\":false,"
                 + "\"user_rating\":0,\"user_notes\":\"\",\"spread_type\":null,\"card_draws\":"
-                + Cards(predictionId, cardCount) + ",\"interpretation\":" + (interpretationJson ?? "null") + "}";
+                + Cards(predictionId, cardCount) + ",\"interpretation\":" + (interpretationJson ?? "null")
+                + ",\"interpretation_run\":{\"state\":\"" + runState + "\",\"can_retry\":"
+                + (canRetry ? "true" : "false") + ",\"requests_started\":1,\"max_requests\":2,\"retry_after\":null}}";
         }
 
         public static string Token(string accessToken)

@@ -103,29 +103,24 @@ namespace TarotUnity.Tests.PlayMode
                 "expected the lost connection to surface (Ready here means the AI beat the drill - rerun it)");
             Report($"drill2 failure={session.failureMessage} canRetry={session.canRetry}");
             Assert.That(session.failureMessage, Is.EqualTo(ReleaseUxCopy.InterpretationConnectionLost));
-            Assert.That(session.canRetry, Is.True);
+            Assert.That(session.canRetry, Is.False, "an unknown server state cannot authorize another paid request");
 
             yield return Handshake("drill2-start-backend", "drill2-backend-started", 180f);
 
             var controller = Object.FindFirstObjectByType<ResultSceneController>();
             var retry = GetField<Button>(controller, "retryInterpretationButton");
-            var startedAt = Time.realtimeSinceStartup;
-            for (var attempt = 1; attempt <= 2; attempt++)
+            Assert.That(retry.gameObject.activeInHierarchy, Is.True);
+            Assert.That(retry.transform.Find("Label").GetComponent<TMP_Text>().text,
+                Is.EqualTo(ReleaseUxCopy.CheckStatusButtonLabel));
+            retry.onClick.Invoke();
+            yield return WaitUntil(() => session.interpretationState != InterpretationState.Pending,
+                InterpretationWaitSeconds, "read-only status check did not settle");
+            if (session.interpretationState == InterpretationState.Failed)
             {
-                Assert.That(retry.gameObject.activeInHierarchy, Is.True, $"retry button hidden before attempt {attempt}");
-                retry.onClick.Invoke();
-                yield return WaitUntil(() => session.interpretationState != InterpretationState.Pending,
-                    InterpretationWaitSeconds, $"retry {attempt} never finished");
-                Report($"drill2 retry={attempt} state={session.interpretationState} failure={session.failureMessage} " +
-                    $"elapsed={Time.realtimeSinceStartup - startedAt:F0}s");
-                if (session.interpretationState == InterpretationState.Ready || !session.canRetry)
-                {
-                    break;
-                }
+                GetField<Button>(controller, "offlineInterpretationButton").onClick.Invoke();
+                Assert.That(session.source, Is.EqualTo(ReadingSource.Offline));
+                Assert.That(session.interpretationState, Is.EqualTo(InterpretationState.Ready), session.failureMessage);
             }
-
-            Assert.That(session.interpretationState, Is.EqualTo(InterpretationState.Ready), session.failureMessage);
-            Assert.That(session.modelUsed, Is.Not.EqualTo("mock_ai"));
         }
 
         [UnityTest]

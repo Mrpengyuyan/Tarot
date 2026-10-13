@@ -116,7 +116,8 @@ namespace TarotUnity.UI
         private void RetryInterpretation()
         {
             var session = ReadingSessionStore.Current;
-            if (poller != null && session != null && session.canRetry && poller.Current == session)
+            if (poller != null && session != null && (session.canRetry || session.canCheckStatus)
+                && poller.Current == session)
             {
                 poller.Retry();
             }

@@ -159,6 +159,17 @@ namespace TarotUnity.Data
         public SpreadSummary spread_type;
         public CardDrawData[] card_draws;
         public InterpretationResponse interpretation;
+        public InterpretationRunSummary interpretation_run;
+    }
+
+    [Serializable]
+    public sealed class InterpretationRunSummary
+    {
+        public string state;
+        public bool can_retry;
+        public int requests_started;
+        public int max_requests;
+        public string retry_after;
     }
 
     // Phase 66: POST /records/{id}/interpret/async answers 202 while the

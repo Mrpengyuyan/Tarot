@@ -212,6 +212,16 @@ namespace TarotUnity.Network
             HandleInterpretAsync(request, onSuccess, onError);
         }
 
+        public IEnumerator PostInterpretRetry(
+            int predictionId,
+            Action<AsyncInterpretationResult> onSuccess,
+            Action<ApiError> onError)
+        {
+            using var request = CreatePost(ApiRoutes.RecordInterpretRetry(predictionId), null);
+            yield return request.SendWebRequest();
+            HandleInterpretAsync(request, onSuccess, onError);
+        }
+
         public IEnumerator FetchRecordDetail(
             int predictionId,
             Action<PredictionDetailResponse> onSuccess,

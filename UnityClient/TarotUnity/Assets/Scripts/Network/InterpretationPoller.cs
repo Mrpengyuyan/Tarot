@@ -16,6 +16,13 @@ namespace TarotUnity.Network
     /// </summary>
     public sealed class InterpretationPoller : MonoBehaviour
     {
+        private enum RequestMode
+        {
+            Initial,
+            ManualRetry,
+            StatusOnly,
+        }
+
         // Backend AI_INTERPRETATION_STALE_SECONDS (300) plus 30 s of slack.
         public const float TotalDeadlineSeconds = 330f;
         public const int MaxConsecutiveNetworkErrors = 3;
@@ -83,6 +90,11 @@ namespace TarotUnity.Network
 
         public void Begin(ReadingSessionSnapshot snapshot)
         {
+            Start(snapshot, RequestMode.Initial);
+        }
+
+        private void Start(ReadingSessionSnapshot snapshot, RequestMode mode)
+        {
             runId++;
             IsPolling = false;
             Current = snapshot;
@@ -94,17 +106,27 @@ namespace TarotUnity.Network
             snapshot.interpretationState = InterpretationState.Pending;
             snapshot.failureMessage = string.Empty;
             snapshot.canRetry = false;
+            snapshot.canCheckStatus = false;
             IsPolling = true;
             var run = runId;
             StateChanged?.Invoke(snapshot);
-            StartCoroutine(PollRoutine(run, snapshot));
+            StartCoroutine(PollRoutine(run, snapshot, mode));
         }
 
         public void Retry()
         {
-            if (Current != null)
+            if (Current == null || IsPolling)
             {
-                Begin(Current);
+                return;
+            }
+
+            if (Current.canRetry)
+            {
+                Start(Current, RequestMode.ManualRetry);
+            }
+            else if (Current.canCheckStatus)
+            {
+                Start(Current, RequestMode.StatusOnly);
             }
         }
 
@@ -127,7 +149,8 @@ namespace TarotUnity.Network
             StateChanged?.Invoke(Current);
         }
 
-        public static void ApplyFailure(ReadingSessionSnapshot snapshot, InterpretationFailure failure)
+        public static void ApplyFailure(
+            ReadingSessionSnapshot snapshot, InterpretationFailure failure, bool canRetry = false, bool canCheckStatus = false)
         {
             if (snapshot == null)
             {
@@ -135,8 +158,11 @@ namespace TarotUnity.Network
             }
 
             snapshot.interpretationState = InterpretationState.Failed;
-            snapshot.failureMessage = ReleaseUxCopy.ForInterpretationFailure(failure);
-            snapshot.canRetry = ReleaseUxCopy.CanRetry(failure);
+            snapshot.failureMessage = canRetry
+                ? ReleaseUxCopy.InterpretationRetryMayCost
+                : ReleaseUxCopy.ForInterpretationFailure(failure);
+            snapshot.canRetry = canRetry;
+            snapshot.canCheckStatus = canCheckStatus;
         }
 
         // Keeps the dealt cards and the record id; only the text becomes the local
@@ -164,9 +190,10 @@ namespace TarotUnity.Network
             snapshot.modelUsed = string.Empty;
             snapshot.failureMessage = string.Empty;
             snapshot.canRetry = false;
+            snapshot.canCheckStatus = false;
         }
 
-        private IEnumerator PollRoutine(int run, ReadingSessionSnapshot snapshot)
+        private IEnumerator PollRoutine(int run, ReadingSessionSnapshot snapshot, RequestMode mode)
         {
             var client = Client;
             if (client == null)
@@ -176,7 +203,7 @@ namespace TarotUnity.Network
             }
 
             var startedAt = Time.realtimeSinceStartup;
-            var accepted = false;
+            var accepted = mode == RequestMode.StatusOnly;
             var attempt = 0;
             var networkErrors = 0;
             var refreshedThisRequest = false;
@@ -185,7 +212,7 @@ namespace TarotUnity.Network
             {
                 if (Time.realtimeSinceStartup - startedAt >= deadlineSeconds)
                 {
-                    Fail(run, snapshot, InterpretationFailure.TimedOut, "deadline reached");
+                    Fail(run, snapshot, InterpretationFailure.TimedOut, "deadline reached", canCheckStatus: true);
                     yield break;
                 }
 
@@ -193,7 +220,9 @@ namespace TarotUnity.Network
                 if (!accepted)
                 {
                     AsyncInterpretationResult result = null;
-                    yield return client.PostInterpretAsync(snapshot.predictionId, value => result = value, value => error = value);
+                    yield return mode == RequestMode.ManualRetry
+                        ? client.PostInterpretRetry(snapshot.predictionId, value => result = value, value => error = value)
+                        : client.PostInterpretAsync(snapshot.predictionId, value => result = value, value => error = value);
                     if (run != runId)
                     {
                         yield break;
@@ -209,15 +238,15 @@ namespace TarotUnity.Network
 
                         accepted = true;
                     }
-                    else if (error.Kind == ApiErrorKind.RateLimited)
-                    {
-                        Fail(run, snapshot, InterpretationFailure.AttemptsExhausted, error.RawMessage);
-                        yield break;
-                    }
-                    else if (error.Kind != ApiErrorKind.Unauthorized && !error.IsTransient)
+                    else if (error.Kind == ApiErrorKind.NotFound || error.Kind == ApiErrorKind.BadRequest)
                     {
                         Fail(run, snapshot, InterpretationFailure.Unavailable, error.RawMessage);
                         yield break;
+                    }
+                    else if (error.Kind != ApiErrorKind.Unauthorized)
+                    {
+                        // The server may have accepted this POST even when its response was lost.
+                        accepted = true;
                     }
                 }
                 else
@@ -238,9 +267,33 @@ namespace TarotUnity.Network
                             yield break;
                         }
 
-                        if (detail != null && string.Equals(detail.status, "failed", StringComparison.OrdinalIgnoreCase))
+                        if (detail?.interpretation_run != null)
                         {
-                            Fail(run, snapshot, InterpretationFailure.BackendFailed, "status failed");
+                            var state = detail.interpretation_run.state;
+                            if (state == "retry_required" || state == "budget_blocked")
+                            {
+                                var canRetry = detail.interpretation_run.can_retry;
+                                Fail(run, snapshot, state == "retry_required"
+                                    ? InterpretationFailure.BackendFailed : InterpretationFailure.BudgetBlocked,
+                                    state, canRetry, state == "budget_blocked" && !canRetry);
+                                yield break;
+                            }
+
+                            if (state == "exhausted")
+                            {
+                                Fail(run, snapshot, InterpretationFailure.AttemptsExhausted, state);
+                                yield break;
+                            }
+
+                            if (state == "not_started" || state == "completed")
+                            {
+                                Fail(run, snapshot, InterpretationFailure.Unavailable, state);
+                                yield break;
+                            }
+                        }
+                        else if (detail != null && string.Equals(detail.status, "failed", StringComparison.OrdinalIgnoreCase))
+                        {
+                            Fail(run, snapshot, InterpretationFailure.BackendFailed, "legacy status failed");
                             yield break;
                         }
                     }
@@ -290,7 +343,7 @@ namespace TarotUnity.Network
                         $"({networkErrors}/{MaxConsecutiveNetworkErrors}): {error.RawMessage}");
                     if (networkErrors >= MaxConsecutiveNetworkErrors)
                     {
-                        Fail(run, snapshot, InterpretationFailure.ConnectionLost, error.RawMessage);
+                        Fail(run, snapshot, InterpretationFailure.ConnectionLost, error.RawMessage, canCheckStatus: true);
                         yield break;
                     }
                 }
@@ -321,14 +374,16 @@ namespace TarotUnity.Network
             StateChanged?.Invoke(snapshot);
         }
 
-        private void Fail(int run, ReadingSessionSnapshot snapshot, InterpretationFailure failure, string detail)
+        private void Fail(
+            int run, ReadingSessionSnapshot snapshot, InterpretationFailure failure, string detail,
+            bool canRetry = false, bool canCheckStatus = false)
         {
             if (run != runId)
             {
                 return;
             }
 
-            ApplyFailure(snapshot, failure);
+            ApplyFailure(snapshot, failure, canRetry, canCheckStatus);
             IsPolling = false;
             Debug.Log($"InterpretationPoller: prediction {snapshot.predictionId} stopped with {failure} ({detail}).");
             StateChanged?.Invoke(snapshot);
