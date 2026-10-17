@@ -46,6 +46,8 @@ Unity 工程位于 `UnityClient/TarotUnity/`。构建场景包括：
 3. 客户端启动时先访问 `/api/v1/health/`，服务可达后再访问 `/api/v1/guest-session` 申请访客会话。
 
 后端负责认证、阅读记录、抽牌、AI 解读、限流、预算和 API Key；Unity 只负责客户端表现和交互。
+已在无模型密钥的本机 FastAPI 模拟环境中验证 Unity 的 1、3、10 张牌完整场景流程；
+这不等同于真实 AI 或公开发行环境验收。
 
 ### 玩家发行包
 
@@ -74,7 +76,7 @@ GitHub Releases 下载并解压运行；在线模式必须指向部署后的 HTT
 
 ## 当前下一步
 
-1. 激活 Unity Editor 许可证，重新执行 EditMode、PlayMode 和真实客户端联调。
-2. 将后端部署到 HTTPS 地址，并把发行配置从 `localhost` 切换到正式地址。
-3. 完善部署级访客频率限制和 AI 预算保护，再验证 macOS/Windows 干净环境。
+1. 确定后端托管方式和预算，补齐部署级访客限流，再部署到 HTTPS 地址。
+2. 将发行配置从 `localhost` 切换到正式地址；经明确同意后，以小额真实 AI 调用验证 1、3、10 张牌流程。
+3. 检查密钥与构建产物，并在 macOS/Windows 干净环境中验证下载安装和离线模式。
 4. 通过 1.0 验收后，将发行包放入 GitHub Release，而不是提交到源码历史。
