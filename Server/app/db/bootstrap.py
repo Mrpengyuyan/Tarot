@@ -36,6 +36,8 @@ def ensure_reference_data(db: Session) -> dict:
 
     result["cards_after"] = get_total_cards_count(db)
     result["spreads_after"] = get_total_spreads_count(db, active_only=False)
+    if result["cards_after"] == 0 or result["spreads_after"] == 0:
+        raise RuntimeError("Reference data initialization failed: cards or spreads are missing")
 
     if settings.AUTO_REPAIR_PREDICTION_QUESTIONS_ON_STARTUP:
         maintenance = repair_prediction_questions(db, include_synthetic=True, commit=True)

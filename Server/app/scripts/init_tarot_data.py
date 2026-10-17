@@ -212,8 +212,7 @@ def main():
     
     # 检查数据目录
     if not DATA_DIR.exists():
-        print(f"❌ 数据目录不存在: {DATA_DIR}")
-        return
+        raise RuntimeError(f"Reference data initialization failed: data directory not found: {DATA_DIR}")
     
     # 创建数据库会话
     db = SessionLocal()
@@ -224,6 +223,9 @@ def main():
         
         # 初始化牌阵数据
         spreads_count = init_spreads(db)
+
+        if cards_count == 0 or spreads_count == 0:
+            raise RuntimeError("Reference data initialization failed: cards or spreads were not imported")
         
         print(f"\n🎉 数据初始化完成!")
         print(f"📊 统计信息:")
@@ -241,8 +243,9 @@ def main():
     except Exception as e:
         print(f"❌ 数据初始化过程中出现错误: {e}")
         db.rollback()
+        raise
     finally:
         db.close()
 
 if __name__ == "__main__":
-    main() 
+    main()
