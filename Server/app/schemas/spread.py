@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing import List, Optional, Dict, Any
 
 class SpreadPosition(BaseModel):
@@ -28,15 +28,16 @@ class SpreadTypeBase(BaseModel):
 
 class SpreadTypeCreate(SpreadTypeBase):
     """创建牌阵类型数据模型"""
-    pass
+    card_count: int = Field(ge=1, le=78)
+    difficulty_level: int = Field(default=1, ge=1, le=5)
 
 class SpreadTypeUpdate(BaseModel):
     """更新牌阵类型数据模型"""
     name: Optional[str] = None
     name_en: Optional[str] = None
     description: Optional[str] = None
-    card_count: Optional[int] = None
-    difficulty_level: Optional[int] = None
+    card_count: Optional[int] = Field(default=None, ge=1, le=78)
+    difficulty_level: Optional[int] = Field(default=None, ge=1, le=5)
     positions: Optional[List[SpreadPosition]] = None
     layout_image_url: Optional[str] = None
     is_active: Optional[bool] = None
@@ -46,6 +47,17 @@ class SpreadTypeUpdate(BaseModel):
     suitable_for_finance: Optional[bool] = None
     suitable_for_health: Optional[bool] = None
     suitable_for_general: Optional[bool] = None
+
+    @field_validator(
+        "name", "description", "card_count", "difficulty_level", "positions", "is_active",
+        "is_beginner_friendly", "suitable_for_love", "suitable_for_career", "suitable_for_finance",
+        "suitable_for_health", "suitable_for_general",
+    )
+    @classmethod
+    def reject_null(cls, value):
+        if value is None:
+            raise ValueError("This field cannot be null")
+        return value
 
 class SpreadType(SpreadTypeBase):
     """牌阵类型响应数据模型"""

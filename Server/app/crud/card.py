@@ -106,8 +106,17 @@ def search_cards(db: Session, search_term: str, skip: int = 0, limit: int = 100)
     return get_cards(db, skip=skip, limit=limit, search_term=search_term)
 
 
+def _card_values(card_data: TarotCardCreate | TarotCardUpdate) -> dict:
+    values = card_data.model_dump(exclude_unset=True)
+    if values.get("card_type") is not None:
+        values["card_type"] = CardType(values["card_type"])
+    if values.get("suit") is not None:
+        values["suit"] = Suit(values["suit"])
+    return values
+
+
 def create_card(db: Session, card_create: TarotCardCreate) -> TarotCard:
-    db_card = TarotCard(**card_create.model_dump())
+    db_card = TarotCard(**_card_values(card_create))
     db.add(db_card)
     db.commit()
     db.refresh(db_card)
@@ -115,7 +124,7 @@ def create_card(db: Session, card_create: TarotCardCreate) -> TarotCard:
 
 
 def update_card(db: Session, db_card: TarotCard, card_update: TarotCardUpdate) -> TarotCard:
-    update_data = card_update.model_dump(exclude_unset=True)
+    update_data = _card_values(card_update)
     for field, value in update_data.items():
         setattr(db_card, field, value)
 
@@ -201,7 +210,7 @@ def validate_card_exists(db: Session, card_id: int) -> bool:
 def batch_create_cards(db: Session, cards_data: List[TarotCardCreate]) -> List[TarotCard]:
     db_cards: List[TarotCard] = []
     for card_data in cards_data:
-        db_card = TarotCard(**card_data.model_dump())
+        db_card = TarotCard(**_card_values(card_data))
         db.add(db_card)
         db_cards.append(db_card)
 

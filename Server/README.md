@@ -64,7 +64,9 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - `POST http://localhost:8000/api/v1/records/{id}/interpret/async`：仅启动首次 AI 解读；重复调用不会自动重新发送付费请求。
 - `GET http://localhost:8000/api/v1/records/{id}`：读取 `interpretation_run` 中的状态、已发送次数和是否可手动重试。
 - `POST http://localhost:8000/api/v1/records/{id}/interpret/retry`：仅由玩家主动触发一次失败后的重试；同一局最多两次可能计费的请求。
-- `http://localhost:8000/docs`：OpenAPI 文档，仅在 `DEBUG=true` 时可用。
+- `http://localhost:8000/docs`：OpenAPI 文档，开发环境或 `DEBUG=true` 时可用，正式环境默认关闭。
+
+更新接口中，省略字段表示保留原值；只有备注、评分等允许为空的字段才能通过 `null` 清空。牌阵支持 1 至 78 张牌、1 至 5 级难度，位置编号必须完整且不重复地覆盖 `1..card_count`；修改牌数时需要同时提供匹配的位置配置。
 
 ## 关键配置
 
@@ -98,6 +100,8 @@ python -m pytest -q
 第二条命令不带路径，所以还会收集 `app/scripts/` 下的 `test_*.py` 模块。GitHub Actions（仓库根目录的 `.github/workflows/backend-tests.yml`）只在 `Server/` 有改动时运行这两条命令。
 
 测试包含 50 并发请求下的访客会话额度、单账号阅读额度，以及多个服务实例共享日/月预算的检查。模型服务在测试中使用模拟响应，不产生付费调用；同时检查上游错误回显不会把密钥或问题内容写入日志。正式部署后仍需在实际数据库和 HTTPS 入口重复验收。
+
+写入完整性测试覆盖卡牌枚举的创建、批量创建与更新，以及空值拒绝、可空字段清空和牌阵数量/位置配置校验。无效请求会在写入前被拒绝。
 
 ## Docker
 

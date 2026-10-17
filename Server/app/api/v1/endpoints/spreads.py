@@ -19,6 +19,13 @@ router = APIRouter()
 VALID_QUESTION_TYPES = {"love", "career", "finance", "health", "general"}
 
 
+def _validate_positions(card_count: int, numbers: List[int]) -> None:
+    if len(numbers) != card_count:
+        raise HTTPException(status_code=400, detail="positions count does not match card_count")
+    if set(numbers) != set(range(1, card_count + 1)):
+        raise HTTPException(status_code=400, detail="positions must cover 1 through card_count exactly once")
+
+
 @router.get("/", response_model=List[SpreadTypeSimple], summary="Get spreads")
 def get_spreads(
     skip: int = Query(0, ge=0, description="Records to skip"),
@@ -163,8 +170,7 @@ def create_spread(
     if existing_spread:
         raise HTTPException(status_code=400, detail="Spread with same name already exists")
 
-    if len(spread_create.positions) != spread_create.card_count:
-        raise HTTPException(status_code=400, detail="positions count does not match card_count")
+    _validate_positions(spread_create.card_count, [position.position for position in spread_create.positions])
 
     return spread_crud.create_spread(db=db, spread_create=spread_create)
 
@@ -183,14 +189,18 @@ def update_spread(
     if not spread:
         raise HTTPException(status_code=404, detail="Spread not found")
 
-    if spread_update.positions is not None:
+    if spread_update.positions is not None or spread_update.card_count is not None:
         expected_card_count = (
             spread_update.card_count
             if spread_update.card_count is not None
             else spread.card_count
         )
-        if len(spread_update.positions) != expected_card_count:
-            raise HTTPException(status_code=400, detail="positions count does not match card_count")
+        numbers = (
+            [position.position for position in spread_update.positions]
+            if spread_update.positions is not None
+            else [position.get("position") for position in spread.positions]
+        )
+        _validate_positions(expected_card_count, numbers)
 
     return spread_crud.update_spread(db=db, db_spread=spread, spread_update=spread_update)
 
@@ -248,10 +258,6 @@ def batch_create_spreads(
         raise HTTPException(status_code=400, detail="At most 50 spreads per batch")
 
     for spread_data in spreads_data:
-        if len(spread_data.positions) != spread_data.card_count:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Spread '{spread_data.name}' positions count does not match card_count",
-            )
+        _validate_positions(spread_data.card_count, [position.position for position in spread_data.positions])
 
     return spread_crud.batch_create_spreads(db=db, spreads_data=spreads_data)

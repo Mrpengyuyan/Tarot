@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 from typing import Optional, List
 from enum import Enum
 
@@ -75,6 +75,13 @@ class TarotCardUpdate(BaseModel):
     element: Optional[str] = None
     zodiac: Optional[str] = None
     planet: Optional[str] = None
+
+    @field_validator("name_en", "name_zh", "card_number", "card_type", "upright_meaning", "reversed_meaning")
+    @classmethod
+    def reject_null(cls, value):
+        if value is None:
+            raise ValueError("This field cannot be null")
+        return value
 
 class TarotCard(TarotCardBase):
     """塔罗牌响应数据模型"""

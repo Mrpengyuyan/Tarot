@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 from typing import Optional
 
 
@@ -24,6 +24,13 @@ class UserUpdate(BaseModel):
     username: Optional[str] = Field(default=None, min_length=3, max_length=50)
     email: Optional[EmailStr] = None
     password: Optional[str] = Field(default=None, min_length=8, max_length=128)
+
+    @field_validator("username", "email", "password")
+    @classmethod
+    def reject_null(cls, value):
+        if value is None:
+            raise ValueError("This field cannot be null")
+        return value
 
 
 class UserInDB(UserBase):

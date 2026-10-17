@@ -43,6 +43,13 @@ class PredictionUpdate(BaseModel):
     user_rating: Optional[int] = Field(default=None, ge=1, le=5)
     user_notes: Optional[str] = None
 
+    @field_validator("is_favorite")
+    @classmethod
+    def reject_null(cls, value):
+        if value is None:
+            raise ValueError("This field cannot be null")
+        return value
+
 class Prediction(PredictionBase):
     """预测记录响应数据模型"""
     id: int
@@ -141,6 +148,13 @@ class InterpretationUpdate(BaseModel):
     model_used: Optional[str] = None
     model_version: Optional[str] = None
     confidence_score: Optional[float] = None
+
+    @field_validator("overall_interpretation")
+    @classmethod
+    def reject_null(cls, value):
+        if value is None:
+            raise ValueError("This field cannot be null")
+        return value
 
 
 class Interpretation(InterpretationBase):
