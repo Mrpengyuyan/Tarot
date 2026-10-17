@@ -103,9 +103,11 @@ python -m pytest -q
 
 ```bash
 docker build -t tarot-server .
+docker run --rm --env-file .env tarot-server alembic upgrade head
+docker run --rm --env-file .env tarot-server python -m app.scripts.init_tarot_data
 docker run --rm -p 8000:8000 --env-file .env tarot-server
 ```
 
-容器启动时不会执行 `alembic upgrade head`。需要建表和导入数据时，在 `.env` 中把 `AUTO_CREATE_TABLES_ON_STARTUP` 和 `AUTO_BOOTSTRAP_REFERENCE_DATA_ON_STARTUP` 设为 `true`。
+以上三次运行必须连接同一个持久数据库。可以使用容器可访问的 PostgreSQL；单实例、低流量部署也可使用 SQLite，但三次运行都要挂载同一个持久卷，并将 `DATABASE_URL` 指向卷内的绝对路径。示例中的相对 SQLite 路径会随容器删除，不适合这套命令。镜像包含迁移文件，但服务启动时不会自动执行迁移，以免多个实例同时修改数据库。`AUTO_CREATE_TABLES_ON_STARTUP` 和 `AUTO_BOOTSTRAP_REFERENCE_DATA_ON_STARTUP` 仅适合本地临时体验，不替代正式迁移。
 
 目前没有 `docker-compose.yml`：旧版编排包含已废弃的 React 前端，等部署方式确定后再重写。

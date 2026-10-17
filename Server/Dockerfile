@@ -16,6 +16,8 @@ RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 # Copy the rest of the application's code to the working directory
 COPY ./app /app/app
 COPY ./data /app/data
+COPY ./alembic.ini /app/alembic.ini
+COPY ./alembic /app/alembic
 
 # Command to run the application
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
