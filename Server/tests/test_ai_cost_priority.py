@@ -111,6 +111,28 @@ def test_single_attempt_wall_clock_timeout_is_reported(monkeypatch):
         ))
 
 
+def test_single_attempt_failure_does_not_wait_for_another_attempt(monkeypatch):
+    service = CozeService()
+    service.max_retries = 2
+    service.retry_on_timeout = True
+    service.retry_backoff_ms = 800
+
+    async def fail_request(**kwargs):
+        raise CozeTimeoutError("response lost")
+
+    async def forbidden_backoff(delay):
+        raise AssertionError("A single attempt must not wait for a retry")
+
+    monkeypatch.setattr(service, "_request_chat_completion", fail_request)
+    monkeypatch.setattr(asyncio, "sleep", forbidden_backoff)
+
+    with pytest.raises(CozeTimeoutError):
+        asyncio.run(service._chat_once(
+            model=service.chat_model, messages=[], max_wait_time=60,
+            expect_json=True, single_attempt=True,
+        ))
+
+
 def test_single_attempt_rejects_redirect_without_following(monkeypatch):
     posts = []
 
@@ -387,3 +409,41 @@ def test_real_interpretation_service_timeout_never_auto_sends_again(
     assert detail["can_retry"] is False
     assert client.post(f"/api/v1/records/{prediction_id}/interpret/retry").status_code == 429
     assert len(posts) == 2
+
+
+@pytest.mark.parametrize("failure_kind", ["http_error", "invalid_json", "request_error"])
+def test_provider_failure_does_not_expose_echoed_credentials_or_question(
+    client, db_session_factory, seeded_spread_and_cards, monkeypatch, caplog, failure_kind,
+):
+    prediction_id = _login_and_draw(client, seeded_spread_and_cards["spread_id"], "private_error")
+    secret = "sensitive-test-credential"
+    question = "接下来做什么？"
+    echoed_text = f"{secret}: {question}"
+
+    class FakeClient:
+        def __init__(self, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return None
+
+        async def post(self, url, **kwargs):
+            if failure_kind == "request_error":
+                raise httpx.ConnectError(echoed_text)
+            return httpx.Response(503 if failure_kind == "http_error" else 200, text=echoed_text)
+
+    monkeypatch.setattr("app.services.coze_service.httpx.AsyncClient", FakeClient)
+    service = CozeService(budget_store=DatabaseBudgetStore(db_session_factory))
+    service.api_key = secret
+    service.budget_guard_enabled = True
+    monkeypatch.setattr(records_endpoint.tarot_interpretation_service, "ai_service", service)
+
+    response = client.post(f"/api/v1/records/{prediction_id}/interpret?force_ai=true")
+
+    assert response.status_code == 502
+    for private_value in (secret, question):
+        assert private_value not in response.text
+        assert private_value not in caplog.text

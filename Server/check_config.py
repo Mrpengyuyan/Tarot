@@ -53,7 +53,7 @@ try:
     print(f"request_soft_cap_usd: {settings.AI_REQUEST_SOFT_CAP_USD}")
     print(f"reasoner_max_percent: {settings.AI_REASONER_MAX_PERCENT}")
     if settings.AI_BUDGET_GUARD_ENABLED:
-        print("budget_guard_note: process-local counters; keep disabled for multi-instance deployment.")
+        print("budget_guard_note: database-backed reservations shared by workers; keep enabled for paid interpretations.")
 except ImportError as exc:
     print(f"Import error: {exc}")
 except Exception as exc:

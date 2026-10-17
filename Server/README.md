@@ -97,6 +97,8 @@ python -m pytest -q
 
 第二条命令不带路径，所以还会收集 `app/scripts/` 下的 `test_*.py` 模块。GitHub Actions（仓库根目录的 `.github/workflows/backend-tests.yml`）只在 `Server/` 有改动时运行这两条命令。
 
+测试包含 50 并发请求下的访客会话额度、单账号阅读额度，以及多个服务实例共享日/月预算的检查。模型服务在测试中使用模拟响应，不产生付费调用；同时检查上游错误回显不会把密钥或问题内容写入日志。正式部署后仍需在实际数据库和 HTTPS 入口重复验收。
+
 ## Docker
 
 镜像的构建上下文是 `Server/`：

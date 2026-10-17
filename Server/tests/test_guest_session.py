@@ -1,10 +1,13 @@
 from concurrent.futures import ThreadPoolExecutor
+from threading import Barrier
 
 import pytest
 from sqlalchemy import func, select, text
 
 from app.api.v1.endpoints import records as records_endpoint
 from app.core.config import settings
+from app.models.record import Prediction
+from app.models.spread import SpreadType
 from app.models.user import User
 from app.services.guest_session_limiter import GuestSessionLimitReached, claim_guest_session
 
@@ -20,11 +23,21 @@ def test_guest_session_creation_is_limited_per_source(client, db_session):
     assert "testclient" not in source_hash
 
 
-def test_guest_session_limit_is_atomic_under_parallel_requests(client):
-    with ThreadPoolExecutor(max_workers=4) as executor:
-        responses = list(executor.map(lambda _: client.post("/api/v1/guest-session"), range(12)))
+def test_guest_session_limit_is_atomic_under_fifty_parallel_requests(client, db_session):
+    ready = Barrier(50, timeout=30)
 
-    assert sorted(response.status_code for response in responses) == [200] * 10 + [429] * 2
+    def request_session(_):
+        ready.wait()
+        return client.post("/api/v1/guest-session")
+
+    with ThreadPoolExecutor(max_workers=50) as executor:
+        responses = list(executor.map(request_session, range(50)))
+
+    assert sorted(response.status_code for response in responses) == [200] * 10 + [429] * 40
+    assert all(1 <= int(response.headers["Retry-After"]) <= 3600
+               for response in responses if response.status_code == 429)
+    assert db_session.scalar(select(func.count(User.id)).where(User.is_guest.is_(True))) == 10
+    assert db_session.execute(text("SELECT issued FROM guest_session_windows")).scalar_one() == 10
 
 
 def test_forwarded_for_header_does_not_bypass_guest_session_limit(client, monkeypatch):
@@ -260,20 +273,35 @@ def test_registered_account_has_its_own_daily_reading_limit(client, seeded_sprea
     assert client.post("/api/v1/records/", headers=headers, json=payload).status_code == 429
 
 
-def test_parallel_guest_record_creation_claims_only_one_slot(client, seeded_spread_and_cards, monkeypatch):
-    monkeypatch.setattr(settings, "GUEST_DAILY_READING_LIMIT", 1)
+def test_fifty_parallel_guest_readings_cannot_exceed_daily_quota(
+    client, db_session, seeded_spread_and_cards, monkeypatch,
+):
+    monkeypatch.setattr(settings, "GUEST_DAILY_READING_LIMIT", 3)
     token = client.post("/api/v1/guest-session").json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
     payload = {
-        "question": "Can two requests use the same slot?",
+        "question": "Can concurrent requests exceed my daily quota?",
         "question_type": "general",
         "spread_type_id": seeded_spread_and_cards["spread_id"],
     }
 
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        responses = list(pool.map(lambda _: client.post("/api/v1/records/", headers=headers, json=payload), range(2)))
+    ready = Barrier(50, timeout=30)
 
-    assert sorted(response.status_code for response in responses) == [200, 429]
+    def request_reading(_):
+        ready.wait()
+        return client.post("/api/v1/records/", headers=headers, json=payload)
+
+    with ThreadPoolExecutor(max_workers=50) as pool:
+        responses = list(pool.map(request_reading, range(50)))
+
+    assert sorted(response.status_code for response in responses) == [200] * 3 + [429] * 47
+    assert all(1 <= int(response.headers["Retry-After"]) <= 86400
+               for response in responses if response.status_code == 429)
+    assert db_session.scalar(select(func.count(Prediction.id))) == 3
+    guest = db_session.scalars(select(User).where(User.is_guest.is_(True))).one()
+    assert guest.reading_quota_count == 3
+    assert guest.prediction_count == 3
+    assert db_session.get(SpreadType, payload["spread_type_id"]).usage_count == 3
 
 
 def test_guest_session_refresh_keeps_access_to_own_record(client, seeded_spread_and_cards):

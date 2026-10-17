@@ -2,9 +2,46 @@ from __future__ import annotations
 
 import asyncio
 
+import httpx
 import pytest
 
 from app.services.coze_service import CozeError, CozeService, CozeTimeoutError
+
+
+def test_response_format_rejection_preserves_legacy_retry_without_json_mode(monkeypatch):
+    service = CozeService()
+    service.api_key = "test-key"
+    service.budget_guard_enabled = False
+    service.force_json_output = True
+    service.max_retries = 2
+    formats = []
+
+    class FakeClient:
+        def __init__(self, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return None
+
+        async def post(self, url, **kwargs):
+            has_format = "response_format" in kwargs["json"]
+            formats.append(has_format)
+            if has_format:
+                return httpx.Response(400, text="response_format is not supported")
+            return httpx.Response(200, json={"choices": [{"message": {"content": "answer"}}]})
+
+    monkeypatch.setattr("app.services.coze_service.httpx.AsyncClient", FakeClient)
+
+    result = asyncio.run(service._chat_once(
+        model=service.chat_model, messages=[], max_wait_time=60, expect_json=True,
+    ))
+
+    assert formats[0] is True
+    assert formats[-1] is False
+    assert result["text"] == "answer"
 
 
 def _set_reasoner_blocked_budget(service: CozeService) -> None:
@@ -75,4 +112,3 @@ def test_primary_failure_and_fallback_blocked_raises_clear_error():
     message = str(exc_info.value).lower()
     assert "fallback blocked" in message
     assert "primary timeout" in message
-

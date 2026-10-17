@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 import asyncio
+from threading import Barrier
 
+import httpx
 import pytest
 
 from app.core.config import Settings
@@ -67,25 +69,60 @@ def test_reservation_survives_new_service_instance(db_session_factory):
     )
 
 
-def test_concurrent_reservations_cannot_both_take_remaining_budget(db_session_factory):
-    store = DatabaseBudgetStore(db_session_factory)
+@pytest.mark.parametrize("daily_limit,monthly_limit", [(0.012, 0.024), (0.024, 0.012)])
+def test_fifty_paid_requests_share_daily_and_monthly_budget(
+    db_session_factory, monkeypatch, daily_limit, monthly_limit,
+):
+    posts = []
+    ready = Barrier(50, timeout=30)
 
-    def reserve_once():
-        try:
-            return store.reserve(
-                model="deepseek-chat",
-                estimated_micros=700,
-                daily_limit_micros=1000,
-                monthly_limit_micros=2000,
-            )
-        except BudgetLimitExceeded:
+    class FakeClient:
+        def __init__(self, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
             return None
 
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        results = list(pool.map(lambda _: reserve_once(), range(2)))
+        async def post(self, *args, **kwargs):
+            posts.append(1)
+            return httpx.Response(200, json={"choices": [{"message": {"content": "answer"}}]})
 
-    assert sum(result is not None for result in results) == 1
-    assert store.snapshot()["daily_reserved_micros"] == 700
+    monkeypatch.setattr("app.services.coze_service.httpx.AsyncClient", FakeClient)
+    store = DatabaseBudgetStore(db_session_factory)
+
+    def send_once(_):
+        service = CozeService(budget_store=DatabaseBudgetStore(db_session_factory))
+        service.api_key = "test-key"
+        service.budget_guard_enabled = True
+        service.daily_budget_usd = daily_limit
+        service.monthly_budget_usd = monthly_limit
+        service.chat_input_cost_per_m = 1
+        service.chat_output_cost_per_m = 1
+        ready.wait()
+        try:
+            asyncio.run(service._request_chat_completion(
+                payload={"model": service.chat_model, "messages": [], "max_tokens": 100},
+                single_attempt=True,
+            ))
+            return True
+        except CozeBudgetExceededError:
+            return False
+
+    with ThreadPoolExecutor(max_workers=50) as pool:
+        results = list(pool.map(send_once, range(50)))
+
+    assert sum(results) == 10
+    assert len(posts) == 10
+    # Each response omits usage, so its full 1126-microdollar reservation stays held.
+    assert store.snapshot() == {
+        "daily_reserved_micros": 11260,
+        "monthly_reserved_micros": 11260,
+        "daily_spent_micros": 0,
+        "monthly_spent_micros": 0,
+    }
 
 
 def test_provider_request_is_blocked_before_network_when_budget_is_insufficient(

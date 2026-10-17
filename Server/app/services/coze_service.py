@@ -131,13 +131,6 @@ class CozeService:
             "Content-Type": "application/json",
         }
 
-    @staticmethod
-    def _exception_text(exc: Exception) -> str:
-        message = str(exc).strip()
-        if message:
-            return message
-        return repr(exc)
-
     def _candidate_chat_endpoints(self) -> List[str]:
         endpoints: List[str] = []
         for endpoint in [self.chat_endpoint, "chat/completions", "v1/chat/completions"]:
@@ -392,26 +385,26 @@ class CozeService:
                     raise
                 if isinstance(exc, httpx.TimeoutException):
                     last_error = CozeTimeoutError(
-                        f"DeepSeek request timeout ({request_timeout}s) on endpoint '{endpoint}'"
+                        f"DeepSeek request timeout ({request_timeout}s)"
                     )
                 elif isinstance(exc, httpx.RequestError):
-                    detail = self._exception_text(exc)
                     last_error = CozeRequestError(
-                        f"DeepSeek request error on endpoint '{endpoint}' ({type(exc).__name__}): {detail}"
+                        f"DeepSeek request error ({type(exc).__name__})"
                     )
                 else:
                     raise
                 if single_attempt:
-                    raise last_error from exc
+                    raise last_error from None
                 continue
 
             if response.status_code >= 400 or (single_attempt and response.status_code >= 300):
                 if reservation_id is not None and response.status_code < 500:
                     self.budget_store.settle(reservation_id, actual_micros=0)
-                detail = response.text[:500]
+                # Keep only a known compatibility marker, never provider-echoed private data.
+                format_note = " (response_format rejected)" if "response_format" in response.text.lower() else ""
                 last_error = CozeHttpStatusError(
                     int(response.status_code),
-                    f"DeepSeek HTTP {response.status_code} on endpoint '{endpoint}': {detail}",
+                    f"DeepSeek HTTP {response.status_code}{format_note}",
                 )
                 if single_attempt:
                     raise last_error
@@ -433,10 +426,10 @@ class CozeService:
                 return result
             except json.JSONDecodeError:
                 last_error = CozeError(
-                    f"DeepSeek returned non-JSON response on endpoint '{endpoint}': {response.text[:200]}"
+                    "DeepSeek returned non-JSON response"
                 )
                 if single_attempt:
-                    raise last_error
+                    raise last_error from None
                 continue
 
         if last_error:
@@ -590,7 +583,7 @@ class CozeService:
                     continue
 
                 last_error = exc
-                if attempt >= self.max_retries or not self._is_retryable_exception(exc):
+                if attempt + 1 >= max_attempts or not self._is_retryable_exception(exc):
                     break
 
                 delay = self._retry_delay_seconds(attempt)
