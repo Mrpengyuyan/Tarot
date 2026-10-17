@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_active_user
@@ -216,7 +217,14 @@ def delete_spread(
         raise HTTPException(status_code=403, detail="Admin privileges required")
 
     if hard_delete:
-        success = spread_crud.hard_delete_spread(db, spread_id=spread_id)
+        try:
+            success = spread_crud.hard_delete_spread(db, spread_id=spread_id)
+        except IntegrityError as exc:
+            db.rollback()
+            raise HTTPException(
+                status_code=409,
+                detail="Spread is used by reading history; mark it inactive instead",
+            ) from exc
         message = "Spread hard deleted"
     else:
         success = spread_crud.delete_spread(db, spread_id=spread_id)

@@ -1,13 +1,22 @@
 import logging
 from typing import Callable, Generator
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+def enable_sqlite_foreign_keys(dbapi_connection, _connection_record) -> None:
+    cursor = dbapi_connection.cursor()
+    try:
+        cursor.execute("PRAGMA foreign_keys=ON")
+    finally:
+        cursor.close()
+
 
 # Database configuration from settings.
 DATABASE_URL = settings.DATABASE_URL
@@ -37,6 +46,9 @@ else:
         pool_pre_ping=True,
         echo=False,
     )
+
+if engine.dialect.name == "sqlite":
+    event.listen(engine, "connect", enable_sqlite_foreign_keys)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

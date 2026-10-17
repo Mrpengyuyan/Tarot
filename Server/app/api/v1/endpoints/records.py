@@ -231,6 +231,9 @@ def create_prediction(
         )
     except prediction_crud.DailyReadingLimitExceeded as exc:
         raise _daily_reading_limit_error(is_guest=is_guest) from exc
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Reading data changed; select an active spread and try again") from exc
 
 
 @router.put("/{prediction_id:int}", response_model=Prediction, summary="Update record")
@@ -271,7 +274,11 @@ def delete_prediction(
     ):
         raise HTTPException(status_code=404, detail="Record not found")
 
-    success = prediction_crud.delete_prediction(db, prediction_id=prediction_id)
+    try:
+        success = prediction_crud.delete_prediction(db, prediction_id=prediction_id)
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Reading changed while being deleted; please try again") from exc
     if not success:
         raise HTTPException(status_code=404, detail="Record not found")
     return {"message": "Record deleted"}

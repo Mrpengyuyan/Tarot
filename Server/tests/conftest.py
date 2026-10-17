@@ -4,12 +4,12 @@ from collections.abc import Generator
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
 
 import app.db.base  # noqa: F401 - ensure model metadata is loaded
 from app.db.base_class import Base
-from app.db.session import get_db, get_session_factory
+from app.db.session import enable_sqlite_foreign_keys, get_db, get_session_factory
 from app.main import app
 from app.models.spread import SpreadType
 from app.models.tarot_card import CardType, TarotCard
@@ -22,6 +22,7 @@ def db_session_factory(tmp_path):
         f"sqlite:///{db_path}",
         connect_args={"check_same_thread": False},
     )
+    event.listen(engine, "connect", enable_sqlite_foreign_keys)
     Base.metadata.create_all(bind=engine)
 
     factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)

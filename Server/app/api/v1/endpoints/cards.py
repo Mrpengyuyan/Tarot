@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_active_user
@@ -184,7 +185,14 @@ def delete_card(
     if not current_user.is_superuser:
         raise HTTPException(status_code=403, detail="Admin privileges required")
 
-    success = card_crud.delete_card(db, card_id=card_id)
+    try:
+        success = card_crud.delete_card(db, card_id=card_id)
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="Tarot card is used by reading history and cannot be deleted",
+        ) from exc
     if not success:
         raise HTTPException(status_code=404, detail="Tarot card not found")
 
