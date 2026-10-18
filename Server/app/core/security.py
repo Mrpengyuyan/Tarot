@@ -7,6 +7,7 @@ from passlib.context import CryptContext
 from app.core.config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+MAX_PASSWORD_BYTES = 72
 
 
 TokenType = Literal["access", "refresh"]
@@ -34,16 +35,22 @@ def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None) 
     return _create_token(data=data, expires_delta=expires_delta, token_type="refresh")
 
 
+def validate_password_bytes(password: str) -> str:
+    if len(password.encode("utf-8")) > MAX_PASSWORD_BYTES:
+        raise ValueError(f"Password must not exceed {MAX_PASSWORD_BYTES} UTF-8 bytes")
+    return password
+
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     try:
-        return pwd_context.verify(plain_password, hashed_password)
+        return pwd_context.verify(validate_password_bytes(plain_password), hashed_password)
     except ValueError:
         # Invalid credentials must not turn authentication rejection into a 500.
         return False
 
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    return pwd_context.hash(validate_password_bytes(password))
 
 
 def verify_token(token: str, expected_type: TokenType = "access") -> Optional[int]:

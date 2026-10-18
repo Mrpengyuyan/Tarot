@@ -1,19 +1,17 @@
 from pydantic import AfterValidator, BaseModel, BeforeValidator, ConfigDict, EmailStr, Field, field_validator
 from typing import Annotated, Optional
 
+from app.core.security import MAX_PASSWORD_BYTES, validate_password_bytes
+
 
 def _strip_username(value):
     return value.strip() if isinstance(value, str) else value
 
 
-def _validate_password_bytes(value: str) -> str:
-    if len(value.encode("utf-8")) > 72:
-        raise ValueError("Password must not exceed 72 UTF-8 bytes")
-    return value
-
-
 UsernameInput = Annotated[str, Field(min_length=3, max_length=50), BeforeValidator(_strip_username)]
-PasswordInput = Annotated[str, Field(min_length=8, max_length=72), AfterValidator(_validate_password_bytes)]
+PasswordInput = Annotated[
+    str, Field(min_length=8, max_length=MAX_PASSWORD_BYTES), AfterValidator(validate_password_bytes)
+]
 
 
 class UserBase(BaseModel):
