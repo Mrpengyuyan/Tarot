@@ -1,6 +1,6 @@
 import secrets
 from datetime import timedelta
-from typing import Optional, cast
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -19,6 +19,7 @@ from app.crud.user import (
     authenticate_user,
     create_user,
     get_user_by_email,
+    get_user_by_id,
     get_user_by_username,
     is_active,
 )
@@ -30,18 +31,18 @@ from app.services.guest_session_limiter import GuestSessionLimitReached, claim_g
 router = APIRouter()
 
 
-def _issue_access_token(username: str) -> str:
+def _issue_access_token(user_id: int) -> str:
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     return create_access_token(
-        data={"sub": username},
+        data={"sub": str(user_id), "sub_type": "user_id"},
         expires_delta=access_token_expires,
     )
 
 
-def _issue_refresh_token(username: str) -> str:
+def _issue_refresh_token(user_id: int) -> str:
     refresh_token_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     return create_refresh_token(
-        data={"sub": username},
+        data={"sub": str(user_id), "sub_type": "user_id"},
         expires_delta=refresh_token_expires,
     )
 
@@ -169,8 +170,8 @@ def guest_session(
             headers={"Retry-After": str(exc.retry_after_seconds)},
         ) from exc
     guest_user = _create_guest_user(db)
-    access_token = _issue_access_token(cast(str, guest_user.username))
-    refresh_token = _issue_refresh_token(cast(str, guest_user.username))
+    access_token = _issue_access_token(guest_user.id)
+    refresh_token = _issue_refresh_token(guest_user.id)
     _set_auth_cookie(response, access_token, refresh_token)
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -189,8 +190,11 @@ def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    access_token = _issue_access_token(cast(str, user.username))
-    refresh_token = _issue_refresh_token(cast(str, user.username))
+    if not is_active(user):
+        raise HTTPException(status_code=400, detail="Inactive user")
+
+    access_token = _issue_access_token(user.id)
+    refresh_token = _issue_refresh_token(user.id)
     _set_auth_cookie(response, access_token, refresh_token)
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -204,15 +208,15 @@ def refresh_token(
     _ensure_cookie_csrf_protection(request)
 
     refresh_cookie = request.cookies.get(settings.REFRESH_COOKIE_NAME)
-    username = verify_token(refresh_cookie, expected_type="refresh") if refresh_cookie else None
-    if username is None:
+    user_id = verify_token(refresh_cookie, expected_type="refresh") if refresh_cookie else None
+    if user_id is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not refresh session",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    user = get_user_by_username(db, username=username)
+    user = get_user_by_id(db, user_id=user_id)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -222,8 +226,8 @@ def refresh_token(
     if not is_active(user):
         raise HTTPException(status_code=400, detail="Inactive user")
 
-    access_token = _issue_access_token(cast(str, user.username))
-    new_refresh_token = _issue_refresh_token(cast(str, user.username))
+    access_token = _issue_access_token(user.id)
+    new_refresh_token = _issue_refresh_token(user.id)
     existing_csrf = request.cookies.get(settings.CSRF_COOKIE_NAME)
     _set_auth_cookie(
         response,

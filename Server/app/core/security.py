@@ -42,18 +42,23 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-def verify_token(token: str, expected_type: TokenType = "access") -> Optional[str]:
+def verify_token(token: str, expected_type: TokenType = "access") -> Optional[int]:
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        username = payload.get("sub")
-        token_type = payload.get("type")
-        if not isinstance(username, str):
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
+            options={"require_exp": True, "require_sub": True},
+        )
+        # Reject legacy username subjects, including names that look like numeric IDs.
+        if payload.get("sub_type") != "user_id" or payload.get("type") != expected_type:
             return None
-        if expected_type == "refresh":
-            if token_type != "refresh":
-                return None
-        elif token_type is not None and token_type != "access":
+        subject = payload.get("sub")
+        if not isinstance(subject, str) or len(subject) > 19 or not subject.isascii() or not subject.isdecimal():
             return None
-        return username
-    except JWTError:
+        user_id = int(subject)
+        if not 0 < user_id < 2**63 or str(user_id) != subject:
+            return None
+        return user_id
+    except (JWTError, TypeError, ValueError, OverflowError):
         return None

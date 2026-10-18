@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.security import verify_token
-from app.crud.user import get_user_by_username, is_active
+from app.crud.user import get_user_by_id, is_active
 from app.db.session import get_db
 from app.models.user import User
 
@@ -104,11 +104,11 @@ def get_current_user(
     if from_cookie:
         _ensure_cookie_csrf_protection(request)
 
-    username = verify_token(token)
-    if username is None:
+    user_id = verify_token(token)
+    if user_id is None:
         raise credentials_exception
 
-    user = get_user_by_username(db, username=username)
+    user = get_user_by_id(db, user_id=user_id)
     if user is None:
         raise credentials_exception
 
@@ -131,11 +131,12 @@ def get_current_user_optional(
         except HTTPException:
             return None
 
-    username = verify_token(token)
-    if username is None:
+    user_id = verify_token(token)
+    if user_id is None:
         return None
 
-    return get_user_by_username(db, username=username)
+    user = get_user_by_id(db, user_id=user_id)
+    return user if user is not None and is_active(user) else None
 
 
 def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
@@ -145,7 +146,7 @@ def get_current_active_user(current_user: User = Depends(get_current_user)) -> U
     return current_user
 
 
-def get_current_superuser(current_user: User = Depends(get_current_user)) -> User:
+def get_current_superuser(current_user: User = Depends(get_current_active_user)) -> User:
     """Get current superuser."""
     if not current_user.is_superuser:
         raise HTTPException(

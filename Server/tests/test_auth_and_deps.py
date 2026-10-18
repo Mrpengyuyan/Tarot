@@ -6,7 +6,7 @@ from fastapi.security import HTTPAuthorizationCredentials
 
 from app.api.deps import _extract_token
 from app.core.config import settings
-from app.core.security import create_access_token
+from app.core.security import create_access_token, verify_token
 
 
 class _CookieRequest:
@@ -110,6 +110,9 @@ def test_refresh_keeps_existing_csrf_cookie_value(client):
 
 def test_refresh_works_with_expired_access_cookie(client):
     _register_and_login(client, username="expired_access_user")
+    profile = client.get("/api/v1/users/me")
+    assert profile.status_code == 200
+    user_id = profile.json()["id"]
     csrf_token = client.cookies.get(settings.CSRF_COOKIE_NAME)
     refresh_cookie = client.cookies.get(settings.REFRESH_COOKIE_NAME)
 
@@ -117,9 +120,13 @@ def test_refresh_works_with_expired_access_cookie(client):
     assert refresh_cookie
 
     expired_access_token = create_access_token(
-        {"sub": "expired_access_user"},
+        {"sub": str(user_id), "sub_type": "user_id"},
         expires_delta=timedelta(seconds=-1),
     )
+    assert verify_token(expired_access_token) is None
+    assert client.get("/api/v1/users/me", headers={
+        "Authorization": f"Bearer {expired_access_token}",
+    }).status_code == 401
     client.cookies.set(settings.AUTH_COOKIE_NAME, expired_access_token)
     client.headers.update({settings.CSRF_HEADER_NAME: csrf_token})
 
@@ -129,6 +136,10 @@ def test_refresh_works_with_expired_access_cookie(client):
     assert refresh_resp.json()["token_type"] == "bearer"
     refreshed_access_token = refresh_resp.json().get("access_token")
     assert refreshed_access_token
+    assert verify_token(refreshed_access_token) == user_id
+    refreshed_refresh_token = refresh_resp.cookies.get(settings.REFRESH_COOKIE_NAME)
+    assert refreshed_refresh_token
+    assert verify_token(refreshed_refresh_token, expected_type="refresh") == user_id
     refreshed_access_cookie = refresh_resp.cookies.get(settings.AUTH_COOKIE_NAME)
     assert refreshed_access_cookie
 
