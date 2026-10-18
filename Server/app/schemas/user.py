@@ -1,5 +1,12 @@
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
-from typing import Optional
+from pydantic import BaseModel, BeforeValidator, ConfigDict, EmailStr, Field, field_validator
+from typing import Annotated, Optional
+
+
+def _strip_username(value):
+    return value.strip() if isinstance(value, str) else value
+
+
+UsernameInput = Annotated[str, Field(min_length=3, max_length=50), BeforeValidator(_strip_username)]
 
 
 class UserBase(BaseModel):
@@ -10,6 +17,8 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     """用户注册数据模型"""
+    username: UsernameInput
+    email: EmailStr = Field(max_length=100)
     password: str = Field(min_length=8, max_length=128)
 
 
@@ -21,8 +30,8 @@ class UserLogin(BaseModel):
 
 class UserUpdate(BaseModel):
     """用户信息更新数据模型"""
-    username: Optional[str] = Field(default=None, min_length=3, max_length=50)
-    email: Optional[EmailStr] = None
+    username: Optional[UsernameInput] = None
+    email: Optional[EmailStr] = Field(default=None, max_length=100)
     password: Optional[str] = Field(default=None, min_length=8, max_length=128)
 
     @field_validator("username", "email", "password")
