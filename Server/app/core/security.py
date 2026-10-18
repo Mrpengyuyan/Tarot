@@ -35,7 +35,11 @@ def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None) 
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except ValueError:
+        # Invalid credentials must not turn authentication rejection into a 500.
+        return False
 
 
 def get_password_hash(password: str) -> str:
