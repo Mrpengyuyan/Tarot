@@ -4,6 +4,7 @@ from app.db.session import get_db
 from app.api.deps import get_current_active_user
 from app.crud.user import get_user_by_id, get_user_by_username, get_user_by_email, update_user
 from app.schemas.user import User, UserUpdate
+from app.schemas.limits import DatabaseInteger
 from app.models.user import User as UserModel
 
 router = APIRouter()
@@ -47,7 +48,7 @@ def update_current_user(
 
 @router.get("/{user_id}", response_model=User, summary="根据ID获取用户信息")
 def get_user_by_id_endpoint(
-    user_id: int,
+    user_id: DatabaseInteger,
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_active_user)
 ):

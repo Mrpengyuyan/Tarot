@@ -4,6 +4,7 @@ from datetime import datetime
 from enum import Enum
 from .card import TarotCardSimple, TarotCardMeaning
 from .spread import SpreadTypeSimple, SpreadPosition
+from .limits import DatabaseInteger
 
 class QuestionTypeEnum(str, Enum):
     """问题类型枚举"""
@@ -30,7 +31,7 @@ class PredictionBase(BaseModel):
 class PredictionCreate(PredictionBase):
     """创建预测记录数据模型"""
     question: str = Field(min_length=1, max_length=2000)
-    spread_type_id: int
+    spread_type_id: DatabaseInteger
 
     @field_validator("question", mode="before")
     @classmethod

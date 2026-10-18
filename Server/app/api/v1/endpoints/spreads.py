@@ -15,6 +15,7 @@ from app.schemas.spread import (
     SpreadTypeUpdate,
 )
 from app.schemas.user import User
+from app.schemas.limits import DatabaseInteger, MAX_DATABASE_INTEGER
 
 router = APIRouter()
 VALID_QUESTION_TYPES = {"love", "career", "finance", "health", "general"}
@@ -29,7 +30,7 @@ def _validate_positions(card_count: int, numbers: List[int]) -> None:
 
 @router.get("/", response_model=List[SpreadTypeSimple], summary="Get spreads")
 def get_spreads(
-    skip: int = Query(0, ge=0, description="Records to skip"),
+    skip: int = Query(0, ge=0, le=MAX_DATABASE_INTEGER, description="Records to skip"),
     limit: int = Query(100, ge=1, le=500, description="Records to return"),
     difficulty: Optional[int] = Query(None, ge=1, le=5, description="Filter by difficulty"),
     card_count: Optional[int] = Query(None, ge=1, le=78, description="Filter by card count"),
@@ -71,7 +72,7 @@ def get_popular_spreads(
 
 @router.get("/beginner", response_model=List[SpreadTypeSimple], summary="Get beginner spreads")
 def get_beginner_spreads(
-    skip: int = Query(0, ge=0),
+    skip: int = Query(0, ge=0, le=MAX_DATABASE_INTEGER),
     limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
@@ -81,7 +82,7 @@ def get_beginner_spreads(
 @router.get("/by-question-type/{question_type}", response_model=List[SpreadTypeSimple], summary="Get spreads by question type")
 def get_spreads_by_question_type(
     question_type: str,
-    skip: int = Query(0, ge=0),
+    skip: int = Query(0, ge=0, le=MAX_DATABASE_INTEGER),
     limit: int = Query(50, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
@@ -120,7 +121,7 @@ def get_spreads_count(db: Session = Depends(get_db)):
 @router.get("/search", response_model=List[SpreadTypeSimple], summary="Search spreads")
 def search_spreads(
     q: str = Query(..., description="Search keyword"),
-    skip: int = Query(0, ge=0),
+    skip: int = Query(0, ge=0, le=MAX_DATABASE_INTEGER),
     limit: int = Query(50, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
@@ -129,7 +130,7 @@ def search_spreads(
 
 @router.get("/{spread_id}", response_model=SpreadType, summary="Get spread detail")
 def get_spread_detail(
-    spread_id: int,
+    spread_id: DatabaseInteger,
     db: Session = Depends(get_db),
 ):
     spread = spread_crud.get_spread_by_id(db, spread_id=spread_id)
@@ -140,7 +141,7 @@ def get_spread_detail(
 
 @router.get("/{spread_id}/suitability", response_model=SpreadSuitability, summary="Get spread suitability")
 def get_spread_suitability(
-    spread_id: int,
+    spread_id: DatabaseInteger,
     db: Session = Depends(get_db),
 ):
     spread = spread_crud.get_spread_by_id(db, spread_id=spread_id)
@@ -178,7 +179,7 @@ def create_spread(
 
 @router.put("/{spread_id}", response_model=SpreadType, summary="Update spread")
 def update_spread(
-    spread_id: int,
+    spread_id: DatabaseInteger,
     spread_update: SpreadTypeUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -208,7 +209,7 @@ def update_spread(
 
 @router.delete("/{spread_id}", summary="Delete spread")
 def delete_spread(
-    spread_id: int,
+    spread_id: DatabaseInteger,
     hard_delete: bool = Query(False, description="Hard delete"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -238,7 +239,7 @@ def delete_spread(
 
 @router.post("/{spread_id}/use", summary="Record spread usage")
 def use_spread(
-    spread_id: int,
+    spread_id: DatabaseInteger,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):

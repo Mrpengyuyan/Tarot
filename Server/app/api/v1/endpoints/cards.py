@@ -18,13 +18,14 @@ from app.schemas.card import (
     TarotCardUpdate,
 )
 from app.schemas.user import User
+from app.schemas.limits import DatabaseInteger, MAX_DATABASE_INTEGER
 
 router = APIRouter()
 
 
 @router.get("/", response_model=List[TarotCardSimple], summary="Get tarot cards")
 def get_cards(
-    skip: int = Query(0, ge=0, description="Records to skip"),
+    skip: int = Query(0, ge=0, le=MAX_DATABASE_INTEGER, description="Records to skip"),
     limit: int = Query(100, ge=1, le=500, description="Records to return"),
     card_type: Optional[CardTypeEnum] = Query(None, description="Filter by card type"),
     suit: Optional[SuitEnum] = Query(None, description="Filter by suit"),
@@ -68,7 +69,7 @@ def get_minor_arcana_cards(db: Session = Depends(get_db)):
 @router.get("/draw", response_model=List[TarotCardSimple], summary="Draw random cards")
 def draw_random_cards(
     count: int = Query(1, ge=1, le=78, description="Draw count"),
-    exclude_ids: Optional[List[int]] = Query(None, description="Excluded card ids"),
+    exclude_ids: Optional[List[DatabaseInteger]] = Query(None, description="Excluded card ids"),
     seed: Optional[int] = Query(None, description="Optional deterministic draw seed"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -83,7 +84,7 @@ def draw_random_cards(
 @router.get("/search", response_model=List[TarotCardSimple], summary="Search cards")
 def search_cards(
     q: str = Query(..., description="Search keyword"),
-    skip: int = Query(0, ge=0),
+    skip: int = Query(0, ge=0, le=MAX_DATABASE_INTEGER),
     limit: int = Query(50, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
@@ -92,7 +93,7 @@ def search_cards(
 
 @router.get("/{card_id}", response_model=TarotCard, summary="Get card detail")
 def get_card_detail(
-    card_id: int,
+    card_id: DatabaseInteger,
     db: Session = Depends(get_db),
 ):
     card = card_crud.get_card_by_id(db, card_id=card_id)
@@ -103,7 +104,7 @@ def get_card_detail(
 
 @router.get("/{card_id}/meaning", response_model=TarotCardMeaning, summary="Get card meaning")
 def get_card_meaning(
-    card_id: int,
+    card_id: DatabaseInteger,
     is_reversed: bool = Query(False, description="Is reversed"),
     aspect: str = Query("general", description="Aspect: general/love/career/finance/health"),
     position: Optional[int] = Query(None, description="Card position"),
@@ -161,7 +162,7 @@ def create_card(
 
 @router.put("/{card_id}", response_model=TarotCard, summary="Update card")
 def update_card(
-    card_id: int,
+    card_id: DatabaseInteger,
     card_update: TarotCardUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -178,7 +179,7 @@ def update_card(
 
 @router.delete("/{card_id}", summary="Delete card")
 def delete_card(
-    card_id: int,
+    card_id: DatabaseInteger,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):

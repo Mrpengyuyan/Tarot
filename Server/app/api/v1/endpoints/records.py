@@ -11,6 +11,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+from starlette.convertors import IntegerConvertor, StringConvertor, register_url_convertor
 
 from app.api.deps import get_current_active_user
 from app.core.config import settings
@@ -21,6 +22,7 @@ from app.db.session import get_db, get_session_factory
 from app.models.record import Prediction as PredictionModel
 from app.models.record import InterpretationRunState, PredictionStatus, QuestionType
 from app.models.user import User
+from app.schemas.limits import DatabaseInteger, MAX_DATABASE_INTEGER
 from app.schemas.prediction import (
     CardDraw as CardDrawSchema,
     CardDrawCreate,
@@ -45,6 +47,17 @@ from app.services.tarot_service import tarot_interpretation_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+class _RecordIdConvertor(StringConvertor):
+    # Keep numeric-only routes, but let Pydantic validate before converting long IDs.
+    regex = IntegerConvertor.regex
+
+    def to_string(self, value: str) -> str:
+        return IntegerConvertor().to_string(int(value))
+
+
+register_url_convertor("record_id", _RecordIdConvertor())
 
 
 def _is_guest_account(current_user: User) -> bool:
@@ -77,7 +90,7 @@ def _normalize_key_themes(value) -> Optional[str]:  # noqa: ANN001
 
 @router.get("/", response_model=List[PredictionSimple], summary="List user records")
 def get_user_predictions(
-    skip: int = Query(0, ge=0, description="Records to skip"),
+    skip: int = Query(0, ge=0, le=MAX_DATABASE_INTEGER, description="Records to skip"),
     limit: int = Query(20, ge=1, le=100, description="Records to return"),
     status: Optional[PredictionStatusEnum] = Query(None, description="Filter by record status"),
     question_type: Optional[QuestionTypeEnum] = Query(None, description="Filter by question type"),
@@ -174,9 +187,9 @@ def get_recent_prediction_overview(
     return result
 
 
-@router.get("/{prediction_id:int}", response_model=PredictionDetail, summary="Get record detail")
+@router.get("/{prediction_id:record_id}", response_model=PredictionDetail, summary="Get record detail")
 def get_prediction_detail(
-    prediction_id: int,
+    prediction_id: DatabaseInteger,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -236,9 +249,9 @@ def create_prediction(
         raise HTTPException(status_code=409, detail="Reading data changed; select an active spread and try again") from exc
 
 
-@router.put("/{prediction_id:int}", response_model=Prediction, summary="Update record")
+@router.put("/{prediction_id:record_id}", response_model=Prediction, summary="Update record")
 def update_prediction(
-    prediction_id: int,
+    prediction_id: DatabaseInteger,
     prediction_update: PredictionUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -261,9 +274,9 @@ def update_prediction(
     )
 
 
-@router.delete("/{prediction_id:int}", summary="Delete record")
+@router.delete("/{prediction_id:record_id}", summary="Delete record")
 def delete_prediction(
-    prediction_id: int,
+    prediction_id: DatabaseInteger,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -293,9 +306,9 @@ def draw_orientations(count: int, rng) -> List[bool]:
     return [rng.random() < REVERSED_PROBABILITY for _ in range(count)]
 
 
-@router.post("/{prediction_id:int}/draw", response_model=DrawCardsResponse, summary="Draw cards for record")
+@router.post("/{prediction_id:record_id}/draw", response_model=DrawCardsResponse, summary="Draw cards for record")
 def draw_cards_for_prediction(
-    prediction_id: int,
+    prediction_id: DatabaseInteger,
     seed: Optional[int] = Query(None, description="Optional deterministic draw seed (for reproducible experiments)"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -353,9 +366,9 @@ def draw_cards_for_prediction(
     )
 
 
-@router.get("/{prediction_id:int}/cards", response_model=List[CardDrawWithMeaning], summary="Get drawn cards")
+@router.get("/{prediction_id:record_id}/cards", response_model=List[CardDrawWithMeaning], summary="Get drawn cards")
 def get_prediction_cards(
-    prediction_id: int,
+    prediction_id: DatabaseInteger,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -569,9 +582,9 @@ def _complete_existing_interpretation(db: Session, prediction: PredictionModel) 
         db.commit()
 
 
-@router.post("/{prediction_id:int}/interpret", response_model=Interpretation, summary="Create AI interpretation")
+@router.post("/{prediction_id:record_id}/interpret", response_model=Interpretation, summary="Create AI interpretation")
 async def create_ai_interpretation(
-    prediction_id: int,
+    prediction_id: DatabaseInteger,
     interpretation_create: Optional[InterpretationCreate] = None,
     user_context: Optional[str] = Query(None, max_length=2000, description="Additional user context"),
     force_ai: bool = Query(False, description="Force AI generation even when manual payload is provided"),
@@ -714,7 +727,7 @@ def _budget_retry_time(exc: CozeBudgetExceededError) -> datetime:
 
 
 @router.post(
-    "/{prediction_id:int}/interpret/async",
+    "/{prediction_id:record_id}/interpret/async",
     summary="Start AI interpretation in the background",
     responses={
         200: {"model": Interpretation, "description": "Interpretation already exists"},
@@ -723,7 +736,7 @@ def _budget_retry_time(exc: CozeBudgetExceededError) -> datetime:
     },
 )
 async def start_ai_interpretation_async(
-    prediction_id: int,
+    prediction_id: DatabaseInteger,
     background_tasks: BackgroundTasks,
     user_context: Optional[str] = Query(None, max_length=2000, description="Additional user context"),
     db: Session = Depends(get_db),
@@ -789,12 +802,12 @@ async def start_ai_interpretation_async(
 
 
 @router.post(
-    "/{prediction_id:int}/interpret/retry",
+    "/{prediction_id:record_id}/interpret/retry",
     summary="Explicitly retry a failed AI interpretation once",
     responses={200: {"model": Interpretation}, 202: {"description": "Manual retry started"}},
 )
 async def retry_ai_interpretation(
-    prediction_id: int,
+    prediction_id: DatabaseInteger,
     background_tasks: BackgroundTasks,
     user_context: Optional[str] = Query(None, max_length=2000, description="Additional user context"),
     db: Session = Depends(get_db),
@@ -833,9 +846,9 @@ async def retry_ai_interpretation(
     return _processing_json(prediction_id)
 
 
-@router.get("/{prediction_id:int}/interpretation", response_model=Interpretation, summary="Get interpretation")
+@router.get("/{prediction_id:record_id}/interpretation", response_model=Interpretation, summary="Get interpretation")
 def get_prediction_interpretation(
-    prediction_id: int,
+    prediction_id: DatabaseInteger,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -852,9 +865,9 @@ def get_prediction_interpretation(
     return interpretation
 
 
-@router.put("/{prediction_id:int}/interpretation", response_model=Interpretation, summary="Update interpretation")
+@router.put("/{prediction_id:record_id}/interpretation", response_model=Interpretation, summary="Update interpretation")
 def update_interpretation(
-    prediction_id: int,
+    prediction_id: DatabaseInteger,
     interpretation_update: InterpretationUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
@@ -879,7 +892,7 @@ def update_interpretation(
 
 @router.get("/admin/all", response_model=List[PredictionSimple], summary="Admin list all records")
 def get_all_predictions_admin(
-    skip: int = Query(0, ge=0),
+    skip: int = Query(0, ge=0, le=MAX_DATABASE_INTEGER),
     limit: int = Query(50, ge=1, le=200),
     status: Optional[PredictionStatusEnum] = Query(None),
     db: Session = Depends(get_db),
