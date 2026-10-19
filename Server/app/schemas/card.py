@@ -2,6 +2,8 @@ from pydantic import BaseModel, ConfigDict, field_validator
 from typing import Optional, List
 from enum import Enum
 
+from app.schemas.limits import DatabaseInteger
+
 class CardTypeEnum(str, Enum):
     """塔罗牌类型枚举"""
     MAJOR_ARCANA = "major_arcana"
@@ -49,13 +51,13 @@ class TarotCardBase(BaseModel):
 
 class TarotCardCreate(TarotCardBase):
     """创建塔罗牌数据模型"""
-    pass
+    card_number: DatabaseInteger
 
 class TarotCardUpdate(BaseModel):
     """更新塔罗牌数据模型"""
     name_en: Optional[str] = None
     name_zh: Optional[str] = None
-    card_number: Optional[int] = None
+    card_number: Optional[DatabaseInteger] = None
     card_type: Optional[CardTypeEnum] = None
     suit: Optional[SuitEnum] = None
     image_url: Optional[str] = None
