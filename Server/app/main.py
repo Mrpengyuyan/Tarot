@@ -22,9 +22,15 @@ def _json_safe_float(value: float) -> float | str:
     return value if isfinite(value) else str(value)
 
 
+def _json_safe_string(value: str) -> str:
+    return value.encode("utf-8", errors="backslashreplace").decode("utf-8")
+
+
 async def validation_error_handler(_request: Request, exc: RequestValidationError) -> JSONResponse:
-    # Validation errors echo input, which can itself contain non-JSON numeric values.
-    detail = jsonable_encoder(exc.errors(), custom_encoder={float: _json_safe_float})
+    # Error details echo untrusted input, including invalid numbers and Unicode.
+    detail = jsonable_encoder(
+        exc.errors(), custom_encoder={float: _json_safe_float, str: _json_safe_string},
+    )
     return JSONResponse(status_code=422, content={"detail": detail})
 
 
