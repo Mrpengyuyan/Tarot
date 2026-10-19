@@ -1,7 +1,11 @@
 import logging
+from math import isfinite
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from app.api.v1.api import api_router
@@ -12,6 +16,16 @@ from app.db.bootstrap import ensure_reference_data
 from app.db.session import SessionLocal, engine
 
 logger = logging.getLogger(__name__)
+
+
+def _json_safe_float(value: float) -> float | str:
+    return value if isfinite(value) else str(value)
+
+
+async def validation_error_handler(_request: Request, exc: RequestValidationError) -> JSONResponse:
+    # Validation errors echo input, which can itself contain non-JSON numeric values.
+    detail = jsonable_encoder(exc.errors(), custom_encoder={float: _json_safe_float})
+    return JSONResponse(status_code=422, content={"detail": detail})
 
 
 def create_tables():
@@ -73,6 +87,7 @@ def get_application():
         docs_url=docs_url,
         redoc_url=redoc_url,
     )
+    app.add_exception_handler(RequestValidationError, validation_error_handler)
 
     allowed_origins = settings.cors_origins_list
     allow_credentials = settings.CORS_ALLOW_CREDENTIALS and "*" not in allowed_origins

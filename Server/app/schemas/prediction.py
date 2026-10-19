@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, FiniteFloat, field_validator
 from typing import List, Optional
 from datetime import datetime
 from enum import Enum
@@ -133,7 +133,7 @@ class InterpretationCreate(InterpretationBase):
     """创建解读结果数据模型"""
     model_used: Optional[str] = None
     model_version: Optional[str] = None
-    confidence_score: Optional[float] = None
+    confidence_score: Optional[FiniteFloat] = None
 
 class InterpretationUpdate(BaseModel):
     """Partial update model for interpretation fields."""
@@ -148,7 +148,7 @@ class InterpretationUpdate(BaseModel):
     key_themes: Optional[str] = None
     model_used: Optional[str] = None
     model_version: Optional[str] = None
-    confidence_score: Optional[float] = None
+    confidence_score: Optional[FiniteFloat] = None
 
     @field_validator("overall_interpretation")
     @classmethod
