@@ -186,7 +186,7 @@ def test_provider_response_settles_persistent_reservation(db_session_factory, mo
     class FakeResponse:
         status_code = 200
 
-        def json(self):
+        def json(self, **kwargs):
             return {
                 "choices": [{"message": {"content": "answer"}}],
                 "usage": {"prompt_tokens": 20, "completion_tokens": 10},
@@ -233,7 +233,7 @@ def test_response_without_token_usage_keeps_reservation(db_session_factory, monk
     class FakeResponse:
         status_code = 200
 
-        def json(self):
+        def json(self, **kwargs):
             return {"choices": [{"message": {"content": "answer"}}], "usage": reported_usage}
 
     class FakeClient:
