@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Annotated, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.exc import IntegrityError
@@ -15,7 +15,7 @@ from app.schemas.spread import (
     SpreadTypeUpdate,
 )
 from app.schemas.user import User
-from app.schemas.limits import DatabaseInteger, MAX_DATABASE_INTEGER
+from app.schemas.limits import DatabaseInteger, MAX_DATABASE_INTEGER, SearchTerm
 
 router = APIRouter()
 VALID_QUESTION_TYPES = {"love", "career", "finance", "health", "general"}
@@ -36,7 +36,7 @@ def get_spreads(
     card_count: Optional[int] = Query(None, ge=1, le=78, description="Filter by card count"),
     question_type: Optional[str] = Query(None, description="Filter by question type"),
     beginner_friendly: Optional[bool] = Query(None, description="Filter by beginner-friendly"),
-    search: Optional[str] = Query(None, description="Search keyword"),
+    search: Optional[SearchTerm] = Query(None, description="Search keyword"),
     active_only: bool = Query(True, description="Only active spreads"),
     db: Session = Depends(get_db),
 ):
@@ -120,7 +120,7 @@ def get_spreads_count(db: Session = Depends(get_db)):
 
 @router.get("/search", response_model=List[SpreadTypeSimple], summary="Search spreads")
 def search_spreads(
-    q: str = Query(..., description="Search keyword"),
+    q: Annotated[SearchTerm, Query(description="Search keyword")],
     skip: int = Query(0, ge=0, le=MAX_DATABASE_INTEGER),
     limit: int = Query(50, ge=1, le=100),
     db: Session = Depends(get_db),

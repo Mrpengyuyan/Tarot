@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Annotated, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.exc import IntegrityError
@@ -18,7 +18,7 @@ from app.schemas.card import (
     TarotCardUpdate,
 )
 from app.schemas.user import User
-from app.schemas.limits import DatabaseInteger, MAX_DATABASE_INTEGER
+from app.schemas.limits import DatabaseInteger, MAX_DATABASE_INTEGER, SearchTerm
 
 router = APIRouter()
 
@@ -29,7 +29,7 @@ def get_cards(
     limit: int = Query(100, ge=1, le=500, description="Records to return"),
     card_type: Optional[CardTypeEnum] = Query(None, description="Filter by card type"),
     suit: Optional[SuitEnum] = Query(None, description="Filter by suit"),
-    search: Optional[str] = Query(None, description="Search keyword"),
+    search: Optional[SearchTerm] = Query(None, description="Search keyword"),
     db: Session = Depends(get_db),
 ):
     db_card_type = CardType(card_type.value) if card_type else None
@@ -83,7 +83,7 @@ def draw_random_cards(
 
 @router.get("/search", response_model=List[TarotCardSimple], summary="Search cards")
 def search_cards(
-    q: str = Query(..., description="Search keyword"),
+    q: Annotated[SearchTerm, Query(description="Search keyword")],
     skip: int = Query(0, ge=0, le=MAX_DATABASE_INTEGER),
     limit: int = Query(50, ge=1, le=100),
     db: Session = Depends(get_db),

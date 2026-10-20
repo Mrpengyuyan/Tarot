@@ -22,7 +22,7 @@ from app.db.session import get_db, get_session_factory
 from app.models.record import Prediction as PredictionModel
 from app.models.record import InterpretationRunState, PredictionStatus, QuestionType
 from app.models.user import User
-from app.schemas.limits import DatabaseInteger, MAX_DATABASE_INTEGER
+from app.schemas.limits import DatabaseInteger, MAX_DATABASE_INTEGER, SearchTerm
 from app.schemas.prediction import (
     CardDraw as CardDrawSchema,
     CardDrawCreate,
@@ -95,7 +95,7 @@ def get_user_predictions(
     status: Optional[PredictionStatusEnum] = Query(None, description="Filter by record status"),
     question_type: Optional[QuestionTypeEnum] = Query(None, description="Filter by question type"),
     favorites_only: bool = Query(False, description="Only favorite records"),
-    search: Optional[str] = Query(None, description="Search question/user notes"),
+    search: Optional[SearchTerm] = Query(None, description="Search question/user notes"),
     sort_by: str = Query("created_at", description="Sort field: created_at/completed_at/status/question_type"),
     sort_order: str = Query("desc", description="Sort order: asc/desc"),
     db: Session = Depends(get_db),
