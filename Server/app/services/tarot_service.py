@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import re
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional
@@ -235,7 +236,8 @@ class TarotInterpretationService:
 
         if candidate:
             try:
-                parsed = json.loads(candidate)
+                # Preserve the answer even when an integer exceeds the JSON decoder's limit.
+                parsed = json.loads(candidate, parse_int=lambda value: int(value) if len(value) <= 20 else value)
                 if isinstance(parsed, dict):
                     obj = parsed
             except json.JSONDecodeError:
@@ -279,8 +281,8 @@ class TarotInterpretationService:
         if confidence_value is not None:
             try:
                 confidence_score = float(confidence_value)
-                confidence_score = max(0.0, min(1.0, confidence_score))
-            except (TypeError, ValueError):
+                confidence_score = max(0.0, min(1.0, confidence_score)) if math.isfinite(confidence_score) else None
+            except (TypeError, ValueError, OverflowError):
                 confidence_score = None
 
         if not overall:
