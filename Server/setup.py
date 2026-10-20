@@ -11,6 +11,7 @@ setup(
         # FastAPI
         "fastapi==0.111.0",
         "uvicorn[standard]==0.29.0",
+        "httptools==0.9.0",
         "python-decouple==3.8",
         
         # Database
