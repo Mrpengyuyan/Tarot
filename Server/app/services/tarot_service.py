@@ -166,7 +166,7 @@ class TarotInterpretationService:
             parsed.setdefault("confidence_score", 0.85)
             return parsed
         except Exception as exc:
-            logger.error("AI interpretation generation failed: %s", exc)
+            logger.error("AI interpretation generation failed (error_type=%s)", type(exc).__name__)
             raise
 
     @staticmethod

@@ -8,7 +8,7 @@ from typing import Callable, List, Optional, cast
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from starlette.convertors import IntegerConvertor, StringConvertor, register_url_convertor
@@ -521,19 +521,20 @@ async def _build_ai_interpretation_create(
             )
         raise HTTPException(status_code=429, detail="AI budget exhausted. Please try again later.") from exc
     except CozeTimeoutError as exc:
-        logger.error("AI interpretation timed out: %s", exc)
+        logger.error("AI interpretation timed out (record=%s, error_type=%s)", prediction_id, type(exc).__name__)
         prediction_crud.fail_interpretation_generation(db, prediction_id=prediction_id, started_at=started_at, error="timeout")
         raise HTTPException(status_code=504, detail="AI interpretation request timed out") from exc
     except CozeHttpStatusError as exc:
-        logger.error("AI interpretation provider HTTP error: %s", exc)
+        logger.error("AI interpretation provider HTTP error (record=%s, status=%s, error_type=%s)",
+                     prediction_id, exc.status_code, type(exc).__name__)
         prediction_crud.fail_interpretation_generation(db, prediction_id=prediction_id, started_at=started_at)
         raise HTTPException(status_code=502, detail="AI interpretation upstream service error") from exc
     except (CozeRequestError, CozeError) as exc:
-        logger.error("AI interpretation upstream request failed: %s", exc)
+        logger.error("AI interpretation upstream request failed (record=%s, error_type=%s)", prediction_id, type(exc).__name__)
         prediction_crud.fail_interpretation_generation(db, prediction_id=prediction_id, started_at=started_at)
         raise HTTPException(status_code=502, detail="AI interpretation request failed") from exc
     except Exception as exc:
-        logger.error("AI interpretation generation failed: %s", exc)
+        logger.error("AI interpretation generation failed (record=%s, error_type=%s)", prediction_id, type(exc).__name__)
         prediction_crud.fail_interpretation_generation(db, prediction_id=prediction_id, started_at=started_at)
         raise HTTPException(status_code=502, detail="AI interpretation service unavailable") from exc
 
@@ -646,9 +647,17 @@ async def create_ai_interpretation(
 
         db.refresh(prediction)
         expected_started_at = prediction.interpretation_started_at
-        interpretation_create = await _build_ai_interpretation_create(db, prediction, user_context)
 
-    return _store_interpretation(db, prediction_id, interpretation_create, expected_started_at)
+    try:
+        if not interpretation_create or force_ai:
+            interpretation_create = await _build_ai_interpretation_create(db, prediction, user_context)
+        return _store_interpretation(db, prediction_id, interpretation_create, expected_started_at)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("AI interpretation generation or storage failed (record=%s, error_type=%s)",
+                     prediction_id, type(exc).__name__)
+        return PlainTextResponse("Internal Server Error", status_code=500)
 
 
 async def generate_and_store_interpretation(
@@ -671,8 +680,9 @@ async def run_interpretation_job(
     """Background task. Opens its own session because the request session is already closed."""
     try:
         db = session_factory()
-    except Exception:  # noqa: BLE001 - a lost task can be reclaimed after the stale timeout
-        logger.exception("Background interpretation for record %s failed to open a session", prediction_id)
+    except Exception as exc:  # noqa: BLE001 - a lost task can be reclaimed after the stale timeout
+        logger.error("Background interpretation for record %s failed to open a session (error_type=%s)",
+                     prediction_id, type(exc).__name__)
         return
     try:
         prediction = prediction_crud.get_prediction_by_id(db, prediction_id=prediction_id)
@@ -684,17 +694,19 @@ async def run_interpretation_job(
             return
         await generate_and_store_interpretation(db, prediction, user_context)
     except Exception as exc:  # noqa: BLE001 - background work must never raise into the event loop
-        logger.error("Background interpretation for record %s failed: %s", prediction_id, exc)
+        logger.error("Background interpretation for record %s failed (error_type=%s)", prediction_id, type(exc).__name__)
         try:
             db.rollback()
             prediction_crud.fail_interpretation_generation(db, prediction_id=prediction_id, started_at=claimed_at)
-        except Exception:  # noqa: BLE001 - stale claims remain retryable if the database is unavailable
-            logger.exception("Background interpretation for record %s could not be marked failed", prediction_id)
+        except Exception as exc:  # noqa: BLE001 - stale claims remain retryable if the database is unavailable
+            logger.error("Background interpretation for record %s could not be marked failed (error_type=%s)",
+                         prediction_id, type(exc).__name__)
     finally:
         try:
             db.close()
-        except Exception:  # noqa: BLE001 - closing a broken connection must not mask the task failure
-            logger.exception("Background interpretation for record %s could not close its session", prediction_id)
+        except Exception as exc:  # noqa: BLE001 - closing a broken connection must not mask the task failure
+            logger.error("Background interpretation for record %s could not close its session (error_type=%s)",
+                         prediction_id, type(exc).__name__)
 
 
 def _interpretation_json(interpretation) -> JSONResponse:  # noqa: ANN001

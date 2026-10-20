@@ -83,7 +83,9 @@ def test_background_session_open_failure_does_not_escape(caplog):
     asyncio.run(records_endpoint.run_interpretation_job(unavailable_session, 42, None, datetime.now(timezone.utc)))
 
     assert "Background interpretation for record 42 failed" in caplog.text
-    assert "database unavailable" in caplog.text
+    assert "RuntimeError" in caplog.text
+    assert "database unavailable" not in caplog.text
+    assert all(entry.exc_info is None for entry in caplog.records)
 
 
 def test_background_failure_status_write_error_waits_for_stale_retry(

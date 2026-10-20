@@ -434,8 +434,8 @@ class CozeService:
                                 reservation_id,
                                 actual_micros=math.ceil(actual_cost * 1_000_000),
                             )
-                        except Exception:
-                            logger.exception("AI budget settlement failed; retaining the reserved amount")
+                        except Exception as exc:
+                            logger.error("AI budget settlement failed; retaining the reserved amount (error_type=%s)", type(exc).__name__)
                 return result
             except json.JSONDecodeError:
                 last_error = CozeError(
@@ -671,13 +671,13 @@ class CozeService:
                     cost_usd=float(result.get("cost_usd") or 0.0),
                 )
             except CozeBudgetExceededError as exc:
-                logger.warning("Budget threshold exceeded after paid response; preserving result: %s", exc)
+                logger.warning("Budget threshold exceeded after paid response; preserving result (error_type=%s)", type(exc).__name__)
             if not result["text"]:
                 raise CozeError("DeepSeek primary request returned empty content.")
             try:
                 budget = self.budget_status()
-            except Exception:
-                logger.exception("AI budget snapshot unavailable after paid response")
+            except Exception as exc:
+                logger.error("AI budget snapshot unavailable after paid response (error_type=%s)", type(exc).__name__)
                 budget = {}
             return {
                 "text": result["text"],
