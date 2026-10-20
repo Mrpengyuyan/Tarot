@@ -55,7 +55,13 @@ def _request_origin(request: Request) -> Optional[str]:
     if not referer:
         return None
 
-    parsed = urlparse(referer)
+    try:
+        parsed = urlparse(referer)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Origin not allowed",
+        ) from exc
     if not parsed.scheme or not parsed.netloc:
         return None
     return f"{parsed.scheme}://{parsed.netloc}"
