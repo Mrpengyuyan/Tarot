@@ -3,6 +3,7 @@ from typing import Optional, List
 from enum import Enum
 
 from app.schemas.limits import DatabaseInteger
+from app.schemas.input_text import UTF8InputModel
 
 class CardTypeEnum(str, Enum):
     """塔罗牌类型枚举"""
@@ -49,11 +50,11 @@ class TarotCardBase(BaseModel):
     zodiac: Optional[str] = None
     planet: Optional[str] = None
 
-class TarotCardCreate(TarotCardBase):
+class TarotCardCreate(TarotCardBase, UTF8InputModel):
     """创建塔罗牌数据模型"""
     card_number: DatabaseInteger
 
-class TarotCardUpdate(BaseModel):
+class TarotCardUpdate(UTF8InputModel):
     """更新塔罗牌数据模型"""
     name_en: Optional[str] = None
     name_zh: Optional[str] = None

@@ -5,6 +5,7 @@ from enum import Enum
 from .card import TarotCardSimple, TarotCardMeaning
 from .spread import SpreadTypeSimple, SpreadPosition
 from .limits import DatabaseInteger
+from .input_text import UTF8InputModel
 
 class QuestionTypeEnum(str, Enum):
     """问题类型枚举"""
@@ -38,7 +39,7 @@ class PredictionCreate(PredictionBase):
     def strip_question(cls, value):
         return value.strip() if isinstance(value, str) else value
 
-class PredictionUpdate(BaseModel):
+class PredictionUpdate(UTF8InputModel):
     """更新预测记录数据模型"""
     is_favorite: Optional[bool] = None
     user_rating: Optional[int] = Field(default=None, ge=1, le=5)
@@ -129,13 +130,13 @@ class InterpretationBase(BaseModel):
     summary: Optional[str] = None
     key_themes: Optional[str] = None
 
-class InterpretationCreate(InterpretationBase):
+class InterpretationCreate(InterpretationBase, UTF8InputModel):
     """创建解读结果数据模型"""
     model_used: Optional[str] = None
     model_version: Optional[str] = None
     confidence_score: Optional[FiniteFloat] = None
 
-class InterpretationUpdate(BaseModel):
+class InterpretationUpdate(UTF8InputModel):
     """Partial update model for interpretation fields."""
     model_config = ConfigDict(protected_namespaces=())
 

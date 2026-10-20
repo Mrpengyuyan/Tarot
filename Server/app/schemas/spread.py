@@ -1,6 +1,8 @@
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing import List, Optional, Dict, Any
 
+from .input_text import UTF8InputModel
+
 class SpreadPosition(BaseModel):
     """牌位定义模型"""
     position: int
@@ -26,12 +28,12 @@ class SpreadTypeBase(BaseModel):
     suitable_for_health: bool = True
     suitable_for_general: bool = True
 
-class SpreadTypeCreate(SpreadTypeBase):
+class SpreadTypeCreate(SpreadTypeBase, UTF8InputModel):
     """创建牌阵类型数据模型"""
     card_count: int = Field(ge=1, le=78)
     difficulty_level: int = Field(default=1, ge=1, le=5)
 
-class SpreadTypeUpdate(BaseModel):
+class SpreadTypeUpdate(UTF8InputModel):
     """更新牌阵类型数据模型"""
     name: Optional[str] = None
     name_en: Optional[str] = None
