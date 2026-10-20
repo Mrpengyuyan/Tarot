@@ -204,7 +204,13 @@ def update_spread(
         )
         _validate_positions(expected_card_count, numbers)
 
-    return spread_crud.update_spread(db=db, db_spread=spread, spread_update=spread_update)
+    try:
+        return spread_crud.update_spread(db=db, db_spread=spread, spread_update=spread_update)
+    except spread_crud.SpreadLayoutInUseError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail="Spread layout is used by reading history; create a new spread instead",
+        ) from exc
 
 
 @router.delete("/{spread_id}", summary="Delete spread")

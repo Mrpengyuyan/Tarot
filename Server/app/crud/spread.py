@@ -1,10 +1,16 @@
 from typing import List, Optional
 
-from sqlalchemy import and_, func, or_, update
+from sqlalchemy import and_, func, or_, select, update
 from sqlalchemy.orm import Session
 
+from app.models.record import Prediction
 from app.models.spread import SpreadType
 from app.schemas.spread import SpreadTypeCreate, SpreadTypeUpdate
+
+
+class SpreadLayoutInUseError(ValueError):
+    pass
+
 
 _QUESTION_TYPE_SUITABILITY = {
     "love": SpreadType.suitable_for_love,
@@ -188,8 +194,32 @@ def update_spread(db: Session, db_spread: SpreadType, spread_update: SpreadTypeU
                 normalized_positions.append(pos)
         update_data["positions"] = normalized_positions
 
-    for field, value in update_data.items():
-        setattr(db_spread, field, value)
+    layout_fields = ("card_count", "positions")
+    layout_changed = any(
+        field in update_data and update_data[field] != getattr(db_spread, field)
+        for field in layout_fields
+    )
+    if layout_changed:
+        # Serialize with new FK references where row locks are supported.
+        db.execute(
+            select(SpreadType.id).where(SpreadType.id == db_spread.id).with_for_update()
+        ).scalar_one_or_none()
+        references = select(Prediction.id).where(Prediction.spread_type_id == db_spread.id).exists()
+        values = {field: getattr(db_spread, field) for field in layout_fields}
+        changed = db.execute(
+            update(SpreadType)
+            .where(SpreadType.id == db_spread.id, ~references)
+            .values(**{**values, **update_data})
+            .execution_options(synchronize_session=False)
+        )
+        if changed.rowcount != 1:
+            db.rollback()
+            raise SpreadLayoutInUseError("Spread layout is used by reading history")
+    else:
+        # Unchanged layout fields must not overwrite a concurrent layout edit.
+        for field, value in update_data.items():
+            if field not in layout_fields:
+                setattr(db_spread, field, value)
 
     db.commit()
     db.refresh(db_spread)
