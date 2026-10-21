@@ -1,11 +1,16 @@
 import random
 from typing import List, Optional
 
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, select, update
 from sqlalchemy.orm import Session
 
+from app.models.record import CardDraw
 from app.models.tarot_card import CardType, Suit, TarotCard
 from app.schemas.card import TarotCardCreate, TarotCardUpdate
+
+
+class CardIdentityInUseError(ValueError):
+    pass
 
 
 def _build_cards_query(
@@ -124,9 +129,30 @@ def create_card(db: Session, card_create: TarotCardCreate) -> TarotCard:
 
 
 def update_card(db: Session, db_card: TarotCard, card_update: TarotCardUpdate) -> TarotCard:
-    update_data = _card_values(card_update)
-    for field, value in update_data.items():
-        setattr(db_card, field, value)
+    identity_fields = ("name_en", "name_zh", "card_number", "card_type", "suit")
+    # Unchanged identity fields must not overwrite a concurrent card edit.
+    update_data = {
+        field: value for field, value in _card_values(card_update).items()
+        if field not in identity_fields or value != getattr(db_card, field)
+    }
+    if any(field in update_data for field in identity_fields):
+        # Serialize with new draw references where row locks are supported.
+        db.execute(
+            select(TarotCard.id).where(TarotCard.id == db_card.id).with_for_update()
+        ).scalar_one_or_none()
+        references = select(CardDraw.id).where(CardDraw.tarot_card_id == db_card.id).exists()
+        changed = db.execute(
+            update(TarotCard)
+            .where(TarotCard.id == db_card.id, ~references)
+            .values(**update_data)
+            .execution_options(synchronize_session=False)
+        )
+        if changed.rowcount != 1:
+            db.rollback()
+            raise CardIdentityInUseError("Card identity is used by reading history")
+    else:
+        for field, value in update_data.items():
+            setattr(db_card, field, value)
 
     db.commit()
     db.refresh(db_card)

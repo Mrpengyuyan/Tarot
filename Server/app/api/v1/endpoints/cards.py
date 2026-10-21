@@ -174,7 +174,13 @@ def update_card(
     if not card:
         raise HTTPException(status_code=404, detail="Tarot card not found")
 
-    return card_crud.update_card(db=db, db_card=card, card_update=card_update)
+    try:
+        return card_crud.update_card(db=db, db_card=card, card_update=card_update)
+    except card_crud.CardIdentityInUseError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail="Card identity is used by reading history and cannot be changed",
+        ) from exc
 
 
 @router.delete("/{card_id}", summary="Delete card")
