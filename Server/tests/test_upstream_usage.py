@@ -14,6 +14,27 @@ from app.services.tarot_service import tarot_interpretation_service
 CANARY = "PRIVATE_USAGE_CANARY"
 ANSWER = '{"overall_interpretation":"Usable answer","summary":"Usable summary"}'
 EMPTY_USAGE = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+UNRELIABLE_USAGE = [
+    pytest.param({"prompt_tokens": 20}, id="missing-output"),
+    pytest.param({"completion_tokens": 10}, id="missing-input"),
+    pytest.param({"prompt_tokens": 20, "total_tokens": 30}, id="missing-output-with-total"),
+    pytest.param({"completion_tokens": 10, "total_tokens": 30}, id="missing-input-with-total"),
+    pytest.param({"prompt_tokens": 20, "completion_tokens": None, "total_tokens": 30}, id="null-output"),
+    pytest.param({"prompt_tokens": None, "completion_tokens": 10, "total_tokens": 30}, id="null-input"),
+    pytest.param({"input_tokens": 20, "total_tokens": 30}, id="missing-output-alias"),
+    pytest.param({"output_tokens": 10, "total_tokens": 30}, id="missing-input-alias"),
+    pytest.param({"prompt_tokens": 20, "output_tokens": None}, id="null-output-alias"),
+    pytest.param({"input_tokens": None, "completion_tokens": 10}, id="null-input-alias"),
+    pytest.param({"prompt_tokens": 20, "completion_tokens": 10, "total_tokens": 31}, id="total-too-large"),
+    pytest.param({"prompt_tokens": 20, "completion_tokens": 10, "total_tokens": 29}, id="total-too-small"),
+    pytest.param({"prompt_tokens": 20, "completion_tokens": 10, "total_tokens": 0}, id="zero-total"),
+    pytest.param({"prompt_tokens": 20, "completion_tokens": 10, "total_tokens": "0"}, id="string-zero-total"),
+    pytest.param({"prompt_tokens": 0, "input_tokens": 20, "completion_tokens": 10}, id="zero-input-conflict"),
+    pytest.param({"prompt_tokens": "0", "input_tokens": 20, "completion_tokens": 10}, id="string-zero-input-conflict"),
+    pytest.param({"prompt_tokens": 20, "input_tokens": 21, "completion_tokens": 10}, id="input-alias-conflict"),
+    pytest.param({"prompt_tokens": 20, "completion_tokens": 0, "output_tokens": 10}, id="zero-output-conflict"),
+    pytest.param({"prompt_tokens": 20, "completion_tokens": 10, "output_tokens": 11}, id="output-alias-conflict"),
+]
 
 
 @pytest.fixture()
@@ -70,6 +91,23 @@ def test_bad_usage_keeps_the_answer_and_entire_reservation(upstream, db_session,
     assert CANARY not in json.dumps(result, allow_nan=False)
 
 
+@pytest.mark.parametrize("usage", UNRELIABLE_USAGE)
+def test_incomplete_or_inconsistent_usage_keeps_the_answer_and_reservation(upstream, db_session, usage):
+    state, service, store = upstream
+    state["usage"] = usage
+    result = asyncio.run(service.send_messages_and_wait(messages=[], single_attempt=True))
+    assert result["text"] == ANSWER and result["usage"] == EMPTY_USAGE
+    assert result["cost_usd"] == 0 and result["fallback_used"] is False
+    assert len(state["posts"]) == 1
+    reservation = db_session.scalars(select(AIBudgetReservation)).one()
+    assert reservation.actual_micros is None
+    assert store.snapshot() == {
+        "daily_reserved_micros": reservation.estimated_micros,
+        "monthly_reserved_micros": reservation.estimated_micros,
+        "daily_spent_micros": 0, "monthly_spent_micros": 0,
+    }
+
+
 @pytest.mark.parametrize("explicit_total", [False, True])
 def test_overflowing_combined_count_keeps_the_entire_reservation(upstream, db_session, explicit_total):
     state, service, store = upstream
@@ -105,8 +143,11 @@ def test_oversized_json_integer_does_not_discard_the_answer(upstream, db_session
     # Preserve the existing float-based cost calculation and upward rounding.
     ({"prompt_tokens": 20, "completion_tokens": 10}, {"prompt_tokens": 20, "completion_tokens": 10, "total_tokens": 30}, 31),
     ({"input_tokens": "20", "output_tokens": 10.0, "total_tokens": "30"}, {"prompt_tokens": 20, "completion_tokens": 10, "total_tokens": 30}, 31),
-    ({"prompt_tokens": 0, "input_tokens": 20, "completion_tokens": 10}, {"prompt_tokens": 20, "completion_tokens": 10, "total_tokens": 30}, 31),
-    ({"prompt_tokens": "0", "input_tokens": 20, "completion_tokens": 10}, {"prompt_tokens": 0, "completion_tokens": 10, "total_tokens": 10}, 10),
+    ({"prompt_tokens": 20, "input_tokens": "20", "completion_tokens": 10, "output_tokens": 10.0, "total_tokens": 30}, {"prompt_tokens": 20, "completion_tokens": 10, "total_tokens": 30}, 31),
+    ({"prompt_tokens": None, "input_tokens": 20, "completion_tokens": None, "output_tokens": 10}, {"prompt_tokens": 20, "completion_tokens": 10, "total_tokens": 30}, 31),
+    ({"prompt_tokens": 20, "completion_tokens": 10, "total_tokens": None}, {"prompt_tokens": 20, "completion_tokens": 10, "total_tokens": 30}, 31),
+    ({"prompt_tokens": 0, "input_tokens": "0", "completion_tokens": 10}, {"prompt_tokens": 0, "completion_tokens": 10, "total_tokens": 10}, 10),
+    ({"prompt_tokens": 20, "completion_tokens": 0, "output_tokens": "0", "total_tokens": 20}, {"prompt_tokens": 20, "completion_tokens": 0, "total_tokens": 20}, 20),
     ({}, EMPTY_USAGE, 0), (None, EMPTY_USAGE, 0), ([], EMPTY_USAGE, 0),
     ({"prompt_tokens": None, "completion_tokens": None}, EMPTY_USAGE, 0),
     ({"prompt_tokens": 0, "completion_tokens": 0}, EMPTY_USAGE, 0),
@@ -125,9 +166,10 @@ def test_normal_usage_settlement_and_missing_usage_policy_are_unchanged(upstream
     }
 
 
-def test_unknown_usage_cannot_reuse_reserved_budget_after_service_recreation(upstream, db_session_factory):
+@pytest.mark.parametrize("usage", [{"prompt_tokens": 20, "completion_tokens": 10, "total_tokens": CANARY}] + UNRELIABLE_USAGE)
+def test_unknown_usage_cannot_reuse_reserved_budget_after_service_recreation(upstream, db_session_factory, usage):
     state, service, store = upstream
-    state["usage"]["total_tokens"] = CANARY
+    state["usage"] = usage
     service.daily_budget_usd = 0.0015
     first = asyncio.run(service.send_messages_and_wait(messages=[], single_attempt=True))
     assert first["text"] == ANSWER
@@ -142,10 +184,12 @@ def test_unknown_usage_cannot_reuse_reserved_budget_after_service_recreation(ups
 
 
 @pytest.mark.parametrize("mode", ["sync", "async", "manual-retry"])
-@pytest.mark.parametrize("invalid", [CANARY, {"private": CANARY}, float("inf"), 10**400],
-                         ids=["text", "object", "inf", "overflow"])
+@pytest.mark.parametrize("usage", [
+    pytest.param({"prompt_tokens": 20, "completion_tokens": 10, "total_tokens": invalid}, id=name)
+    for name, invalid in [("text", CANARY), ("object", {"private": CANARY}), ("inf", float("inf")), ("overflow", 10**400)]
+] + UNRELIABLE_USAGE)
 def test_usable_interpretation_is_saved_without_extra_requests_or_private_logs(
-    client, seeded_spread_and_cards, upstream, db_session, caplog, monkeypatch, mode, invalid,
+    client, seeded_spread_and_cards, upstream, db_session, caplog, monkeypatch, mode, usage,
 ):
     state, service, store = upstream
     monkeypatch.setattr(tarot_interpretation_service, "ai_service", service)
@@ -166,7 +210,7 @@ def test_usable_interpretation_is_saved_without_extra_requests_or_private_logs(
         assert first.status_code == 504
         assert len(state["posts"]) == 1
         state["timeout"] = False
-    state["usage"]["total_tokens"] = invalid
+    state["usage"] = usage
     suffix = {"sync": "/interpret", "async": "/interpret/async", "manual-retry": "/interpret/retry"}[mode]
     response = client.post(path + suffix, headers=headers)
     assert response.status_code == (200 if mode == "sync" else 202)

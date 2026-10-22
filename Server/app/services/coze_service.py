@@ -290,6 +290,7 @@ class CozeService:
             return unknown
         try:
             # Any invalid count makes usage unknown; keep the full budget reservation.
+            counts = {}
             for field in ("prompt_tokens", "input_tokens", "completion_tokens", "output_tokens", "total_tokens"):
                 value = usage.get(field)
                 if value is None:
@@ -300,11 +301,20 @@ class CozeService:
                     return unknown
                 if not 0 <= int(value) <= MAX_DATABASE_INTEGER:
                     return unknown
-            prompt_tokens = int(usage.get("prompt_tokens") or usage.get("input_tokens") or 0)
-            completion_tokens = int(usage.get("completion_tokens") or usage.get("output_tokens") or 0)
+                counts[field] = int(value)
+            # Both sides must be known; aliases must agree, including explicit zeroes.
+            breakdown = []
+            for fields in (("prompt_tokens", "input_tokens"), ("completion_tokens", "output_tokens")):
+                values = {counts[field] for field in fields if field in counts}
+                if len(values) != 1:
+                    return unknown
+                breakdown.append(values.pop())
+            prompt_tokens, completion_tokens = breakdown
             if prompt_tokens + completion_tokens > MAX_DATABASE_INTEGER:
                 return unknown
-            total_tokens = int(usage.get("total_tokens") or (prompt_tokens + completion_tokens))
+            total_tokens = counts.get("total_tokens", prompt_tokens + completion_tokens)
+            if total_tokens != prompt_tokens + completion_tokens:
+                return unknown
         except (TypeError, ValueError, OverflowError):
             return unknown
         return {
