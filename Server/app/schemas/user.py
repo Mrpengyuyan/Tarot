@@ -8,7 +8,7 @@ def _strip_username(value):
     return value.strip() if isinstance(value, str) else value
 
 
-UsernameInput = Annotated[str, Field(min_length=3, max_length=50), BeforeValidator(_strip_username)]
+UsernameInput = Annotated[str, Field(min_length=3, max_length=50, pattern=r"^[^@]+$"), BeforeValidator(_strip_username)]
 PasswordInput = Annotated[
     str, Field(min_length=8, max_length=MAX_PASSWORD_BYTES), AfterValidator(validate_password_bytes)
 ]

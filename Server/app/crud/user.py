@@ -69,9 +69,10 @@ def update_user(db: Session, db_user: User, user_update: UserUpdate) -> User:
 def authenticate_user(db: Session, username: str, password: str) -> Optional[User]:
     """验证用户身份"""
     identifier = (username or "").strip()
-    user = get_user_by_username(db, identifier)
-    if not user and identifier:
+    if "@" in identifier:
         user = get_user_by_email(db, identifier)
+    else:
+        user = get_user_by_username(db, identifier)
     if not user:
         return None
     if not verify_password(password, user.hashed_password):
