@@ -9,8 +9,6 @@ from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 from app.models.tarot_card import TarotCard, CardType, Suit
 from app.models.spread import SpreadType
-from app.crud.card import get_card_by_number_and_type
-from app.crud.spread import get_spread_by_name
 
 # 获取项目根目录
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -59,8 +57,12 @@ def convert_suit(suit_str: str) -> Suit:
         raise ValueError(f"未知的花色: {suit_str}")
 
 def init_tarot_cards(db: Session) -> int:
-    """初始化塔罗牌数据"""
+    """仅向空表导入塔罗牌，返回保留或创建的条数。"""
     print("\n🃏 开始初始化塔罗牌数据...")
+    existing_count = db.query(TarotCard).count()
+    if existing_count:
+        print(f"已有 {existing_count} 张塔罗牌，跳过整组导入")
+        return existing_count
     
     # 加载塔罗牌数据
     cards_data = load_json_data("tarotCards.json")
@@ -68,21 +70,12 @@ def init_tarot_cards(db: Session) -> int:
         return 0
     
     created_count = 0
-    updated_count = 0
     
     for card_data in cards_data:
         try:
             # 转换数据格式
             card_type = convert_card_type(card_data["type"])
             suit = convert_suit(card_data.get("suit"))
-            
-            # 检查是否已存在
-            existing_card = get_card_by_number_and_type(
-                db, 
-                card_number=card_data["cardNumber"],
-                card_type=card_type,
-                suit=suit
-            )
             
             # 准备数据
             card_params = {
@@ -110,18 +103,10 @@ def init_tarot_cards(db: Session) -> int:
                 "planet": card_data.get("planet")
             }
             
-            if existing_card:
-                # 更新现有卡牌
-                for key, value in card_params.items():
-                    setattr(existing_card, key, value)
-                updated_count += 1
-                print(f"  ✏️ 更新塔罗牌: {card_data['nameZh']} ({card_data['nameEn']})")
-            else:
-                # 创建新卡牌
-                new_card = TarotCard(**card_params)
-                db.add(new_card)
-                created_count += 1
-                print(f"  ➕ 创建塔罗牌: {card_data['nameZh']} ({card_data['nameEn']})")
+            new_card = TarotCard(**card_params)
+            db.add(new_card)
+            created_count += 1
+            print(f"  ➕ 创建塔罗牌: {card_data['nameZh']} ({card_data['nameEn']})")
                 
         except Exception as e:
             print(f"  ❌ 处理塔罗牌数据失败: {card_data.get('nameZh', 'Unknown')}, 错误: {e}")
@@ -130,16 +115,20 @@ def init_tarot_cards(db: Session) -> int:
     # 提交事务
     try:
         db.commit()
-        print(f"✅ 塔罗牌数据初始化完成! 创建: {created_count}, 更新: {updated_count}")
-        return created_count + updated_count
+        print(f"✅ 塔罗牌数据初始化完成! 创建: {created_count}")
+        return created_count
     except Exception as e:
         print(f"❌ 提交塔罗牌数据失败: {e}")
         db.rollback()
         return 0
 
 def init_spreads(db: Session) -> int:
-    """初始化牌阵数据"""
+    """仅向空表导入牌阵，包含停用记录的已有表也保留。"""
     print("\n🔮 开始初始化牌阵数据...")
+    existing_count = db.query(SpreadType).count()
+    if existing_count:
+        print(f"已有 {existing_count} 个牌阵，跳过整组导入")
+        return existing_count
     
     # 加载牌阵数据
     spreads_data = load_json_data("spreads.json")
@@ -147,13 +136,9 @@ def init_spreads(db: Session) -> int:
         return 0
     
     created_count = 0
-    updated_count = 0
     
     for spread_data in spreads_data:
         try:
-            # 检查是否已存在
-            existing_spread = get_spread_by_name(db, name=spread_data["name"])
-            
             # 准备数据
             spread_params = {
                 "name": spread_data["name"],
@@ -178,18 +163,10 @@ def init_spreads(db: Session) -> int:
                 "suitable_for_general": "general" in suitable_for
             })
             
-            if existing_spread:
-                # 更新现有牌阵
-                for key, value in spread_params.items():
-                    setattr(existing_spread, key, value)
-                updated_count += 1
-                print(f"  ✏️ 更新牌阵: {spread_data['name']} ({spread_data['cardCount']}张牌)")
-            else:
-                # 创建新牌阵
-                new_spread = SpreadType(**spread_params)
-                db.add(new_spread)
-                created_count += 1
-                print(f"  ➕ 创建牌阵: {spread_data['name']} ({spread_data['cardCount']}张牌)")
+            new_spread = SpreadType(**spread_params)
+            db.add(new_spread)
+            created_count += 1
+            print(f"  ➕ 创建牌阵: {spread_data['name']} ({spread_data['cardCount']}张牌)")
                 
         except Exception as e:
             print(f"  ❌ 处理牌阵数据失败: {spread_data.get('name', 'Unknown')}, 错误: {e}")
@@ -198,8 +175,8 @@ def init_spreads(db: Session) -> int:
     # 提交事务
     try:
         db.commit()
-        print(f"✅ 牌阵数据初始化完成! 创建: {created_count}, 更新: {updated_count}")
-        return created_count + updated_count
+        print(f"✅ 牌阵数据初始化完成! 创建: {created_count}")
+        return created_count
     except Exception as e:
         print(f"❌ 提交牌阵数据失败: {e}")
         db.rollback()
@@ -209,10 +186,6 @@ def main():
     """主函数"""
     print("🚀 开始初始化塔罗牌游戏数据...")
     print(f"📁 数据目录: {DATA_DIR}")
-    
-    # 检查数据目录
-    if not DATA_DIR.exists():
-        raise RuntimeError(f"Reference data initialization failed: data directory not found: {DATA_DIR}")
     
     # 创建数据库会话
     db = SessionLocal()
