@@ -1,7 +1,7 @@
 from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import func
+from app.core.email_identity import email_identity_key
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
 from app.core.security import get_password_hash, verify_password
@@ -19,10 +19,11 @@ def get_user_by_username(db: Session, username: str) -> Optional[User]:
 
 def get_user_by_email(db: Session, email: str) -> Optional[User]:
     """根据邮箱获取用户"""
-    normalized = (email or "").strip().lower()
-    if not normalized:
+    try:
+        key = email_identity_key(email)
+    except (TypeError, ValueError):
         return None
-    return db.query(User).filter(func.lower(User.email) == normalized).first()
+    return db.query(User).filter(User.email_key == key).first()
 
 
 def create_user(db: Session, user_create: UserCreate) -> User:

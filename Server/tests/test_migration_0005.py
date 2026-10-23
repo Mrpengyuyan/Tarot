@@ -18,6 +18,8 @@ def test_upgrade_treats_historical_generation_attempts_as_possibly_paid(tmp_path
     command.upgrade(config, "0004_persistent_ai_budget")
 
     with sqlite3.connect(database) as conn:
+        conn.execute("DROP INDEX ix_users_email_key")
+        conn.execute("ALTER TABLE users DROP COLUMN email_key")
         for column in (
             "ai_last_error", "ai_budget_retry_at", "ai_request_started_at",
             "ai_requests_started", "ai_run_state",

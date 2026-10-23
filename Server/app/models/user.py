@@ -3,9 +3,10 @@ from __future__ import annotations
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Date, DateTime, Integer, String, Text, false, func
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import Boolean, Date, DateTime, Integer, LargeBinary, String, Text, false, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
+from app.core.email_identity import email_identity_key
 from app.db.base_class import Base
 
 if TYPE_CHECKING:
@@ -20,6 +21,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     username: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False, comment="用户名")
     email: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False, comment="邮箱")
+    email_key: Mapped[bytes] = mapped_column(LargeBinary, unique=True, index=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False, comment="加密密码")
     nickname: Mapped[str | None] = mapped_column(String(50), nullable=True, comment="昵称")
     avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True, comment="头像URL")
@@ -43,6 +45,11 @@ class User(Base):
     prediction_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False, comment="预测次数")
 
     predictions: Mapped[list["Prediction"]] = relationship("Prediction", back_populates="user")
+
+    @validates("email")
+    def _set_email_identity(self, key: str, value: str) -> str:
+        self.email_key = email_identity_key(value)
+        return value
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"

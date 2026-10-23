@@ -20,6 +20,8 @@ def test_upgrade_backfills_guest_identity_and_today_usage(tmp_path, monkeypatch)
     original_guest = "guest_" + "a" * 32
     changed_email_guest = "guest_" + "b" * 32
     with sqlite3.connect(database) as conn:
+        conn.execute("DROP INDEX ix_users_email_key")
+        conn.execute("ALTER TABLE users DROP COLUMN email_key")
         for column in ("reading_quota_count", "reading_quota_day", "is_guest"):
             conn.execute(f"ALTER TABLE users DROP COLUMN {column}")
         now = datetime.now(timezone.utc).isoformat()
