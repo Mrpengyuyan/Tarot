@@ -170,12 +170,14 @@ def search_spreads(
     )
 
 
-def create_spread(db: Session, spread_create: SpreadTypeCreate) -> SpreadType:
-    positions_data = [pos.model_dump() for pos in spread_create.positions]
-    spread_data = spread_create.model_dump()
-    spread_data["positions"] = positions_data
+def _spread_create_values(spread_create: SpreadTypeCreate) -> dict:
+    # Preserve nested model extensions, as the existing creation paths do.
+    positions = [position.model_dump() for position in spread_create.positions]
+    return {**spread_create.model_dump(), "positions": positions}
 
-    db_spread = SpreadType(**spread_data)
+
+def create_spread(db: Session, spread_create: SpreadTypeCreate) -> SpreadType:
+    db_spread = SpreadType(**_spread_create_values(spread_create))
     db.add(db_spread)
     db.commit()
     db.refresh(db_spread)
@@ -184,15 +186,6 @@ def create_spread(db: Session, spread_create: SpreadTypeCreate) -> SpreadType:
 
 def update_spread(db: Session, db_spread: SpreadType, spread_update: SpreadTypeUpdate) -> SpreadType:
     update_data = spread_update.model_dump(exclude_unset=True)
-
-    if "positions" in update_data and update_data["positions"] is not None:
-        normalized_positions = []
-        for pos in update_data["positions"]:
-            if hasattr(pos, "model_dump"):
-                normalized_positions.append(pos.model_dump())
-            elif isinstance(pos, dict):
-                normalized_positions.append(pos)
-        update_data["positions"] = normalized_positions
 
     layout_fields = ("card_count", "positions")
     layout_changed = any(
@@ -334,11 +327,7 @@ def get_spreads_by_card_count_range(
 def batch_create_spreads(db: Session, spreads_data: List[SpreadTypeCreate]) -> List[SpreadType]:
     db_spreads: List[SpreadType] = []
     for spread_data in spreads_data:
-        positions_data = [pos.model_dump() for pos in spread_data.positions]
-        spread_dict = spread_data.model_dump()
-        spread_dict["positions"] = positions_data
-
-        db_spread = SpreadType(**spread_dict)
+        db_spread = SpreadType(**_spread_create_values(spread_data))
         db.add(db_spread)
         db_spreads.append(db_spread)
 
