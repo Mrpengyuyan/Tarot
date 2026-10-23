@@ -47,6 +47,14 @@ namespace TarotUnity.Core
             }
         }
 
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
+        }
+
         public void PlayMusic(AudioClip clip, float volume = 0.75f)
         {
             if (clip == null)
