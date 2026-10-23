@@ -249,32 +249,6 @@ class EnhancedTarotInterpretationService:
                 ai_response, question, question_type, spread, cards_drawn
             )
 
-    def _extract_json_from_response_legacy(self, response: str) -> Optional[Dict[str, Any]]:
-        """从AI回复中提取JSON内��"""
-        try:
-            # 方法1: 查找JSON代码块
-            if "```json" in response:
-                start = response.find("```json") + 7
-                end = response.find("```", start)
-                if end != -1:
-                    json_str = response[start:end].strip()
-                    return json.loads(json_str)
-
-            # 方法2: 查找花括号包围的内容
-            if "{" in response and "}" in response:
-                start = response.find("{")
-                end = response.rfind("}") + 1
-                json_str = response[start:end]
-                return json.loads(json_str)
-
-            # 方法3: 尝试直接解析整个回复
-            return json.loads(response.strip())
-
-        except json.JSONDecodeError:
-            return None
-        except Exception:
-            return None
-
     def _extract_json_from_response(self, response: str) -> Optional[Dict[str, Any]]:
         """Extract the first valid JSON object from model output."""
 
