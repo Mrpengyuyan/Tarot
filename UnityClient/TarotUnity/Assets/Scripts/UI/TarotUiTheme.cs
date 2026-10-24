@@ -194,7 +194,11 @@ namespace TarotUnity.UI
                 }
             }
 
-            text.enableWordWrapping = true;
+            // Input fields own wrapping and scrolling; single-line questions must not wrap.
+            if (text.GetComponentInParent<TMP_InputField>(true) == null)
+            {
+                text.enableWordWrapping = true;
+            }
         }
 
         private void ApplyTextStyle(Text text)

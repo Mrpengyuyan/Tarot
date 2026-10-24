@@ -2,6 +2,7 @@ using System.Collections;
 using NUnit.Framework;
 using TarotUnity.Gameplay;
 using TarotUnity.UI;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -15,6 +16,76 @@ namespace TarotUnity.Tests.PlayMode
     /// </summary>
     public sealed class Phase69RuntimeSkinTests
     {
+        private const string LongQuestion = "三牌离线验收：我应如何安排下一阶段的学习与生活，兼顾课程、项目开发和休息，并保持稳定的节奏？";
+
+        [UnityTest]
+        public IEnumerator LongQuestionStaysOnOneLineAfterThemeReapplication()
+        {
+            SceneManager.LoadScene("ReadingRoom");
+            for (var i = 0; i < 5; i++)
+            {
+                yield return null;
+            }
+
+            var canvas = GameObject.Find("ReadingRoomCanvas");
+            var theme = canvas.GetComponent<TarotUiTheme>();
+            var input = canvas.GetComponentInChildren<TMP_InputField>();
+            Assert.That(input.lineType, Is.EqualTo(TMP_InputField.LineType.SingleLine));
+
+            foreach (var width in new[] { 448f, 320f, 224f })
+            {
+                ((RectTransform)input.transform).SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
+                input.text = LongQuestion;
+                theme.Apply();
+                yield return null;
+                input.ForceLabelUpdate();
+                input.textComponent.ForceMeshUpdate();
+
+                Assert.That(input.textComponent.textInfo.lineCount, Is.EqualTo(1),
+                    $"A single-line question must scroll rather than wrap at width {width}.");
+                Assert.That(input.text, Is.EqualTo(LongQuestion), "Display fitting must not truncate the question.");
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator MultilineInputAndBodyTextKeepWrappingAfterThemeReapplication()
+        {
+            SceneManager.LoadScene("ReadingRoom");
+            for (var i = 0; i < 5; i++)
+            {
+                yield return null;
+            }
+
+            var canvas = GameObject.Find("ReadingRoomCanvas");
+            var theme = canvas.GetComponent<TarotUiTheme>();
+            var input = canvas.GetComponentInChildren<TMP_InputField>();
+            var body = new GameObject("ThemeBodyWrapTest", typeof(RectTransform), typeof(TextMeshProUGUI));
+            body.transform.SetParent(canvas.transform, false);
+            var label = body.GetComponent<TMP_Text>();
+            label.font = input.textComponent.font;
+            label.fontSize = input.textComponent.fontSize;
+            label.rectTransform.sizeDelta = new Vector2(224f, 100f);
+            label.text = LongQuestion;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+
+            foreach (var mode in new[] { TMP_InputField.LineType.MultiLineSubmit, TMP_InputField.LineType.MultiLineNewline })
+            {
+                input.lineType = mode;
+                input.text = LongQuestion;
+                theme.Apply();
+                yield return null;
+                input.ForceLabelUpdate();
+                input.textComponent.ForceMeshUpdate();
+                label.ForceMeshUpdate();
+
+                Assert.That(input.textComponent.textInfo.lineCount, Is.GreaterThan(1), $"{mode} still wraps.");
+                Assert.That(label.textInfo.lineCount, Is.GreaterThan(1), "Ordinary body text still wraps.");
+                Assert.That(input.text, Is.EqualTo(LongQuestion));
+            }
+
+            Object.Destroy(body);
+        }
+
         [UnityTest]
         public IEnumerator CardStockSurvivesTheThemeAndFollowsTheChoice()
         {
