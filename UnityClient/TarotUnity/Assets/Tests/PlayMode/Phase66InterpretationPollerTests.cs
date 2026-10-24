@@ -52,6 +52,17 @@ namespace TarotUnity.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator InitializationWaitsForAnExplicitReading()
+        {
+            yield return null;
+
+            Assert.That(InterpretationPoller.Instance, Is.SameAs(poller));
+            Assert.That(poller.Current, Is.Null);
+            Assert.That(poller.IsPolling, Is.False);
+            Assert.That(server.RequestLog, Is.Empty);
+        }
+
+        [UnityTest]
         public IEnumerator ProcessingTwiceThenCompletedBecomesReady()
         {
             server.Script("POST", AsyncPath, Accepted());

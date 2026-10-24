@@ -90,10 +90,10 @@ namespace TarotUnity.Network
 
         public void Begin(ReadingSessionSnapshot snapshot)
         {
-            Start(snapshot, RequestMode.Initial);
+            StartPolling(snapshot, RequestMode.Initial);
         }
 
-        private void Start(ReadingSessionSnapshot snapshot, RequestMode mode)
+        private void StartPolling(ReadingSessionSnapshot snapshot, RequestMode mode)
         {
             runId++;
             IsPolling = false;
@@ -122,11 +122,11 @@ namespace TarotUnity.Network
 
             if (Current.canRetry)
             {
-                Start(Current, RequestMode.ManualRetry);
+                StartPolling(Current, RequestMode.ManualRetry);
             }
             else if (Current.canCheckStatus)
             {
-                Start(Current, RequestMode.StatusOnly);
+                StartPolling(Current, RequestMode.StatusOnly);
             }
         }
 

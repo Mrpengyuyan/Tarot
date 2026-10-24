@@ -1,4 +1,5 @@
 using System.IO;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 using TarotUnity.Data;
@@ -24,6 +25,20 @@ namespace TarotUnity.Tests.EditMode
         public void ClearSharedClient()
         {
             ApiClient.ClearShared();
+        }
+
+        [Test]
+        public void PollerStartMessagesMustBeParameterless()
+        {
+            var methods = typeof(InterpretationPoller).GetMethods(
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+            foreach (var method in methods)
+            {
+                if (method.Name == "Start")
+                {
+                    Assert.That(method.GetParameters(), Is.Empty, "Unity invokes Start without arguments.");
+                }
+            }
         }
 
         [Test]
