@@ -59,6 +59,7 @@ namespace TarotUnity.UI
         private Transform pickDeckOrigin;
         private SpreadSummary[] backendSpreads;
         private InterpretationPoller subscribedPoller;
+        private CardInspectionController cardInspection;
 
         // Phase 66: the longest online start is nine requests (spread list, record,
         // draw, cards, refresh, guest session, then record, draw and cards again), each
@@ -114,6 +115,8 @@ namespace TarotUnity.UI
 
         private void Start()
         {
+            cardInspection = gameObject.AddComponent<CardInspectionController>();
+            cardInspection.Initialize(Camera.main, questionInput != null ? questionInput.GetComponentInParent<Canvas>() : null);
             EnsureBackendReferences();
             SelectOneCard();
             SetResultButtonVisible(false);
@@ -818,7 +821,23 @@ namespace TarotUnity.UI
 
         private void HandleCardClicked(CardView card)
         {
-            if (card == null || card.IsFaceUp || flowController == null || flowController.State != ReadingFlowState.WaitingForFlip)
+            if (card == null || flowController == null || AnyCardIsFlipping() || (cardInspection != null && cardInspection.IsOpen))
+            {
+                return;
+            }
+
+            if (card.IsFaceUp)
+            {
+                if (cardInspection != null && (flowController.State == ReadingFlowState.WaitingForFlip
+                    || flowController.State == ReadingFlowState.ResultReady))
+                {
+                    cardInspection.Show(card, false);
+                }
+
+                return;
+            }
+
+            if (flowController.State != ReadingFlowState.WaitingForFlip)
             {
                 return;
             }
@@ -832,14 +851,42 @@ namespace TarotUnity.UI
             flipController.Flip(card);
         }
 
+        private bool AnyCardIsFlipping()
+        {
+            if (deckController != null)
+            {
+                foreach (var card in deckController.ActiveCards)
+                {
+                    var flip = card != null ? card.GetComponent<CardFlipController>() : null;
+                    if (flip != null && flip.IsFlipping)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         private void HandleCardFaceChanged(CardView card, bool faceUp)
         {
             if (faceUp)
             {
-                if (flowController != null)
-                {
-                    flowController.RegisterCardFlipped(card);
-                }
+                StartCoroutine(RegisterAfterInspection(card));
+            }
+        }
+
+        private IEnumerator RegisterAfterInspection(CardView card)
+        {
+            var flip = card.GetComponent<CardFlipController>();
+            while ((flip != null && flip.IsFlipping) || (cardInspection != null && cardInspection.IsOpen))
+            {
+                yield return null;
+            }
+
+            if (card != null && card.IsFaceUp && flowController != null)
+            {
+                flowController.RegisterCardFlipped(card);
             }
         }
 

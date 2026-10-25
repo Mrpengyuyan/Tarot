@@ -73,6 +73,7 @@ namespace TarotUnity.Tests.PlayMode
             Assert.That(flipController, Is.Not.Null);
             foreach (var card in deck.ActiveCards.ToArray())
             {
+                flipController = card.GetComponent<CardFlipController>();
                 card.GetComponent<CardClickHandler>().OnPointerClick(
                     new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left });
                 yield return SampleWhile(() => flipController.IsFlipping, flipSamples, "Expected the flip to finish.");

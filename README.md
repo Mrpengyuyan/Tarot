@@ -37,6 +37,10 @@ Unity 工程位于 `UnityClient/TarotUnity/`。构建场景包括：
 使用 Unity `6000.3.16f1` 打开 `UnityClient/TarotUnity/`，然后从
 `Assets/Scenes/Boot.unity` 运行。默认可以使用本地模拟数据完成完整流程。
 
+单牌、三牌和凯尔特十字翻牌后会自动展示牌面近景，再回到原牌位。
+点击已翻开的牌可以不限时放大查看；点击空白处、「收起牌面」或按 `Esc` 返回牌桌。
+近景显示牌名、牌位和正逆位，不会重新抽牌或额外请求 AI。
+
 ### 本地后端联调
 
 1. 按 [`Server/README.md`](Server/README.md) 启动后端，默认地址为 `http://localhost:8000`。

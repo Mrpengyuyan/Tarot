@@ -221,7 +221,8 @@ namespace TarotUnity.Tests.PlayMode
                 {
                     button = PointerEventData.InputButton.Left,
                 });
-                yield return WaitUntil(() => card.IsFaceUp, 10f, $"expected card {i + 1} to flip");
+                yield return WaitUntil(() => card.IsFaceUp && !card.GetComponent<CardFlipController>().IsFlipping,
+                    10f, $"expected card {i + 1} to finish its flip and close-up");
             }
 
             yield return WaitUntil(() => flow.State == ReadingFlowState.ResultReady, 20f, "expected ResultReady");

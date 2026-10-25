@@ -69,6 +69,7 @@ namespace TarotUnity.Tests.PlayMode
             var flipper = Object.FindFirstObjectByType<CardFlipController>();
             foreach (var card in picked)
             {
+                flipper = card.GetComponent<CardFlipController>();
                 card.GetComponent<CardClickHandler>().OnPointerClick(
                     new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left });
                 yield return Until(() => card.IsFaceUp && (flipper == null || !flipper.IsFlipping), "the card flips");

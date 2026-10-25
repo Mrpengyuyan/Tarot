@@ -222,7 +222,7 @@ namespace TarotUnity.Tests.PlayMode
                     {
                         button = PointerEventData.InputButton.Left,
                     });
-                    yield return WaitUntil(() => card.IsFaceUp, 10f);
+                    yield return WaitUntil(() => card.IsFaceUp && !card.GetComponent<CardFlipController>().IsFlipping, 10f);
                 }
 
                 yield return WaitUntil(() => flow.State == ReadingFlowState.ResultReady, 20f);

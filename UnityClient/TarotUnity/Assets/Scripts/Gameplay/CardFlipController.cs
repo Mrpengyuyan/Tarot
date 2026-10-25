@@ -246,6 +246,15 @@ namespace TarotUnity.Gameplay
             t.localRotation = restRotation;
             t.localScale = restScale;
             card.SetHighlighted(false);
+            if (faceUp)
+            {
+                var inspection = FindFirstObjectByType<CardInspectionController>();
+                if (inspection != null)
+                {
+                    yield return inspection.ShowAutomatic(card);
+                }
+            }
+
             isFlipping = false;
         }
 

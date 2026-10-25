@@ -85,7 +85,7 @@ namespace TarotUnity.Tests.PlayMode
             start = Time.time;
             next = 0f;
             shot = 0;
-            while (Time.time - start < 2.2f)
+            while (Time.time - start < 8f && (Time.time - start < 2.2f || flipper.IsFlipping))
             {
                 if (Time.time - start >= next)
                 {

@@ -2,7 +2,8 @@
   "name": "TarotUnity.Runtime",
   "rootNamespace": "TarotUnity",
   "references": [
-    "Unity.TextMeshPro"
+    "Unity.TextMeshPro",
+    "Unity.InputSystem"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
