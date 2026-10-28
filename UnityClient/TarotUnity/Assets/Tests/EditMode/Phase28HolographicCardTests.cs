@@ -27,8 +27,8 @@ namespace TarotUnity.Tests.EditMode
             var material = AssetDatabase.LoadAssetAtPath<Material>(MaterialPath);
             Assert.That(material, Is.Not.Null, $"Missing material at {MaterialPath}");
             Assert.That(material.shader.name, Is.EqualTo(ShaderName));
-            Assert.That(material.GetFloat("_GlareIntensity"), Is.InRange(0.1f, 1.5f),
-                "Glare should be tuned to a tasteful range, not blown out");
+            Assert.That(material.GetFloat("_GlareIntensity"), Is.InRange(0f, 0.08f),
+                "The tabletop sheen must not obscure the illustration");
         }
 
         [Test]

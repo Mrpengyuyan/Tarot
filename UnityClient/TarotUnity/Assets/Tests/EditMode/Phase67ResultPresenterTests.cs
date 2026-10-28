@@ -261,11 +261,11 @@ namespace TarotUnity.Tests.EditMode
             for (var i = 0; i < 3; i++)
             {
                 var label = (RectTransform)band.Find($"SpreadCell_{i}/Label");
-                Assert.That(label.sizeDelta.x, Is.EqualTo(ResultSpreadLayout.BasePitch / threeCards.Cells[i].Scale).Within(0.01f),
-                    $"control: with 3 cards label {i} keeps its width");
+                Assert.That(label.sizeDelta.x, Is.EqualTo(threeCards.RowPitch / threeCards.Cells[i].Scale).Within(0.01f),
+                    $"control: with 3 cards label {i} follows the compact row pitch");
             }
 
-            foreach (var cardCount in new[] { 5, 10 })
+            foreach (var cardCount in new[] { 3, 5, 10 })
             {
                 presenter.PresentSession(Offline(cardCount));
                 presenter.ApplyLayout(new Vector2(1280f, 720f));
@@ -286,7 +286,8 @@ namespace TarotUnity.Tests.EditMode
                         $"{cardCount} cards: label {i}'s hit area overlaps label {i + 1}'s");
                 }
 
-                Assert.That(compared, Is.EqualTo(cardCount == 10 ? 8 : 4), $"control: {cardCount} cards, every same-row pair compared");
+                Assert.That(compared, Is.EqualTo(cardCount - ResultSpreadLayout.Compute(cardCount, 720f).Rows),
+                    $"control: {cardCount} cards, every same-row pair compared");
             }
         }
 

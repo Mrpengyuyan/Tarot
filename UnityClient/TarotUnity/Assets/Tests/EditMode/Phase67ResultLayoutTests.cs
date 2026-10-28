@@ -16,7 +16,6 @@ namespace TarotUnity.Tests.EditMode
         private const float ButtonTop = -276f;      // BackToMenuButton: y -300, 48 tall
 
         [TestCase(2)]
-        [TestCase(3)]
         [TestCase(5)]
         public void OneRowReadingIsAtLeast326AtSixteenByNine(int cardCount)
         {

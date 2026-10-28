@@ -73,7 +73,9 @@ namespace TarotUnity.Editor
                 changed |= SetIfDifferent(importer.textureType, TextureImporterType.Sprite, v => importer.textureType = v);
                 changed |= SetIfDifferent(importer.spriteImportMode, SpriteImportMode.Single, v => importer.spriteImportMode = v);
                 changed |= SetIfDifferent(importer.maxTextureSize, MaxTextureSize, v => importer.maxTextureSize = v);
-                changed |= SetIfDifferent(importer.mipmapEnabled, false, v => importer.mipmapEnabled = v);
+                changed |= SetIfDifferent(importer.mipmapEnabled, true, v => importer.mipmapEnabled = v);
+                changed |= SetIfDifferent(importer.filterMode, FilterMode.Trilinear, v => importer.filterMode = v);
+                changed |= SetIfDifferent(importer.anisoLevel, 4, v => importer.anisoLevel = v);
                 changed |= SetIfDifferent(importer.alphaIsTransparency, false, v => importer.alphaIsTransparency = v);
                 changed |= SetIfDifferent(importer.sRGBTexture, true, v => importer.sRGBTexture = v);
 

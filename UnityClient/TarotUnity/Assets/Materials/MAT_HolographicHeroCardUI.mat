@@ -30,10 +30,10 @@ Material:
     m_Ints: []
     m_Floats:
     - _ColorMask: 15
-    - _GlareIntensity: 0.62
+    - _GlareIntensity: 0.06
     - _GlareShift: 0.85
     - _GlareWidth: 0.22
-    - _Iridescence: 0.3
+    - _Iridescence: 0.01
     - _Stencil: 0
     - _StencilComp: 8
     - _StencilOp: 0

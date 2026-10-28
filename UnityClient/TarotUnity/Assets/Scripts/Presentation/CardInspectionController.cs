@@ -13,7 +13,7 @@ namespace TarotUnity.Presentation
     public sealed class CardInspectionController : MonoBehaviour
     {
         private const float TravelSeconds = 0.3f;
-        private const float HoldSeconds = 1.5f;
+        private const float HoldSeconds = 1f;
         private Camera viewCamera;
         private CanvasGroup roomGroup;
         private GameObject overlay;
@@ -292,11 +292,6 @@ namespace TarotUnity.Presentation
             background.gameObject.AddComponent<Button>().onClick.AddListener(Close);
             title = CreateLabel("CardName", new Vector2(0.08f, 0.88f), new Vector2(0.92f, 0.96f), 32f, font);
             caption = CreateLabel("CardPosition", new Vector2(0.08f, 0.82f), new Vector2(0.92f, 0.88f), 23f, font);
-            var close = CreateRect("CloseButton", overlay.transform, new Vector2(0.32f, 0.08f), new Vector2(0.68f, 0.15f));
-            close.gameObject.AddComponent<Image>().color = new Color(0.12f, 0.075f, 0.035f, 0.96f);
-            close.gameObject.AddComponent<Button>().onClick.AddListener(Close);
-            var label = CreateLabel("CloseLabel", new Vector2(0.32f, 0.08f), new Vector2(0.68f, 0.15f), 23f, font);
-            label.text = "收起牌面 · Esc";
             overlay.SetActive(false);
         }
 

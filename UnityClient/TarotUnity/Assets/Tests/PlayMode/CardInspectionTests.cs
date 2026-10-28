@@ -144,9 +144,14 @@ namespace TarotUnity.Tests.PlayMode
             var card = deck.ActiveCards[0];
             Click(card);
             yield return Until(() => Open, "automatic close-up should open");
-            yield return new WaitForSecondsRealtime(1.45f);
-            Assert.That(Open, Is.True, "motion must not consume the 1.5-second readable hold");
-            yield return Until(() => !Open, "automatic inspection should close without a click");
+            var openedAt = Time.realtimeSinceStartup;
+            yield return new WaitForSecondsRealtime(1.1f);
+            Assert.That(Open, Is.True, "travel must not consume the one-second readable hold");
+            while (Open && Time.realtimeSinceStartup - openedAt < 1.8f)
+            {
+                yield return null;
+            }
+            Assert.That(Open, Is.False, "one-second hold plus two 0.3-second journeys should finish within 1.8 seconds");
             yield return Until(() => flow.State == ReadingFlowState.ResultReady, "the flip must release after viewing");
         }
 
@@ -231,24 +236,25 @@ namespace TarotUnity.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator CloseButtonAndBackgroundBothReturnTheCard()
+        public IEnumerator BackgroundReturnsTheCardWithoutABottomHintRow()
         {
             yield return Draw(1);
             var card = deck.ActiveCards[0];
             card.SetFaceUp(true);
-            foreach (var target in new[] { "CloseButton", "CloseBackground" })
-            {
-                Assert.That((bool)Call("Show", card, false), Is.True);
-                yield return new WaitForSecondsRealtime(0.35f);
-                var hits = new System.Collections.Generic.List<RaycastResult>();
-                EventSystem.current.RaycastAll(new PointerEventData(EventSystem.current)
-                    { position = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f) }, hits);
-                Assert.That(hits.Count, Is.GreaterThan(0));
-                Assert.That(hits[0].gameObject.name, Is.EqualTo("CloseBackground"), "the close-up must intercept clicks before the table collider");
-                GameObject.Find("CardInspectionOverlay").transform.Find(target).GetComponent<Button>().onClick.Invoke();
-                yield return Until(() => !Open, "both close affordances must return the card");
-                Assert.That(canvas.GetComponent<CanvasGroup>().interactable, Is.True);
-            }
+            Assert.That((bool)Call("Show", card, false), Is.True);
+            yield return new WaitForSecondsRealtime(0.35f);
+            var hits = new System.Collections.Generic.List<RaycastResult>();
+            EventSystem.current.RaycastAll(new PointerEventData(EventSystem.current)
+                { position = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f) }, hits);
+            Assert.That(hits.Count, Is.GreaterThan(0));
+            Assert.That(hits[0].gameObject.name, Is.EqualTo("CloseBackground"), "the close-up must intercept clicks before the table collider");
+            var overlay = GameObject.Find("CardInspectionOverlay").transform;
+            Assert.That(overlay.Find("CloseButton"), Is.Null, "the bottom hint/button row is intentionally removed");
+            Assert.That(overlay.Find("CloseLabel"), Is.Null);
+            Assert.That(overlay.GetComponentsInChildren<TMP_Text>().Any(t => t.text.Contains("Esc")), Is.False);
+            overlay.Find("CloseBackground").GetComponent<Button>().onClick.Invoke();
+            yield return Until(() => !Open, "background click must return the card");
+            Assert.That(canvas.GetComponent<CanvasGroup>().interactable, Is.True);
         }
 
         [UnityTest]
@@ -348,10 +354,43 @@ namespace TarotUnity.Tests.PlayMode
                     texture.Release();
                     Object.Destroy(texture);
                 }
+
+                var session = LocalReadingSimulator.CreateSession(1, "牌阵", "此刻我最需要留意什么？", "general",
+                    deck.ActiveCards.Select(c => c.DrawData).ToArray());
+                session.advice += string.Concat(Enumerable.Repeat("放慢脚步，只选定一个下一步，再留意现实中的变化。", 24));
+                ReadingSessionStore.Save(session);
+                SceneManager.LoadScene("Result");
+                yield return null;
+                yield return null;
+                yield return Until(() => Object.FindFirstObjectByType<TarotUnity.Presentation.ResultRevealDirector>().IsRevealComplete,
+                    "result should finish its reveal before review");
+                foreach (var size in new[] { new Vector2Int(1440, 900), new Vector2Int(1280, 720), new Vector2Int(1024, 768) })
+                {
+                    var camera = Object.FindFirstObjectByType<Camera>();
+                    var texture = new RenderTexture(size.x, size.y, 24);
+                    var previousTarget = camera.targetTexture;
+                    var previousAspect = camera.aspect;
+                    camera.targetTexture = texture;
+                    camera.aspect = (float)size.x / size.y;
+                    var resultCanvas = GameObject.Find("ResultCanvas").GetComponent<Canvas>();
+                    Capture(camera, resultCanvas, texture, Path.Combine(directory, $"result-{count}-{size.x}x{size.y}.png"));
+                    var scroll = resultCanvas.transform.Find("ResultReadingScroll").GetComponent<ScrollRect>();
+                    Assert.That(scroll.content.rect.height, Is.GreaterThan(scroll.viewport.rect.height), "long text must still scroll");
+                    scroll.verticalNormalizedPosition = 0f;
+                    yield return new WaitForSecondsRealtime(0.25f);
+                    Assert.That(scroll.GetComponent<ResultReadingNavigator>().IsFadeVisible, Is.False);
+                    Capture(camera, resultCanvas, texture, Path.Combine(directory, $"result-bottom-{count}-{size.x}x{size.y}.png"), 0f);
+                    scroll.verticalNormalizedPosition = 1f;
+                    yield return new WaitForSecondsRealtime(0.25f);
+                    camera.targetTexture = previousTarget;
+                    camera.aspect = previousAspect;
+                    texture.Release();
+                    Object.Destroy(texture);
+                }
             }
         }
 
-        private static void Capture(Camera camera, Canvas ui, RenderTexture target, string path)
+        private static void Capture(Camera camera, Canvas ui, RenderTexture target, string path, float? readingPosition = null)
         {
             var mode = ui.renderMode;
             var previousCamera = ui.worldCamera;
@@ -360,6 +399,28 @@ namespace TarotUnity.Tests.PlayMode
             ui.renderMode = RenderMode.ScreenSpaceCamera;
             ui.worldCamera = camera;
             ui.planeDistance = camera.nearClipPlane + 0.05f;
+            var fit = ui.GetComponent<ResultCanvasAspectFit>();
+            var presenter = ui.GetComponent<ResultPanelPresenter>();
+            if (fit != null && presenter != null)
+            {
+                fit.Apply(target.width, target.height);
+                var scaler = ui.GetComponent<CanvasScaler>();
+                scaler.enabled = false;
+                scaler.enabled = true;
+                Canvas.ForceUpdateCanvases();
+                var size = ((RectTransform)ui.transform).rect.size;
+                Assert.That(size.y, Is.EqualTo(1280f * target.height / target.width).Within(1f));
+                fit.Repin(size.y);
+                presenter.ApplyLayout(size);
+                var content = (RectTransform)ui.transform.Find("ResultReadingScroll/Viewport/Content");
+                LayoutRebuilder.ForceRebuildLayoutImmediate(content);
+                // Re-pinning changes the viewport after switching from Overlay to the capture camera.
+                var scroll = content.GetComponentInParent<ScrollRect>();
+                scroll.verticalNormalizedPosition = readingPosition ?? 1f;
+                Canvas.ForceUpdateCanvases();
+                scroll.GetComponent<ResultReadingNavigator>().SendMessage("LateUpdate");
+                Assert.That(scroll.verticalNormalizedPosition, Is.EqualTo(readingPosition ?? 1f).Within(0.001f));
+            }
             Canvas.ForceUpdateCanvases();
             camera.Render();
             RenderTexture.active = target;

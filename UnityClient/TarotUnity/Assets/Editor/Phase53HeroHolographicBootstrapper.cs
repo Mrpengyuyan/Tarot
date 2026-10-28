@@ -110,12 +110,12 @@ namespace TarotUnity.Editor
             // the 3D face default because the hero card is large and viewed flat.
             material.SetColor("_Color", Color.white);
             material.SetColor("_GlareColor", new Color(1f, 0.95f, 0.82f, 1f));
-            material.SetFloat("_GlareIntensity", 0.62f);
+            material.SetFloat("_GlareIntensity", 0.06f);
             material.SetFloat("_GlareWidth", 0.22f);
             // With the decoupled band, _Sheen.x (-1..1) sweeps the band and this
             // shift keeps a full pointer sweep travelling right across the card face.
             material.SetFloat("_GlareShift", 0.85f);
-            material.SetFloat("_Iridescence", 0.30f);
+            material.SetFloat("_Iridescence", 0.01f);
             material.SetVector("_Sheen", Vector4.zero);
             EditorUtility.SetDirty(material);
             return material;

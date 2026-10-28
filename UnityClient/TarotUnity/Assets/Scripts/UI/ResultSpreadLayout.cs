@@ -34,7 +34,7 @@ namespace TarotUnity.UI
     /// <summary>
     /// Phase 67 (spec C 4.1): geometry of the multi-card Result screen, in centre-anchored
     /// canvas units. The band hangs from the header (136 below the canvas top), rows are
-    /// centred at a pitch of min(348, 1180 / cards in the row), and the reading panel fills the
+    /// centred in rows, and the reading panel fills the
     /// rest down to 10 above the button row - so every extra unit of canvas height goes to the
     /// reading. Cell constants come from the Phase 60 cell (frame 164x234 centred 18 above the
     /// cell centre, label centred at -118).
@@ -67,21 +67,23 @@ namespace TarotUnity.UI
             var height = canvasHeight >= 1f ? canvasHeight : TarotUiSpacing.ReferenceHeight;
             var twoRows = count >= TwoRowThreshold;
             var rows = count == 0 ? 0 : (twoRows ? 2 : 1);
-            var scale = twoRows ? TwoRowScale : OneRowScale;
-            var labelHeight = twoRows ? TwoRowLabelHeight : OneRowLabelHeight;
+            var compactThree = count == 3;
+            var scale = compactThree ? 0.9f : twoRows ? TwoRowScale : OneRowScale;
+            var labelHeight = compactThree ? 30f : twoRows ? TwoRowLabelHeight : OneRowLabelHeight;
             var firstRowCount = twoRows ? (count + 1) / 2 : count;
 
             var cells = new SpreadCellPlacement[count];
             var rowTop = height * 0.5f - BandTopFromCanvasTop;
             var bandBottom = rowTop;
-            var rowPitch = BasePitch;
+            var basePitch = compactThree ? 240f : BasePitch;
+            var rowPitch = basePitch;
             var placed = 0;
             for (var row = 0; row < rows; row++)
             {
                 var inRow = row == 0 ? firstRowCount : count - firstRowCount;
                 var centreY = rowTop - CellFrameTop * scale;
                 var labelBottom = centreY + CellLabelCentre * scale - labelHeight * 0.5f;
-                var pitch = Mathf.Min(BasePitch, inRow > 0 ? RowWidth / inRow : BasePitch);
+                var pitch = Mathf.Min(basePitch, inRow > 0 ? RowWidth / inRow : basePitch);
                 rowPitch = Mathf.Min(rowPitch, pitch);
                 for (var i = 0; i < inRow; i++)
                 {
@@ -99,11 +101,11 @@ namespace TarotUnity.UI
             {
                 Cells = cells,
                 Rows = rows,
-                LabelFontSize = twoRows ? TwoRowLabelSize : OneRowLabelSize,
+                LabelFontSize = compactThree ? 20f : twoRows ? TwoRowLabelSize : OneRowLabelSize,
                 LabelHeight = labelHeight,
                 BandBottom = bandBottom,
                 ReadingPosition = new Vector2(0f, (readingTop + readingBottom) * 0.5f),
-                ReadingSize = new Vector2(ReadingWidth, Mathf.Max(0f, readingTop - readingBottom)),
+                ReadingSize = new Vector2(compactThree ? 1024f : ReadingWidth, Mathf.Max(0f, readingTop - readingBottom)),
                 RowPitch = rowPitch,
             };
         }

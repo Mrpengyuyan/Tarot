@@ -20,10 +20,10 @@ namespace TarotUnity.Editor
         private const string CardPrefabPath = "Assets/Prefabs/Cards/PF_TarotCard.prefab";
 
         private static readonly Color GlareColor = new(1.0f, 0.96f, 0.86f, 1f);
-        private const float GlareIntensity = 0.5f;
+        private const float GlareIntensity = 0.04f;
         private const float GlareWidth = 0.16f;
         private const float GlareShift = 2.4f;
-        private const float Iridescence = 0.26f;
+        private const float Iridescence = 0.01f;
 
         [MenuItem("Tools/Tarot Unity/Run Phase 28 Holographic Card Bootstrap")]
         public static void Run()
