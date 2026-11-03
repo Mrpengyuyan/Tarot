@@ -5,6 +5,7 @@ using System.Reflection;
 using NUnit.Framework;
 using TarotUnity.Gameplay;
 using TarotUnity.Data;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
@@ -37,6 +38,7 @@ namespace TarotUnity.Tests.PlayMode
             Assert.That(draw.gameObject.activeSelf, Is.True, "control: 洗牌抽取 shows before the draw");
             Assert.That(reveal.gameObject.activeSelf, Is.False);
 
+            GetField<TMP_InputField>(room, "questionInput").text = "What should I focus on?";
             draw.onClick.Invoke();
             yield return DrawRitualTestDriver.PickAll();   // Phase 72: the player picks from the fan
             yield return WaitUntil(() => flow.State == ReadingFlowState.WaitingForFlip, "Expected the deal to finish.");

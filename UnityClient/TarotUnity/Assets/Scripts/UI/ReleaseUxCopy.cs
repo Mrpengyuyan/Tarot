@@ -7,6 +7,7 @@ namespace TarotUnity.UI
     {
         // Phase 66: reading-room flow copy (spec 6.6). Guarded to contain no ASCII letters.
         public const string DefaultQuestion = "此刻我最需要留意什么？";
+        public const string FlowQuestionRequired = "请先输入你的问题，再开始抽牌。";
         public const string FlowShuffling = "正在洗牌……";
         public const string FlowDealing = "正在发牌……";
         public const string FlowReadingTheCards = "正在感应牌面……";

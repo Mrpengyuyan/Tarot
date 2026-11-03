@@ -37,6 +37,33 @@ namespace TarotUnity.Tests.PlayMode
             flow = Object.FindFirstObjectByType<ReadingFlowController>();
             deck = Object.FindFirstObjectByType<DeckController>();
             fan = Object.FindFirstObjectByType<SpreadFanController>();
+            Get<TMP_InputField>("questionInput").text = "What should I focus on?";
+        }
+
+        [UnityTest]
+        public IEnumerator BlankQuestionsLeaveTheTableIdle()
+        {
+            yield return LoadRoom();
+            foreach (var question in new[] { "", "   ", "\t\r\n", "\u3000\u00a0" })
+            {
+                Get<TMP_InputField>("questionInput").text = question;
+                Get<Button>("drawButton").onClick.Invoke();
+                yield return null;
+                Assert.That(flow.State, Is.EqualTo(ReadingFlowState.QuestionInput));
+                Assert.That(fan.AcceptingPicks, Is.False);
+                Assert.That(fan.PreparedCount, Is.EqualTo(0));
+                Assert.That(deck.ActiveCards.Count, Is.EqualTo(0));
+                Assert.That(Get<Button>("drawButton").interactable, Is.True);
+                Assert.That(Get<TMP_Text>("flowStatusText").text, Does.Contain("问题"));
+            }
+
+            typeof(ReadingRoomController).GetField("questionInput", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(room, null);
+            Get<Button>("drawButton").onClick.Invoke();
+            yield return null;
+            Assert.That(flow.State, Is.EqualTo(ReadingFlowState.QuestionInput));
+            Assert.That(fan.AcceptingPicks, Is.False);
+            Assert.That(deck.ActiveCards.Count, Is.EqualTo(0));
         }
 
         [UnityTest]

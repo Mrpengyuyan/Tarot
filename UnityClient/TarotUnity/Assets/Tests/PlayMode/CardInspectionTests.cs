@@ -437,6 +437,7 @@ namespace TarotUnity.Tests.PlayMode
 
         private IEnumerator Draw(int count)
         {
+            canvas.GetComponentInChildren<TMP_InputField>().text = "What should I focus on?";
             var name = count == 10 ? "CelticCrossButton" : count == 3 ? "ThreeCardButton" : "OneCardButton";
             canvas.Find(name).GetComponent<Button>().onClick.Invoke();
             canvas.Find("DrawButton").GetComponent<Button>().onClick.Invoke();

@@ -4,6 +4,7 @@ using System.Linq;
 using NUnit.Framework;
 using TarotUnity.Data;
 using TarotUnity.Gameplay;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
@@ -30,6 +31,7 @@ namespace TarotUnity.Tests.PlayMode
 
             var flow = UnityEngine.Object.FindFirstObjectByType<ReadingFlowController>();
             var deck = UnityEngine.Object.FindFirstObjectByType<DeckController>();
+            GameObject.Find("ReadingRoomCanvas").GetComponentInChildren<TMP_InputField>().text = "What should I focus on?";
             GameObject.Find("ReadingRoomCanvas").transform.Find("DrawButton").GetComponent<Button>().onClick.Invoke();
             yield return DrawRitualTestDriver.PickAll();   // Phase 72: the player picks from the fan
             yield return WaitUntil(() => flow.State == ReadingFlowState.WaitingForFlip, "Expected the deal to finish.");

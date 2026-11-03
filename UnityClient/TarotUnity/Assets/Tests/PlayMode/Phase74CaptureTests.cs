@@ -3,6 +3,7 @@ using System.IO;
 using TarotUnity.Data;
 using TarotUnity.Gameplay;
 using NUnit.Framework;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
@@ -43,6 +44,7 @@ namespace TarotUnity.Tests.PlayMode
             var flow = Object.FindFirstObjectByType<ReadingFlowController>();
             var deck = Object.FindFirstObjectByType<DeckController>();
             var fan = Object.FindFirstObjectByType<SpreadFanController>();
+            GameObject.Find("ReadingRoomCanvas").GetComponentInChildren<TMP_InputField>().text = "What should I focus on?";
             GameObject.Find("ReadingRoomCanvas").transform.Find("DrawButton").GetComponent<Button>().onClick.Invoke();
 
             var start = Time.time;

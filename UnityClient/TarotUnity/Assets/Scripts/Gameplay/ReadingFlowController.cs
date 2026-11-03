@@ -65,11 +65,15 @@ namespace TarotUnity.Gameplay
             {
                 SetState(ReadingFlowState.ReadyToDraw);
             }
+            else if (State == ReadingFlowState.ReadyToDraw)
+            {
+                SetState(ReadingFlowState.QuestionInput);
+            }
         }
 
         public void BeginShuffle()
         {
-            if (State != ReadingFlowState.ReadyToDraw)
+            if (State != ReadingFlowState.ReadyToDraw || string.IsNullOrWhiteSpace(Question))
             {
                 return;
             }

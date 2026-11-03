@@ -54,6 +54,26 @@ namespace TarotUnity.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator BlankQuestionsDoNotCreateAnOnlineReading()
+        {
+            yield return LoadReadingRoom();
+            var room = Object.FindFirstObjectByType<ReadingRoomController>();
+            var flow = Object.FindFirstObjectByType<ReadingFlowController>();
+            var deck = Object.FindFirstObjectByType<DeckController>();
+            yield return WaitForBackendSpreads(room);
+            foreach (var question in new[] { "", "   ", "\t\r\n", "\u3000\u00a0" })
+            {
+                GetField<TMP_InputField>(room, "questionInput").text = question;
+                GetField<Button>(room, "drawButton").onClick.Invoke();
+                yield return null;
+                Assert.That(server.Count("POST", "/api/v1/records/"), Is.EqualTo(0));
+                Assert.That(flow.State, Is.EqualTo(ReadingFlowState.QuestionInput));
+                Assert.That(deck.ActiveCards.Count, Is.EqualTo(0));
+                Assert.That(ReadingSessionStore.HasCurrent, Is.False);
+            }
+        }
+
+        [UnityTest]
         public IEnumerator OnlineReadingDealsBackendCardsBeforeTheInterpretationIsReady()
         {
             server.Script("POST", "/api/v1/records/", MockTarotBackend.Json(200, MockTarotJson.Record(701, 12)));
@@ -70,7 +90,7 @@ namespace TarotUnity.Tests.PlayMode
             yield return WaitForBackendSpreads(room);
 
             GetField<Button>(room, "threeCardButton").onClick.Invoke();
-            GetField<TMP_InputField>(room, "questionInput").text = string.Empty;
+            GetField<TMP_InputField>(room, "questionInput").text = ReleaseUxCopy.DefaultQuestion;
             GetField<Button>(room, "drawButton").onClick.Invoke();
             yield return DrawRitualTestDriver.PickAll();   // Phase 72: the player picks from the fan
 
@@ -278,6 +298,8 @@ namespace TarotUnity.Tests.PlayMode
                     && Object.FindFirstObjectByType<ReadingRoomController>() != null,
                 10f,
                 "expected the ReadingRoom scene");
+            GetField<TMP_InputField>(Object.FindFirstObjectByType<ReadingRoomController>(), "questionInput").text =
+                ReleaseUxCopy.DefaultQuestion;
         }
 
         private static IEnumerator WaitForBackendSpreads(ReadingRoomController room)

@@ -65,6 +65,7 @@ namespace TarotUnity.Tests.PlayMode
             yield return Handshake("drill1-stop-backend", "drill1-backend-stopped", 120f);
 
             GetField<Button>(room, "oneCardButton").onClick.Invoke();
+            GetField<TMP_InputField>(room, "questionInput").text = "What should I focus on?";
             GetField<Button>(room, "drawButton").onClick.Invoke();
             yield return DrawRitualTestDriver.PickAll(120f);   // Phase 72: the player picks from the fan
             var deck = Object.FindFirstObjectByType<DeckController>();
@@ -88,6 +89,7 @@ namespace TarotUnity.Tests.PlayMode
             yield return WaitForBackendSpreads(room);
 
             GetField<Button>(room, "threeCardButton").onClick.Invoke();
+            GetField<TMP_InputField>(room, "questionInput").text = "What should I focus on?";
             GetField<Button>(room, "drawButton").onClick.Invoke();
             yield return DrawRitualTestDriver.PickAll(120f);   // Phase 72: the player picks from the fan
             var deck = Object.FindFirstObjectByType<DeckController>();

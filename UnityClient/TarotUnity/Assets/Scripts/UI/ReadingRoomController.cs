@@ -260,16 +260,24 @@ namespace TarotUnity.UI
 
         private IEnumerator DrawRoutine()
         {
+            var question = questionInput == null ? null : questionInput.text;
+            if (string.IsNullOrWhiteSpace(question))
+            {
+                SetStatus(ReleaseUxCopy.FlowQuestionRequired);
+                if (questionInput != null)
+                {
+                    questionInput.ActivateInputField();
+                }
+                yield break;
+            }
+            question = question.Trim();
+
             drawInProgress = true;
             drawFault = null;
             followLastPick = false;
             cameraFollowedPick = false;
             SetResultButtonVisible(false);
             SetDrawControls(false);
-
-            var question = questionInput == null || string.IsNullOrWhiteSpace(questionInput.text)
-                ? ReleaseUxCopy.DefaultQuestion
-                : questionInput.text.Trim();
 
             // Phase 72 review: explicit Unity null checks (not `?.`) so a destroyed reference
             // is skipped instead of called.

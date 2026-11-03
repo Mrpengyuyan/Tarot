@@ -5,6 +5,7 @@ using NUnit.Framework;
 using TarotUnity.Data;
 using TarotUnity.Gameplay;
 using TarotUnity.Presentation;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -88,6 +89,7 @@ namespace TarotUnity.Tests.PlayMode
             }
 
             yield return null;
+            GameObject.Find("ReadingRoomCanvas").GetComponentInChildren<TMP_InputField>().text = "What should I focus on?";
         }
     }
 }

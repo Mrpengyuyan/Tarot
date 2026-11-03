@@ -8,6 +8,7 @@ using TarotUnity.Data;
 using TarotUnity.Gameplay;
 using TarotUnity.Presentation;
 using TarotUnity.UI;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
@@ -41,6 +42,7 @@ namespace TarotUnity.Tests.PlayMode
             room = Object.FindFirstObjectByType<ReadingRoomController>();
             flow = Object.FindFirstObjectByType<ReadingFlowController>();
             deck = Object.FindFirstObjectByType<DeckController>();
+            Get<TMP_InputField>("questionInput").text = "What should I focus on?";
         }
 
         [UnityTest]

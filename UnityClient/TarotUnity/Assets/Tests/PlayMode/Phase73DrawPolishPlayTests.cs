@@ -3,6 +3,7 @@ using System.Linq;
 using NUnit.Framework;
 using TarotUnity.Data;
 using TarotUnity.Gameplay;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
@@ -34,6 +35,7 @@ namespace TarotUnity.Tests.PlayMode
             yield return null;
             var flow = Object.FindFirstObjectByType<ReadingFlowController>();
             var deck = Object.FindFirstObjectByType<DeckController>();
+            GameObject.Find("ReadingRoomCanvas").GetComponentInChildren<TMP_InputField>().text = "What should I focus on?";
             GameObject.Find("ReadingRoomCanvas").transform.Find("DrawButton").GetComponent<Button>().onClick.Invoke();
             var maxParticles = 0;
             var picking = DrawRitualTestDriver.PickAll();
@@ -93,6 +95,7 @@ namespace TarotUnity.Tests.PlayMode
             yield return null;
             var fan = Object.FindFirstObjectByType<SpreadFanController>();
             var deck = Object.FindFirstObjectByType<DeckController>();
+            GameObject.Find("ReadingRoomCanvas").GetComponentInChildren<TMP_InputField>().text = "What should I focus on?";
             GameObject.Find("ReadingRoomCanvas").transform.Find("DrawButton").GetComponent<Button>().onClick.Invoke();
             while (!fan.AcceptingPicks)
             {

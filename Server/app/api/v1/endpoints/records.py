@@ -324,6 +324,9 @@ def draw_cards_for_prediction(
     if not prediction:
         raise HTTPException(status_code=404, detail="Record not found")
 
+    if not prediction.question or not prediction.question.strip():
+        raise HTTPException(status_code=409, detail="A question is required; create a new reading before drawing cards")
+
     existing_draws = prediction_crud.get_prediction_card_draws(db, prediction_id=prediction_id)
     if existing_draws:
         raise HTTPException(status_code=409, detail="Cards already drawn for this record")

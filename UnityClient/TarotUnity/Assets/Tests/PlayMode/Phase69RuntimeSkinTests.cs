@@ -140,6 +140,7 @@ namespace TarotUnity.Tests.PlayMode
             var drawSkin = draw.GetComponent<UiSkinState>();
             Assert.That(drawSkin.IsEmphasized, Is.True, "control: ready to draw");
 
+            canvas.GetComponentInChildren<TMP_InputField>().text = "What should I focus on?";
             draw.onClick.Invoke();
             yield return null;
 
