@@ -7,11 +7,11 @@ using UnityEngine.TestTools;
 
 namespace TarotUnity.Tests.PlayMode
 {
-    /// <summary>Phase 72: the shuffle is three beats - cut, two riffles, square. Phase 74 stretched it to about 3 s, Phase 75 to about 4 s.</summary>
+    /// <summary>The real deck is picked up, cut and riffled twice, then squared without a duplicate stack.</summary>
     public sealed class Phase72ShuffleTests
     {
         [UnityTest]
-        public IEnumerator ShuffleCutsTheDeckIntoTwoPilesAndLastsAboutFourSeconds()
+        public IEnumerator PickupAndTwoRifflesGiveTheDeckAReadableRitual()
         {
             SceneManager.LoadScene("ReadingRoom");
             yield return null;
@@ -19,6 +19,7 @@ namespace TarotUnity.Tests.PlayMode
             {
                 yield return null;
             }
+            yield return null;
 
             var choreographer = Object.FindFirstObjectByType<DeckShuffleChoreographer>();
             var stack = choreographer.transform;
@@ -26,6 +27,8 @@ namespace TarotUnity.Tests.PlayMode
             var maxX = float.MinValue;
 
             var started = Time.time;
+            var anchor = choreographer.GetComponent<RitualDeckAnchor>();
+            yield return anchor.Pickup();
             choreographer.Play();
             while (choreographer.IsPlaying && Time.time - started < 10f)
             {
@@ -39,10 +42,10 @@ namespace TarotUnity.Tests.PlayMode
             }
 
             var seconds = Time.time - started;
-            Assert.That(seconds, Is.InRange(3.7f, 4.4f), "three beats, not a single shiver");
+            Assert.That(seconds, Is.InRange(6.2f, 7.3f), "pickup, two pronounced cuts and square-up");
             Assert.That(minX, Is.LessThan(-0.15f), "one pile goes left");
             Assert.That(maxX, Is.GreaterThan(0.15f), "the other goes right");
-            Assert.That(choreographer.PlannedSeconds, Is.InRange(3.7f, 4.4f));
+            Assert.That(seconds, Is.EqualTo(choreographer.PlannedSeconds + anchor.PickupSeconds).Within(0.6f));
         }
     }
 }

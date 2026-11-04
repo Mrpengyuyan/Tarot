@@ -60,6 +60,8 @@ namespace TarotUnity.UI
         private SpreadSummary[] backendSpreads;
         private InterpretationPoller subscribedPoller;
         private CardInspectionController cardInspection;
+        private RitualDeckAnchor ritualDeck;
+        private PickedCardStaging pickedStaging;
 
         // Phase 66: the longest online start is nine requests (spread list, record,
         // draw, cards, refresh, guest session, then record, draw and cards again), each
@@ -116,12 +118,21 @@ namespace TarotUnity.UI
         private void Start()
         {
             cardInspection = gameObject.AddComponent<CardInspectionController>();
-            cardInspection.Initialize(Camera.main, questionInput != null ? questionInput.GetComponentInParent<Canvas>() : null);
+            cardInspection.Initialize(PresentationCamera(), questionInput != null ? questionInput.GetComponentInParent<Canvas>() : null);
             EnsureBackendReferences();
             SelectOneCard();
             SetResultButtonVisible(false);
             SetStatus("先选一个牌阵，写下你的问题，再抽牌。");
             SetReleaseStatus(ReleaseUxCopy.LocalModeReady);
+            RitualReadingView.Attach(this, flowController, questionInput, drawButton, revealResultButton,
+                new[] { oneCardButton, threeCardButton, celticCrossButton });
+            if (deckShuffle != null)
+            {
+                deckShuffle.ApplyRitualPresentation();
+                ritualDeck = RitualDeckAnchor.Attach(deckShuffle, cameraChoreography);
+            }
+            pickedStaging = gameObject.AddComponent<PickedCardStaging>();
+            pickedStaging.TransferStarted += HandleStagedTransferStarted;
             if (cameraChoreography != null)
             {
                 cameraChoreography.PlayOpening();
@@ -135,6 +146,7 @@ namespace TarotUnity.UI
 
         private void OnDestroy()
         {
+            if (pickedStaging != null) pickedStaging.TransferStarted -= HandleStagedTransferStarted;
             if (oneCardButton != null)
             {
                 oneCardButton.onClick.RemoveListener(SelectOneCard);
@@ -287,6 +299,11 @@ namespace TarotUnity.UI
                 flowController.BeginShuffle();
             }
 
+            if (ritualDeck != null)
+            {
+                yield return ritualDeck.Pickup();
+            }
+
             if (cameraChoreography != null)
             {
                 cameraChoreography.FocusDeck();
@@ -399,6 +416,7 @@ namespace TarotUnity.UI
                 SetReleaseStatus(message);
                 SetDrawControls(true);
                 drawInProgress = false;
+                if (ritualDeck != null) ritualDeck.Park();
                 yield break;
             }
 
@@ -470,10 +488,17 @@ namespace TarotUnity.UI
         {
             pickDeckOrigin = deckOrigin;
             yield return spreadFan.Spread(deckOrigin);
+            while (cameraChoreography != null && cameraChoreography.IsMoving) yield return null;
+            if (pickedStaging != null) pickedStaging.Prepare(slots.Count, PresentationCamera());
             FocusSocket(0);
             SetStatus(ReleaseUxCopy.FlowPickPrompt(slots.Count, slots.Count));
             yield return spreadFan.PickCards(slots.Count, (card, index) => DeliverPick(card, index, slots));
             FocusSocket(-1);
+            if (pickedStaging != null)
+            {
+                yield return pickedStaging.Settle(deckController.ActiveCards, slots);
+                pickedStaging.Clear();
+            }
             if (gatherRoutine == null && spreadFan.FanCards.Count > 0)
             {
                 // No flight carried the gather (a delivery without one): gather now.
@@ -484,6 +509,7 @@ namespace TarotUnity.UI
             {
                 yield return null;
             }
+            if (ritualDeck != null) ritualDeck.Park();
         }
 
         /// <summary>
@@ -530,6 +556,7 @@ namespace TarotUnity.UI
         /// <summary>Phase 72 review: after a fault mid-pick, clear the table and give the player the draw back.</summary>
         private IEnumerator RecoverFromDrawFault(Transform deckOrigin)
         {
+            if (pickedStaging != null) pickedStaging.Clear();
             if (gatherRoutine != null)
             {
                 StopCoroutine(gatherRoutine);
@@ -561,6 +588,7 @@ namespace TarotUnity.UI
             SetStatus(ReleaseUxCopy.FlowDrawInterrupted);
             SetDrawControls(true);
             drawInProgress = false;
+            if (ritualDeck != null) ritualDeck.Park();
         }
 
         /// <summary>Phase 72: one picked card flies to its slot; then the next slot lights and the prompt counts down.</summary>
@@ -571,8 +599,9 @@ namespace TarotUnity.UI
                 yield break;
             }
 
-            followLastPick = index == slots.Count - 1;
-            yield return deckController.DealPickedCard(card, slots[index]);
+            followLastPick = pickedStaging == null && index == slots.Count - 1;
+            var target = pickedStaging != null ? pickedStaging.Slot(index) : slots[index];
+            yield return deckController.DealPickedCard(card, target);
             followLastPick = false;
             var next = index + 1;
             FocusSocket(next < slots.Count ? next : -1);
@@ -638,6 +667,31 @@ namespace TarotUnity.UI
             {
                 gatherRoutine = StartCoroutine(GatherBehindLastPick());
             }
+        }
+
+        private void HandleStagedTransferStarted()
+        {
+            if (cameraChoreography != null)
+            {
+                cameraChoreography.FocusSpread(selectedCardCount, 0.7f + pickCameraLagSeconds);
+                cameraFollowedPick = true;
+            }
+            if (spreadFan != null && gatherRoutine == null)
+            {
+                gatherRoutine = StartCoroutine(GatherBehindLastPick());
+            }
+        }
+
+        private Camera PresentationCamera()
+        {
+            var selected = Camera.main;
+            if (selected != null) return selected;
+            foreach (var candidate in FindObjectsByType<Camera>(FindObjectsSortMode.None))
+            {
+                if (candidate.isActiveAndEnabled && candidate.gameObject.scene == gameObject.scene
+                    && (selected == null || candidate.depth > selected.depth)) selected = candidate;
+            }
+            return selected;
         }
 
         private IEnumerator GatherBehindLastPick()
@@ -815,6 +869,9 @@ namespace TarotUnity.UI
                 {
                     continue;
                 }
+
+                var flip = card.GetComponent<CardFlipController>();
+                if (flip != null) flip.ApplyRitualPresentation();
 
                 var clickHandler = card.GetComponent<CardClickHandler>();
                 if (clickHandler == null)

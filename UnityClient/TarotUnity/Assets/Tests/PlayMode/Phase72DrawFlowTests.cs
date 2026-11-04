@@ -53,7 +53,7 @@ namespace TarotUnity.Tests.PlayMode
                 Assert.That(fan.AcceptingPicks, Is.False);
                 Assert.That(fan.PreparedCount, Is.EqualTo(0));
                 Assert.That(deck.ActiveCards.Count, Is.EqualTo(0));
-                Assert.That(Get<Button>("drawButton").interactable, Is.True);
+                Assert.That(Get<Button>("drawButton").interactable, Is.False, "an empty question cannot start");
                 Assert.That(Get<TMP_Text>("flowStatusText").text, Does.Contain("问题"));
             }
 
@@ -91,7 +91,8 @@ namespace TarotUnity.Tests.PlayMode
             Assert.That(deck.ActiveCards, Is.EqualTo(picked), "the cards picked are the cards on the table");
             Assert.That(picked.All(c => c.DrawData != null), Is.True, "bound after the picks");
             Assert.That(fan.FanCards.Count, Is.EqualTo(0), "the fan is gathered");
-            Assert.That(Get<CanvasGroup[]>("pickHiddenUi").All(g => g.alpha > 0.99f), Is.True, "the dock returns");
+            Assert.That(Get<CanvasGroup[]>("pickHiddenUi").All(g => g.alpha < 0.01f && !g.blocksRaycasts), Is.True,
+                "old choices and dock stay out of the reveal stage");
 
             var flipper = Object.FindFirstObjectByType<CardFlipController>();
             foreach (var card in picked)

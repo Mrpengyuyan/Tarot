@@ -82,6 +82,23 @@ namespace TarotUnity.Presentation
 
         public bool IsPlaying => active != null;
 
+        /// <summary>Opt in after scene deserialization; legacy scenes and tests keep their authored tuning.</summary>
+        public void ApplyRitualPresentation()
+        {
+            anticipationSeconds = 0.25f;
+            cutSpread = 0.72f;
+            cutSeconds = 0.95f;
+            recutSeconds = 0.75f;
+            cutYawDegrees = 10f;
+            riffleLift = 0.18f;
+            riffleCardSeconds = 0.28f;
+            riffleStagger = 0.18f;
+            riffleBendDegrees = 14f;
+            secondRiffleSpeedup = 1.25f;
+            settleSeconds = 0.22f;
+            squareHoldSeconds = 0.55f;
+        }
+
         /// <summary>The whole shuffle's length for the current knobs and stack size.</summary>
         public float PlannedSeconds
         {

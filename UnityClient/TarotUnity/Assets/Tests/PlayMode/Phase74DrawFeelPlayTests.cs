@@ -96,7 +96,7 @@ namespace TarotUnity.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator TheLastPickCarriesTheCameraDownWithIt()
+        public IEnumerator TheHeldSelectionCarriesTheCameraDownDuringItsFinalTransfer()
         {
             yield return LoadRoom();
             var fan = Object.FindFirstObjectByType<SpreadFanController>();
@@ -114,6 +114,16 @@ namespace TarotUnity.Tests.PlayMode
             var flightStarted = -1f;
             var landed = -1f;
             var landedPosition = Vector3.zero;
+            var transferStarted = -1f;
+            var transferStartPosition = Vector3.zero;
+            var duringHoldTravel = 0f;
+            var duringTransferTravel = 0f;
+            var staging = Object.FindFirstObjectByType<PickedCardStaging>();
+            staging.TransferStarted += () =>
+            {
+                transferStarted = Time.time;
+                transferStartPosition = camera.position;
+            };
             deck.CardFlightStarted += (_, _) => flightStarted = Time.time;
             deck.CardDealt += _ =>
             {
@@ -123,6 +133,10 @@ namespace TarotUnity.Tests.PlayMode
             fan.RequestPick(fan.FanCards[fan.FanCards.Count - 1]);
             while (flow.State != ReadingFlowState.WaitingForFlip)
             {
+                if (landed >= 0f && transferStarted < 0f)
+                    duringHoldTravel = Mathf.Max(duringHoldTravel, Vector3.Distance(landedPosition, camera.position));
+                if (transferStarted >= 0f && Time.time - transferStarted < staging.TransferSeconds - 0.05f)
+                    duringTransferTravel = Mathf.Max(duringTransferTravel, Vector3.Distance(transferStartPosition, camera.position));
                 yield return null;
             }
 
@@ -131,8 +145,12 @@ namespace TarotUnity.Tests.PlayMode
             var total = Vector3.Distance(drawPosition, spreadPosition);
             Assert.That(total, Is.GreaterThan(3f), "control: the spread pose is far from the draw pose");
             Assert.That(landed - flightStarted, Is.GreaterThan(0.7f), "a long flight is unhurried");
-            Assert.That(Vector3.Distance(drawPosition, landedPosition) / total, Is.GreaterThan(0.6f),
-                "the camera has travelled most of the way as the card lands - it moves with the card, not after it");
+            Assert.That(Vector3.Distance(drawPosition, landedPosition) / total, Is.LessThan(0.05f),
+                "the camera holds the upper selection while the first flight lands");
+            Assert.That(transferStarted - landed, Is.GreaterThanOrEqualTo(1.2f), "the complete selection is held before transfer");
+            Assert.That(duringHoldTravel / total, Is.LessThan(0.05f), "the camera stays still throughout the selection hold");
+            Assert.That(duringTransferTravel / total, Is.GreaterThan(0.25f),
+                "the camera travels with the final transfer, not after it");
             Assert.That(fan.FanCards.Count, Is.EqualTo(0), "the rest of the fan has gathered");
         }
 
@@ -144,6 +162,13 @@ namespace TarotUnity.Tests.PlayMode
             var shuffle = Object.FindFirstObjectByType<DeckShuffleChoreographer>();
             GameObject.Find("ReadingRoomCanvas").transform.Find("DrawButton").GetComponent<Button>().onClick.Invoke();
             yield return null;
+            var deadline = Time.realtimeSinceStartup + 15f;
+            while (!shuffle.IsPlaying)
+            {
+                Assert.That(Time.realtimeSinceStartup, Is.LessThan(deadline), "the same deck finishes its pickup before shuffling");
+                Assert.That(fan.GetComponentsInChildren<Renderer>().Count(r => r.enabled), Is.EqualTo(0));
+                yield return null;
+            }
             var sawPrepared = 0;
             while (shuffle.IsPlaying)
             {

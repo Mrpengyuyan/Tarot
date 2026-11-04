@@ -55,6 +55,12 @@ namespace TarotUnity.UI
                 SubscribeToPoller();
             }
 
+            if (resultPanel != null)
+            {
+                var canvas = resultPanel.GetComponentInParent<Canvas>();
+                if (canvas != null) RitualTypography.ApplyHierarchy(canvas.transform);
+            }
+
             cameraChoreography?.FocusResult();
             ritualFeedback?.PlayCue(PresentationCueId.ResultReveal);
             revealDirector?.PlayReveal();

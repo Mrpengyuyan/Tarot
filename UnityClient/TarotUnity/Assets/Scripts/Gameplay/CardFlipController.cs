@@ -71,6 +71,24 @@ namespace TarotUnity.Gameplay
 
         public bool IsFlipping => isFlipping;
 
+        /// <summary>Apply per active card, overriding old prefab values without changing legacy defaults.</summary>
+        public void ApplyRitualPresentation()
+        {
+            flipDuration = 1.2f;
+            anticipationPause = 0.18f;
+            faceRevealPause = 0.1f;
+            windBackAngle = 4f;
+            settleOvershootAngle = 2f;
+            revealScalePunch = 0f;
+            revealCameraShake = 0.015f;
+            turnSway = 0.035f;
+            setDownSquash = 0.02f;
+            sheenIntensity = 0.18f;
+            pushInOnFlip = false;
+            var presentation = GetComponent<ThreeDCardPresentationController>();
+            if (presentation != null) presentation.UsePrintedFace();
+        }
+
         // Cached lazily instead of in Awake so scene-load order never matters; Unity's
         // destroyed-object == null lets the cache self-heal across scene reloads.
         private CameraChoreographyController CameraChoreography

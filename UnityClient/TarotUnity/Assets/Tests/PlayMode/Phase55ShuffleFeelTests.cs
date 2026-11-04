@@ -27,10 +27,12 @@ namespace TarotUnity.Tests.PlayMode
             {
                 yield return null;
             }
+            yield return null;
 
             var choreographer = Object.FindFirstObjectByType<DeckShuffleChoreographer>();
             Assert.That(choreographer, Is.Not.Null,
                 "the ReadingRoom deck stack should carry the shuffle choreographer");
+            yield return choreographer.GetComponent<RitualDeckAnchor>().Pickup();
 
             var stack = choreographer.transform;
             Assert.That(stack.childCount, Is.GreaterThanOrEqualTo(8),

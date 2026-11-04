@@ -67,6 +67,7 @@ namespace TarotUnity.Presentation
 
             var theme = roomCanvas.GetComponent<TarotUiTheme>();
             BuildOverlay(theme != null ? theme.TmpBodyFont : TMP_Settings.defaultFontAsset);
+            RitualTypography.ApplyHierarchy(overlay.transform);
         }
 
         public bool Show(CardView card, bool automatically)

@@ -85,8 +85,14 @@ namespace TarotUnity.Tests.PlayMode
             yield return Until(() => fan.AcceptingPicks, "the fan opens");
             fan.RequestPick(fan.FanCards[4]);
             yield return Until(() => Get<Button>("drawButton").interactable, "the draw comes back");
+            yield return null; // The stage view settles its visibility in LateUpdate.
 
-            Assert.That(Get<CanvasGroup[]>("pickHiddenUi").All(g => g.alpha > 0.99f && g.blocksRaycasts), Is.True, "the dock is back");
+            var inputGroup = Get<TMP_InputField>("questionInput").GetComponent<CanvasGroup>();
+            Assert.That(inputGroup.alpha > 0.99f && inputGroup.blocksRaycasts, Is.True, "question entry recovers");
+            Assert.That(Get<Button>("threeCardButton").GetComponent<CanvasGroup>().blocksRaycasts, Is.False,
+                "retired spread choices do not overlay question entry");
+            Assert.That(Object.FindFirstObjectByType<RitualReadingView>().Stage,
+                Is.EqualTo(RitualReadingView.ViewStage.Question));
             Assert.That(flow.State, Is.EqualTo(ReadingFlowState.ReadyToDraw));
             Assert.That(deck.ActiveCards.Count, Is.EqualTo(0));
             Assert.That(fan.FanCards.Count, Is.EqualTo(0));

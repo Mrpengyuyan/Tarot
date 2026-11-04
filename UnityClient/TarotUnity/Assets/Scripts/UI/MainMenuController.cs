@@ -30,6 +30,7 @@ namespace TarotUnity.UI
 
         private void Start()
         {
+            RitualMenuView.Attach(gameObject);
             SetStatus("烛火已燃，牌已洗过。\n正在准备在线解读……");
 
             backendSessionBootstrap = FindFirstObjectByType<BackendSessionBootstrap>();

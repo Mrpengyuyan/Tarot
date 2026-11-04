@@ -26,10 +26,15 @@ here anyway).
   Composed in-house with Python/PIL; generators live in `Tools/UiKitGenerator/`
   so every sprite is reproducible. No third-party imagery embedded.
 
-## Fonts and audio (recorded elsewhere, unchanged)
+## Fonts and audio
 
 - LXGW WenKai (SIL OFL 1.1) — integrated during the typography pass; see the
   corresponding entry in `Docs/PROJECT_CHRONICLE.md`.
+- Ma Shan Zheng and Noto Serif SC (SIL OFL 1.1) — compact title and interface
+  subsets reused from the approved UI preview. Source font files and their
+  licenses are bundled in `Assets/Resources/RitualFonts/`; no generated font
+  atlases are stored. LXGW WenKai remains the full Chinese fallback for player
+  text outside these subsets.
 - SFX/music — synthesized in-house; the audio pass is summarized in
   `Docs/PROJECT_CHRONICLE.md`.
 
