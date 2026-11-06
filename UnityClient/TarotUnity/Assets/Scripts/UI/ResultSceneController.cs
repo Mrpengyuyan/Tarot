@@ -58,7 +58,7 @@ namespace TarotUnity.UI
             if (resultPanel != null)
             {
                 var canvas = resultPanel.GetComponentInParent<Canvas>();
-                if (canvas != null) RitualTypography.ApplyHierarchy(canvas.transform);
+                if (canvas != null) RitualResultView.Attach(canvas.gameObject);
             }
 
             cameraChoreography?.FocusResult();

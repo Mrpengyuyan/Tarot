@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using NUnit.Framework;
 using TarotUnity.Data;
 using TarotUnity.Gameplay;
@@ -73,6 +74,28 @@ namespace TarotUnity.Tests.PlayMode
                 yield return Until(() => Object.FindFirstObjectByType<ResultRevealDirector>().IsRevealComplete,
                     "the result has fully faded in");
                 yield return CaptureBoth(directory, $"result-{count}");
+                if (count == 3)
+                {
+                    var resultCanvas = GameObject.Find("ResultCanvas").transform;
+                    var presenter = resultCanvas.GetComponent<ResultPanelPresenter>();
+                    var scroll = resultCanvas.Find("ResultReadingScroll").GetComponent<ScrollRect>();
+                    Canvas.ForceUpdateCanvases();
+                    scroll.verticalNormalizedPosition = 0f;
+                    yield return null;
+                    yield return CaptureBoth(directory, "result-scroll-bottom");
+                    var session = ReadingSessionStore.Current;
+                    presenter.ShowPending(session);
+                    yield return CaptureBoth(directory, "result-pending");
+                    typeof(ResultPanelPresenter).GetField("pendingSince", BindingFlags.Instance | BindingFlags.NonPublic)
+                        .SetValue(presenter, Time.unscaledTime - ResultPanelPresenter.PendingSlowNoticeSeconds - 1f);
+                    yield return null;
+                    yield return CaptureBoth(directory, "result-pending-slow");
+                    session.failureMessage = ReleaseUxCopy.InterpretationRetryMayCost;
+                    session.canRetry = true;
+                    presenter.ShowFailed(session);
+                    yield return CaptureBoth(directory, "result-failed");
+                    presenter.ShowOffline(session);
+                }
             }
         }
 
@@ -113,6 +136,13 @@ namespace TarotUnity.Tests.PlayMode
                 }
                 yield return null;
                 Canvas.ForceUpdateCanvases();
+                if (name == "result-pending-slow")
+                {
+                    var status = canvas.GetComponentsInChildren<TMP_Text>(true)
+                        .First(t => t.name == "Phase66_InterpretationStatus");
+                    Assert.That(status.text, Does.Contain(ReleaseUxCopy.ResultPendingSlow),
+                        "The slow notice must survive Update and actually appear in the captured frame.");
+                }
                 for (var i = 0; i < 4; i++) camera.Render();
                 RenderTexture.active = texture;
                 var pixels = new Texture2D(size.x, size.y, TextureFormat.RGB24, false);
