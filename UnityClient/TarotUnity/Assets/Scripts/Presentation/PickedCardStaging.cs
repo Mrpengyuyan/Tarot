@@ -119,10 +119,13 @@ namespace TarotUnity.Presentation
 
             IsSettling = true;
             var destinations = new Transform[cards.Count];
+            var targetScales = new Vector3[cards.Count];
             for (var i = 0; i < cards.Count; i++)
             {
                 ownedCards.Add(new CardPose(cards[i]));
                 destinations[i] = finalSlots[i];
+                var slot = destinations[i].GetComponent<RitualSpreadSlot>();
+                targetScales[i] = slot != null ? slot.ScaleFor(cards[i].transform) : cards[i].transform.localScale;
             }
 
             var completed = false;
@@ -166,7 +169,7 @@ namespace TarotUnity.Presentation
                         pose.Card.transform.SetPositionAndRotation(
                             Vector3.Lerp(pose.WorldPosition, destinations[i].position, eased),
                             Quaternion.Slerp(pose.WorldRotation, destinations[i].rotation, eased));
-                        pose.Card.transform.localScale = pose.Scale;
+                        pose.Card.transform.localScale = Vector3.Lerp(pose.Scale, targetScales[i], eased);
                     }
 
                     yield return null;
@@ -181,6 +184,8 @@ namespace TarotUnity.Presentation
                 {
                     ownedCards[i].Card.transform.SetPositionAndRotation(destinations[i].position, destinations[i].rotation);
                     ownedCards[i].Card.transform.localScale = ownedCards[i].Scale;
+                    var destination = destinations[i].GetComponent<RitualSpreadSlot>();
+                    if (destination != null) destination.Dock(ownedCards[i].Card);
                 }
 
                 completed = true;

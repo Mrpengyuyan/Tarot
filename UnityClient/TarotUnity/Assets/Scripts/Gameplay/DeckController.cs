@@ -294,6 +294,8 @@ namespace TarotUnity.Gameplay
             }
 
             cardTransform.SetPositionAndRotation(slot.position, slot.rotation);
+            var presentationSlot = slot.GetComponent<RitualSpreadSlot>();
+            if (presentationSlot != null) presentationSlot.Dock(cardTransform.GetComponent<CardView>());
         }
 
         /// <summary>

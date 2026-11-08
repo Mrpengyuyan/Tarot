@@ -112,23 +112,24 @@ namespace TarotUnity.Presentation
         /// <summary>Phase 74: the same move over <paramref name="seconds"/> - the last pick's flight carries the camera down with it.</summary>
         public void FocusSpread(int cardCount, float seconds)
         {
+            if (TryGetSpreadPose(cardCount, out var pose, out var fov)) MoveTo(pose, fov, seconds);
+        }
+
+        public bool TryGetSpreadPose(int cardCount, out Transform pose, out float fov)
+        {
             foreach (var entry in spreadPoses)
             {
                 if (entry != null && entry.cardCount == cardCount && entry.pose != null)
                 {
-                    MoveTo(entry.pose, entry.fov, seconds);
-                    return;
+                    pose = entry.pose;
+                    fov = entry.fov;
+                    return true;
                 }
             }
 
-            if (cardCount == 1)
-            {
-                MoveTo(oneCardPose, oneCardFov, seconds);
-            }
-            else
-            {
-                MoveTo(threeCardPose, threeCardFov, seconds);
-            }
+            pose = cardCount == 1 ? oneCardPose : threeCardPose;
+            fov = cardCount == 1 ? oneCardFov : threeCardFov;
+            return pose != null;
         }
 
         public bool TryGetDrawPose(int cardCount, out Transform pose, out float fov)

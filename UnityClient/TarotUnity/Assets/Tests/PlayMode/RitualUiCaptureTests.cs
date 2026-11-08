@@ -60,6 +60,29 @@ namespace TarotUnity.Tests.PlayMode
                     if (count > 1 && picked == count) yield return CaptureBoth(directory, $"selected-full-{count}");
                 }
                 yield return Until(() => flow.State == ReadingFlowState.WaitingForFlip, "ready to reveal", 45f);
+                if (Environment.GetEnvironmentVariable("TAROT_VISUAL_PARITY_CAPTURE") == "1")
+                {
+                    var session = ReadingSessionStore.Current;
+                    Assert.That(session.source, Is.EqualTo(ReadingSource.Offline));
+                    var prototype = LocalReadingSimulator.CreatePlaceholderDraws(3);
+                    var fixture = new CardDrawData[count];
+                    for (var i = 0; i < count; i++)
+                    {
+                        fixture[i] = JsonUtility.FromJson<CardDrawData>(JsonUtility.ToJson(prototype[i % 3]));
+                        fixture[i].id = fixture[i].position = i + 1;
+                        fixture[i].is_reversed = i % 3 == 1;
+                        fixture[i].position_name = count == 1 ? "\u6b64\u523b" : count == 3
+                            ? new[] { "\u8fc7\u53bb", "\u73b0\u5728", "\u672a\u6765" }[i] : (i + 1).ToString();
+                        fixture[i].card_meaning.position = i + 1;
+                        fixture[i].card_meaning.position_name = fixture[i].position_name;
+                        fixture[i].card_meaning.is_reversed = fixture[i].is_reversed;
+                    }
+                    // Fixed reference artwork is opt-in test data; production still draws from all 78 cards.
+                    deck.BindDealtCards(fixture);
+                    ReadingSessionStore.Save(LocalReadingSimulator.CreateSession(session.spreadId, session.spreadName,
+                        session.question, "general", fixture));
+                }
+                yield return CaptureBoth(directory, $"waiting-{count}");
                 foreach (var card in deck.ActiveCards.ToArray())
                 {
                     card.GetComponent<CardFlipController>().Flip(card);

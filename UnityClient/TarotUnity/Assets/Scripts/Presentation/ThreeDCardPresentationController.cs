@@ -14,6 +14,14 @@ namespace TarotUnity.Presentation
         private bool[] shellStates;
         private bool printedFaceOnly;
         private bool faceIsVisible;
+        private Renderer paperBack;
+
+        public void UsePaperSurface(Renderer back)
+        {
+            paperBack = back;
+            UsePrintedFace();
+            ApplyPrintedFace();
+        }
 
         public void UsePrintedFace()
         {
@@ -47,14 +55,15 @@ namespace TarotUnity.Presentation
             if (!printedFaceOnly) return;
             for (var i = 0; i < shellParts.Length; i++)
                 if (shellParts[i] != null && shellParts[i] != artwork)
-                    shellParts[i].enabled = !faceIsVisible && shellStates[i];
+                    shellParts[i].enabled = paperBack == null && !faceIsVisible && shellStates[i];
+            if (paperBack != null) paperBack.enabled = !faceIsVisible;
         }
 
         public void SetDropShadowVisible(bool visible)
         {
             if (cardDropShadowRenderer != null)
             {
-                cardDropShadowRenderer.enabled = visible && (!printedFaceOnly || !faceIsVisible);
+                cardDropShadowRenderer.enabled = visible && paperBack == null && (!printedFaceOnly || !faceIsVisible);
             }
         }
 

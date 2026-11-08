@@ -62,6 +62,7 @@ namespace TarotUnity.UI
         private CardInspectionController cardInspection;
         private RitualDeckAnchor ritualDeck;
         private PickedCardStaging pickedStaging;
+        private RitualSpreadPresentation spreadPresentation;
 
         // Phase 66: the longest online start is nine requests (spread list, record,
         // draw, cards, refresh, guest session, then record, draw and cards again), each
@@ -133,6 +134,8 @@ namespace TarotUnity.UI
             }
             pickedStaging = gameObject.AddComponent<PickedCardStaging>();
             pickedStaging.TransferStarted += HandleStagedTransferStarted;
+            spreadPresentation = RitualSpreadPresentation.Attach(gameObject, flowController, deckController,
+                cameraChoreography, PresentationCamera());
             if (cameraChoreography != null)
             {
                 cameraChoreography.PlayOpening();
@@ -358,6 +361,7 @@ namespace TarotUnity.UI
                 deckController.Clear();
             }
 
+            if (spreadPresentation != null) spreadPresentation.Prepare(selectedCardCount);
             var slots = flowController != null ? flowController.GetSelectedSpreadSlots() : new List<Transform>();
             if (FanCanDeal(slots.Count))
             {
