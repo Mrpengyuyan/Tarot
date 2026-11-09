@@ -136,6 +136,8 @@ namespace TarotUnity.UI
             pickedStaging.TransferStarted += HandleStagedTransferStarted;
             spreadPresentation = RitualSpreadPresentation.Attach(gameObject, flowController, deckController,
                 cameraChoreography, PresentationCamera());
+            RitualPickPresentation.Attach(gameObject, spreadFan, deckController, pickedStaging,
+                flowController, cameraChoreography, PresentationCamera());
             if (cameraChoreography != null)
             {
                 cameraChoreography.PlayOpening();
@@ -491,9 +493,11 @@ namespace TarotUnity.UI
         private IEnumerator PickFromFan(IList<Transform> slots, Transform deckOrigin)
         {
             pickDeckOrigin = deckOrigin;
+            var pickPresentation = GetComponent<RitualPickPresentation>();
+            if (pickPresentation != null) pickPresentation.Prepare(slots.Count);
             yield return spreadFan.Spread(deckOrigin);
             while (cameraChoreography != null && cameraChoreography.IsMoving) yield return null;
-            if (pickedStaging != null) pickedStaging.Prepare(slots.Count, PresentationCamera());
+            if (pickedStaging != null && pickPresentation == null) pickedStaging.Prepare(slots.Count, PresentationCamera());
             FocusSocket(0);
             SetStatus(ReleaseUxCopy.FlowPickPrompt(slots.Count, slots.Count));
             yield return spreadFan.PickCards(slots.Count, (card, index) => DeliverPick(card, index, slots));

@@ -124,8 +124,7 @@ namespace TarotUnity.Presentation
             {
                 ownedCards.Add(new CardPose(cards[i]));
                 destinations[i] = finalSlots[i];
-                var slot = destinations[i].GetComponent<RitualSpreadSlot>();
-                targetScales[i] = slot != null ? slot.ScaleFor(cards[i].transform) : cards[i].transform.localScale;
+                targetScales[i] = cards[i].transform.localScale;
             }
 
             var completed = false;
@@ -147,6 +146,8 @@ namespace TarotUnity.Presentation
                 }
 
                 transferStarted = true;
+                var starts = new CardPose[ownedCards.Count];
+                for (var i = 0; i < starts.Length; i++) starts[i] = new CardPose(ownedCards[i].Card, false);
                 TransferStarted?.Invoke();
                 // A recovery handler may clear or disable staging during notification.
                 if (!IsCurrent(token) || !SelectionStillExists(destinations))
@@ -165,11 +166,13 @@ namespace TarotUnity.Presentation
                     var eased = t * t * (3f - 2f * t);
                     for (var i = 0; i < ownedCards.Count; i++)
                     {
-                        var pose = ownedCards[i];
+                        var pose = starts[i];
                         pose.Card.transform.SetPositionAndRotation(
                             Vector3.Lerp(pose.WorldPosition, destinations[i].position, eased),
                             Quaternion.Slerp(pose.WorldRotation, destinations[i].rotation, eased));
-                        pose.Card.transform.localScale = Vector3.Lerp(pose.Scale, targetScales[i], eased);
+                        var slot = destinations[i].GetComponent<RitualSpreadSlot>();
+                        var targetScale = slot != null ? slot.ScaleFor(pose.Card.transform) : targetScales[i];
+                        pose.Card.transform.localScale = Vector3.Lerp(pose.Scale, targetScale, eased);
                     }
 
                     yield return null;
@@ -282,7 +285,7 @@ namespace TarotUnity.Presentation
             private readonly bool hoverEnabled;
             private readonly bool hoverSuspended;
 
-            public CardPose(CardView card)
+            public CardPose(CardView card, bool suspendHover = true)
             {
                 Card = card;
                 var pose = card.transform;
@@ -292,7 +295,7 @@ namespace TarotUnity.Presentation
                 WorldPosition = pose.position;
                 WorldRotation = pose.rotation;
                 hover = card.GetComponent<CardHoverTiltController>();
-                if (hover != null)
+                if (hover != null && suspendHover)
                 {
                     hoverEnabled = hover.enabled;
                     hoverSuspended = hover.IsSuspended;

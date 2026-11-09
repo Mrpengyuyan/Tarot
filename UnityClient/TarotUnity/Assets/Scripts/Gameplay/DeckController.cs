@@ -154,6 +154,21 @@ namespace TarotUnity.Gameplay
             card.SetHighlighted(true);
             CardDealStarted?.Invoke(card);
 
+            var pickSlot = slot.GetComponent<RitualPickSlot>();
+            if (pickSlot != null)
+            {
+                CardHovering?.Invoke(card);
+                CardFlightStarted?.Invoke(card, RitualPickSlot.FlightSeconds);
+                yield return pickSlot.Fly(card);
+                if (pickSlot == null || !pickSlot.HasLanded(card))
+                {
+                    if (card != null) Destroy(card.gameObject);
+                    throw new InvalidOperationException("The picked-card flight was interrupted.");
+                }
+                CompletePickedDeal(card);
+                yield break;
+            }
+
             var start = t.position;
             var toward = -(t.rotation * Vector3.forward);
             toward.y = 0f;
@@ -205,6 +220,11 @@ namespace TarotUnity.Gameplay
             }
 
             yield return LandingSettle(t);
+            CompletePickedDeal(card);
+        }
+
+        private void CompletePickedDeal(CardView card)
+        {
             activeCards.Add(card);
             var tilt = card.GetComponent<CardHoverTiltController>();
             if (tilt != null)

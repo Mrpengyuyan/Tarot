@@ -371,6 +371,25 @@ namespace TarotUnity.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator ResizingTheFinalSlotsDuringHoldDoesNotSnapScaleOnLanding()
+        {
+            var staging = CreateStaging(1);
+            var cards = CreateStagedCards(staging, 1);
+            var destination = FinalSlots(1);
+            destination[0].gameObject.AddComponent<TarotUnity.Presentation.RitualSpreadSlot>();
+            var completed = false;
+            host.StartCoroutine(Track(Settle(staging, cards, destination), () => completed = true));
+            yield return new WaitForSeconds(0.3f);
+            destination[0].localScale *= 3f;
+            yield return new WaitForSeconds(1.55f);
+            Assert.That(completed, Is.False, "Sample the transfer just before docking.");
+            Assert.That(Vector3.Distance(cards[0].transform.lossyScale, destination[0].lossyScale),
+                Is.LessThan(destination[0].lossyScale.magnitude * 0.15f),
+                "Approach the resized destination smoothly, not the obsolete pre-hold size.");
+            while (!completed) yield return null;
+        }
+
+        [UnityTest]
         public IEnumerator ClearDuringTransferRestoresOwnedCardStateAndInvalidatesAnExternalRoutine()
         {
             yield return CancelSettle(1.5f, false);

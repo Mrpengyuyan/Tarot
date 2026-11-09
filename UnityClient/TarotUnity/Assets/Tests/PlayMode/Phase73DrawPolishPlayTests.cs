@@ -95,6 +95,9 @@ namespace TarotUnity.Tests.PlayMode
             yield return null;
             var fan = Object.FindFirstObjectByType<SpreadFanController>();
             var deck = Object.FindFirstObjectByType<DeckController>();
+            // This regression covers the preserved legacy pull/hover, not the opt-in v6 flight.
+            Object.Destroy(GameObject.Find("ReadingRoomCanvas").GetComponent<TarotUnity.Presentation.RitualPickPresentation>());
+            yield return null;
             GameObject.Find("ReadingRoomCanvas").GetComponentInChildren<TMP_InputField>().text = "What should I focus on?";
             GameObject.Find("ReadingRoomCanvas").transform.Find("DrawButton").GetComponent<Button>().onClick.Invoke();
             while (!fan.AcceptingPicks)

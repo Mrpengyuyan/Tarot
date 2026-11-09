@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TarotUnity.Presentation;
 using UnityEngine;
 
 namespace TarotUnity.Gameplay
@@ -118,6 +119,17 @@ namespace TarotUnity.Gameplay
         private int remainingPicks;
 
         public event Action<CardView> CardPicked;
+        public RitualPickPresentation PickPresentation { get; set; }
+        public void RefreshPresentation() { if (isActiveAndEnabled && PickPresentation != null) Update(); }
+
+        private void OnEnable() { if (PickPresentation != null) PickPresentation.SetFanVisible(true); }
+        private void OnDisable() { if (PickPresentation != null) PickPresentation.SetFanVisible(false); }
+        private void OnDestroy()
+        {
+            Clear();
+            DestroyPrepared();
+            if (PickPresentation != null) PickPresentation.DetachFan();
+        }
 
         public int CardCount
         {
@@ -253,6 +265,7 @@ namespace TarotUnity.Gameplay
 
                 click.Clicked += RequestPick;
                 click.HoverChanged += SetHovered;
+                if (PickPresentation != null) PickPresentation.PrepareFanCard(card, i);
                 fanCards.Add(card);
                 state[card] = Track(card, i);
             }
@@ -331,7 +344,7 @@ namespace TarotUnity.Gameplay
 
         public void RequestPick(CardView card)
         {
-            if (card == null || !state.ContainsKey(card) || remainingPicks <= 0)
+            if (!isActiveAndEnabled || card == null || !state.ContainsKey(card) || remainingPicks <= 0)
             {
                 return;
             }
@@ -532,6 +545,11 @@ namespace TarotUnity.Gameplay
         /// <summary>Where card <paramref name="index"/> lies on its arc, slid <paramref name="part"/> metres along it.</summary>
         private void PoseOnArc(int index, float part, out Vector3 position, out Quaternion rotation)
         {
+            if (PickPresentation != null)
+            {
+                PickPresentation.FanPose(index, out position, out rotation);
+                return;
+            }
             Locate(index, out var r, out var inRow);
             var row = rows[r];
             var center = fanCenter != null ? fanCenter : transform;
@@ -761,6 +779,16 @@ namespace TarotUnity.Gameplay
             foreach (var card in fanCards)
             {
                 var tracked = state[card];
+                if (PickPresentation != null)
+                {
+                    PickPresentation.ApplyFanHover(card, tracked.index, card == hovered);
+                    if (tracked.box != null)
+                    {
+                        GetFanPose(tracked.index, out var rest, out var rotation);
+                        tracked.box.center = card.transform.InverseTransformPoint(rest + rotation * tracked.boxCenter);
+                    }
+                    continue;
+                }
                 Locate(tracked.index, out var row, out var inRow);
 
                 var hoverTarget = tracked.index == hoveredIndex ? 1f : 0f;

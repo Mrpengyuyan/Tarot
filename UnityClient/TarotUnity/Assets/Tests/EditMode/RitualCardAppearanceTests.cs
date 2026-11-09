@@ -11,6 +11,25 @@ namespace TarotUnity.Tests.EditMode
     public sealed class RitualCardAppearanceTests
     {
         [Test]
+        public void MovingTheSameCardBetweenSlotsKeepsOnePhysicalPaperBack()
+        {
+            var root = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Cards/PF_TarotCard.prefab"));
+            var a = new GameObject("FirstSlot", typeof(RitualSpreadSlot));
+            var b = new GameObject("SecondSlot", typeof(RitualSpreadSlot));
+            try
+            {
+                var card = root.GetComponent<CardView>();
+                a.GetComponent<RitualSpreadSlot>().Dock(card);
+                b.GetComponent<RitualSpreadSlot>().Dock(card);
+                a.GetComponent<RitualSpreadSlot>().Dock(card);
+                Assert.That(root.GetComponentsInChildren<SpriteRenderer>(true).Count(r => r.name == "RitualPaperBack"), Is.EqualTo(1));
+                card.SetFaceUp(true);
+                Assert.That(root.GetComponentsInChildren<SpriteRenderer>(true).Single(r => r.name == "RitualPaperBack").enabled, Is.False);
+            }
+            finally { Object.DestroyImmediate(root); Object.DestroyImmediate(a); Object.DestroyImmediate(b); }
+        }
+
+        [Test]
         public void PreviewPaperSurfacePreservesOpaqueArtworkAndDisablesOnlyFoilProperties()
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Cards/PF_TarotCard.prefab");
