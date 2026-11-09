@@ -9,8 +9,8 @@ namespace TarotUnity.UI
     [DefaultExecutionOrder(1000)]
     public sealed class RitualMenuView : MonoBehaviour
     {
-        private static readonly Color Gold = new(0.94f, 0.84f, 0.65f, 1f);
-        private static readonly Color QuietGold = new(0.76f, 0.68f, 0.54f, 1f);
+        private static readonly Color Gold = new(240f/255f, 214f/255f, 165f/255f, 1f);
+        private static readonly Color QuietGold = new(194f/255f, 173f/255f, 138f/255f, 1f);
         private readonly List<GameObject> retired = new();
         private RectTransform canvas;
         private TMP_Text title;
@@ -19,6 +19,8 @@ namespace TarotUnity.UI
         private TMP_Text startLabel;
         private TMP_Text quitLabel;
         private RectTransform titleRule;
+        private RectTransform seal;
+        private TMP_Text caption;
         private Vector2 lastSize;
 
         public static RitualMenuView Attach(GameObject host)
@@ -63,6 +65,20 @@ namespace TarotUnity.UI
             startLabel = PrepareAction(start, true);
             quitLabel = PrepareAction(quit, false);
             titleRule = Rule(transform, "RitualTitleRule", 0.5f);
+            titleRule.GetComponent<RitualOrnamentGraphic>().CenterMark = true;
+            seal = Rule(transform, "RitualCoverSeal", 0.5f);
+            var ornament = seal.GetComponent<RitualOrnamentGraphic>();
+            ornament.Seal = true;
+            ornament.color = new Color(208f/255f, 180f/255f, 124f/255f, 0.75f);
+            var captionNode = new GameObject("RitualCoverCaption", typeof(RectTransform), typeof(TextMeshProUGUI));
+            captionNode.transform.SetParent(canvas, false);
+            caption = captionNode.GetComponent<TMP_Text>();
+            caption.text = "T A R O T \u00b7 R I T U A L";
+            caption.alignment = TextAlignmentOptions.Center;
+            caption.color = new Color(158f/255f, 139f/255f, 108f/255f, 0.6f);
+            caption.raycastTarget = false;
+            caption.textWrappingMode = TextWrappingModes.NoWrap;
+            captionNode.AddComponent<TarotUiPreserveColor>();
             if (title != null)
             {
                 title.text = "\u5854\u7f57\u4eea\u5f0f";
@@ -71,7 +87,9 @@ namespace TarotUnity.UI
                 title.textWrappingMode = TextWrappingModes.NoWrap;
                 title.overflowMode = TextOverflowModes.Overflow;
                 title.margin = Vector4.zero;
-                title.characterSpacing = 9f;
+                title.characterSpacing = 11f;
+                title.fontStyle = FontStyles.Normal;
+                title.fontWeight = FontWeight.Regular;
                 title.color = Color.white;
                 title.enableVertexGradient = true;
                 title.colorGradient = new VertexGradient(new Color(1f, 0.94f, 0.81f),
@@ -102,7 +120,9 @@ namespace TarotUnity.UI
                 label.alignment = TextAlignmentOptions.Center;
                 label.textWrappingMode = TextWrappingModes.NoWrap;
                 label.enableAutoSizing = false;
-                label.characterSpacing = rules ? 5f : 4f;
+                label.characterSpacing = rules ? 20f : 22f;
+                label.fontStyle = FontStyles.Normal;
+                label.fontWeight = FontWeight.Regular;
                 label.margin = Vector4.zero;
                 if (label.GetComponent<TarotUiPreserveColor>() == null)
                     label.gameObject.AddComponent<TarotUiPreserveColor>();
@@ -131,20 +151,18 @@ namespace TarotUnity.UI
         {
             if (canvas == null) return;
             lastSize = canvas.rect.size;
-            var width = lastSize.x > 0f ? lastSize.x : 1280f;
-            var height = lastSize.y > 0f ? lastSize.y : 720f;
-            var scale = Mathf.Min(width / 1280f, height / 720f);
-            if (title != null)
+            if (lastSize.x <= 2f || lastSize.y <= 2f) return;
+            var frame = RitualStaticLayout.Compute("cover", lastSize.x, lastSize.y);
+            foreach (var entry in frame)
             {
-                Place(title.rectTransform, 0.72f, width * 0.82f, 196f * scale);
-                title.rectTransform.localRotation = Quaternion.Euler(0f, 0f, -2f);
-                title.fontSize = 142f * scale;
+                var node = transform.Find(entry.Key) as RectTransform;
+                if (node == null) continue;
+                RitualStaticLayout.Apply(node, entry.Value, canvas);
+                var text = node.GetComponent<TMP_Text>() ?? node.GetComponentInChildren<TMP_Text>(true);
+                if (text == null || entry.Value.FontSize <= 0f) continue;
+                text.fontSize = entry.Value.FontSize;
+                text.characterSpacing = entry.Value.Tracking * 100f;
             }
-            Place(titleRule, 0.555f, width * 0.26f, 1f);
-            if (start != null) Place((RectTransform)start.transform, 0.235f, 304f * scale, 64f * scale);
-            if (quit != null) Place((RectTransform)quit.transform, 0.13f, 156f * scale, 44f * scale);
-            if (startLabel != null) startLabel.fontSize = 25f * scale;
-            if (quitLabel != null) quitLabel.fontSize = 17f * scale;
         }
 
         private void RestoreInk()
@@ -168,20 +186,9 @@ namespace TarotUnity.UI
             if (label != null && label.color != ink) label.color = ink;
         }
 
-        private static void Place(RectTransform rect, float y, float width, float height)
-        {
-            if (rect == null) return;
-            rect.anchorMin = rect.anchorMax = new Vector2(0.5f, y);
-            rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = Vector2.zero;
-            rect.sizeDelta = new Vector2(width, height);
-            rect.localScale = Vector3.one;
-            rect.localRotation = Quaternion.identity;
-        }
-
         private static RectTransform Rule(Transform parent, string name, float y)
         {
-            var node = new GameObject(name, typeof(RectTransform), typeof(Image));
+            var node = new GameObject(name, typeof(RectTransform), typeof(RitualOrnamentGraphic));
             node.transform.SetParent(parent, false);
             var rect = (RectTransform)node.transform;
             rect.anchorMin = new Vector2(0.05f, y);

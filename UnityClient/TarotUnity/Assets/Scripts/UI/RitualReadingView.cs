@@ -106,6 +106,9 @@ namespace TarotUnity.UI
                 placeholder.alignment = TextAlignmentOptions.Center;
                 placeholder.textWrappingMode = TextWrappingModes.NoWrap;
             }
+            if (question.textViewport != null) Stretch(question.textViewport, 0f);
+            Stretch(question.textComponent.rectTransform, 0f);
+            if (question.placeholder is TMP_Text hint) Stretch(hint.rectTransform, 0f);
             foreach (var graphic in question.GetComponentsInChildren<Image>(true))
             {
                 if (graphic != ground) graphic.enabled = false;
@@ -191,44 +194,51 @@ namespace TarotUnity.UI
             var width = lastSize.x;
             var height = lastSize.y;
             var scale = width / 1280f;
-            for (var i = 0; i < spreads.Length; i++)
+            if (width <= 2f || height <= 2f) return;
+            foreach (var stage in new[] { "spread", "question" })
             {
-                if (spreads[i] == null) continue;
-                Place((RectTransform)spreads[i].transform, 0.25f + i * 0.25f, 0.51f, width * 0.22f, height * 0.39f);
-                var label = spreads[i].GetComponentInChildren<TMP_Text>(true);
-                Place(label.rectTransform, 0.5f, 0.22f, width * 0.23f, 48f * scale);
-                label.fontSize = 29f * scale;
-                label.textWrappingMode = TextWrappingModes.NoWrap;
-                var subtitle = spreads[i].transform.Find("RitualSpreadSubtitle").GetComponent<TMP_Text>();
-                Place(subtitle.rectTransform, 0.5f, 0.05f, width * 0.24f, 34f * scale);
-                subtitle.fontSize = 18f * scale;
-                var symbols = spreads[i].transform.Find("RitualSpreadSymbol") as RectTransform;
-                Place(symbols, 0.5f, 0.66f, width * 0.16f, height * 0.24f);
+                foreach (var entry in RitualStaticLayout.Compute(stage, width, height))
+                {
+                    var key = entry.Key;
+                    var node = key.EndsWith("/Title")
+                        ? canvas.Find(key.Substring(0, key.Length - 6)).GetComponentInChildren<TMP_Text>(true).rectTransform
+                        : canvas.Find(key) as RectTransform;
+                    if (node == null) continue;
+                    RitualStaticLayout.Apply(node, entry.Value, canvas);
+                    if (entry.Value.FontSize <= 0f) continue;
+                    if (node == question.transform)
+                    {
+                        ApplyText(question.textComponent, entry.Value, new Color(242f/255f, 223f/255f, 190f/255f));
+                        if (question.placeholder is TMP_Text hint) ApplyText(hint, entry.Value, new Color(203f/255f, 182f/255f, 150f/255f, 0.85f));
+                        continue;
+                    }
+                    var text = node.GetComponent<TMP_Text>() ?? node.GetComponentInChildren<TMP_Text>(true);
+                    var ink = key.EndsWith("/Title") ? new Color(228f/255f, 204f/255f, 164f/255f)
+                        : key.EndsWith("RitualSpreadSubtitle") ? new Color(173f/255f, 150f/255f, 116f/255f)
+                        : key == "RitualQuestionLabel" ? new Color(234f/255f, 214f/255f, 179f/255f)
+                        : key == "RitualSpreadCaption" ? new Color(179f/255f, 157f/255f, 125f/255f)
+                        : key == "RitualReturnMenu" || key == "RitualChangeSpread" ? new Color(187f/255f, 164f/255f, 132f/255f)
+                        : new Color(240f/255f, 214f/255f, 165f/255f);
+                    ApplyText(text, entry.Value, ink);
+                }
             }
-            Place(spreadCaption.rectTransform, 0.5f, 0.12f, width * 0.5f, 44f * scale);
-            spreadCaption.fontSize = 20f * scale;
-            Place(questionLabel.rectTransform, 0.5f, 0.60f, width * 0.78f, 70f * scale);
-            questionLabel.fontSize = 36f * scale;
-            Place((RectTransform)question.transform, 0.5f, 0.47f, width * 0.62f, 64f * scale);
-            question.textComponent.fontSize = 27f * scale;
-            if (question.placeholder is TMP_Text placeholder) placeholder.fontSize = 26f * scale;
-            Place(feedback.rectTransform, 0.5f, 0.38f, width * 0.78f, 40f * scale);
-            feedback.fontSize = 17f * scale;
-            Place((RectTransform)draw.transform, 0.5f, 0.28f, width * 0.20f, 72f * scale);
             Place((RectTransform)reveal.transform, 0.5f, 0.10f, width * 0.22f, 72f * scale);
-            foreach (var button in new[] { draw, reveal })
-            {
-                var label = button.GetComponentInChildren<TMP_Text>(true);
-                label.fontSize = 27f * scale;
-                label.alignment = TextAlignmentOptions.Center;
-                Stretch(label.rectTransform, 0f);
-            }
-            Place((RectTransform)changeSpread.transform, 0.12f, 0.08f, width * 0.18f, 56f * scale);
-            Place((RectTransform)back.transform, 0.10f, 0.08f, width * 0.14f, 56f * scale);
-            changeSpread.GetComponentInChildren<TMP_Text>().fontSize = 20f * scale;
-            back.GetComponentInChildren<TMP_Text>().fontSize = 20f * scale;
+            var revealLabel = reveal.GetComponentInChildren<TMP_Text>(true);
+            revealLabel.fontSize = 27f * scale;
+            Stretch(revealLabel.rectTransform, 0f);
             Place(progress.rectTransform, 0.5f, 0.075f, width * 0.6f, 40f * scale);
             progress.fontSize = 20f * scale;
+        }
+
+        private static void ApplyText(TMP_Text text, RitualStaticElement element, Color ink)
+        {
+            if (text == null) return;
+            text.fontSize = element.FontSize;
+            text.characterSpacing = element.Tracking * 100f;
+            text.margin = Vector4.zero;
+            text.color = ink;
+            text.textWrappingMode = TextWrappingModes.NoWrap;
+            if (text.GetComponent<TarotUiPreserveColor>() == null) text.gameObject.AddComponent<TarotUiPreserveColor>();
         }
 
         private void Show(Transform node, bool visible)
@@ -256,6 +266,7 @@ namespace TarotUnity.UI
             label.alignment = TextAlignmentOptions.Center;
             label.textWrappingMode = TextWrappingModes.NoWrap;
             label.raycastTarget = false;
+            go.AddComponent<TarotUiPreserveColor>();
             return label;
         }
 
@@ -305,14 +316,14 @@ namespace TarotUnity.UI
 
         private static void Rule(Transform parent, string name, float y)
         {
-            var go = new GameObject(name, typeof(RectTransform), typeof(Image));
+            var go = new GameObject(name, typeof(RectTransform), typeof(RitualOrnamentGraphic));
             go.transform.SetParent(parent, false);
             var image = go.GetComponent<Image>();
             image.color = new Color(0.72f, 0.55f, 0.30f, 0.55f);
             image.raycastTarget = false;
             var rect = image.rectTransform;
-            rect.anchorMin = new Vector2(0.04f, y);
-            rect.anchorMax = new Vector2(0.96f, y);
+            rect.anchorMin = new Vector2(name == "RitualInputUnderline" ? 0f : 0.05f, y);
+            rect.anchorMax = new Vector2(name == "RitualInputUnderline" ? 1f : 0.95f, y);
             rect.sizeDelta = new Vector2(0f, 1f);
             rect.anchoredPosition = Vector2.zero;
         }
@@ -324,7 +335,7 @@ namespace TarotUnity.UI
             var artwork = DeckBackArtwork();
             for (var i = 0; i < count; i++)
             {
-                var card = new GameObject("Back", typeof(RectTransform), typeof(RawImage), typeof(Outline));
+                var card = new GameObject("Back_" + i, typeof(RectTransform), typeof(RawImage), typeof(Outline));
                 card.transform.SetParent(root.transform, false);
                 var image = card.GetComponent<RawImage>();
                 image.texture = artwork;

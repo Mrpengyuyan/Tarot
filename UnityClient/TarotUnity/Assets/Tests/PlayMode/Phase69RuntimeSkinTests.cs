@@ -104,7 +104,8 @@ namespace TarotUnity.Tests.PlayMode
             Assert.That(oneSkin.IsEmphasized, Is.True, "the room opens on one card");
             Assert.That(one.colors.normalColor, Is.EqualTo(Color.white), "the theme left the ColorBlock alone");
             Assert.That(((Image)one.targetGraphic).color.a, Is.EqualTo(0f), "no opaque choice plate");
-            Assert.That(oneSkin.Label.color, Is.EqualTo(new Color(0.94f, 0.84f, 0.65f)), "gold ink directly on the table");
+            Assert.That(oneSkin.Label.color, Is.EqualTo(new Color(228f / 255f, 204f / 255f, 164f / 255f)),
+                "approved v6 spread-title ink directly on the table");
             Assert.That(threeSkin.Label.color, Is.EqualTo(oneSkin.Label.color));
 
             three.onClick.Invoke();

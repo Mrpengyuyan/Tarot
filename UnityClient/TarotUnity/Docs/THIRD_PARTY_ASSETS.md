@@ -35,6 +35,9 @@ here anyway).
   licenses are bundled in `Assets/Resources/RitualFonts/`; no generated font
   atlases are stored. LXGW WenKai remains the full Chinese fallback for player
   text outside these subsets.
+  The two Noto subsets include missing fixed-label punctuation, one Chinese
+  character and the Latin cover caption (140 codepoints per weight), fetched from Google Fonts' Noto Serif SC v36 endpoints
+  under the same bundled OFL notice. No system fonts are bundled.
 - SFX/music — synthesized in-house; the audio pass is summarized in
   `Docs/PROJECT_CHRONICLE.md`.
 

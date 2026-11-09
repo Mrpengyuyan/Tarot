@@ -16,6 +16,7 @@ namespace TarotUnity.UI
             public TMP_FontAsset font;
             public TextWrappingModes wrapping;
             public TMP_InputField input;
+            public bool fixedStyle;
         }
 
         private sealed class InputBinding
@@ -52,12 +53,15 @@ namespace TarotUnity.UI
             foreach (var text in GetComponentsInChildren<TMP_Text>(true))
             {
                 var input = text.GetComponentInParent<TMP_InputField>(true);
-                var emphasis = input == null && text.GetComponentInParent<Button>(true) != null;
+                var button = text.GetComponentInParent<Button>(true);
+                var quiet = button != null && (button.name == "QuitButton" || button.name == "RitualReturnMenu" || button.name == "RitualChangeSpread");
+                var emphasis = text.name == "RitualQuestionLabel" || (input == null && button != null && !quiet && text.name != "RitualSpreadSubtitle");
                 var resource = text == brushTitle ? "brush-0" : emphasis ? "noto-1" : "noto-0";
                 var font = FontFor(resource, theme, text.font);
                 var wrapping = text == brushTitle || emphasis || (input != null && input.lineType == TMP_InputField.LineType.SingleLine)
                     ? TextWrappingModes.NoWrap : text.textWrappingMode;
-                texts.Add(new TextBinding { text = text, font = font, wrapping = wrapping, input = input });
+                var fixedStyle = GetComponent<RitualMenuView>() != null || GetComponent<RitualReadingView>() != null;
+                texts.Add(new TextBinding { text = text, font = font, wrapping = wrapping, input = input, fixedStyle = fixedStyle });
             }
 
             foreach (var input in GetComponentsInChildren<TMP_InputField>(true))
@@ -84,6 +88,11 @@ namespace TarotUnity.UI
             {
                 if (binding.text == null) continue;
                 if (binding.font != null && binding.text.font != binding.font) binding.text.font = binding.font;
+                if (binding.fixedStyle)
+                {
+                    if (binding.text.fontStyle != FontStyles.Normal) binding.text.fontStyle = FontStyles.Normal;
+                    if (binding.text.fontWeight != FontWeight.Regular) binding.text.fontWeight = FontWeight.Regular;
+                }
                 var input = binding.input;
                 var wrapping = input != null
                     ? input.lineType == TMP_InputField.LineType.SingleLine ? TextWrappingModes.NoWrap : TextWrappingModes.Normal

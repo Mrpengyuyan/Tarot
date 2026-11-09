@@ -287,7 +287,8 @@ namespace TarotUnity.UI
                     input.textComponent.font = body;
                 }
 
-                input.textComponent.color = textColor;
+                if (input.textComponent.GetComponent<TarotUiPreserveColor>() == null)
+                    input.textComponent.color = textColor;
             }
 
             if (input.placeholder is TMP_Text placeholder)
@@ -297,7 +298,8 @@ namespace TarotUnity.UI
                     placeholder.font = body;
                 }
 
-                placeholder.color = new Color(mutedTextColor.r, mutedTextColor.g, mutedTextColor.b, 0.72f);
+                if (placeholder.GetComponent<TarotUiPreserveColor>() == null)
+                    placeholder.color = new Color(mutedTextColor.r, mutedTextColor.g, mutedTextColor.b, 0.72f);
             }
         }
 
