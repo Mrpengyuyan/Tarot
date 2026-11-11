@@ -216,10 +216,11 @@ namespace TarotUnity.Presentation
             fan.RefreshPresentation();
             if(progress!=null)
             {
-                progress.text=accepted<count?$"还可选 <size={frame.NumberFont*canvas.rect.height/size.y}> {count-accepted} </size> 张":$"已选 {count} / {count}";
+                progress.text=accepted<count?$"还可选 <size={frame.NumberFont*canvas.rect.height/size.y}><color=#F0D4A2> {count-accepted} </color></size> 张":$"已选 <color=#F0D4A2>{count} / {count}</color>";
+                progress.color=new Color(203f/255f,179f/255f,141f/255f);
                 Place(progress.rectTransform,frame.Progress);
                 progress.fontSize=frame.ProgressFont*canvas.rect.height/size.y;
-                progress.characterSpacing=progress.fontSize*0.1f;
+                progress.characterSpacing=15f;
                 var group=progress.GetComponent<CanvasGroup>();if(group!=null)group.alpha=1f;
             }
         }

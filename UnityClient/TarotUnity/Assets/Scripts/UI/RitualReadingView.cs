@@ -183,7 +183,8 @@ namespace TarotUnity.UI
             var flipped = 0;
             if (deck != null) foreach (var card in deck.ActiveCards) if (card != null && card.IsFaceUp) flipped++;
             progress.text = Stage == ViewStage.Pick && picked < total ? $"还可选 {total - picked} 张"
-                : Stage == ViewStage.Reveal ? $"逐张揭开 {flipped} / {total}" : "";
+                : Stage == ViewStage.Reveal ? $"逐张揭开 <color=#CCAD75>{flipped} / {total}</color>" : "";
+            if (Stage == ViewStage.Reveal) progress.color = new Color(183f/255f, 160f/255f, 128f/255f);
             Show(progress.transform, progress.text.Length > 0);
         }
 
@@ -301,7 +302,8 @@ namespace TarotUnity.UI
                 else image.enabled = false;
             }
             foreach (var effect in button.GetComponentsInChildren<Shadow>(true)) effect.enabled = false;
-            label.color = new Color(0.94f, 0.84f, 0.65f);
+            label.color = new Color(240f/255f, 214f/255f, 165f/255f);
+            if (label.GetComponent<TarotUiPreserveColor>() == null) label.gameObject.AddComponent<TarotUiPreserveColor>();
             label.fontStyle = FontStyles.Normal;
             label.enableAutoSizing = false;
             label.characterSpacing = 8f;

@@ -98,6 +98,7 @@ namespace TarotUnity.UI
                 text.textWrappingMode = TextWrappingModes.NoWrap;
                 text.raycastTarget = false;
                 text.margin = Vector4.zero;
+                node.AddComponent<TarotUiPreserveColor>();
                 node.SetActive(false);
                 labels.Add(text);
             }
@@ -172,20 +173,21 @@ namespace TarotUnity.UI
                     new Vector2(placement.LabelWidth, placement.LabelFontSize * 1.5f)), width, height);
                 labels[i].rectTransform.localRotation = Quaternion.Euler(0f, 0f, -placement.Roll);
                 labels[i].fontSize = placement.LabelFontSize * canvas.rect.height / height;
-                labels[i].characterSpacing = labels[i].fontSize * 0.12f;
+                labels[i].characterSpacing = 12f;
             }
             if (!final) return;
             if (action != null) Place(action, frame.ActionRect, width, height);
             if (actionText != null)
             {
                 actionText.fontSize = frame.ActionFontSize * canvas.rect.height / height;
-                actionText.characterSpacing = actionText.fontSize * 0.2f;
+                actionText.characterSpacing = 20f;
             }
             if (progress != null)
             {
                 var size = new Vector2(width * 0.6f, frame.ProgressFontSize * 1.5f);
                 Place(progress.rectTransform, new Rect(frame.ProgressCenter - size * 0.5f, size), width, height);
                 progress.fontSize = frame.ProgressFontSize * canvas.rect.height / height;
+                progress.characterSpacing = 15f;
             }
         }
 
