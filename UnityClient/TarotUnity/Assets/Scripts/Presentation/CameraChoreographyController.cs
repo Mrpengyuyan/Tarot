@@ -122,6 +122,13 @@ namespace TarotUnity.Presentation
             MoveTo(deckPose, deckFov);
         }
 
+        public bool TryGetDeckPose(out Transform pose, out float fov)
+        {
+            pose = deckPose;
+            fov = deckFov;
+            return pose != null;
+        }
+
         public void FocusSpread(int cardCount)
         {
             FocusSpread(cardCount, transitionDuration);

@@ -132,6 +132,7 @@ namespace TarotUnity.UI
             if (deckShuffle != null)
             {
                 deckShuffle.ApplyRitualPresentation();
+                RitualDeckPresentation.Attach(deckShuffle, PresentationCamera(), GetComponent<RitualReadingView>(), spreadFan, cameraChoreography);
                 ritualDeck = RitualDeckAnchor.Attach(deckShuffle, cameraChoreography);
             }
             pickedStaging = gameObject.AddComponent<PickedCardStaging>();

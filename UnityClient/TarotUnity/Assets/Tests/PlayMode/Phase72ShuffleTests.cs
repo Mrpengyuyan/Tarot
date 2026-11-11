@@ -22,6 +22,8 @@ namespace TarotUnity.Tests.PlayMode
             yield return null;
 
             var choreographer = Object.FindFirstObjectByType<DeckShuffleChoreographer>();
+            // This regression pins the legacy two-riffle authored-child motion.
+            choreographer.GetComponent<RitualDeckPresentation>().enabled = false;
             var stack = choreographer.transform;
             var minX = float.MaxValue;
             var maxX = float.MinValue;

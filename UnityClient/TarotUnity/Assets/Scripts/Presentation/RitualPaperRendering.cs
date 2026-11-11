@@ -43,6 +43,18 @@ namespace TarotUnity.Presentation
             owner.Restore(face != null ? face.gameObject : null);
         }
 
+        internal static void Register(Renderer renderer)
+        {
+            if (renderer != null && Rooms.TryGetValue(renderer.gameObject.scene.handle, out var owner) && owner != null && owner.isActiveAndEnabled)
+                owner.Track(renderer);
+        }
+
+        internal static void Unregister(Renderer renderer)
+        {
+            if (renderer != null && Rooms.TryGetValue(renderer.gameObject.scene.handle, out var owner) && owner != null)
+                owner.Restore(renderer.gameObject);
+        }
+
         private void OnEnable() => Apply();
 
         private void Apply()
@@ -70,6 +82,9 @@ namespace TarotUnity.Presentation
             SyncCamera();
             foreach (var surface in FindObjectsByType<RitualPaperSurface>(FindObjectsInactive.Include, FindObjectsSortMode.None))
                 if (surface.gameObject.scene == gameObject.scene) Track(surface);
+            foreach (var deck in FindObjectsByType<RitualDeckPresentation>(FindObjectsSortMode.None))
+                if (deck.gameObject.scene == gameObject.scene && deck.IsReady)
+                    foreach (var renderer in deck.LayerRenderers) Track(renderer);
         }
 
         private void BeforeCamera(ScriptableRenderContext context, Camera camera)

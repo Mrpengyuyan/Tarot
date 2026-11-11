@@ -32,6 +32,8 @@ namespace TarotUnity.Tests.PlayMode
             var choreographer = Object.FindFirstObjectByType<DeckShuffleChoreographer>();
             Assert.That(choreographer, Is.Not.Null,
                 "the ReadingRoom deck stack should carry the shuffle choreographer");
+            // Exercise the retained authored-slab path; native paper motion has its own scene regressions.
+            choreographer.GetComponent<RitualDeckPresentation>().enabled = false;
             yield return choreographer.GetComponent<RitualDeckAnchor>().Pickup();
 
             var stack = choreographer.transform;

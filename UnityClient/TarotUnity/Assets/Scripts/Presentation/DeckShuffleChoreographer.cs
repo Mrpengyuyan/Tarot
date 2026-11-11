@@ -81,6 +81,7 @@ namespace TarotUnity.Presentation
         }
 
         public bool IsPlaying => active != null;
+        public RitualDeckPresentation Presentation { get; set; }
 
         /// <summary>Opt in after scene deserialization; legacy scenes and tests keep their authored tuning.</summary>
         public void ApplyRitualPresentation()
@@ -104,6 +105,8 @@ namespace TarotUnity.Presentation
         {
             get
             {
+                if (Presentation != null && Presentation.IsReady)
+                    return UI.RitualDeckLayout.ShuffleSeconds + UI.RitualDeckLayout.SettleSeconds;
                 var n = Mathf.Max(1, transform.childCount);
                 var riffle = riffleCardSeconds + riffleStagger * (n - 1);
                 return anticipationSeconds + cutSeconds + riffle
@@ -168,6 +171,12 @@ namespace TarotUnity.Presentation
 
         private IEnumerator ShuffleRoutine()
         {
+            if (Presentation != null && Presentation.IsReady)
+            {
+                try { yield return Presentation.Shuffle(); }
+                finally { active = null; }
+                yield break;
+            }
             CaptureRestPose();
             if (cards.Count == 0)
             {

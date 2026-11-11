@@ -230,17 +230,18 @@ namespace TarotUnity.Tests.PlayMode
             var rendering = GameObject.Find("ReadingRoomCanvas").GetComponent<RitualPaperRendering>();
             var registry = (System.Collections.IDictionary)typeof(RitualPaperRendering)
                 .GetField("layers", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(rendering);
+            var baseline = registry.Count;
             for (var i = 0; i < 3; i++)
             {
                 var root = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Cards/PF_TarotCard.prefab"));
                 var card = root.GetComponent<CardView>();
                 card.Bind(LocalReadingSimulator.CreatePlaceholderDraws(1)[0]);
                 RitualPaperSurface.Attach(card);
-                Assert.That(registry.Count, Is.EqualTo(2));
+                Assert.That(registry.Count, Is.EqualTo(baseline + 2));
                 Object.Destroy(root);
                 yield return null;
                 yield return null;
-                Assert.That(registry.Count, Is.Zero, "Repeated abandoned fans must not retain destroyed face/back objects.");
+                Assert.That(registry.Count, Is.EqualTo(baseline), "Repeated abandoned fans must not retain destroyed face/back objects.");
             }
 #else
             Assert.Ignore("Requires the editor fixture prefab.");

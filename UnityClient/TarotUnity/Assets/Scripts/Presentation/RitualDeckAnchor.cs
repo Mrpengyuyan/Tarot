@@ -19,6 +19,9 @@ namespace TarotUnity.Presentation
         private bool ownsPose;
         private bool hasRenderedBounds;
         private int generation;
+        private RitualDeckPresentation presentation;
+        private bool disabledPresentation;
+        private bool parkRequested;
 
         public float PickupSeconds => 0.9f;
         public bool IsParked { get; private set; }
@@ -39,13 +42,16 @@ namespace TarotUnity.Presentation
 
             anchor.deck = deck;
             anchor.viewCamera = ResolveCamera(camera, deck);
+            anchor.presentation = deck.GetComponent<RitualDeckPresentation>();
             if (!anchor.captured)
             {
                 var pose = deck.transform;
                 anchor.authoredPosition = pose.localPosition;
                 anchor.authoredRotation = pose.localRotation;
                 anchor.authoredScale = pose.localScale;
-                anchor.CacheRenderedBounds();
+                if (anchor.presentation != null)
+                    anchor.presentation.GetAuthoredPose(out anchor.authoredPosition, out anchor.authoredRotation, out anchor.authoredScale);
+                if (anchor.presentation == null || !anchor.presentation.IsReady) anchor.CacheRenderedBounds();
                 anchor.captured = true;
                 anchor.Park();
             }
@@ -55,9 +61,17 @@ namespace TarotUnity.Presentation
 
         public void Park()
         {
-            if (!captured || deck == null || deck.IsPlaying)
+            if (!captured || deck == null)
             {
                 return;
+            }
+            if (deck.IsPlaying) { parkRequested = true; return; }
+            parkRequested = false;
+
+            if (disabledPresentation && presentation != null)
+            {
+                disabledPresentation = false;
+                presentation.enabled = true;
             }
 
             generation++;
@@ -72,8 +86,14 @@ namespace TarotUnity.Presentation
         public void Clear()
         {
             generation++;
+            parkRequested = false;
             IsParked = false;
             IsPickingUp = false;
+            if (presentation != null && presentation.enabled)
+            {
+                disabledPresentation = true;
+                presentation.enabled = false;
+            }
             if (ownsPose && deck != null)
             {
                 RestoreAuthoredPose();
@@ -84,6 +104,7 @@ namespace TarotUnity.Presentation
 
         private void LateUpdate()
         {
+            if (parkRequested) Park();
             if (IsParked)
             {
                 UpdateParkedPose();
@@ -91,6 +112,7 @@ namespace TarotUnity.Presentation
         }
 
         private void OnDisable() => Clear();
+        private void OnEnable() { if (captured) Park(); }
 
         private void OnDestroy() => Clear();
 
@@ -103,6 +125,20 @@ namespace TarotUnity.Presentation
 
             IsParked = false;
             IsPickingUp = true;
+            if (presentation != null && presentation.IsReady)
+            {
+                ownsPose = true;
+                try
+                {
+                    yield return presentation.Pickup();
+                    if (IsCurrent(token)) IsPickingUp = false;
+                }
+                finally
+                {
+                    if (this != null && generation == token && IsPickingUp) Clear();
+                }
+                yield break;
+            }
             var pose = deck.transform;
             var fromPosition = pose.position;
             var fromRotation = pose.localRotation;
@@ -155,6 +191,9 @@ namespace TarotUnity.Presentation
             {
                 return;
             }
+
+            if (presentation != null && presentation.IsReady) { presentation.Park(); return; }
+            if (!hasRenderedBounds) CacheRenderedBounds();
 
             var plane = new Plane(Vector3.up, AuthoredWorldPosition());
             var ray = viewCamera.ViewportPointToRay(ParkedViewport);

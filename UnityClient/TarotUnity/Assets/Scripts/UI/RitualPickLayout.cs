@@ -106,7 +106,7 @@ namespace TarotUnity.UI
             return new RitualPickPose(Vector2.Lerp(a.Center, b.Center, k), Vector2.Lerp(a.Size, b.Size, k), Mathf.Lerp(a.Roll, b.Roll, k));
         }
 
-        private static float Bezier(float time, float x1, float y1, float x2, float y2)
+        internal static float Bezier(float time, float x1, float y1, float x2, float y2)
         {
             var lo = 0f; var hi = 1f;
             for (var i = 0; i < 22; i++)

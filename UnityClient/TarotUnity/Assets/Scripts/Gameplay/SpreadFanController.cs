@@ -108,6 +108,7 @@ namespace TarotUnity.Gameplay
         private readonly Dictionary<CardView, FanCard> state = new();
         private readonly List<CardView> prepared = new();
         private readonly List<List<Renderer>> deckLayers = new();
+        private Transform capturedDeckOrigin;
         private bool preparing;
         private Coroutine lightFade;
         private Vector3 baseScale = Vector3.one;
@@ -399,8 +400,16 @@ namespace TarotUnity.Gameplay
         private void CaptureDeck(Transform origin)
         {
             deckLayers.Clear();
+            capturedDeckOrigin = origin;
             if (origin == null)
             {
+                return;
+            }
+
+            var native = origin.GetComponent<RitualDeckPresentation>();
+            if (native != null && native.IsReady)
+            {
+                foreach (var renderer in native.LayerRenderers) deckLayers.Add(new List<Renderer> { renderer });
                 return;
             }
 
@@ -424,6 +433,13 @@ namespace TarotUnity.Gameplay
 
                 deckLayers.Add(shown);
             }
+        }
+
+        internal void RefreshDeckVisuals(Transform origin, float fraction)
+        {
+            if (capturedDeckOrigin != origin) return;
+            CaptureDeck(origin);
+            ShowDeck(fraction);
         }
 
         /// <summary>Shows the bottom <paramref name="fraction"/> of the deck's layers.</summary>

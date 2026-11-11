@@ -60,6 +60,7 @@ namespace TarotUnity.Tests.PlayMode
                     if (count > 1 && picked == count) yield return CaptureBoth(directory, $"selected-full-{count}");
                 }
                 yield return Until(() => flow.State == ReadingFlowState.WaitingForFlip, "ready to reveal", 45f);
+                yield return Until(() => !Object.FindFirstObjectByType<RitualDeckPresentation>().IsReturning, "deck finishes returning to the edge");
                 if (Environment.GetEnvironmentVariable("TAROT_VISUAL_PARITY_CAPTURE") == "1")
                 {
                     var session = ReadingSessionStore.Current;
