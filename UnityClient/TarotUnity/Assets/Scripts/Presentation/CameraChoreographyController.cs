@@ -63,10 +63,22 @@ namespace TarotUnity.Presentation
         private Vector3 punchDirection;
         private float shakeEnergy;
         private float breathSeed;
+        private Transform ritualTablePose;
+        private float ritualTableFov;
 
         public bool IsMoving { get; private set; }
         public bool IsPunching => activePunch != null;
         public float CurrentBaseFov => baseFov;
+
+        /// <summary>Keep the authored table tableau between rituals; the deck still has its own approach.</summary>
+        public void ApplyRitualTableFraming()
+        {
+            if (ritualTablePose != null || targetCamera == null) return;
+            ritualTablePose = new GameObject("RitualTablePose").transform;
+            ritualTablePose.SetParent(transform, false);
+            ritualTablePose.SetPositionAndRotation(targetCamera.transform.position, targetCamera.transform.rotation);
+            ritualTableFov = targetCamera.fieldOfView;
+        }
 
         private void Awake()
         {
@@ -94,9 +106,15 @@ namespace TarotUnity.Presentation
             ComposeCameraFrame();
         }
 
+        private void OnDestroy()
+        {
+            if (ritualTablePose != null) Destroy(ritualTablePose.gameObject);
+        }
+
         public void PlayOpening()
         {
-            MoveTo(defaultPose, defaultFov);
+            MoveTo(ritualTablePose != null ? ritualTablePose : defaultPose,
+                ritualTablePose != null ? ritualTableFov : defaultFov);
         }
 
         public void FocusDeck()
@@ -117,6 +135,12 @@ namespace TarotUnity.Presentation
 
         public bool TryGetSpreadPose(int cardCount, out Transform pose, out float fov)
         {
+            if (ritualTablePose != null)
+            {
+                pose = ritualTablePose;
+                fov = ritualTableFov;
+                return true;
+            }
             foreach (var entry in spreadPoses)
             {
                 if (entry != null && entry.cardCount == cardCount && entry.pose != null)
@@ -134,6 +158,12 @@ namespace TarotUnity.Presentation
 
         public bool TryGetDrawPose(int cardCount, out Transform pose, out float fov)
         {
+            if (ritualTablePose != null)
+            {
+                pose = ritualTablePose;
+                fov = ritualTableFov;
+                return true;
+            }
             pose = null;
             fov = defaultFov;
             SpreadPose fallback = null;

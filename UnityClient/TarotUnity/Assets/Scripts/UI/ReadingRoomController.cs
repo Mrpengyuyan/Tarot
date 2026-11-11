@@ -127,6 +127,8 @@ namespace TarotUnity.UI
             SetReleaseStatus(ReleaseUxCopy.LocalModeReady);
             RitualReadingView.Attach(this, flowController, questionInput, drawButton, revealResultButton,
                 new[] { oneCardButton, threeCardButton, celticCrossButton });
+            RitualPaperRendering.Attach(gameObject, PresentationCamera());
+            cameraChoreography?.ApplyRitualTableFraming();
             if (deckShuffle != null)
             {
                 deckShuffle.ApplyRitualPresentation();

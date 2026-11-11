@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Linq;
+using System.Reflection;
 using NUnit.Framework;
 using TarotUnity.Data;
 using TarotUnity.Gameplay;
@@ -99,6 +100,14 @@ namespace TarotUnity.Tests.PlayMode
         public IEnumerator TheHeldSelectionCarriesTheCameraDownDuringItsFinalTransfer()
         {
             yield return LoadRoom();
+            // Keep this regression on the authored legacy journey. The v6 common
+            // table shot is covered separately by RitualTableRenderingTests.
+            var choreography = Object.FindFirstObjectByType<CameraChoreographyController>();
+            while (choreography.IsMoving) yield return null;
+            var tableField = typeof(CameraChoreographyController).GetField("ritualTablePose", BindingFlags.Instance | BindingFlags.NonPublic);
+            var table = (Transform)tableField.GetValue(choreography);
+            tableField.SetValue(choreography, null);
+            if (table != null) Object.Destroy(table.gameObject);
             var fan = Object.FindFirstObjectByType<SpreadFanController>();
             var deck = Object.FindFirstObjectByType<DeckController>();
             var flow = Object.FindFirstObjectByType<ReadingFlowController>();

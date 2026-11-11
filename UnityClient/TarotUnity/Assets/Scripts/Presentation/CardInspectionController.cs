@@ -28,7 +28,6 @@ namespace TarotUnity.Presentation
         private float artHeight;
         private float artWidth;
         private Vector3 restArtScale;
-        private float artAspectCorrection;
         private Renderer[] cardRenderers;
         private bool[] rendererStates;
         private Color restColor;
@@ -98,10 +97,8 @@ namespace TarotUnity.Presentation
             artRelativeRotation = Quaternion.Inverse(cardTransform.rotation) * artwork.transform.rotation;
             artCenter = cardTransform.InverseTransformPoint(artwork.transform.TransformPoint(artwork.sprite.bounds.center));
             artHeight = Mathf.Abs(artwork.sprite.bounds.size.y * artwork.transform.lossyScale.y);
-            artWidth = Mathf.Abs(artwork.sprite.bounds.size.x * artwork.transform.lossyScale.x);
             restArtScale = artwork.transform.localScale;
             var sourceAspect = artwork.sprite.bounds.size.x / artwork.sprite.bounds.size.y;
-            artAspectCorrection = artHeight * sourceAspect / Mathf.Max(artWidth, 0.001f);
             artWidth = artHeight * sourceAspect;
             // The legacy tabletop slab, glow and fake shadow are not the lifted face.
             cardRenderers = card.GetComponentsInChildren<Renderer>(true);
@@ -255,11 +252,18 @@ namespace TarotUnity.Presentation
                 * Quaternion.Euler(0f, 0f, CurrentCard.ShowsReversed ? 180f : 0f);
             var targetRotation = targetArtRotation * Quaternion.Inverse(artRelativeRotation);
             var blend = Mathf.SmoothStep(0f, 1f, progress);
-            CurrentCard.FaceArtwork.transform.localScale = new Vector3(
-                restArtScale.x * Mathf.Lerp(1f, artAspectCorrection, blend), restArtScale.y, restArtScale.z);
+            var artwork = CurrentCard.FaceArtwork;
+            artwork.transform.localScale = restArtScale;
             cardTransform.localScale = Vector3.Lerp(restScale, restScale * zoom, blend);
             var restWorldRotation = cardTransform.parent != null ? cardTransform.parent.rotation * restRotation : restRotation;
             cardTransform.rotation = Quaternion.Slerp(restWorldRotation, targetRotation, blend);
+            // A calibrated parent can shear when the card turns. Measure in the
+            // current orientation, not its resting lossyScale, to preserve print aspect.
+            var size = artwork.sprite.bounds.size;
+            var width = Mathf.Abs(Vector3.Dot(artwork.transform.TransformVector(Vector3.right * size.x), viewCamera.transform.right));
+            var printedHeight = Mathf.Abs(Vector3.Dot(artwork.transform.TransformVector(Vector3.up * size.y), viewCamera.transform.up));
+            var correction = width > 0.0001f && printedHeight > 0.0001f ? size.x / size.y * printedHeight / width : 1f;
+            artwork.transform.localScale = new Vector3(restArtScale.x * Mathf.Lerp(1f, correction, blend), restArtScale.y, restArtScale.z);
             var center = viewCamera.ViewportToWorldPoint(new Vector3(0.5f, 0.5f, distance));
             var offset = cardTransform.TransformPoint(artCenter) - cardTransform.position;
             var restWorldPosition = cardTransform.parent != null ? cardTransform.parent.TransformPoint(restPosition) : restPosition;

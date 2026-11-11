@@ -45,6 +45,7 @@ namespace TarotUnity.Presentation
             surface.EnforcePaper();
             card.FaceChanged += surface.RefreshFace;
             surface.RefreshFace(card, card.IsFaceUp);
+            RitualPaperRendering.Register(surface);
             return surface;
         }
 
@@ -81,6 +82,10 @@ namespace TarotUnity.Presentation
             image.transform.localPosition = -(rotation * Vector3.Scale(scale, bounds.center));
         }
 
-        private void OnDestroy() { if (card != null) card.FaceChanged -= RefreshFace; }
+        private void OnDestroy()
+        {
+            RitualPaperRendering.Unregister(this);
+            if (card != null) card.FaceChanged -= RefreshFace;
+        }
     }
 }

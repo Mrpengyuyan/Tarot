@@ -131,56 +131,37 @@ namespace TarotUnity.Tests.PlayMode
                     .OrderByDescending(c => c.depth).First();
                 var canvas = Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None)
                     .First(c => c.isRootCanvas && c.gameObject.scene == SceneManager.GetActiveScene());
-                var texture = new RenderTexture(size.x, size.y, 24);
-                var target = camera.targetTexture;
-                var aspect = camera.aspect;
-                var mode = canvas.renderMode;
-                var worldCamera = canvas.worldCamera;
-                var distance = canvas.planeDistance;
-                var previous = RenderTexture.active;
-                camera.targetTexture = texture;
-                camera.aspect = (float)size.x / size.y;
-                canvas.renderMode = RenderMode.ScreenSpaceCamera;
-                canvas.worldCamera = camera;
-                canvas.planeDistance = camera.nearClipPlane + 0.05f;
-                Canvas.ForceUpdateCanvases();
-                canvas.GetComponent<RitualReadingView>()?.RefreshLayout();
-                var resultFit = canvas.GetComponent<ResultCanvasAspectFit>();
-                if (resultFit != null)
+                using (var capture = new RitualFrameCapture(camera, canvas, size.x, size.y))
                 {
-                    resultFit.Apply(size.x, size.y);
-                    var scaler = canvas.GetComponent<CanvasScaler>();
-                    scaler.enabled = false;
-                    scaler.enabled = true;
                     Canvas.ForceUpdateCanvases();
-                    var canvasSize = ((RectTransform)canvas.transform).rect.size;
-                    resultFit.Repin(canvasSize.y);
-                    canvas.GetComponent<ResultPanelPresenter>()?.ApplyLayout(canvasSize);
+                    canvas.GetComponent<RitualReadingView>()?.RefreshLayout();
+                    var resultFit = canvas.GetComponent<ResultCanvasAspectFit>();
+                    if (resultFit != null)
+                    {
+                        resultFit.Apply(size.x, size.y);
+                        var scaler = canvas.GetComponent<CanvasScaler>();
+                        scaler.enabled = false;
+                        scaler.enabled = true;
+                        Canvas.ForceUpdateCanvases();
+                        var canvasSize = ((RectTransform)canvas.transform).rect.size;
+                        resultFit.Repin(canvasSize.y);
+                        canvas.GetComponent<ResultPanelPresenter>()?.ApplyLayout(canvasSize);
+                    }
+                    yield return null;
+                    Canvas.ForceUpdateCanvases();
+                    Assert.That(((RectTransform)canvas.transform).rect.width / ((RectTransform)canvas.transform).rect.height,
+                        Is.EqualTo((float)size.x / size.y).Within(0.001f), "UI and world must use the same capture frame.");
+                    if (name == "result-pending-slow")
+                    {
+                        var status = canvas.GetComponentsInChildren<TMP_Text>(true)
+                            .First(t => t.name == "Phase66_InterpretationStatus");
+                        Assert.That(status.text, Does.Contain(ReleaseUxCopy.ResultPendingSlow),
+                            "The slow notice must survive Update and actually appear in the captured frame.");
+                    }
+                    var pixels = capture.Render();
+                    File.WriteAllBytes(Path.Combine(directory, $"{name}-{size.x}x{size.y}.png"), pixels.EncodeToPNG());
+                    Object.Destroy(pixels);
                 }
-                yield return null;
-                Canvas.ForceUpdateCanvases();
-                if (name == "result-pending-slow")
-                {
-                    var status = canvas.GetComponentsInChildren<TMP_Text>(true)
-                        .First(t => t.name == "Phase66_InterpretationStatus");
-                    Assert.That(status.text, Does.Contain(ReleaseUxCopy.ResultPendingSlow),
-                        "The slow notice must survive Update and actually appear in the captured frame.");
-                }
-                for (var i = 0; i < 4; i++) camera.Render();
-                RenderTexture.active = texture;
-                var pixels = new Texture2D(size.x, size.y, TextureFormat.RGB24, false);
-                pixels.ReadPixels(new Rect(0, 0, size.x, size.y), 0, 0);
-                pixels.Apply();
-                File.WriteAllBytes(Path.Combine(directory, $"{name}-{size.x}x{size.y}.png"), pixels.EncodeToPNG());
-                Object.Destroy(pixels);
-                RenderTexture.active = previous;
-                canvas.renderMode = mode;
-                canvas.worldCamera = worldCamera;
-                canvas.planeDistance = distance;
-                camera.targetTexture = target;
-                camera.aspect = aspect;
-                texture.Release();
-                Object.Destroy(texture);
             }
         }
 
