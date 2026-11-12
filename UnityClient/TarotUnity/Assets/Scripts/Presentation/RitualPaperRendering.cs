@@ -18,6 +18,7 @@ namespace TarotUnity.Presentation
         private UniversalAdditionalCameraData data;
         private int layer;
         private int originalMaskBit;
+        private RitualTableAtmosphere atmosphere;
 
         public static RitualPaperRendering Attach(GameObject host, Camera camera)
         {
@@ -85,6 +86,7 @@ namespace TarotUnity.Presentation
             paperData.volumeLayerMask = 0;
             data = worldCamera.GetUniversalAdditionalCameraData();
             data.cameraStack.Add(paperCamera);
+            atmosphere = RitualTableAtmosphere.Attach(paperCamera,layer);
             Rooms[gameObject.scene.handle] = this;
             RenderPipelineManager.beginCameraRendering += BeforeCamera;
             SyncCamera();
@@ -116,6 +118,7 @@ namespace TarotUnity.Presentation
             paperCamera.targetTexture = null;
             paperCamera.aspect = worldCamera.aspect;
             paperCamera.rect = worldCamera.rect;
+            atmosphere?.Fit(paperCamera);
         }
 
         private void Track(RitualPaperSurface surface)
@@ -145,6 +148,8 @@ namespace TarotUnity.Presentation
         private void Release()
         {
             RenderPipelineManager.beginCameraRendering -= BeforeCamera;
+            atmosphere?.Dispose();
+            atmosphere = null;
             if (Rooms.TryGetValue(gameObject.scene.handle, out var owner) && owner == this) Rooms.Remove(gameObject.scene.handle);
             foreach (var entry in layers)
                 if (entry.Key != null && entry.Key.layer == layer) entry.Key.layer = entry.Value;
