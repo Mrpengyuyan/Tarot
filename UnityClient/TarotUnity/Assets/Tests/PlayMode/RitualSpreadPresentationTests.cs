@@ -190,8 +190,8 @@ namespace TarotUnity.Tests.PlayMode
                             "A hidden face must not disclose its position label early.");
                         var visibleRenderers = deck.ActiveCards[i].GetComponentsInChildren<Renderer>(true)
                             .Where(r => r.enabled && r.gameObject.activeInHierarchy).ToArray();
-                        Assert.That(visibleRenderers.Select(r => r.name), Is.EqualTo(new[] { "RitualPaperBack" }),
-                            "Old shells and fake shadows must not reappear under the paper back.");
+                        Assert.That(visibleRenderers.Select(r => r.name), Is.EqualTo(new[] { "RitualPaperBack", "RitualPaperFinishMesh" }),
+                            "Only the printed back and its native finish may appear, never old shells or fake slab shadows.");
                         var back = (SpriteRenderer)visibleRenderers[0];
                         Assert.That(back.sprite, Is.Not.Null, "A clickable face-down card must also remain visible.");
                         Assert.That(back.sprite.texture.name, Is.EqualTo("TarotCardBack"));

@@ -7,6 +7,10 @@ namespace TarotUnity.Presentation
     public sealed class RitualSpreadSlot : MonoBehaviour
     {
         public const float PaperWidth = RitualPaperSurface.PaperWidth;
+        private Camera view;
+        private ReadingFlowController flow;
+
+        public void Configure(Camera camera, ReadingFlowController readingFlow) { view = camera; flow = readingFlow; }
 
         public Vector3 ScaleFor(Transform moving)
         {
@@ -24,6 +28,7 @@ namespace TarotUnity.Presentation
             value.transform.localScale = Vector3.one;
             if (value.FaceArtwork != null) value.FaceArtwork.transform.SetParent(value.transform, false);
             RitualPaperSurface.Attach(value).Back.sortingOrder = 0;
+            if (view != null && flow != null) RitualPaperFinish.Attach(value,view,flow);
         }
     }
 }

@@ -55,6 +55,14 @@ namespace TarotUnity.Presentation
                 owner.Restore(renderer.gameObject);
         }
 
+        internal static bool TryGetInspection(int scene, Camera camera, out CardInspectionController inspection)
+        {
+            inspection = null;
+            if (!Rooms.TryGetValue(scene,out var owner) || owner == null || !owner.isActiveAndEnabled || owner.worldCamera != camera) return false;
+            inspection = owner.GetComponent<CardInspectionController>();
+            return true;
+        }
+
         private void OnEnable() => Apply();
 
         private void Apply()
@@ -85,6 +93,8 @@ namespace TarotUnity.Presentation
             foreach (var deck in FindObjectsByType<RitualDeckPresentation>(FindObjectsSortMode.None))
                 if (deck.gameObject.scene == gameObject.scene && deck.IsReady)
                     foreach (var renderer in deck.LayerRenderers) Track(renderer);
+            foreach (var finish in FindObjectsByType<RitualPaperFinish>(FindObjectsSortMode.None))
+                if (finish.gameObject.scene == gameObject.scene && finish.IsReady) Track(finish.FrameRenderer);
         }
 
         private void BeforeCamera(ScriptableRenderContext context, Camera camera)

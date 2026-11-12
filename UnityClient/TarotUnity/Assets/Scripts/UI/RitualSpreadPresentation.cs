@@ -87,6 +87,7 @@ namespace TarotUnity.UI
             {
                 var slot = new GameObject("RitualSpreadSlot_" + i, typeof(RitualSpreadSlot)).transform;
                 slot.SetParent(projectionAxes, false);
+                slot.GetComponent<RitualSpreadSlot>().Configure(cameraView,flow);
                 slots.Add(slot);
                 var node = new GameObject("RitualPositionLabel_" + i, typeof(RectTransform), typeof(TextMeshProUGUI));
                 node.transform.SetParent(canvas, false);
