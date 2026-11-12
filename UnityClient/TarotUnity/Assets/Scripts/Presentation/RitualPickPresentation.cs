@@ -13,10 +13,12 @@ namespace TarotUnity.Presentation
     [DefaultExecutionOrder(1150)]
     public sealed class RitualPickPresentation : MonoBehaviour
     {
+        internal enum FinishStage { Fan, Flying, Selected }
         private sealed class FanInk
         {
             public RitualPaperSurface Surface;
             public float HoverFrom, HoverTarget, HoverSince;
+            public FinishStage Stage;
         }
         private readonly Dictionary<CardView, FanInk> ink = new();
         private readonly List<Transform> slots = new();
@@ -106,6 +108,7 @@ namespace TarotUnity.Presentation
             var box=card.GetComponent<BoxCollider>();
             if(box!=null) { box.center=Vector3.zero; box.size=new Vector3(RitualPaperSurface.PaperWidth,0.0001f,1f); }
             SetPose(card,frame.Fan[index],Depth(index));
+            RitualPaperFinish.AttachPick(card,cameraView,flow,this);
         }
 
         private static float Depth(int index) => 2.5f-index*0.0001f;
@@ -139,6 +142,7 @@ namespace TarotUnity.Presentation
             var normalizedSize=from.Size/cameraView.pixelWidth;
             var surface=RitualPaperSurface.Attach(card);
             surface.Back.sortingOrder=300; surface.Back.color=Color.white;
+            if(ink.TryGetValue(card,out var value)) value.Stage=FinishStage.Flying;
             var hover=card.GetComponent<CardHoverTiltController>();
             if(hover!=null) hover.Suspend();
             for(var elapsed=0f;elapsed<RitualPickSlot.FlightSeconds;elapsed+=Time.deltaTime)
@@ -156,6 +160,17 @@ namespace TarotUnity.Presentation
                 || index>=slots.Count || slots[index]==null) yield break;
             SetPose(card,frame.Selected[index],2.48f);
             slots[index].GetComponent<RitualPickSlot>().ConfirmLanding(card);
+            if(value!=null) value.Stage=FinishStage.Selected;
+        }
+
+        internal bool TryGetFinish(CardView card,out FinishStage stage)
+        {
+            stage=FinishStage.Fan;
+            if(!isActiveAndEnabled || frozen || world==null || !world.gameObject.activeInHierarchy
+                || fan==null || !fan.isActiveAndEnabled || flow==null || flow.State!=ReadingFlowState.Drawing
+                || staging==null || staging.StagingRoot==null || card==null || !ink.TryGetValue(card,out var value)) return false;
+            stage=value.Stage;
+            return true;
         }
 
         private RitualPickPose Capture(CardView card)

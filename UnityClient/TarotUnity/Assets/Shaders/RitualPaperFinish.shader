@@ -78,8 +78,8 @@ Shader "Tarot/RitualPaperFinish"
                     return half4(0,0,0,shadow);
                 }
                 float stroke=coverage-saturate(0.5-(sd+_Style.x)/footprint);
-                clip(stroke-0.0001);
-                return half4(_Stroke.rgb,stroke);
+                clip(stroke*_Stroke.w-0.0001);
+                return half4(_Stroke.rgb,stroke*_Stroke.w);
             }
             ENDHLSL
         }

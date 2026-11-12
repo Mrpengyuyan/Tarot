@@ -16,6 +16,8 @@ namespace TarotUnity.Presentation
         private CardView card;
         private Camera view;
         private ReadingFlowController flow;
+        private RitualPickPresentation pick;
+        private bool picking;
         private MeshRenderer frame;
         private Mesh mesh;
         private MaterialPropertyBlock ink;
@@ -24,13 +26,20 @@ namespace TarotUnity.Presentation
         public bool IsReady => isActiveAndEnabled && frame != null;
 
         public static RitualPaperFinish Attach(CardView card, Camera camera, ReadingFlowController flow)
+            => AttachTo(card,camera,flow,null,false);
+
+        internal static RitualPaperFinish AttachPick(CardView card,Camera camera,ReadingFlowController flow,RitualPickPresentation pick)
+            => pick != null ? AttachTo(card,camera,flow,pick,true) : null;
+
+        private static RitualPaperFinish AttachTo(CardView card,Camera camera,ReadingFlowController flow,RitualPickPresentation pick,bool picking)
         {
             if (card == null || camera == null || flow == null) return null;
             var owner = card.GetComponent<RitualPaperFinish>();
-            if (owner != null) return owner;
-            owner = card.gameObject.AddComponent<RitualPaperFinish>();
+            if (owner == null) owner = card.gameObject.AddComponent<RitualPaperFinish>();
             owner.card = card; owner.view = camera; owner.flow = flow;
+            owner.pick = pick; owner.picking = picking;
             owner.Build();
+            owner.Refresh();
             return owner;
         }
 
@@ -69,9 +78,14 @@ namespace TarotUnity.Presentation
             if (!IsReady) return;
             frame.enabled = false;
             if (card == null || view == null || flow == null || view.pixelWidth <= 2 || view.pixelHeight <= 2
-                || (flow.State != ReadingFlowState.WaitingForFlip && flow.State != ReadingFlowState.ResultReady)
                 || !RitualPaperRendering.TryGetInspection(gameObject.scene.handle, view, out var inspection)
                 || inspection != null && inspection.IsOpen) return;
+            var stage = RitualPickPresentation.FinishStage.Fan;
+            if (picking)
+            {
+                if (pick == null || !pick.TryGetFinish(card,out stage)) return;
+            }
+            else if (flow.State != ReadingFlowState.WaitingForFlip && flow.State != ReadingFlowState.ResultReady) return;
             var flip = card.GetComponent<CardFlipController>();
             if (flip != null && flip.IsFlipping) return;
             var source = card.IsFaceUp ? card.FaceArtwork : card.GetComponent<RitualPaperSurface>()?.Back;
@@ -93,7 +107,21 @@ namespace TarotUnity.Presentation
             for (var i = 0; i < 4; i++) area += points[i].x*points[(i+1)%4].y - points[(i+1)%4].x*points[i].y;
             if (Mathf.Abs(area) < 1f) return;
             var density = RitualDeckLayout.Density(view.pixelWidth,view.pixelHeight);
-            var padding = 38f*density;
+            var style = new Vector4(1f,12f,8f,.6f);
+            var stroke = card.IsFaceUp ? new Color(223f/255f,199f/255f,141f/255f) : new Color(181f/255f,139f/255f,74f/255f);
+            var opacity = 1f;
+            if (picking)
+            {
+                style = stage == RitualPickPresentation.FinishStage.Fan ? new Vector4(1f,5f,6f,.6f)
+                    : stage == RitualPickPresentation.FinishStage.Flying ? new Vector4(1f,16f,12.5f,10f/15f)
+                    : new Vector4(1f,8f,7f,8f/15f);
+                stroke = stage == RitualPickPresentation.FinishStage.Fan ? new Color(186f/255f,137f/255f,67f/255f)
+                    : stage == RitualPickPresentation.FinishStage.Flying ? new Color(208f/255f,178f/255f,120f/255f)
+                    : new Color(192f/255f,161f/255f,104f/255f);
+                opacity = Mathf.Clamp01(source.color.a);
+            }
+            style.x *= density; style.y *= density; style.z *= density; style.w *= opacity;
+            var padding = Mathf.Abs(style.y)+3f*style.z+2f*density;
             min -= Vector2.one*padding; max += Vector2.one*padding;
             var worldToLocal = frame.transform.worldToLocalMatrix;
             for (var i = 0; i < 4; i++)
@@ -104,9 +132,10 @@ namespace TarotUnity.Presentation
             for (var i = 0; i < 4; i++) ink.SetVector(CornerProperties[i],new Vector4(points[i].x,points[i].y,0f,0f));
             var viewport = view.pixelRect;
             ink.SetVector("_Viewport",new Vector4(viewport.x,viewport.y,viewport.width,viewport.height));
-            ink.SetVector("_Style",new Vector4(density,12f*density,8f*density,0.6f));
-            var stroke = (card.IsFaceUp ? new Color(223f/255f,199f/255f,141f/255f) : new Color(181f/255f,139f/255f,74f/255f)).linear;
-            ink.SetVector("_Stroke",new Vector4(stroke.r,stroke.g,stroke.b,1f));
+            ink.SetVector("_Style",style);
+            stroke = stroke.linear;
+            if (picking) { stroke.r *= source.color.r; stroke.g *= source.color.g; stroke.b *= source.color.b; }
+            ink.SetVector("_Stroke",new Vector4(stroke.r,stroke.g,stroke.b,opacity));
             frame.SetPropertyBlock(ink);
             frame.sortingLayerID = source.sortingLayerID;
             frame.sortingOrder = source.sortingOrder;
