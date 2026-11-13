@@ -98,6 +98,7 @@ namespace TarotUnity.UI
             }
             RitualTypography.ApplyHierarchy(transform);
             GetComponent<RitualTypography>().UseBrushTitle(title);
+            if (Application.isPlaying) RitualCoverFinish.Attach(gameObject,title);
         }
 
         private TMP_Text PrepareAction(Button button, bool rules)

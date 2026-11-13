@@ -89,9 +89,11 @@ namespace TarotUnity.UI
         }
 
         public static Vector3 ProjectCorner(RitualDeckPose pose, RitualDeckLayerPose layer, int corner)
+            => ProjectPoint(pose,layer,new Vector2(corner==0 || corner==3 ? 0f : 1f,corner<2 ? 0f : 1f));
+
+        internal static Vector3 ProjectPoint(RitualDeckPose pose,RitualDeckLayerPose layer,Vector2 point)
         {
-            var p = new Vector3((corner == 0 || corner == 3 ? -0.5f : 0.5f) * pose.Size.x,
-                (corner < 2 ? -0.5f : 0.5f) * pose.Size.y, 0f);
+            var p = new Vector3((point.x-.5f)*pose.Size.x,(point.y-.5f)*pose.Size.y,0f);
             p = Quaternion.AngleAxis(layer.Roll, Vector3.forward) * p + layer.Offset;
             // CSS opacity groups flatten child depth before the parent's transform.
             if (pose.Opacity < 0.99999f) p.z = 0f;

@@ -94,7 +94,10 @@ namespace TarotUnity.Presentation
                 if (surface.gameObject.scene == gameObject.scene) Track(surface);
             foreach (var deck in FindObjectsByType<RitualDeckPresentation>(FindObjectsSortMode.None))
                 if (deck.gameObject.scene == gameObject.scene && deck.IsReady)
+                {
                     foreach (var renderer in deck.LayerRenderers) Track(renderer);
+                    Track(deck.ShadowRenderer);
+                }
             foreach (var finish in FindObjectsByType<RitualPaperFinish>(FindObjectsSortMode.None))
                 if (finish.gameObject.scene == gameObject.scene && finish.IsReady) Track(finish.FrameRenderer);
         }

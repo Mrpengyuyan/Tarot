@@ -75,7 +75,9 @@ namespace TarotUnity.Tests.PlayMode
                 Assert.That(renderer.gameObject.layer, Is.EqualTo(LayerMask.NameToLayer("RitualPaper")));
                 Assert.That(renderer.sharedMaterial.shader.name, Is.EqualTo("Tarot/RitualDeckInk"));
             }
-            var legacy = deck.GetComponentsInChildren<Renderer>(true).Except(Layers());
+            var contact = deck.GetComponentsInChildren<Renderer>(true).Single(r=>r.name=="RitualDeckShadow");
+            Assert.That(contact.sharedMaterial.shader.name,Is.EqualTo("Tarot/RitualDeckShadow"));
+            var legacy = deck.GetComponentsInChildren<Renderer>(true).Except(Layers()).Except(new[] { contact });
             Assert.That(legacy.Any(r => r.enabled), Is.False, "No second lit or stationary slab may remain.");
             Assert.That(deck.PlannedSeconds, Is.EqualTo(5.8f).Within(0.001f));
             yield return null;
@@ -94,10 +96,13 @@ namespace TarotUnity.Tests.PlayMode
                 {
                     var renderer = Layers()[i];
                     var vertices = renderer.GetComponent<MeshFilter>().sharedMesh.vertices;
+                    var uv = renderer.GetComponent<MeshFilter>().sharedMesh.uv;
                     Assert.That(vertices.Length, Is.EqualTo(4));
                     for (var j = 0; j < 4; j++)
                     {
-                        var p = camera.WorldToScreenPoint(renderer.transform.TransformPoint(vertices[j]));
+                        var point = vertices[j];
+                        if(j>=2) point=Vector3.Lerp(point,vertices[3-j],-uv[j].y/(1f-uv[j].y));
+                        var p = camera.WorldToScreenPoint(renderer.transform.TransformPoint(point));
                         var projected = new Vector2(p.x, size.y - p.y);
                         var reference = RitualDeckLayout.ProjectCorner(expected, RitualDeckLayout.ShuffleLayer(i, 0f, size.x, size.y), j);
                         Assert.That(Vector2.Distance(projected, reference), Is.LessThan(0.35f));
@@ -249,20 +254,23 @@ namespace TarotUnity.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator RebuildingTheRoomPaperPassRetainsExactlyTwelveDeckRegistrations()
+        public IEnumerator RebuildingTheRoomPaperPassRetainsTwelvePrintsAndOnlyOneShadowRegistration()
         {
             RequirePresentation();
             var paper = canvas.GetComponent<RitualPaperRendering>();
             var registry = (System.Collections.IDictionary)typeof(RitualPaperRendering)
                 .GetField("layers", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(paper);
-            Assert.That(registry.Count, Is.EqualTo(12));
+            var shadow=deck.GetComponentsInChildren<Renderer>(true).Single(r=>r.name=="RitualDeckShadow");
+            var expected=Layers().Select(r=>r.gameObject).Append(shadow.gameObject).ToArray();
+            Assert.That(registry.Keys.Cast<GameObject>(), Is.EquivalentTo(expected));
             for (var i = 0; i < 2; i++)
             {
                 paper.enabled = false;
                 Assert.That(registry.Count, Is.Zero);
                 paper.enabled = true;
-                Assert.That(registry.Count, Is.EqualTo(12));
+                Assert.That(registry.Keys.Cast<GameObject>(), Is.EquivalentTo(expected));
                 Assert.That(Layers().All(r => r.gameObject.layer == LayerMask.NameToLayer("RitualPaper")), Is.True);
+                Assert.That(shadow.gameObject.layer,Is.EqualTo(LayerMask.NameToLayer("RitualPaper")));
                 yield return null;
             }
             ((Behaviour)presentation).enabled = false;

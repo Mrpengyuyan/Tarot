@@ -16,6 +16,7 @@ namespace TarotUnity.Presentation
         private readonly List<Renderer> layers = new();
         private readonly List<Mesh> meshes = new();
         private readonly Vector3[] corners = new Vector3[4];
+        private readonly Vector2[] paperUV = new Vector2[4];
         private MaterialPropertyBlock ink;
         private OriginalRenderer[] originals;
         private DeckShuffleChoreographer deck;
@@ -35,6 +36,7 @@ namespace TarotUnity.Presentation
         private Quaternion pickupViewRotation, shuffleViewRotation;
         private float pickupViewFov, shuffleViewFov;
         private bool hasShuffleFrame, shuffleCompleted;
+        private RitualDeckShadow shadow;
 
         public IReadOnlyList<Renderer> LayerRenderers => layers;
         public bool IsReady => isActiveAndEnabled && !releasing && visualRoot != null;
@@ -42,6 +44,7 @@ namespace TarotUnity.Presentation
         public float ShuffleProgress => shuffleProgress;
         public bool IsReturning => mode == PoseMode.Returning;
         public RitualDeckPose CurrentPose { get; private set; }
+        internal Renderer ShadowRenderer => shadow?.Renderer;
 
         internal void GetAuthoredPose(out Vector3 position, out Quaternion rotation, out Vector3 scale)
         { position = authoredPosition; rotation = authoredRotation; scale = authoredScale; }
@@ -107,6 +110,7 @@ namespace TarotUnity.Presentation
             }
             releasing = false;
             fan?.RefreshDeckVisuals(deck.transform, fraction);
+            shadow = RitualDeckShadow.Attach(visualRoot);
             RefreshGeometry();
         }
 
@@ -205,21 +209,29 @@ namespace TarotUnity.Presentation
             deck.transform.localScale = authoredScale;
             ink.SetFloat("_Opacity", CurrentPose.Opacity);
             ink.SetVector("_BorderSize", new Vector4(CurrentPose.Density / CurrentPose.Size.x, CurrentPose.Density / CurrentPose.Size.y, 0f, 0f));
+            var stock=2f*CurrentPose.Density/CurrentPose.Size.y;
+            paperUV[0]=new Vector2(0f,1f); paperUV[1]=Vector2.one;
+            paperUV[2]=new Vector2(1f,-stock); paperUV[3]=new Vector2(0f,-stock);
+            var visible=0;
             for (var i = 0; i < layers.Count; i++)
             {
+                if(layers[i].enabled) visible++;
                 var layer = RitualDeckLayout.ShuffleLayer(i, mode == PoseMode.Raised ? shuffleProgress : 0f, width, height);
                 for (var j = 0; j < 4; j++)
                 {
-                    var p = RitualDeckLayout.ProjectCorner(CurrentPose, layer, j);
+                    var p = RitualDeckLayout.ProjectPoint(CurrentPose,layer,new Vector2(paperUV[j].x,1f-paperUV[j].y));
                     var depth = 2.5f * (1f - p.z / (900f * CurrentPose.Density)) - i * 0.00001f;
                     var world = framePosition + frameRotation * new Vector3((p.x - width * 0.5f) * pixelUnit * depth,
                         (height * 0.5f - p.y) * pixelUnit * depth, depth);
                     corners[j] = layers[i].transform.InverseTransformPoint(world);
                 }
                 meshes[i].vertices = corners;
+                meshes[i].uv = paperUV;
                 meshes[i].RecalculateBounds();
                 layers[i].SetPropertyBlock(ink);
             }
+            shadow?.Refresh(CurrentPose,framePosition,frameRotation,frameFov,width,height,
+                (float)visible/layers.Count,mode==PoseMode.Raised ? .25f : .7f);
         }
 
         private void OnDisable() => Release();
@@ -230,6 +242,8 @@ namespace TarotUnity.Presentation
             IsShuffling = false;
             if (visualRoot == null) return;
             releasing = true;
+            shadow?.Dispose();
+            shadow=null;
             var fraction = fan != null ? fan.DeckShowing : 1f;
             foreach (var renderer in layers)
                 if (renderer != null) { renderer.enabled = false; RitualPaperRendering.Unregister(renderer); }
