@@ -1,4 +1,5 @@
 using TarotUnity.Core;
+using TarotUnity.Gameplay;
 using TarotUnity.Network;
 using TMPro;
 using UnityEngine;
@@ -30,6 +31,7 @@ namespace TarotUnity.UI
 
         private void Start()
         {
+            CardArtworkCatalog.ReleaseDefault();
             RitualMenuView.Attach(gameObject);
             SetStatus("烛火已燃，牌已洗过。\n正在准备在线解读……");
 

@@ -56,7 +56,6 @@ namespace TarotUnity.Gameplay
         [SerializeField] private float pickArcPerMetre = 0.06f;
 
         private readonly List<CardView> activeCards = new();
-        private CardArtworkCatalog defaultArtworkCatalog;
         private CameraChoreographyController cameraChoreography;
 
         // Lazy, self-healing like CardFlipController's - scene-load order and reloads
@@ -354,7 +353,7 @@ namespace TarotUnity.Gameplay
         {
             var catalog = artworkCatalog != null
                 ? artworkCatalog
-                : defaultArtworkCatalog ??= Resources.Load<CardArtworkCatalog>("TarotArt/RWS1909_CardArtworkCatalog");
+                : CardArtworkCatalog.LoadDefault();
 
             return catalog != null ? catalog.FindSprite(drawData) : null;
         }

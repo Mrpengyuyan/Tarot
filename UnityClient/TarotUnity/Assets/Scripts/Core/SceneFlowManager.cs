@@ -36,6 +36,14 @@ namespace TarotUnity.Core
             DontDestroyOnLoad(gameObject);
         }
 
+        private void OnDestroy()
+        {
+            if (Instance == this)
+            {
+                Instance = null;
+            }
+        }
+
         public bool LoadScene(GameSceneId sceneId)
         {
             if (IsLoading)

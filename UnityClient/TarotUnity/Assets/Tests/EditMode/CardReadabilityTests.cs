@@ -53,5 +53,47 @@ namespace TarotUnity.Tests.EditMode
             Assert.That(layout.BandBottom - layout.ReadingTop, Is.GreaterThanOrEqualTo(11.99f));
             Assert.That(layout.ReadingBottom, Is.EqualTo(-height / 2f + 94f).Within(0.01f));
         }
+
+        [Test]
+        public void ArtworkCatalogUsesIndexedLookupAndRefreshesWhenEntriesChange()
+        {
+            var catalog = ScriptableObject.CreateInstance<CardArtworkCatalog>();
+            var texA = new Texture2D(4, 4);
+            var texB = new Texture2D(4, 4);
+            var spriteA = Sprite.Create(texA, new Rect(0, 0, 4, 4), Vector2.one * 0.5f);
+            var spriteB = Sprite.Create(texB, new Rect(0, 0, 4, 4), Vector2.one * 0.5f);
+            try
+            {
+                catalog.SetEntries(new[]
+                {
+                    new CardArtworkEntry { key = "major_00", artwork = spriteA },
+                });
+                Assert.That(catalog.FindSprite("major_00"), Is.SameAs(spriteA));
+                Assert.That(catalog.FindSprite(" MAJOR_00 "), Is.SameAs(spriteA));
+                Assert.That(catalog.FindSprite("cups_01"), Is.Null);
+
+                catalog.SetEntries(new[]
+                {
+                    new CardArtworkEntry { key = "major_00", artwork = spriteB },
+                    new CardArtworkEntry { key = "cups_01", artwork = spriteA },
+                });
+                Assert.That(catalog.FindSprite("major_00"), Is.SameAs(spriteB));
+                Assert.That(catalog.FindSprite("cups_01"), Is.SameAs(spriteA));
+
+                var defaultCatalog = CardArtworkCatalog.LoadDefault();
+                Assert.That(defaultCatalog, Is.Not.Null);
+                Assert.That(CardArtworkCatalog.LoadDefault(), Is.SameAs(defaultCatalog));
+                CardArtworkCatalog.ReleaseDefault();
+                Assert.That(CardArtworkCatalog.LoadDefault(), Is.Not.Null);
+            }
+            finally
+            {
+                Object.DestroyImmediate(spriteA);
+                Object.DestroyImmediate(spriteB);
+                Object.DestroyImmediate(texA);
+                Object.DestroyImmediate(texB);
+                Object.DestroyImmediate(catalog);
+            }
+        }
     }
 }

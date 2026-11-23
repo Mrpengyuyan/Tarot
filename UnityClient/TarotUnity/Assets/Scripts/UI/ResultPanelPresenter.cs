@@ -81,8 +81,6 @@ namespace TarotUnity.UI
         private CardDrawData[] presentedDraws;
         private float laidOutCanvasHeight = -1f;
 
-        private CardArtworkCatalog defaultArtworkCatalog;
-
         public void Present(PredictionDetailResponse detail)
         {
             if (detail == null)
@@ -468,7 +466,7 @@ namespace TarotUnity.UI
         {
             return cardArtworkCatalog != null
                 ? cardArtworkCatalog
-                : defaultArtworkCatalog ??= Resources.Load<CardArtworkCatalog>("TarotArt/RWS1909_CardArtworkCatalog");
+                : CardArtworkCatalog.LoadDefault();
         }
 
         private void PresentCards(CardDrawData[] draws)

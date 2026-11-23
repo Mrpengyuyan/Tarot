@@ -8,9 +8,35 @@ namespace TarotUnity.Gameplay
     [CreateAssetMenu(menuName = "Tarot Unity/Card Artwork Catalog", fileName = "CardArtworkCatalog")]
     public sealed class CardArtworkCatalog : ScriptableObject
     {
+        public const string DefaultResourcePath = "TarotArt/RWS1909_CardArtworkCatalog";
+
+        private static CardArtworkCatalog sharedDefault;
+
         [SerializeField] private CardArtworkEntry[] entries = Array.Empty<CardArtworkEntry>();
 
+        private Dictionary<string, Sprite> spriteLookup;
+
         public IReadOnlyList<CardArtworkEntry> Entries => entries ?? Array.Empty<CardArtworkEntry>();
+
+        public static CardArtworkCatalog LoadDefault()
+        {
+            if (sharedDefault == null)
+            {
+                sharedDefault = Resources.Load<CardArtworkCatalog>(DefaultResourcePath);
+            }
+
+            return sharedDefault;
+        }
+
+        public static void ReleaseDefault()
+        {
+            sharedDefault = null;
+        }
+
+        private void OnEnable()
+        {
+            spriteLookup = null;
+        }
 
         public Sprite FindSprite(CardDrawData drawData)
         {
@@ -19,25 +45,43 @@ namespace TarotUnity.Gameplay
 
         public Sprite FindSprite(string key)
         {
-            if (string.IsNullOrWhiteSpace(key) || entries == null)
+            if (string.IsNullOrWhiteSpace(key) || entries == null || entries.Length == 0)
             {
                 return null;
             }
 
-            foreach (var entry in entries)
-            {
-                if (entry != null && string.Equals(entry.key, key, StringComparison.OrdinalIgnoreCase))
-                {
-                    return entry.artwork;
-                }
-            }
-
-            return null;
+            EnsureLookup();
+            return spriteLookup.TryGetValue(key.Trim(), out var sprite) ? sprite : null;
         }
 
         public void SetEntries(CardArtworkEntry[] nextEntries)
         {
             entries = nextEntries ?? Array.Empty<CardArtworkEntry>();
+            spriteLookup = null;
+        }
+
+        private void EnsureLookup()
+        {
+            if (spriteLookup != null)
+            {
+                return;
+            }
+
+            spriteLookup = new Dictionary<string, Sprite>(entries.Length, StringComparer.OrdinalIgnoreCase);
+            for (var i = 0; i < entries.Length; i++)
+            {
+                var entry = entries[i];
+                if (entry == null || string.IsNullOrWhiteSpace(entry.key))
+                {
+                    continue;
+                }
+
+                var trimmedKey = entry.key.Trim();
+                if (!spriteLookup.ContainsKey(trimmedKey))
+                {
+                    spriteLookup[trimmedKey] = entry.artwork;
+                }
+            }
         }
 
         public static string ResolveKey(TarotCardSimple card)
@@ -47,21 +91,60 @@ namespace TarotUnity.Gameplay
                 return string.Empty;
             }
 
-            var suit = Normalize(card.suit);
+            var suit = ResolveCanonicalSuit(card.suit);
             if (!string.IsNullOrEmpty(suit) && card.number >= 1 && card.number <= 14)
             {
                 return $"{suit}_{card.number:00}";
             }
 
-            var arcana = Normalize(card.arcana);
-            if ((arcana == "major" || arcana == "major_arcana" || string.IsNullOrEmpty(suit)) &&
-                card.number >= 0 &&
-                card.number <= 21)
+            if (IsMajorArcana(card.arcana, suit) && card.number >= 0 && card.number <= 21)
             {
                 return $"major_{card.number:00}";
             }
 
             return ResolveNameKey(card.name_en);
+        }
+
+        private static string ResolveCanonicalSuit(string rawSuit)
+        {
+            if (string.IsNullOrWhiteSpace(rawSuit))
+            {
+                return string.Empty;
+            }
+
+            var trimmed = rawSuit.Trim();
+            for (var i = 0; i < MinorSuits.Length; i++)
+            {
+                if (string.Equals(trimmed, MinorSuits[i], StringComparison.OrdinalIgnoreCase))
+                {
+                    return MinorSuits[i];
+                }
+            }
+
+            return Normalize(trimmed);
+        }
+
+        private static bool IsMajorArcana(string rawArcana, string resolvedSuit)
+        {
+            if (string.IsNullOrEmpty(resolvedSuit))
+            {
+                return true;
+            }
+
+            if (string.IsNullOrWhiteSpace(rawArcana))
+            {
+                return false;
+            }
+
+            var trimmed = rawArcana.Trim();
+            if (string.Equals(trimmed, "major", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(trimmed, "major_arcana", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            var normalized = Normalize(trimmed);
+            return normalized == "major" || normalized == "major_arcana";
         }
 
         private static string ResolveNameKey(string nameEn)
