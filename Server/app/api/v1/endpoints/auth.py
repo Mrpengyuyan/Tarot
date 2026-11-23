@@ -26,6 +26,7 @@ from app.crud.user import (
 from app.db.session import get_db
 from app.models.user import User as UserModel
 from app.schemas.user import Token, User, UserCreate
+from app.services.client_ip import resolve_client_host
 from app.services.guest_session_limiter import GuestSessionLimitReached, claim_guest_session
 
 router = APIRouter()
@@ -162,7 +163,7 @@ def guest_session(
 ):
     """Issue a limited anonymous session for the desktop client."""
     try:
-        claim_guest_session(db, request.client.host if request.client else "unknown")
+        claim_guest_session(db, resolve_client_host(request))
     except GuestSessionLimitReached as exc:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,

@@ -1,7 +1,8 @@
+import ipaddress
 import os
 import sys
 from pathlib import Path
-from typing import Any, List, Literal, Optional, cast
+from typing import Any, List, Literal, Optional, Tuple, Union, cast
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
@@ -120,6 +121,8 @@ class Settings(BaseSettings):
     GUEST_DAILY_READING_LIMIT: int = 3
     GUEST_SESSIONS_PER_HOUR: int = Field(default=10, ge=1)
     USER_DAILY_READING_LIMIT: int = 3
+    # Comma-separated reverse proxy IPs or CIDRs trusted to supply X-Forwarded-For (empty = ignore header).
+    TRUSTED_PROXY_IPS: str = ""
     # Background interpretation generation (POST /records/{id}/interpret/async).
     # Unity's InterpretationPoller gives up after STALE_SECONDS + 30s; keep the two in sync.
     AI_INTERPRETATION_STALE_SECONDS: int = 300
@@ -192,7 +195,20 @@ class Settings(BaseSettings):
             if item.strip()
         ]
 
+    @property
+    def trusted_proxy_networks(self) -> Tuple[Union[ipaddress.IPv4Network, ipaddress.IPv6Network], ...]:
+        networks: List[Union[ipaddress.IPv4Network, ipaddress.IPv6Network]] = []
+        for raw_entry in self.TRUSTED_PROXY_IPS.split(","):
+            entry = raw_entry.strip()
+            if not entry:
+                continue
+            networks.append(ipaddress.ip_network(entry, strict=False))
+        return tuple(networks)
+
     def validate_runtime(self) -> None:
+        # Validate TRUSTED_PROXY_IPS eagerly so misconfigured CIDRs fail at startup.
+        _ = self.trusted_proxy_networks
+
         weak_values = {
             "",
             "change-me-in-production",
