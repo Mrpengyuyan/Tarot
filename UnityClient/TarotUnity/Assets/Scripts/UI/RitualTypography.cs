@@ -30,6 +30,7 @@ namespace TarotUnity.UI
         private readonly List<TextBinding> texts = new();
         private readonly List<InputBinding> inputs = new();
         private TMP_Text brushTitle;
+        private TarotUiTheme subscribedTheme;
 
         public static void ApplyHierarchy(Transform root)
         {
@@ -48,6 +49,12 @@ namespace TarotUnity.UI
         private void BindHierarchy()
         {
             var theme = GetComponentInParent<TarotUiTheme>(true);
+            if (subscribedTheme != theme)
+            {
+                if (subscribedTheme != null) subscribedTheme.Applied -= RestoreBindings;
+                subscribedTheme = theme;
+                if (subscribedTheme != null) subscribedTheme.Applied += RestoreBindings;
+            }
             texts.Clear();
             inputs.Clear();
             foreach (var text in GetComponentsInChildren<TMP_Text>(true))
@@ -71,9 +78,13 @@ namespace TarotUnity.UI
             RestoreBindings();
         }
 
-        private void LateUpdate()
+        private void OnDestroy()
         {
-            RestoreBindings();
+            if (subscribedTheme != null)
+            {
+                subscribedTheme.Applied -= RestoreBindings;
+                subscribedTheme = null;
+            }
         }
 
         private void RestoreBindings()

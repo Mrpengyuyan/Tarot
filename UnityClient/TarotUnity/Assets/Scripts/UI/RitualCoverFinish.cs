@@ -12,6 +12,7 @@ namespace TarotUnity.UI
         private Image shade;
         private Material original, ink;
         private Texture2D gradient;
+        private TarotUiTheme subscribedTheme;
         private bool vertexGradient;
         private Color originalColor;
         private static readonly float[] Stops = { .08f,.32f,.56f,.74f,1f };
@@ -21,7 +22,8 @@ namespace TarotUnity.UI
         internal static void Attach(GameObject host,TMP_Text title)
         {
             if (host==null || title==null) return;
-            var owner=host.GetComponent<RitualCoverFinish>() ?? host.AddComponent<RitualCoverFinish>();
+            var owner=host.GetComponent<RitualCoverFinish>();
+            if (owner==null) owner=host.AddComponent<RitualCoverFinish>();
             owner.title=title;
             owner.Build();
         }
@@ -63,10 +65,10 @@ namespace TarotUnity.UI
             shade=node.GetComponent<Image>();
             shade.material=shadeMaterial;
             shade.raycastTarget=false;
+            subscribedTheme=GetComponentInParent<TarotUiTheme>(true);
+            if (subscribedTheme!=null) subscribedTheme.Applied+=RestoreInk;
             RestoreInk();
         }
-
-        private void LateUpdate() => RestoreInk();
 
         private void RestoreInk()
         {
@@ -100,6 +102,11 @@ namespace TarotUnity.UI
         private void OnDestroy() => Release();
         private void Release()
         {
+            if (subscribedTheme!=null)
+            {
+                subscribedTheme.Applied-=RestoreInk;
+                subscribedTheme=null;
+            }
             if(title!=null)
             {
                 title.OnPreRenderText-=MapTitleInk;

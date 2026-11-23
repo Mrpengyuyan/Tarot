@@ -32,7 +32,21 @@ namespace TarotUnity.UI
         private Vector2Int frameSize;
         private CardDrawData[] labelDraws;
         private bool[] labelReversed;
+        private CardView[] slotCards;
+        private RitualTableCardHover[] slotHovers;
+        private CardFlipController[] slotFlips;
         private RitualSpreadCardLease cardLease;
+        private bool layoutValid;
+        private Vector2Int lastViewport;
+        private Vector2 lastCanvasSize;
+        private Vector3 lastPosePos;
+        private Quaternion lastPoseRot;
+        private float lastPoseFov;
+        private ReadingFlowState lastFlowState;
+        private bool lastInspecting;
+        private int lastActiveCount;
+        private int lastFaceMask;
+        private int lastReversedMask;
 
         public static RitualSpreadPresentation Attach(GameObject host, ReadingFlowController flow,
             DeckController deck, CameraChoreographyController choreography, Camera camera)
@@ -75,8 +89,12 @@ namespace TarotUnity.UI
             count = cardCount;
             originalSlots = layouts.GetSlots(count).ToArray();
             frame = null;
+            layoutValid = false;
             labelDraws = new CardDrawData[count];
             labelReversed = new bool[count];
+            slotCards = new CardView[count];
+            slotHovers = new RitualTableCardHover[count];
+            slotFlips = new CardFlipController[count];
             world = new GameObject("RitualSpreadWorld", typeof(RitualSpreadCardLease)).transform;
             cardLease = world.GetComponent<RitualSpreadCardLease>();
             cardLease.enabled = false;
@@ -108,25 +126,78 @@ namespace TarotUnity.UI
             RefreshLayout();
         }
 
-        private void LateUpdate() => RefreshLayout();
+        private void LateUpdate() => RefreshLayout(false);
 
-        public void RefreshLayout()
+        public void RefreshLayout() => RefreshLayout(true);
+
+        private void RefreshLayout(bool force)
         {
             if (world == null || cameraView == null || flow == null) return;
             var width = cameraView.pixelWidth;
             var height = cameraView.pixelHeight;
             if (width <= 2 || height <= 2) return;
             var viewportSize = new Vector2Int(width, height);
-            if (frame == null || frameSize != viewportSize)
-            {
-                frame = RitualSpreadLayout.Compute(count, width, height);
-                frameSize = viewportSize;
-            }
+            var canvasSize = canvas != null ? canvas.rect.size : Vector2.zero;
             var final = flow.State == ReadingFlowState.WaitingForFlip || flow.State == ReadingFlowState.ResultReady;
             var pose = cameraView.transform;
             var fov = cameraView.fieldOfView;
             if (!final) choreography.TryGetSpreadPose(count, out pose, out fov);
             if (pose == null) return;
+
+            var inspecting = RitualPaperRendering.TryGetInspection(gameObject.scene.handle, cameraView, out var inspection)
+                && inspection != null && inspection.IsOpen;
+            var activeCount = deck != null ? deck.ActiveCards.Count : 0;
+            var faceMask = 0;
+            var reversedMask = 0;
+            var dynamicSlot = false;
+            for (var i = 0; i < count; i++)
+            {
+                var card = deck != null && i < activeCount ? deck.ActiveCards[i] : null;
+                if (slotCards[i] != card)
+                {
+                    slotCards[i] = card;
+                    slotHovers[i] = card != null ? card.GetComponent<RitualTableCardHover>() : null;
+                    slotFlips[i] = slotHovers[i] != null && slotHovers[i].Flip != null
+                        ? slotHovers[i].Flip
+                        : card != null ? card.GetComponent<CardFlipController>() : null;
+                    dynamicSlot = true;
+                }
+                else if (card != null && slotHovers[i] == null)
+                {
+                    slotHovers[i] = card.GetComponent<RitualTableCardHover>();
+                }
+                if (card != null)
+                {
+                    if (card.IsFaceUp) faceMask |= 1 << i;
+                    if (card.ShowsReversed) reversedMask |= 1 << i;
+                }
+                if ((slotHovers[i] != null && slotHovers[i].NeedsUpdate)
+                    || (slotFlips[i] != null && slotFlips[i].IsFlipping))
+                {
+                    dynamicSlot = true;
+                }
+            }
+
+            if (!force && layoutValid && !dynamicSlot
+                && viewportSize == lastViewport
+                && canvasSize == lastCanvasSize
+                && pose.position == lastPosePos
+                && pose.rotation == lastPoseRot
+                && Mathf.Approximately(fov, lastPoseFov)
+                && flow.State == lastFlowState
+                && inspecting == lastInspecting
+                && activeCount == lastActiveCount
+                && faceMask == lastFaceMask
+                && reversedMask == lastReversedMask)
+            {
+                return;
+            }
+
+            if (frame == null || frameSize != viewportSize)
+            {
+                frame = RitualSpreadLayout.Compute(count, width, height);
+                frameSize = viewportSize;
+            }
             const float depth = 2.5f;
             var pixelScale = depth * 2f * Mathf.Tan(fov * 0.5f * Mathf.Deg2Rad) / height;
             // Keep the table camera. Calibrate the real card plane to the preview's longer perspective.
@@ -150,15 +221,12 @@ namespace TarotUnity.UI
             world.localScale = new Vector3(pixelScale, scaleY, scaleZ);
             projectionAxes.localRotation = Quaternion.AngleAxis(-theta * Mathf.Rad2Deg, Vector3.right);
             var density = RitualDeckLayout.Density(width, height);
-            var inspecting = RitualPaperRendering.TryGetInspection(gameObject.scene.handle, cameraView, out var inspection)
-                && inspection != null && inspection.IsOpen;
             for (var i = 0; i < count; i++)
             {
                 var placement = frame.Cards[i];
-                var card = deck != null && i < deck.ActiveCards.Count ? deck.ActiveCards[i] : null;
-                var hover = card != null ? card.GetComponent<RitualTableCardHover>() : null;
-                var flip = hover != null && hover.Flip != null ? hover.Flip
-                    : card != null ? card.GetComponent<CardFlipController>() : null;
+                var card = slotCards[i];
+                var hover = slotHovers[i];
+                var flip = slotFlips[i];
                 var flipping = flip != null && flip.IsFlipping;
                 var hoverAllowed = final && !flipping && !inspecting;
                 var hoverAmount = hover != null ? hover.Evaluate(hoverAllowed, flipping || inspecting) : 0f;
@@ -172,7 +240,7 @@ namespace TarotUnity.UI
                     placement.Size.x / RitualSpreadSlot.PaperWidth, placement.Size.y);
                 hover?.ApplyTint(hoverAmount, inspecting);
                 var visible = final && card != null && card.IsFaceUp && !flipping;
-                labels[i].gameObject.SetActive(visible);
+                if (labels[i].gameObject.activeSelf != visible) labels[i].gameObject.SetActive(visible);
                 if (!visible) continue;
                 if (labelDraws[i] != card.DrawData || labelReversed[i] != card.ShowsReversed || string.IsNullOrEmpty(labels[i].text))
                 {
@@ -188,6 +256,18 @@ namespace TarotUnity.UI
                 labels[i].fontSize = placement.LabelFontSize * canvas.rect.height / height;
                 labels[i].characterSpacing = 12f;
             }
+
+            lastViewport = viewportSize;
+            lastCanvasSize = canvasSize;
+            lastPosePos = pose.position;
+            lastPoseRot = pose.rotation;
+            lastPoseFov = fov;
+            lastFlowState = flow.State;
+            lastInspecting = inspecting;
+            lastActiveCount = activeCount;
+            lastFaceMask = faceMask;
+            lastReversedMask = reversedMask;
+            layoutValid = true;
             if (!final) return;
             if (action != null) Place(action, frame.ActionRect, width, height);
             if (actionText != null)

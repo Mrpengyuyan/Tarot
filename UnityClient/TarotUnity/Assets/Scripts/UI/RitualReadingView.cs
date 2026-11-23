@@ -35,6 +35,14 @@ namespace TarotUnity.UI
         private Vector2 lastSize;
         private RitualStageEntrance entrance;
         private bool stageEntered;
+        private bool stateDirty = true;
+        private ReadingFlowState lastFlowState;
+        private bool lastChoosingSpread;
+        private string lastQuestionText;
+        private string lastStatusText;
+        private int lastPickedCount = -1;
+        private int lastFlippedCount = -1;
+        private int lastTotalCount = -1;
         private readonly List<Transform> retired = new();
 
         public static RitualReadingView Attach(ReadingRoomController room, ReadingFlowController flow,
@@ -135,6 +143,7 @@ namespace TarotUnity.UI
         private void ChooseSpread()
         {
             choosingSpread = false;
+            stateDirty = true;
             if (sockets != null) sockets.Apply(0);
             Refresh();
         }
@@ -142,6 +151,7 @@ namespace TarotUnity.UI
         private void ChangeSpread()
         {
             choosingSpread = true;
+            stateDirty = true;
             Refresh();
         }
 
@@ -162,12 +172,42 @@ namespace TarotUnity.UI
         {
             if (canvas == null || !initialized) return;
             if (lastSize != canvas.rect.size) RefreshLayout();
-            Refresh();
+            if (NeedsRefresh()) Refresh();
+        }
+
+        private bool NeedsRefresh()
+        {
+            if (flow == null) return false;
+            if (stateDirty || flow.State != lastFlowState || choosingSpread != lastChoosingSpread) return true;
+            var currentQuestion = question != null ? question.text : "";
+            var currentStatus = oldStatus != null ? oldStatus.text : "";
+            if (!string.Equals(currentQuestion, lastQuestionText, System.StringComparison.Ordinal)
+                || !string.Equals(currentStatus, lastStatusText, System.StringComparison.Ordinal))
+                return true;
+            var total = flow.SelectedSpreadCardCount;
+            var picked = deck != null ? deck.ActiveCards.Count : 0;
+            var flipped = CountFlipped();
+            return total != lastTotalCount || picked != lastPickedCount || flipped != lastFlippedCount;
+        }
+
+        private int CountFlipped()
+        {
+            var flipped = 0;
+            if (deck != null)
+            {
+                var active = deck.ActiveCards;
+                for (var i = 0; i < active.Count; i++)
+                {
+                    if (active[i] != null && active[i].IsFaceUp) flipped++;
+                }
+            }
+            return flipped;
         }
 
         private void Refresh()
         {
             if (flow == null) return;
+            stateDirty = false;
             foreach (var node in retired) if (node != null) Show(node, false);
             var previousStage=Stage;
             switch (flow.State)
@@ -185,24 +225,32 @@ namespace TarotUnity.UI
             Show(questionLabel.transform, Stage == ViewStage.Question);
             Show(question.transform, Stage == ViewStage.Question);
             Show(changeSpread.transform, Stage == ViewStage.Question);
-            Show(draw.transform, Stage == ViewStage.Question,string.IsNullOrWhiteSpace(question.text)?.35f:1f);
+            var currentQuestion = question != null ? question.text : "";
+            Show(draw.transform, Stage == ViewStage.Question, string.IsNullOrWhiteSpace(currentQuestion) ? .35f : 1f);
             Show(reveal.transform, Stage == ViewStage.Ready);
             question.interactable = Stage == ViewStage.Question;
-            draw.interactable = Stage == ViewStage.Question && !string.IsNullOrWhiteSpace(question.text);
+            draw.interactable = Stage == ViewStage.Question && !string.IsNullOrWhiteSpace(currentQuestion);
 
             var message = oldStatus != null ? oldStatus.text : "";
-            var error = Stage == ViewStage.Question && ((message.Contains("先输入") && string.IsNullOrWhiteSpace(question.text)) || message.Contains("中断") || message.Contains("打断")
+            var error = Stage == ViewStage.Question && ((message.Contains("先输入") && string.IsNullOrWhiteSpace(currentQuestion)) || message.Contains("中断") || message.Contains("打断")
                 || message.Contains("失败") || message.Contains("无法") || message.Contains("不可用"));
             feedback.text = error ? message : "";
             Show(feedback.transform, error);
             var total = flow.SelectedSpreadCardCount;
             var picked = deck != null ? deck.ActiveCards.Count : 0;
-            var flipped = 0;
-            if (deck != null) foreach (var card in deck.ActiveCards) if (card != null && card.IsFaceUp) flipped++;
+            var flipped = CountFlipped();
             progress.text = Stage == ViewStage.Pick && picked < total ? $"还可选 {total - picked} 张"
                 : Stage == ViewStage.Reveal ? $"逐张揭开 <color=#CCAD75>{flipped} / {total}</color>" : "";
             if (Stage == ViewStage.Reveal) progress.color = new Color(183f/255f, 160f/255f, 128f/255f);
             Show(progress.transform, progress.text.Length > 0);
+
+            lastFlowState = flow.State;
+            lastChoosingSpread = choosingSpread;
+            lastQuestionText = currentQuestion;
+            lastStatusText = message;
+            lastTotalCount = total;
+            lastPickedCount = picked;
+            lastFlippedCount = flipped;
         }
 
         public void RefreshLayout()

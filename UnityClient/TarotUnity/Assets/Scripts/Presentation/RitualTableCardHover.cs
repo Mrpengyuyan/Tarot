@@ -18,9 +18,11 @@ namespace TarotUnity.Presentation
         private float from;
         private float target;
         private float since;
+        private float lastEvaluated;
 
         internal CardFlipController Flip => flip;
         internal bool IsHovering => hovering;
+        internal bool NeedsUpdate => hovering || lastEvaluated > 0.0001f || !Mathf.Approximately(from, target);
 
         internal static RitualTableCardHover Attach(CardView card)
         {
@@ -51,6 +53,7 @@ namespace TarotUnity.Presentation
                     from = 0f;
                     target = 0f;
                     since = Time.time;
+                    lastEvaluated = 0f;
                     return 0f;
                 }
             }
@@ -64,7 +67,8 @@ namespace TarotUnity.Presentation
                 since = Time.time;
             }
 
-            return Sample(Time.time);
+            lastEvaluated = Sample(Time.time);
+            return lastEvaluated;
         }
 
         private float Sample(float now)

@@ -23,6 +23,7 @@ namespace TarotUnity.UI
         private TMP_Text caption;
         private RitualStageEntrance entrance;
         private Transform[] entranceNodes;
+        private TarotUiTheme subscribedTheme;
         private Vector2 lastSize;
 
         public static RitualMenuView Attach(GameObject host)
@@ -101,6 +102,8 @@ namespace TarotUnity.UI
             }
             RitualTypography.ApplyHierarchy(transform);
             GetComponent<RitualTypography>().UseBrushTitle(title);
+            subscribedTheme = GetComponentInParent<TarotUiTheme>(true);
+            if (subscribedTheme != null) subscribedTheme.Applied += RestoreInk;
             RestoreInk();
             if (Application.isPlaying) RitualCoverFinish.Attach(gameObject, title);
             if (Application.isPlaying)
@@ -171,11 +174,13 @@ namespace TarotUnity.UI
             if (canvas != null && canvas.rect.size != lastSize) RefreshLayout();
         }
 
-        private void LateUpdate()
+        private void OnDestroy()
         {
-            if (canvas == null) return;
-            if (canvas.rect.size != lastSize) RefreshLayout();
-            RestoreInk();
+            if (subscribedTheme != null)
+            {
+                subscribedTheme.Applied -= RestoreInk;
+                subscribedTheme = null;
+            }
         }
 
         private void RefreshLayout()

@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -62,6 +63,7 @@ namespace TarotUnity.UI
         public int DisplaySizeThreshold => displaySizeThreshold;
 
         public float MutedSizeThreshold => mutedSizeThreshold;
+        public event Action Applied;
 
         private void Awake()
         {
@@ -94,6 +96,8 @@ namespace TarotUnity.UI
             {
                 ApplyTmpInputStyle(input);
             }
+
+            Applied?.Invoke();
         }
 
         /// <summary>
