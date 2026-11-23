@@ -25,8 +25,7 @@ setup(
         
         # Security
         "python-jose[cryptography]==3.5.0",
-        "passlib[bcrypt]==1.7.4",
-        "bcrypt<4.0.0",
+        "bcrypt>=3.2.2,<5.0.0",
         
         # API Client
         "httpx==0.27.0",

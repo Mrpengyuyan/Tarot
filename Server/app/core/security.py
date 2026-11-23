@@ -1,13 +1,45 @@
 from datetime import datetime, timedelta, timezone
 from typing import Literal, Optional
 
+import bcrypt
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 from app.core.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 MAX_PASSWORD_BYTES = 72
+
+
+class _BcryptContext:
+    """Direct bcrypt password hashing without deprecated passlib/crypt imports."""
+
+    def __init__(self, rounds: int = 12) -> None:
+        self.rounds = rounds
+
+    def hash(self, password: str) -> str:
+        if not isinstance(password, str):
+            raise TypeError("Password must be a string")
+        encoded = password.encode("utf-8")
+        if b"\x00" in encoded:
+            raise ValueError("Password must not contain NUL bytes")
+        # Public get_password_hash validates MAX_PASSWORD_BYTES before calling hash();
+        # slicing here preserves legacy bcrypt behavior for direct pwd_context.hash callers.
+        return bcrypt.hashpw(encoded[:MAX_PASSWORD_BYTES], bcrypt.gensalt(rounds=self.rounds)).decode("ascii")
+
+    def verify(self, plain_password: str, hashed_password: str) -> bool:
+        if not isinstance(plain_password, str) or not isinstance(hashed_password, str):
+            raise ValueError("Invalid password or hash type")
+        if not hashed_password.startswith(("$2a$", "$2b$", "$2y$")):
+            raise ValueError("Unsupported password hash format")
+        plain_bytes = plain_password.encode("utf-8")
+        if b"\x00" in plain_bytes or len(plain_bytes) > MAX_PASSWORD_BYTES:
+            raise ValueError("Invalid password input")
+        hashed_bytes = hashed_password.encode("ascii")
+        if b"\x00" in hashed_bytes:
+            raise ValueError("Invalid password hash")
+        return bcrypt.checkpw(plain_bytes, hashed_bytes)
+
+
+pwd_context = _BcryptContext()
 
 
 TokenType = Literal["access", "refresh"]

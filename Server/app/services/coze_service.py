@@ -934,3 +934,12 @@ class CozeService:
 
 
 coze_service = CozeService(budget_store=DatabaseBudgetStore(SessionLocal))
+
+# Provider-accurate aliases; legacy Coze* names remain exported for compatibility.
+AIProviderError = CozeError
+AIProviderTimeoutError = CozeTimeoutError
+AIProviderRequestError = CozeRequestError
+AIProviderHttpStatusError = CozeHttpStatusError
+AIBudgetExceededError = CozeBudgetExceededError
+DeepSeekService = CozeService
+deepseek_service = coze_service
