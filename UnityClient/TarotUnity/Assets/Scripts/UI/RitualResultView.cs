@@ -74,9 +74,14 @@ namespace TarotUnity.UI
                 if (label.GetComponent<TarotUiPreserveColor>() == null)
                     label.gameObject.AddComponent<TarotUiPreserveColor>();
             }
-            if (!rules) return;
+            if (!rules)
+            {
+                if(Application.isPlaying) RitualControlFeedback.Attach(button,RitualControlFeedback.Kind.Quiet);
+                return;
+            }
             AddRule(node, "RitualActionRuleTop", 1f);
             AddRule(node, "RitualActionRuleBottom", 0f);
+            if(Application.isPlaying) RitualControlFeedback.Attach(button,RitualControlFeedback.Kind.Primary);
         }
 
         private static void HideImage(Transform node)

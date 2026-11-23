@@ -50,8 +50,7 @@ namespace TarotUnity.Tests.PlayMode
         public IEnumerator CoverMatchesReferenceAndKeepsDecorationsOutOfHitTesting()
         {
             yield return SceneManager.LoadSceneAsync("MainMenu");
-            yield return null;
-            yield return null;
+            yield return new WaitForSecondsRealtime(0.7f);
             var root = (RectTransform)GameObject.Find("MainMenuCanvas").transform;
             var title = root.Find("TitleText").GetComponent<TMP_Text>();
             var start = root.Find("StartReadingButton").GetComponent<Button>();
@@ -87,8 +86,7 @@ namespace TarotUnity.Tests.PlayMode
         public IEnumerator ChoicesAndQuestionKeepReferenceGeometryAndPlayerInputThroughResize()
         {
             yield return SceneManager.LoadSceneAsync("ReadingRoom");
-            yield return null;
-            yield return null;
+            yield return new WaitForSecondsRealtime(0.7f);
             var root = (RectTransform)GameObject.Find("ReadingRoomCanvas").transform;
             var view = root.GetComponent<RitualReadingView>();
             var input = root.Find("QuestionInput").GetComponent<TMP_InputField>();
@@ -107,7 +105,7 @@ namespace TarotUnity.Tests.PlayMode
                 }
             }
             root.Find("ThreeCardButton").GetComponent<Button>().onClick.Invoke();
-            yield return null;
+            yield return new WaitForSecondsRealtime(0.7f);
             var draw = root.Find("DrawButton").GetComponent<Button>();
             input.text = "   ";
             yield return null;

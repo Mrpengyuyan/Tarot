@@ -33,7 +33,8 @@ namespace TarotUnity.UI
         private bool choosingSpread = true;
         private bool initialized;
         private Vector2 lastSize;
-        private readonly Dictionary<Transform, CanvasGroup> groups = new();
+        private RitualStageEntrance entrance;
+        private bool stageEntered;
         private readonly List<Transform> retired = new();
 
         public static RitualReadingView Attach(ReadingRoomController room, ReadingFlowController flow,
@@ -56,6 +57,7 @@ namespace TarotUnity.UI
 
         private void Build()
         {
+            entrance=RitualStageEntrance.Attach(gameObject);
             // Keep serialized controls and their listeners, but retire the old, always-visible dock.
             foreach (Transform child in canvas)
             {
@@ -119,6 +121,15 @@ namespace TarotUnity.UI
             RefreshLayout();
             initialized = true;
             Refresh();
+            if(Application.isPlaying)
+            {
+                foreach(var button in spreads) RitualControlFeedback.Attach(button,RitualControlFeedback.Kind.Spread);
+                RitualControlFeedback.Attach(draw,RitualControlFeedback.Kind.Primary);
+                RitualControlFeedback.Attach(reveal,RitualControlFeedback.Kind.Primary);
+                RitualControlFeedback.Attach(changeSpread,RitualControlFeedback.Kind.Quiet);
+                RitualControlFeedback.Attach(back,RitualControlFeedback.Kind.Quiet);
+                RitualControlFeedback.Attach(question);
+            }
         }
 
         private void ChooseSpread()
@@ -142,6 +153,11 @@ namespace TarotUnity.UI
                 draw.onClick.Invoke();
         }
 
+        private void OnRectTransformDimensionsChange()
+        {
+            if (canvas != null && initialized && lastSize != canvas.rect.size) RefreshLayout();
+        }
+
         private void LateUpdate()
         {
             if (canvas == null || !initialized) return;
@@ -153,6 +169,7 @@ namespace TarotUnity.UI
         {
             if (flow == null) return;
             foreach (var node in retired) if (node != null) Show(node, false);
+            var previousStage=Stage;
             switch (flow.State)
             {
                 case ReadingFlowState.Shuffling: Stage = ViewStage.Shuffle; break;
@@ -161,17 +178,17 @@ namespace TarotUnity.UI
                 case ReadingFlowState.ResultReady: Stage = ViewStage.Ready; break;
                 default: Stage = choosingSpread ? ViewStage.Spread : ViewStage.Question; break;
             }
+            if(!stageEntered || previousStage!=Stage) { entrance.Restart(); stageEntered=true; }
             foreach (var button in spreads) if (button != null) Show(button.transform, Stage == ViewStage.Spread);
             Show(spreadCaption.transform, Stage == ViewStage.Spread);
             Show(back.transform, Stage == ViewStage.Spread);
             Show(questionLabel.transform, Stage == ViewStage.Question);
             Show(question.transform, Stage == ViewStage.Question);
             Show(changeSpread.transform, Stage == ViewStage.Question);
-            Show(draw.transform, Stage == ViewStage.Question);
+            Show(draw.transform, Stage == ViewStage.Question,string.IsNullOrWhiteSpace(question.text)?.35f:1f);
             Show(reveal.transform, Stage == ViewStage.Ready);
             question.interactable = Stage == ViewStage.Question;
             draw.interactable = Stage == ViewStage.Question && !string.IsNullOrWhiteSpace(question.text);
-            if (Stage == ViewStage.Question && !draw.interactable) groups[draw.transform].alpha = 0.35f;
 
             var message = oldStatus != null ? oldStatus.text : "";
             var error = Stage == ViewStage.Question && ((message.Contains("先输入") && string.IsNullOrWhiteSpace(question.text)) || message.Contains("中断") || message.Contains("打断")
@@ -242,18 +259,10 @@ namespace TarotUnity.UI
             if (text.GetComponent<TarotUiPreserveColor>() == null) text.gameObject.AddComponent<TarotUiPreserveColor>();
         }
 
-        private void Show(Transform node, bool visible)
+        private void Show(Transform node, bool visible, float opacity = 1f)
         {
-            if (node == null) return;
-            if (!groups.TryGetValue(node, out var group) || group == null)
-            {
-                group = node.GetComponent<CanvasGroup>();
-                if (group == null) group = node.gameObject.AddComponent<CanvasGroup>();
-                groups[node] = group;
-            }
-            group.alpha = visible ? 1f : 0f;
-            group.interactable = visible;
-            group.blocksRaycasts = visible;
+            if (entrance == null) return;
+            entrance.Show(node, visible, opacity);
         }
 
         private TMP_Text Text(string name, string value, Transform parent = null)

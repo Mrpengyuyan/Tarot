@@ -21,6 +21,8 @@ namespace TarotUnity.UI
         private RectTransform titleRule;
         private RectTransform seal;
         private TMP_Text caption;
+        private RitualStageEntrance entrance;
+        private Transform[] entranceNodes;
         private Vector2 lastSize;
 
         public static RitualMenuView Attach(GameObject host)
@@ -33,6 +35,7 @@ namespace TarotUnity.UI
                 view.Build();
             }
             view.RefreshLayout();
+            view.ApplyEntrance();
             view.RestoreInk();
             return view;
         }
@@ -98,7 +101,23 @@ namespace TarotUnity.UI
             }
             RitualTypography.ApplyHierarchy(transform);
             GetComponent<RitualTypography>().UseBrushTitle(title);
-            if (Application.isPlaying) RitualCoverFinish.Attach(gameObject,title);
+            RestoreInk();
+            if (Application.isPlaying) RitualCoverFinish.Attach(gameObject, title);
+            if (Application.isPlaying)
+            {
+                entrance = RitualStageEntrance.Attach(gameObject);
+                entranceNodes = new Transform[]
+                {
+                    title != null ? title.transform : null,
+                    titleRule,
+                    seal,
+                    caption != null ? caption.transform : null,
+                    start != null ? start.transform : null,
+                    quit != null ? quit.transform : null,
+                };
+                RitualControlFeedback.Attach(start, RitualControlFeedback.Kind.Primary);
+                RitualControlFeedback.Attach(quit, RitualControlFeedback.Kind.Quiet);
+            }
         }
 
         private TMP_Text PrepareAction(Button button, bool rules)
@@ -139,6 +158,17 @@ namespace TarotUnity.UI
                 Rule(button.transform, "RitualActionRuleBottom", 0f);
             }
             return label;
+        }
+
+        private void ApplyEntrance()
+        {
+            if (entrance == null || entranceNodes == null) return;
+            foreach (var node in entranceNodes) entrance.Show(node, true);
+        }
+
+        private void OnRectTransformDimensionsChange()
+        {
+            if (canvas != null && canvas.rect.size != lastSize) RefreshLayout();
         }
 
         private void LateUpdate()

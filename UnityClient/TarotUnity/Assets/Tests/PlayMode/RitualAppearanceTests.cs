@@ -341,7 +341,7 @@ namespace TarotUnity.Tests.PlayMode
         private IEnumerator Load(string name)
         {
             yield return SceneManager.LoadSceneAsync(name);
-            yield return new WaitForSeconds(.35f);
+            yield return new WaitForSecondsRealtime(.7f);
             canvas=Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None).First(c=>c.isRootCanvas && c.gameObject.scene==SceneManager.GetActiveScene());
             camera=Object.FindObjectsByType<Camera>(FindObjectsSortMode.None).Where(c=>c.isActiveAndEnabled && c.gameObject.scene==SceneManager.GetActiveScene())
                 .OrderByDescending(c=>c.depth).First();
