@@ -107,7 +107,7 @@ namespace TarotUnity.Network
             using var request = UnityWebRequest.Post(BuildUrl(ApiRoutes.Login), form);
             PrepareRequest(request);
             yield return request.SendWebRequest();
-            HandleResponse(request, onSuccess, onError, token => accessToken = token?.access_token);
+            HandleStructured(request, onSuccess, ForwardStringError(onError), token => accessToken = token?.access_token);
         }
 
         public IEnumerator CreateGuestSession(Action<TokenResponse> onSuccess, Action<string> onError)
@@ -182,30 +182,24 @@ namespace TarotUnity.Network
 
         // Phase 66: structured variants for the online interpretation flow. Each one
         // calls exactly one of its callbacks and reports failures as ApiError
-        // (status, kind, Retry-After). The Action<string> methods above are unchanged.
+        // (status, kind, Retry-After). The Action<string> methods above share the
+        // same request/response pipeline via ForwardStringError.
         public IEnumerator PostRecord(
             PredictionCreateRequest payload,
             Action<PredictionResponse> onSuccess,
             Action<ApiError> onError)
         {
-            using var request = CreatePost(ApiRoutes.Records, JsonUtility.ToJson(payload));
-            yield return request.SendWebRequest();
-            HandleStructured(request, onSuccess, onError);
+            yield return SendPost(ApiRoutes.Records, JsonUtility.ToJson(payload), onSuccess, onError);
         }
 
         public IEnumerator PostDraw(int predictionId, Action<DrawCardsResponse> onSuccess, Action<ApiError> onError)
         {
-            using var request = CreatePost(ApiRoutes.RecordDraw(predictionId), null);
-            yield return request.SendWebRequest();
-            HandleStructured(request, onSuccess, onError);
+            yield return SendPost(ApiRoutes.RecordDraw(predictionId), null, onSuccess, onError);
         }
 
         public IEnumerator FetchRecordCards(int predictionId, Action<CardDrawData[]> onSuccess, Action<ApiError> onError)
         {
-            using var request = UnityWebRequest.Get(BuildUrl(ApiRoutes.RecordCards(predictionId)));
-            PrepareRequest(request);
-            yield return request.SendWebRequest();
-            HandleStructuredArray(request, onSuccess, onError);
+            yield return SendGetArray(ApiRoutes.RecordCards(predictionId), onSuccess, onError);
         }
 
         public IEnumerator PostInterpretAsync(
@@ -233,10 +227,7 @@ namespace TarotUnity.Network
             Action<PredictionDetailResponse> onSuccess,
             Action<ApiError> onError)
         {
-            using var request = UnityWebRequest.Get(BuildUrl(ApiRoutes.RecordDetail(predictionId)));
-            PrepareRequest(request);
-            yield return request.SendWebRequest();
-            HandleStructured(request, onSuccess, onError);
+            yield return SendGet(ApiRoutes.RecordDetail(predictionId), onSuccess, onError);
         }
 
         public static TItem[] ParseJsonArray<TItem>(string text)
@@ -248,6 +239,39 @@ namespace TarotUnity.Network
 
             var wrapper = JsonUtility.FromJson<ArrayWrapper<TItem>>($"{{\"items\":{text}}}");
             return wrapper?.items ?? Array.Empty<TItem>();
+        }
+
+        private static Action<ApiError> ForwardStringError(Action<string> onError)
+        {
+            return onError == null ? null : error => onError(error.RawMessage);
+        }
+
+        private IEnumerator SendGet<TResponse>(string path, Action<TResponse> onSuccess, Action<ApiError> onError)
+        {
+            using var request = UnityWebRequest.Get(BuildUrl(path));
+            PrepareRequest(request);
+            yield return request.SendWebRequest();
+            HandleStructured(request, onSuccess, onError);
+        }
+
+        private IEnumerator SendGetArray<TItem>(string path, Action<TItem[]> onSuccess, Action<ApiError> onError)
+        {
+            using var request = UnityWebRequest.Get(BuildUrl(path));
+            PrepareRequest(request);
+            yield return request.SendWebRequest();
+            HandleStructuredArray(request, onSuccess, onError);
+        }
+
+        private IEnumerator SendPost<TResponse>(
+            string path,
+            string json,
+            Action<TResponse> onSuccess,
+            Action<ApiError> onError,
+            Action<TResponse> afterSuccess = null)
+        {
+            using var request = CreatePost(path, json);
+            yield return request.SendWebRequest();
+            HandleStructured(request, onSuccess, onError, afterSuccess);
         }
 
         private UnityWebRequest CreatePost(string path, string json)
@@ -267,7 +291,8 @@ namespace TarotUnity.Network
         private void HandleStructured<TResponse>(
             UnityWebRequest request,
             Action<TResponse> onSuccess,
-            Action<ApiError> onError)
+            Action<ApiError> onError,
+            Action<TResponse> afterSuccess = null)
         {
             CaptureCookies(request);
             if (IsError(request))
@@ -278,6 +303,7 @@ namespace TarotUnity.Network
 
             if (TryParseJson(request, out TResponse response, onError))
             {
+                afterSuccess?.Invoke(response);
                 onSuccess?.Invoke(response);
             }
         }
@@ -388,41 +414,22 @@ namespace TarotUnity.Network
 
         private IEnumerator Get<TResponse>(string path, Action<TResponse> onSuccess, Action<string> onError)
         {
-            using var request = UnityWebRequest.Get(BuildUrl(path));
-            PrepareRequest(request);
-            yield return request.SendWebRequest();
-            HandleResponse(request, onSuccess, onError);
+            yield return SendGet(path, onSuccess, ForwardStringError(onError));
         }
 
         private IEnumerator GetArray<TItem>(string path, Action<TItem[]> onSuccess, Action<string> onError)
         {
-            using var request = UnityWebRequest.Get(BuildUrl(path));
-            PrepareRequest(request);
-            yield return request.SendWebRequest();
-            HandleArrayResponse(request, onSuccess, onError);
+            yield return SendGetArray(path, onSuccess, ForwardStringError(onError));
         }
 
         private IEnumerator PostEmpty<TResponse>(string path, Action<TResponse> onSuccess, Action<string> onError, Action<TResponse> afterSuccess = null)
         {
-            using var request = new UnityWebRequest(BuildUrl(path), UnityWebRequest.kHttpVerbPOST);
-            request.downloadHandler = new DownloadHandlerBuffer();
-            PrepareRequest(request);
-            yield return request.SendWebRequest();
-            HandleResponse(request, onSuccess, onError, afterSuccess);
+            yield return SendPost(path, null, onSuccess, ForwardStringError(onError), afterSuccess);
         }
 
         private IEnumerator PostJson<TPayload, TResponse>(string path, TPayload payload, Action<TResponse> onSuccess, Action<string> onError)
         {
-            var json = JsonUtility.ToJson(payload);
-            var bytes = Encoding.UTF8.GetBytes(json);
-
-            using var request = new UnityWebRequest(BuildUrl(path), UnityWebRequest.kHttpVerbPOST);
-            request.uploadHandler = new UploadHandlerRaw(bytes);
-            request.downloadHandler = new DownloadHandlerBuffer();
-            request.SetRequestHeader("Content-Type", "application/json");
-            PrepareRequest(request);
-            yield return request.SendWebRequest();
-            HandleResponse(request, onSuccess, onError);
+            yield return SendPost(path, JsonUtility.ToJson(payload), onSuccess, ForwardStringError(onError));
         }
 
         private void PrepareRequest(UnityWebRequest request)
@@ -446,67 +453,6 @@ namespace TarotUnity.Network
             }
         }
 
-        private void HandleResponse<TResponse>(
-            UnityWebRequest request,
-            Action<TResponse> onSuccess,
-            Action<string> onError,
-            Action<TResponse> afterSuccess = null)
-        {
-            CaptureCookies(request);
-
-            if (IsError(request))
-            {
-                onError?.Invoke(BuildError(request));
-                return;
-            }
-
-            var text = request.downloadHandler?.text;
-            TResponse response;
-            try
-            {
-                response = string.IsNullOrWhiteSpace(text)
-                    ? default
-                    : JsonUtility.FromJson<TResponse>(text);
-            }
-            catch (ArgumentException exception)
-            {
-                // Phase 66: an unreadable body is reported as an error instead of throwing
-                // out of the caller's coroutine (a thrown refresh stranded the poller).
-                onError?.Invoke($"{request.responseCode}: unreadable JSON ({exception.Message})");
-                return;
-            }
-
-            afterSuccess?.Invoke(response);
-            onSuccess?.Invoke(response);
-        }
-
-        private void HandleArrayResponse<TItem>(UnityWebRequest request, Action<TItem[]> onSuccess, Action<string> onError)
-        {
-            CaptureCookies(request);
-
-            if (IsError(request))
-            {
-                onError?.Invoke(BuildError(request));
-                return;
-            }
-
-            var text = request.downloadHandler?.text;
-            ArrayWrapper<TItem> wrapper;
-            try
-            {
-                wrapper = JsonUtility.FromJson<ArrayWrapper<TItem>>($"{{\"items\":{text}}}");
-            }
-            catch (ArgumentException exception)
-            {
-                // Phase 66: an unreadable array body is reported as an error instead of
-                // throwing out of the caller's coroutine (same rule as HandleResponse).
-                onError?.Invoke($"{request.responseCode}: unreadable JSON ({exception.Message})");
-                return;
-            }
-
-            onSuccess?.Invoke(wrapper?.items ?? Array.Empty<TItem>());
-        }
-
         public string BuildUrl(string path)
         {
             return $"{baseUrl.TrimEnd('/')}/{path.TrimStart('/')}";
@@ -522,14 +468,6 @@ namespace TarotUnity.Network
             return request.result == UnityWebRequest.Result.ConnectionError
                 || request.result == UnityWebRequest.Result.ProtocolError
                 || request.result == UnityWebRequest.Result.DataProcessingError;
-        }
-
-        private static string BuildError(UnityWebRequest request)
-        {
-            var body = request.downloadHandler?.text;
-            return string.IsNullOrWhiteSpace(body)
-                ? $"{request.responseCode}: {request.error}"
-                : $"{request.responseCode}: {body}";
         }
 
         private void CaptureCookies(UnityWebRequest request)
