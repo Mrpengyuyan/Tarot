@@ -10,5 +10,8 @@ namespace TarotUnity.Core
         CardFlipped = 5,
         ResultReady = 6,
         ResultReveal = 7,
+        CardHoverRustle = 8,
+        UiHoverSoft = 9,
+        UiClickSoft = 10,
     }
 }

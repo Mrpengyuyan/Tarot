@@ -83,6 +83,23 @@ namespace TarotUnity.Tests.PlayMode
             Assert.That(active.PlayedCueCount, Is.EqualTo(1));
         }
 
+        [UnityTest]
+        public IEnumerator HighFrequencyHoverRustleCuesAreThrottledAndResumeAfterCooldown()
+        {
+            var audio = CreateOwner().AddComponent<AudioManager>();
+            yield return null;
+
+            audio.PlayCue(PresentationCueId.CardHoverRustle, 0.5f);
+            audio.PlayCue(PresentationCueId.CardHoverRustle, 0.5f);
+            audio.PlayCue(PresentationCueId.CardHoverRustle, 0.5f);
+            Assert.That(audio.LastCue, Is.EqualTo(PresentationCueId.CardHoverRustle));
+            Assert.That(audio.PlayedCueCount, Is.EqualTo(1), "Rapid hover sweeps must be throttled.");
+
+            yield return new WaitForSecondsRealtime(0.08f);
+            audio.PlayCue(PresentationCueId.CardHoverRustle, 0.5f);
+            Assert.That(audio.PlayedCueCount, Is.EqualTo(2), "Rustle cue should play again after cooldown.");
+        }
+
         private GameObject CreateOwner()
         {
             var owner = new GameObject("AudioManager lifecycle test");

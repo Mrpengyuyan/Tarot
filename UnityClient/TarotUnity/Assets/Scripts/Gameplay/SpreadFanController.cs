@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TarotUnity.Core;
 using TarotUnity.Presentation;
 using UnityEngine;
 
@@ -372,6 +373,11 @@ namespace TarotUnity.Gameplay
 
             if (on)
             {
+                if (hovered != card && spreadDone)
+                {
+                    AudioManager.Instance?.PlayCue(PresentationCueId.CardHoverRustle, 0.55f);
+                }
+
                 hovered = card;
                 hoverReleaseAt = -1f;
             }

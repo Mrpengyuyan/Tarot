@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TarotUnity.Core;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -91,9 +92,24 @@ namespace TarotUnity.UI
             return graphic;
         }
 
-        public void OnPointerEnter(PointerEventData data) => hovering=true;
+        public void OnPointerEnter(PointerEventData data)
+        {
+            if (!hovering && kind != Kind.Input && control != null && control.IsInteractable() && Visible())
+            {
+                AudioManager.Instance?.PlayCue(PresentationCueId.UiHoverSoft, 0.35f);
+            }
+
+            hovering = true;
+        }
         public void OnPointerExit(PointerEventData data) => hovering=false;
-        public void OnPointerDown(PointerEventData data) => keyboardFocus=false;
+        public void OnPointerDown(PointerEventData data)
+        {
+            keyboardFocus = false;
+            if (kind != Kind.Input && control != null && control.IsInteractable() && Visible())
+            {
+                AudioManager.Instance?.PlayCue(PresentationCueId.UiClickSoft, 0.4f);
+            }
+        }
         public void OnSelect(BaseEventData data) => keyboardFocus=data is not PointerEventData;
         public void OnDeselect(BaseEventData data) => keyboardFocus=false;
         public void OnMove(AxisEventData data) => keyboardFocus=true;

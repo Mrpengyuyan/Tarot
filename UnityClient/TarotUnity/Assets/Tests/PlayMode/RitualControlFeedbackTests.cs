@@ -56,10 +56,10 @@ namespace TarotUnity.Tests.PlayMode
             var listeners=button.onClick;
             var scaler = canvas.GetComponent<CanvasScaler>();
             if (scaler != null) scaler.enabled = false;
-            canvas.scaleFactor = 1f;
             foreach(var size in Sizes)
             using(var frame=new RitualFrameCapture(camera,canvas,size.x,size.y))
             {
+                canvas.scaleFactor = 1f;
                 yield return null;
                 Canvas.ForceUpdateCanvases();
                 yield return null;
@@ -127,9 +127,9 @@ namespace TarotUnity.Tests.PlayMode
             yield return Load("ReadingRoom");
             var scaler = canvas.GetComponent<CanvasScaler>();
             if (scaler != null) scaler.enabled = false;
-            canvas.scaleFactor = 1f;
             using(var frame=new RitualFrameCapture(camera,canvas,1280,720))
             {
+                canvas.scaleFactor = 1f;
                 yield return null;
                 Canvas.ForceUpdateCanvases();
                 yield return null;

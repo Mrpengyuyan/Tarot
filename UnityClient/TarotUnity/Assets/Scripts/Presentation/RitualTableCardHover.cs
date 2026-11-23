@@ -1,3 +1,4 @@
+using TarotUnity.Core;
 using TarotUnity.Gameplay;
 using TarotUnity.UI;
 using UnityEngine;
@@ -41,7 +42,15 @@ namespace TarotUnity.Presentation
             ResetState();
         }
 
-        public void OnPointerEnter(PointerEventData eventData) => hovering = true;
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            if (!hovering)
+            {
+                AudioManager.Instance?.PlayCue(PresentationCueId.CardHoverRustle, 0.45f);
+            }
+
+            hovering = true;
+        }
         public void OnPointerExit(PointerEventData eventData) => hovering = false;
 
         internal float Evaluate(bool allowed, bool immediateReset)
