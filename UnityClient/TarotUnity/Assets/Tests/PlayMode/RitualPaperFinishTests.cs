@@ -95,6 +95,29 @@ namespace TarotUnity.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator StationaryCardSkipsRedundantMeshRebuildsAndRebuildsOnChange()
+        {
+            CreateProbe();
+            card.SetFaceUp(true);
+            yield return ResizeProbe(new Vector2Int(1280, 720), false);
+            var rebuildsProperty = finish.GetType().GetProperty("RebuildCount", Instance);
+            Assert.That(rebuildsProperty, Is.Not.Null);
+            var settled = (int)rebuildsProperty.GetValue(finish);
+            for (var i = 0; i < 5; i++) yield return null;
+            Assert.That((int)rebuildsProperty.GetValue(finish), Is.EqualTo(settled),
+                "Stationary cards should not rebuild perimeter vertices every frame.");
+            probeSlot.position += Vector3.right * 0.05f;
+            yield return null;
+            Assert.That((int)rebuildsProperty.GetValue(finish), Is.GreaterThan(settled),
+                "Moving a card must immediately invalidate and rebuild its perimeter finish.");
+            var afterMove = (int)rebuildsProperty.GetValue(finish);
+            card.SetFaceUp(false);
+            yield return null;
+            Assert.That((int)rebuildsProperty.GetValue(finish), Is.GreaterThan(afterMove),
+                "Flipping between face and back must immediately rebuild finish styling.");
+        }
+
+        [UnityTest]
         public IEnumerator PrintedCenterStaysExactWhileGoldEdgeAndSoftShadowMatchReferencePixels()
         {
             CreateProbe();
