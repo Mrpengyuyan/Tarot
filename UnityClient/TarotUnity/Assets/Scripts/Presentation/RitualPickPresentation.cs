@@ -19,6 +19,9 @@ namespace TarotUnity.Presentation
             public RitualPaperSurface Surface;
             public float HoverFrom, HoverTarget, HoverSince;
             public FinishStage Stage;
+            public float LastAmount = -1f;
+            public int LastLayoutVersion = -1;
+            public bool Enforced;
         }
         private readonly Dictionary<CardView, FanInk> ink = new();
         private readonly List<Transform> slots = new();
@@ -38,6 +41,10 @@ namespace TarotUnity.Presentation
         private GameObject uiRoot;
         private RitualPickFrame frame;
         private Vector2Int size;
+        private Vector3 lastCamPos;
+        private Quaternion lastCamRot;
+        private float lastCamFov;
+        private int layoutVersion;
         private int count, accepted;
         private bool frozen;
         private bool movingToDraw;
@@ -118,22 +125,39 @@ namespace TarotUnity.Presentation
             Projection(frame.Fan[index],Depth(index),out position,out rotation,out _);
         }
 
-        public void ApplyFanHover(CardView card,int index,bool hovering)
+        public bool ApplyFanHover(CardView card, int index, bool hovering)
         {
-            if(!ink.TryGetValue(card,out var value)) return;
-            var target=hovering?1f:0f;
-            var amount=Hover(value);
-            if(value.HoverTarget!=target)
-            { value.HoverFrom=amount; value.HoverTarget=target; value.HoverSince=Time.time; }
-            var pose=frame.Fan[index];
-            pose=new RitualPickPose(pose.Center-Vector2.up*(cameraView.pixelHeight-2f*frame.Scale)*0.038f*amount,pose.Size,pose.Roll);
-            SetPose(card,pose,Depth(index));
-            value.Surface.Back.sortingOrder=amount>0.001f?200:index;
-            value.Surface.Back.color=Color.white*(1f+0.35f*amount);
+            if (!ink.TryGetValue(card, out var value)) return false;
+            var target = hovering ? 1f : 0f;
+            var amount = Hover(value);
+            if (value.HoverTarget != target)
+            {
+                value.HoverFrom = amount;
+                value.HoverTarget = target;
+                value.HoverSince = Time.time;
+                amount = Hover(value);
+            }
+            if (value.LastLayoutVersion == layoutVersion && Mathf.Approximately(value.LastAmount, amount) && value.Enforced)
+                return false;
+            var pose = frame.Fan[index];
+            pose = new RitualPickPose(pose.Center - Vector2.up * (cameraView.pixelHeight - 2f * frame.Scale) * 0.038f * amount, pose.Size, pose.Roll);
+            SetPose(card, pose, Depth(index));
+            value.Surface.Back.sortingOrder = amount > 0.001f ? 200 : index;
+            value.Surface.Back.color = Color.white * (1f + 0.35f * amount);
             value.Surface.EnforcePaper();
+            value.LastAmount = amount;
+            value.LastLayoutVersion = layoutVersion;
+            value.Enforced = true;
+            return true;
         }
 
-        private static float Hover(FanInk value) => Mathf.Lerp(value.HoverFrom,value.HoverTarget,RitualPickLayout.HoverEase((Time.time-value.HoverSince)/0.3f));
+        private static float Hover(FanInk value)
+        {
+            var progress = (Time.time - value.HoverSince) / 0.3f;
+            if (progress <= 0f) return value.HoverFrom;
+            if (progress >= 1f) return value.HoverTarget;
+            return Mathf.Lerp(value.HoverFrom, value.HoverTarget, RitualPickLayout.HoverEase(progress));
+        }
 
         public IEnumerator Fly(CardView card,int index)
         {
@@ -202,9 +226,19 @@ namespace TarotUnity.Presentation
                 && flow.State==ReadingFlowState.Drawing && staging.StagingRoot!=null;
             if(uiRoot!=null) uiRoot.SetActive(active);
             if(!active) return;
-            var viewport=new Vector2Int(cameraView.pixelWidth,cameraView.pixelHeight);
-            if(viewport.x<=2 || viewport.y<=2) return;
-            if(frame==null || size!=viewport) { size=viewport; frame=RitualPickLayout.Compute(count,size.x,size.y); }
+            var viewport = new Vector2Int(cameraView.pixelWidth, cameraView.pixelHeight);
+            if (viewport.x <= 2 || viewport.y <= 2) return;
+            var camPos = cameraView.transform.position;
+            var camRot = cameraView.transform.rotation;
+            var camFov = cameraView.fieldOfView;
+            if (frame == null || size != viewport || camPos != lastCamPos || camRot != lastCamRot || !Mathf.Approximately(camFov, lastCamFov))
+            {
+                if (frame == null || size != viewport) { size = viewport; frame = RitualPickLayout.Compute(count, size.x, size.y); }
+                lastCamPos = camPos;
+                lastCamRot = camRot;
+                lastCamFov = camFov;
+                layoutVersion++;
+            }
             if(movingToDraw && (choreography==null || !choreography.IsMoving)) movingToDraw=false;
             for(var i=0;i<count;i++)
             {

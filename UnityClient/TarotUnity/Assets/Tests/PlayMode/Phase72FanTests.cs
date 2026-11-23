@@ -238,7 +238,8 @@ namespace TarotUnity.Tests.PlayMode
             yield return fan.Gather(origin);
             yield return null;
             Assert.That(fan.FanCards.Count, Is.EqualTo(0));
-            Assert.That(cards.All(c => c == null), "gathered cards are destroyed");
+            Assert.That(fan.PooledCount, Is.EqualTo(cards.Count));
+            Assert.That(cards.All(c => c != null && !c.gameObject.activeSelf), "gathered cards return inactive to the pool");
         }
 
         [UnityTest]
@@ -317,6 +318,40 @@ namespace TarotUnity.Tests.PlayMode
             yield return fan.Spread(origin);
             Assert.That(fan.FanCards.All(fresh.Contains), Is.True, "the spread uses the prepared cards");
             Assert.That(fan.FanCards.Count, Is.EqualTo(fan.CardCount));
+        }
+
+        [UnityTest]
+        public IEnumerator GatherReturnsUnpickedCardsToPoolForNextPrepareAndAbandonDestroysPool()
+        {
+            var beforeSecondRound = fan.InstantiatedCount;
+            var picked = new List<(CardView, int)>();
+            var pick = fan.StartCoroutine(fan.PickCards(2, (c, i) => Deliver(picked, c, i, 0.01f)));
+            fan.RequestPick(fan.FanCards[0]);
+            yield return new WaitForSeconds(0.05f);
+            fan.RequestPick(fan.FanCards[0]);
+            yield return pick;
+
+            yield return fan.Gather(origin);
+            Assert.That(fan.FanCards.Count, Is.EqualTo(0));
+            Assert.That(fan.PooledCount, Is.EqualTo(fan.CardCount - 2));
+
+            yield return fan.Prepare(origin);
+            Assert.That(fan.PreparedCount, Is.EqualTo(fan.CardCount));
+            Assert.That(fan.InstantiatedCount - beforeSecondRound, Is.EqualTo(2),
+                "Only the deficit from picked cards should be instantiated on a subsequent round.");
+
+            yield return fan.Spread(origin);
+            Assert.That(fan.FanCards.Count, Is.EqualTo(fan.CardCount));
+            yield return fan.Gather(origin);
+            Assert.That(fan.PooledCount, Is.EqualTo(fan.CardCount));
+
+            fan.Abandon();
+            Assert.That(fan.PooledCount, Is.EqualTo(0));
+            Assert.That(fan.PreparedCount, Is.EqualTo(0));
+            foreach (var (card, _) in picked)
+            {
+                if (card != null) Object.Destroy(card.gameObject);
+            }
         }
 
         private static IEnumerator Deliver(List<(CardView, int)> log, CardView card, int index, float seconds = 0.1f)

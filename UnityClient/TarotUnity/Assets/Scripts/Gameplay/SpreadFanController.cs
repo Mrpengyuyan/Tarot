@@ -107,11 +107,14 @@ namespace TarotUnity.Gameplay
         private readonly List<CardView> fanCards = new();
         private readonly Dictionary<CardView, FanCard> state = new();
         private readonly List<CardView> prepared = new();
+        private readonly Stack<CardView> pool = new();
         private readonly List<List<Renderer>> deckLayers = new();
         private Transform capturedDeckOrigin;
         private bool preparing;
         private Coroutine lightFade;
         private Vector3 baseScale = Vector3.one;
+        private Vector3 prefabScale = Vector3.one;
+        private bool prefabScaleCaptured;
         private bool spreadDone;
         private CardView hovered;
         private float hoverReleaseAt = -1f;
@@ -122,6 +125,8 @@ namespace TarotUnity.Gameplay
         public event Action<CardView> CardPicked;
         public RitualPickPresentation PickPresentation { get; set; }
         public void RefreshPresentation() { if (isActiveAndEnabled && PickPresentation != null) Update(); }
+        public int InstantiatedCount { get; private set; }
+        public int PooledCount => pool.Count;
 
         private void OnEnable() { if (PickPresentation != null) PickPresentation.SetFanVisible(true); }
         private void OnDisable() { if (PickPresentation != null) PickPresentation.SetFanVisible(false); }
@@ -129,6 +134,7 @@ namespace TarotUnity.Gameplay
         {
             Clear();
             DestroyPrepared();
+            DestroyPool();
             if (PickPresentation != null) PickPresentation.DetachFan();
         }
 
@@ -177,7 +183,7 @@ namespace TarotUnity.Gameplay
         /// </summary>
         public IEnumerator Prepare(Transform origin)
         {
-            DestroyPrepared();
+            ReturnPreparedToPool();
             if (cardPrefab == null)
             {
                 yield break;
@@ -189,9 +195,7 @@ namespace TarotUnity.Gameplay
             {
                 // Phase 74: face down and switched off until the spread - a fresh prefab shows its
                 // face and its back at once, and nothing of it should show through the shuffle.
-                var card = Instantiate(cardPrefab, hidden, Quaternion.identity, transform);
-                card.SetFaceUp(false);
-                card.gameObject.SetActive(false);
+                var card = AcquireCard(hidden, Quaternion.identity, false);
                 prepared.Add(card);
                 if ((i + 1) % Mathf.Max(1, prepareBatch) == 0)
                 {
@@ -200,6 +204,37 @@ namespace TarotUnity.Gameplay
             }
 
             preparing = false;
+        }
+
+        private CardView AcquireCard(Vector3 position, Quaternion rotation, bool active)
+        {
+            if (!prefabScaleCaptured && cardPrefab != null)
+            {
+                prefabScale = cardPrefab.transform.localScale;
+                prefabScaleCaptured = true;
+            }
+
+            CardView card = null;
+            while (pool.Count > 0 && card == null)
+            {
+                card = pool.Pop();
+            }
+
+            if (card != null)
+            {
+                card.transform.SetParent(transform, false);
+                card.transform.SetPositionAndRotation(position, rotation);
+                card.transform.localScale = prefabScale;
+                card.SetFaceUp(false);
+                card.gameObject.SetActive(active);
+                return card;
+            }
+
+            card = Instantiate(cardPrefab, position, rotation, transform);
+            InstantiatedCount++;
+            card.SetFaceUp(false);
+            card.gameObject.SetActive(active);
+            return card;
         }
 
         public int RowOf(int index)
@@ -221,6 +256,7 @@ namespace TarotUnity.Gameplay
             busy = false;
             Clear();
             DestroyPrepared();
+            DestroyPool();
             SetLight(0f);
             ShowDeck(1f);
         }
@@ -246,7 +282,9 @@ namespace TarotUnity.Gameplay
 
             for (var i = 0; i < CardCount; i++)
             {
-                var card = i < prepared.Count && prepared[i] != null ? prepared[i] : Instantiate(cardPrefab, transform);
+                var card = i < prepared.Count && prepared[i] != null
+                    ? prepared[i]
+                    : AcquireCard(origin.position, origin.rotation, true);
                 card.name = $"FanCard_{i:00}";
                 card.transform.SetPositionAndRotation(origin.position, origin.rotation);
                 card.gameObject.SetActive(true);
@@ -524,7 +562,7 @@ namespace TarotUnity.Gameplay
                 yield return null;
             }
 
-            Clear();
+            Clear(releaseToPool: true);
             ShowDeck(1f);
             SetLight(0f);
         }
@@ -711,14 +749,13 @@ namespace TarotUnity.Gameplay
             }
         }
 
-        private void Clear()
+        private void Clear(bool releaseToPool = false)
         {
             foreach (var card in fanCards)
             {
-                if (card != null)
-                {
-                    Destroy(card.gameObject);
-                }
+                if (card == null) continue;
+                if (releaseToPool) ReturnToPool(card);
+                else Destroy(card.gameObject);
             }
 
             fanCards.Clear();
@@ -726,6 +763,61 @@ namespace TarotUnity.Gameplay
             hovered = null;
             pending = null;
             remainingPicks = 0;
+        }
+
+        private void ReturnToPool(CardView card)
+        {
+            var click = card.GetComponent<CardClickHandler>();
+            if (click != null)
+            {
+                click.Clicked -= RequestPick;
+                click.HoverChanged -= SetHovered;
+            }
+
+            card.SetHovered(false);
+            card.ClearHoverHaloScale();
+            if (state.TryGetValue(card, out var tracked))
+            {
+                if (tracked.box != null) tracked.box.center = tracked.boxCenter;
+                RestoreShadow(tracked);
+                if (tracked.pivot != null)
+                {
+                    foreach (var child in tracked.visuals)
+                    {
+                        if (child != null) child.SetParent(card.transform, false);
+                    }
+                    Destroy(tracked.pivot.gameObject);
+                }
+            }
+
+            var finish = card.GetComponent<RitualPaperFinish>();
+            if (finish != null)
+            {
+                finish.enabled = false;
+                Destroy(finish);
+            }
+
+            card.SetFaceUp(false);
+            card.transform.SetParent(transform, false);
+            card.transform.localScale = prefabScaleCaptured ? prefabScale : Vector3.one;
+            card.gameObject.SetActive(false);
+            pool.Push(card);
+        }
+
+        private void ReturnPreparedToPool()
+        {
+            foreach (var card in prepared)
+            {
+                if (card == null) continue;
+                card.SetFaceUp(false);
+                card.transform.SetParent(transform, false);
+                card.transform.localScale = prefabScaleCaptured ? prefabScale : Vector3.one;
+                card.gameObject.SetActive(false);
+                pool.Push(card);
+            }
+
+            prepared.Clear();
+            preparing = false;
         }
 
         private void DestroyPrepared()
@@ -740,6 +832,18 @@ namespace TarotUnity.Gameplay
 
             prepared.Clear();
             preparing = false;
+        }
+
+        private void DestroyPool()
+        {
+            while (pool.Count > 0)
+            {
+                var card = pool.Pop();
+                if (card != null)
+                {
+                    Destroy(card.gameObject);
+                }
+            }
         }
 
         private static void RestoreShadow(FanCard tracked)
@@ -797,8 +901,7 @@ namespace TarotUnity.Gameplay
                 var tracked = state[card];
                 if (PickPresentation != null)
                 {
-                    PickPresentation.ApplyFanHover(card, tracked.index, card == hovered);
-                    if (tracked.box != null)
+                    if (PickPresentation.ApplyFanHover(card, tracked.index, card == hovered) && tracked.box != null)
                     {
                         GetFanPose(tracked.index, out var rest, out var rotation);
                         tracked.box.center = card.transform.InverseTransformPoint(rest + rotation * tracked.boxCenter);
