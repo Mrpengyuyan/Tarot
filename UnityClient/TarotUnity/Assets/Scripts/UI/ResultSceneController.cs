@@ -51,7 +51,13 @@ namespace TarotUnity.UI
 
             if (ReadingSessionStore.HasCurrent)
             {
-                resultPanel?.PresentSession(ReadingSessionStore.Current);
+                var current = ReadingSessionStore.Current;
+                resultPanel?.PresentSession(current);
+                if (current.source == ReadingSource.Offline || current.interpretationState == InterpretationState.Ready)
+                {
+                    ReadingHistoryStore.Record(current);
+                }
+
                 SubscribeToPoller();
             }
 
@@ -101,6 +107,7 @@ namespace TarotUnity.UI
 
             if (session.source == ReadingSource.Offline)
             {
+                ReadingHistoryStore.Record(session);
                 resultPanel.ShowOffline(session);
                 return;
             }
@@ -111,6 +118,7 @@ namespace TarotUnity.UI
                     resultPanel.ShowPending(session);
                     break;
                 case InterpretationState.Ready:
+                    ReadingHistoryStore.Record(session);
                     resultPanel.ShowReady(session, true);
                     break;
                 default:

@@ -120,6 +120,7 @@ namespace TarotUnity.UI
                 };
                 RitualControlFeedback.Attach(start, RitualControlFeedback.Kind.Primary);
                 RitualControlFeedback.Attach(quit, RitualControlFeedback.Kind.Quiet);
+                RitualHistoryOverlay.Attach(gameObject);
                 RitualSettingsOverlay.Attach(gameObject);
             }
         }

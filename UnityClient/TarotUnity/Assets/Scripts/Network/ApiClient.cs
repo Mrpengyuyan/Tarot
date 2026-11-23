@@ -174,6 +174,12 @@ namespace TarotUnity.Network
             yield return Get(ApiRoutes.RecordDetail(predictionId), onSuccess, onError);
         }
 
+        public IEnumerator GetRecords(int limit, Action<PredictionResponse[]> onSuccess, Action<string> onError)
+        {
+            var clamped = Mathf.Clamp(limit, 1, 100);
+            yield return GetArray($"{ApiRoutes.Records}?limit={clamped}", onSuccess, onError);
+        }
+
         // Phase 66: structured variants for the online interpretation flow. Each one
         // calls exactly one of its callbacks and reports failures as ApiError
         // (status, kind, Retry-After). The Action<string> methods above are unchanged.
