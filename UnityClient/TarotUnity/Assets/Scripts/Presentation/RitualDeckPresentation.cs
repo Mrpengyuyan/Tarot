@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TarotUnity.Core;
 using TarotUnity.Gameplay;
 using TarotUnity.UI;
 using UnityEngine;
@@ -129,7 +130,7 @@ namespace TarotUnity.Presentation
             CaptureShuffleFrame();
             mode = PoseMode.Pickup;
             shuffleProgress = 0f;
-            for (var elapsed = 0f; elapsed < RitualDeckLayout.PickupSeconds; elapsed += Time.deltaTime)
+            for (var elapsed = 0f; elapsed < RitualDeckLayout.PickupSeconds; elapsed += Time.deltaTime * UserPreferences.ShuffleSpeedMultiplier)
             {
                 if (!Current(token)) yield break;
                 pickupProgress = elapsed / RitualDeckLayout.PickupSeconds;
@@ -148,7 +149,7 @@ namespace TarotUnity.Presentation
             IsShuffling = true;
             try
             {
-                for (var elapsed = 0f; elapsed < RitualDeckLayout.ShuffleSeconds + RitualDeckLayout.SettleSeconds; elapsed += Time.deltaTime)
+                for (var elapsed = 0f; elapsed < RitualDeckLayout.ShuffleSeconds + RitualDeckLayout.SettleSeconds; elapsed += Time.deltaTime * UserPreferences.ShuffleSpeedMultiplier)
                 {
                     if (!Current(token)) yield break;
                     shuffleProgress = Mathf.Clamp01(elapsed / RitualDeckLayout.ShuffleSeconds);

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TarotUnity.Core;
 using UnityEngine;
 
 namespace TarotUnity.Presentation
@@ -105,13 +106,14 @@ namespace TarotUnity.Presentation
         {
             get
             {
+                var speed = Mathf.Max(0.1f, UserPreferences.ShuffleSpeedMultiplier);
                 if (Presentation != null && Presentation.IsReady)
-                    return UI.RitualDeckLayout.ShuffleSeconds + UI.RitualDeckLayout.SettleSeconds;
+                    return (UI.RitualDeckLayout.ShuffleSeconds + UI.RitualDeckLayout.SettleSeconds) / speed;
                 var n = Mathf.Max(1, transform.childCount);
                 var riffle = riffleCardSeconds + riffleStagger * (n - 1);
-                return anticipationSeconds + cutSeconds + riffle
+                return (anticipationSeconds + cutSeconds + riffle
                     + recutSeconds + riffle / Mathf.Max(0.01f, secondRiffleSpeedup)
-                    + settleSeconds + squareHoldSeconds;
+                    + settleSeconds + squareHoldSeconds) / speed;
             }
         }
 
@@ -185,7 +187,7 @@ namespace TarotUnity.Presentation
             }
 
             // Beat 1 - anticipation: the stack presses down, easing out into the pose.
-            for (var elapsed = 0f; elapsed < anticipationSeconds; elapsed += Time.deltaTime)
+            for (var elapsed = 0f; elapsed < anticipationSeconds; elapsed += Time.deltaTime * UserPreferences.ShuffleSpeedMultiplier)
             {
                 transform.localPosition = restRootPosition + Vector3.down * (anticipationDip * EaseOut(elapsed / anticipationSeconds));
                 yield return null;
@@ -211,7 +213,7 @@ namespace TarotUnity.Presentation
                 restRootScale.x * (1f + contactSquash * 0.4f),
                 restRootScale.y * (1f - contactSquash),
                 restRootScale.z * (1f + contactSquash * 0.4f));
-            for (var elapsed = 0f; elapsed < settleSeconds; elapsed += Time.deltaTime)
+            for (var elapsed = 0f; elapsed < settleSeconds; elapsed += Time.deltaTime * UserPreferences.ShuffleSpeedMultiplier)
             {
                 transform.localScale = Vector3.Lerp(squashed, restRootScale, EaseOut(elapsed / settleSeconds));
                 yield return null;
@@ -219,7 +221,7 @@ namespace TarotUnity.Presentation
 
             transform.localScale = restRootScale;
             transform.localPosition = restRootPosition;
-            for (var elapsed = 0f; elapsed < squareHoldSeconds; elapsed += Time.deltaTime)
+            for (var elapsed = 0f; elapsed < squareHoldSeconds; elapsed += Time.deltaTime * UserPreferences.ShuffleSpeedMultiplier)
             {
                 yield return null;
             }
@@ -238,7 +240,7 @@ namespace TarotUnity.Presentation
                 fromRotation[i] = cards[i].localRotation;
             }
 
-            for (var elapsed = 0f; elapsed < seconds; elapsed += Time.deltaTime)
+            for (var elapsed = 0f; elapsed < seconds; elapsed += Time.deltaTime * UserPreferences.ShuffleSpeedMultiplier)
             {
                 var k = EaseInOut(elapsed / seconds);
                 for (var i = 0; i < cards.Count; i++)
@@ -268,7 +270,7 @@ namespace TarotUnity.Presentation
             var cardSeconds = Mathf.Max(0.01f, riffleCardSeconds / speed);
             var stagger = riffleStagger / speed;
             var total = cardSeconds + stagger * (cards.Count - 1);
-            for (var elapsed = 0f; elapsed < total; elapsed += Time.deltaTime)
+            for (var elapsed = 0f; elapsed < total; elapsed += Time.deltaTime * UserPreferences.ShuffleSpeedMultiplier)
             {
                 for (var i = 0; i < cards.Count; i++)
                 {

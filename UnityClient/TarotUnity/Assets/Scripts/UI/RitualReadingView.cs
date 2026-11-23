@@ -34,6 +34,7 @@ namespace TarotUnity.UI
         private bool initialized;
         private Vector2 lastSize;
         private RitualStageEntrance entrance;
+        private RitualSettingsOverlay settingsOverlay;
         private bool stageEntered;
         private bool stateDirty = true;
         private ReadingFlowState lastFlowState;
@@ -137,6 +138,8 @@ namespace TarotUnity.UI
                 RitualControlFeedback.Attach(changeSpread,RitualControlFeedback.Kind.Quiet);
                 RitualControlFeedback.Attach(back,RitualControlFeedback.Kind.Quiet);
                 RitualControlFeedback.Attach(question);
+                settingsOverlay = RitualSettingsOverlay.Attach(gameObject);
+                if (settingsOverlay != null) settingsOverlay.SetTriggerVisible(Stage == ViewStage.Spread || Stage == ViewStage.Question || Stage == ViewStage.Ready);
             }
         }
 
@@ -243,6 +246,10 @@ namespace TarotUnity.UI
                 : Stage == ViewStage.Reveal ? $"逐张揭开 <color=#CCAD75>{flipped} / {total}</color>" : "";
             if (Stage == ViewStage.Reveal) progress.color = new Color(183f/255f, 160f/255f, 128f/255f);
             Show(progress.transform, progress.text.Length > 0);
+            if (settingsOverlay != null)
+            {
+                settingsOverlay.SetTriggerVisible(Stage == ViewStage.Spread || Stage == ViewStage.Question || Stage == ViewStage.Ready);
+            }
 
             lastFlowState = flow.State;
             lastChoosingSpread = choosingSpread;

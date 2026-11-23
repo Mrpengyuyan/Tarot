@@ -40,6 +40,8 @@ namespace TarotUnity.Core
             Instance = this;
             DontDestroyOnLoad(gameObject);
             EnsureSources();
+            UserPreferences.Changed += ApplyPreferences;
+            ApplyPreferences();
 
             if (ambientMusic != null)
             {
@@ -49,10 +51,19 @@ namespace TarotUnity.Core
 
         private void OnDestroy()
         {
+            UserPreferences.Changed -= ApplyPreferences;
             if (Instance == this)
             {
                 Instance = null;
             }
+        }
+
+        public void ApplyPreferences()
+        {
+            EnsureSources();
+            musicSource.mute = UserPreferences.Muted;
+            sfxSource.mute = UserPreferences.Muted;
+            musicSource.volume = UserPreferences.EffectiveMusicVolume;
         }
 
         public void PlayMusic(AudioClip clip, float volume = 0.75f)
@@ -62,8 +73,13 @@ namespace TarotUnity.Core
                 return;
             }
 
+            EnsureSources();
             musicSource.clip = clip;
-            musicSource.volume = volume;
+            var scale = UserPreferences.DefaultMusicVolume > 0f
+                ? UserPreferences.EffectiveMusicVolume / UserPreferences.DefaultMusicVolume
+                : 1f;
+            musicSource.volume = Mathf.Clamp01(volume * scale);
+            musicSource.mute = UserPreferences.Muted;
             musicSource.loop = true;
             musicSource.Play();
         }
@@ -80,7 +96,9 @@ namespace TarotUnity.Core
                 return;
             }
 
-            sfxSource.PlayOneShot(clip, volume);
+            EnsureSources();
+            sfxSource.mute = UserPreferences.Muted;
+            sfxSource.PlayOneShot(clip, Mathf.Clamp01(volume * UserPreferences.EffectiveSfxVolume));
         }
 
         public void PlayCue(PresentationCueId cue, float volumeScale = 1f)
