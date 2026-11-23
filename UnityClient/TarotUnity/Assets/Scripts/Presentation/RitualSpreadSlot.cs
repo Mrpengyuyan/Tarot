@@ -28,6 +28,7 @@ namespace TarotUnity.Presentation
             value.transform.localScale = Vector3.one;
             if (value.FaceArtwork != null) value.FaceArtwork.transform.SetParent(value.transform, false);
             RitualPaperSurface.Attach(value).Back.sortingOrder = 0;
+            RitualTableCardHover.Attach(value);
             if (view != null && flow != null) RitualPaperFinish.Attach(value,view,flow);
         }
     }

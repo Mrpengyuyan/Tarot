@@ -149,17 +149,29 @@ namespace TarotUnity.UI
                 pose.rotation * Quaternion.AngleAxis(phi * Mathf.Rad2Deg, Vector3.right));
             world.localScale = new Vector3(pixelScale, scaleY, scaleZ);
             projectionAxes.localRotation = Quaternion.AngleAxis(-theta * Mathf.Rad2Deg, Vector3.right);
+            var density = RitualDeckLayout.Density(width, height);
+            var inspecting = RitualPaperRendering.TryGetInspection(gameObject.scene.handle, cameraView, out var inspection)
+                && inspection != null && inspection.IsOpen;
             for (var i = 0; i < count; i++)
             {
                 var placement = frame.Cards[i];
+                var card = deck != null && i < deck.ActiveCards.Count ? deck.ActiveCards[i] : null;
+                var hover = card != null ? card.GetComponent<RitualTableCardHover>() : null;
+                var flip = hover != null && hover.Flip != null ? hover.Flip
+                    : card != null ? card.GetComponent<CardFlipController>() : null;
+                var flipping = flip != null && flip.IsFlipping;
+                var hoverAllowed = final && !flipping && !inspecting;
+                var hoverAmount = hover != null ? hover.Evaluate(hoverAllowed, flipping || inspecting) : 0f;
+                var liftY = count == 10 ? 0f : 10f * density * hoverAmount;
+                var tilt = count == 10 ? placement.Tilt : Mathf.Lerp(placement.Tilt, 8f, hoverAmount);
+                var roll = count == 10 ? placement.Roll : Mathf.Lerp(placement.Roll, 0f, hoverAmount);
                 slots[i].localPosition = new Vector3(placement.Center.x - frame.PerspectiveOrigin.x,
-                    frame.PerspectiveOrigin.y - placement.Center.y, 0f);
-                slots[i].localRotation = Quaternion.Euler(placement.Tilt, 0f, -placement.Roll) * Quaternion.Euler(-90f, 0f, 0f);
+                    frame.PerspectiveOrigin.y - placement.Center.y + liftY, 0f);
+                slots[i].localRotation = Quaternion.Euler(tilt, 0f, -roll) * Quaternion.Euler(-90f, 0f, 0f);
                 slots[i].localScale = new Vector3(placement.Size.x / RitualSpreadSlot.PaperWidth,
                     placement.Size.x / RitualSpreadSlot.PaperWidth, placement.Size.y);
-                var card = deck != null && i < deck.ActiveCards.Count ? deck.ActiveCards[i] : null;
-                var flip = card != null ? card.GetComponent<CardFlipController>() : null;
-                var visible = final && card != null && card.IsFaceUp && (flip == null || !flip.IsFlipping);
+                hover?.ApplyTint(hoverAmount, inspecting);
+                var visible = final && card != null && card.IsFaceUp && !flipping;
                 labels[i].gameObject.SetActive(visible);
                 if (!visible) continue;
                 if (labelDraws[i] != card.DrawData || labelReversed[i] != card.ShowsReversed || string.IsNullOrEmpty(labels[i].text))

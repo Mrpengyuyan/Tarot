@@ -8,8 +8,8 @@ using UnityEngine.UI;
 
 namespace TarotUnity.Presentation
 {
-    // Follow the camera's breathing after its LateUpdate, without changing the camera itself.
-    [DefaultExecutionOrder(100)]
+    // Follow the camera's breathing and spread projection after their LateUpdate, before paper finish.
+    [DefaultExecutionOrder(1300)]
     public sealed class CardInspectionController : MonoBehaviour
     {
         private const float TravelSeconds = 0.3f;

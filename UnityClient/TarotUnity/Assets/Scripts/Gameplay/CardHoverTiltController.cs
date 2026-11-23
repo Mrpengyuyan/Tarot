@@ -57,7 +57,7 @@ namespace TarotUnity.Gameplay
 
         public void HoverEnter()
         {
-            if (suspended || (cardView != null && cardView.IsFaceUp))
+            if (suspended || (cardView != null && cardView.IsFaceUp) || GetComponent<Presentation.RitualTableCardHover>() != null)
             {
                 return;
             }
