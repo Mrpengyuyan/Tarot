@@ -1,33 +1,54 @@
-# Tarot
+# Tarot · 塔罗仪式
 
-Tarot 3D 塔罗牌仪式游戏的产品仓库，包含 Unity 桌面客户端和 FastAPI 后端。
+> 一款基于 **Unity 6 (URP)** 与 **FastAPI** 构建的 3D 桌面端塔罗牌仪式体验游戏，支持完整 78 张实体牌扇抽取、双模式解读（在线 AI / 本地离线牌义）与历史占卜回顾。
 
-- 客户端：Unity `6000.3.16f1`、URP、版本 `0.9.0`，目标平台为 macOS 和 Windows 桌面端。
-- 后端：FastAPI、SQLAlchemy、Alembic，负责认证与访客会话、抽牌、阅读记录、AI 解读、限流和预算。
+## 核心特色
 
-## 目录
+- **完整 78 张实体牌桌仪式**：从桌边牌堆抬起洗牌（支持设置中开启 `2.5x` 快速洗牌），展开双排 78 张实体牌扇凭直觉选牌，落位翻牌后自动呈现高清近景检视。
+- **三种经典牌阵**：支持 **一张牌（洞察此刻）**、**三张牌（过去·现在·未来）** 与 **凯尔特十字（10 张全貌）**，自适应 16:9 / 4:3 与高分屏窗口。
+- **在线 AI + 本地离线双模式**：
+  - **在线模式**：连接 FastAPI 后端调用 DeepSeek 生成结构化牌阵解读，支持后台异步轮询与失败后手动重试。
+  - **离线模式**：无需部署后端、不消耗任何 API 额度，即可使用本地 78 张传统牌义完成完整流程；也可在右上角“设置 → 解读模式”随时手动切至离线牌义。
+- **桌面端交互细节**：结果页支持**一键复制占卜摘要**与**再占一局**；主菜单内置**历史记录抽屉**；提问区提供轻量灵感方向提示（情感 / 事业 / 抉择，不代填问题）；内置丝绒暗场场景过渡与完整快捷键。
+- **生产级安全与成本保护**：后端内置数据库级日/月 AI 预算预留、单局最多两次计费调用上限、访客会话与每日占卜限流、受信任反代 `X-Forwarded-For` 解析与自动化秘密边界扫描。
+
+## 桌面快捷键
+
+| 按键 | 作用 |
+| --- | --- |
+| `Enter` | 在提问阶段确认并开始洗牌；在全部翻牌就绪后进入结果页 |
+| `Space` | 在翻牌阶段依次翻开下一张未揭开的牌；全部揭开后进入结果页 |
+| `Esc` | 退出问题输入框，或关闭当前打开的近景检视 / 设置 / 历史记录抽屉 |
+| 鼠标悬停 / 点击 | 牌扇悬停抬牌与分让、牌桌卡牌微倾提亮、点击已翻开卡牌放大检视 |
+
+## 目录结构
 
 ```text
 Tarot/
 ├── README.md                                  本文件
+├── LICENSE                                    MIT 开源协议（含第三方素材声明）
 ├── UnityClient/
 │   ├── README.md
-│   └── TarotUnity/                            Unity 工程
+│   └── TarotUnity/                            Unity 6000.3.16f1 (URP) 客户端工程
 │       ├── Assets/Scenes/                     Boot / MainMenu / ReadingRoom / Result
 │       ├── Assets/Scripts/
-│       │   ├── Core/                          音频、偏好设置、场景流转、历史记录存储
+│       │   ├── Core/                          音频、偏好设置、场景暗场流转、历史记录存储
 │       │   ├── Data/                          API 模型与会话快照
-│       │   ├── Gameplay/                      牌组、78 张牌扇（含对象池）、翻牌与离线模拟
+│       │   ├── Gameplay/                      牌组、78 张牌扇（对象池）、翻牌与离线模拟
 │       │   ├── Network/                       统一 ApiClient 与异步解读轮询
 │       │   ├── Presentation/                  3D 牌桌镜头、洗牌编排、纸张质感与牌桌悬停
-│       │   └── UI/                            封面/牌桌/结果视图、设置与历史抽屉
+│       │   └── UI/                            封面/牌桌/结果视图、设置与历史抽屉、分享格式化
 │       ├── Assets/Editor/
 │       │   ├── Release/                       桌面发行构建与视觉审查工具
 │       │   └── LegacyPhases/                  历史阶段搭建与抓图归档
-│       └── Assets/Tests/                      EditMode / PlayMode 自动化测试
+│       └── Assets/Tests/                      649 EditMode + 280+ PlayMode 自动化测试
 ├── Server/
-│   ├── README.md                              后端启动、配置和测试
-│   ├── check_config.py                        运行配置与 --production-check 上线检查
+│   ├── README.md                              后端启动、配置和测试说明
+│   ├── check_config.py                        运行配置查看与 --production-check 体检
+│   ├── check_release_hygiene.py               发布前秘密与仓库卫生扫描
+│   ├── .env.example                           本地开发配置模板
+│   ├── .env.production.example                低预算小范围公测生产模板
+│   ├── deploy/                                Docker Compose + Caddy 自动 HTTPS 部署模板
 │   ├── app/
 │   │   ├── api/v1/endpoints/                  auth / records / cards / spreads / health
 │   │   ├── core/                              配置、原生 bcrypt 安全与邮箱规范化
@@ -37,93 +58,68 @@ Tarot/
 │   ├── alembic/                               数据库迁移
 │   └── data/                                  78 张牌和 6 个牌阵的参考数据
 └── .github/workflows/
-    └── backend-tests.yml                      只在 Server/ 变动时运行
+    └── backend-tests.yml                      Server/ 变更自动运行全量后端测试
 ```
 
-Unity 工程位于 `UnityClient/TarotUnity/`。构建场景包括：
+## 快速开始
 
-- `Boot`：启动和持久化服务初始化。
-- `MainMenu`：封面和入席入口。
-- `ReadingRoom`：选择牌阵、输入问题、洗牌、选牌和翻牌。
-- `Result`：多张牌展示和 AI 解读阅读。
+### 1. 玩家试玩（无需开发环境）
 
-## 运行方式
+从 **GitHub Releases** 下载对应平台的桌面发行包（macOS / Windows），解压后直接运行即可，无需安装 Unity、Python 或 Docker。
 
-### Unity 本地开发
+- 默认连接不到在线服务时，自动进入本地离线解读模式；
+- 也可点击右上角 **设置 → 解读模式** 手动切换“离线牌义 / 在线优先”。
 
-使用 Unity `6000.3.16f1` 打开 `UnityClient/TarotUnity/`，然后从
-`Assets/Scenes/Boot.unity` 运行。默认可以使用本地模拟数据完成完整流程。
+### 2. Unity 本地开发
 
-开始洗牌和选牌前必须输入自己的问题；空内容或只有空白字符不能开始，也不会自动代填示例问题。
-在线和离线模式都遵守此规则；输入框中的示例仅为提示。
+1. 使用 Unity **`6000.3.16f1`** 打开 `UnityClient/TarotUnity/`。
+2. 打开入口场景 `Assets/Scenes/Boot.unity` 并运行。
+3. 在线模式地址读取自 `UnityClient/TarotUnity/Assets/StreamingAssets/tarot_desktop_config.json`（开发默认 `http://localhost:8000/api/v1`）。
 
-界面按阶段显示操作，不再同时铺开牌阵、输入框和结果按钮。
-洗牌时不显示文字提示；选中的牌先以牌背停留在上方，全部选齐后再落入牌阵。
-单牌和三牌使用一行暂存，凯尔特十字使用两行；牌堆始终是同一副实体牌，不另留静态副本。
-桌边牌堆使用同一套暗紫金色牌背，按窗口比例显示；洗牌时从桌边抬起，经过分叠、交错、再切和收齐，
-选牌展开时逐层消失，收牌后回到桌边。抬牌约 0.9 秒，洗牌与收齐约 5.8 秒。
-牌堆保留细纸边与柔和接触阴影，随同一副牌的移动、展开和收拢显示，不额外生成可抽卡牌。
-选牌时完整的 78 张实体牌以双排牌扇展开，选中牌用 0.9 秒飞入上方牌位；
-全部选齐后停留 1.25 秒，再转入翻牌。牌扇和暂存区随窗口比例、高清缩放调整，不改变选牌顺序或重新抽牌。
-牌扇、飞行和暂存分别使用细金边与柔和阴影，遮挡随真实牌层变化；转入翻牌时复用同一张牌的装饰。
-封面使用题字字体，其余界面采用衬线字体，并保留完整中文字库作为后备。
-封面标题采用整行金色渐变，背景上下压暗；文字和操作不参与背景压暗，保留正常淡入淡出。
-封面、牌阵选择和提问区按同一套参考比例适配 16:9、4:3 及高清窗口；固定文案的补字随包提供，不依赖系统字体。
-选牌计数、翻牌提示和牌位文字使用统一的暖金色层级，字距随字号适配高清窗口；重新应用主题不会覆盖这些文字的颜色。
-解读页沿用无边框阅读区和金色细线操作，保留多牌展示、长文滚动、卡牌定位及在线等待、重试和离线提示。
+### 3. 本地后端联调与测试
 
-单牌、三牌和凯尔特十字翻牌后会自动展示牌面近景，清晰停留 1 秒后回到原牌位。
-翻牌牌桌按预览的屏幕比例呈现卡牌及牌位标注，支持 16:9 和 4:3；调整窗口不会重新抽牌。
-牌阵选择、提问、选牌和翻牌共用稳定的牌桌取景，洗牌仍保留靠近实体牌堆的镜头。
-实体卡牌的印刷图案独立于环境调色，避免暗紫牌背被压黑，同时保留牌桌的烛光和阴影。
-牌桌背景使用暖色暗角和淡中央暖光收拢视线，保持真实烛光闪动，不压暗卡牌或界面文字。
-翻牌牌桌上的卡牌采用细金边和柔和落影；翻动或近景查看时自动隐藏这层装饰，不遮挡牌面内容。
-点击已翻开的牌可以不限时放大查看；点击空白处或按 `Esc` 返回牌桌。
-近景显示牌名、牌位和正逆位，不会重新抽牌或额外请求 AI。
+```bash
+cd Server
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+alembic upgrade head
+python -m app.scripts.init_tarot_data
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
 
-### 本地后端联调
+运行全量隔离测试：
 
-1. 按 [`Server/README.md`](Server/README.md) 启动后端，默认地址为 `http://localhost:8000`。
-2. Unity 的在线模式通过
-   `UnityClient/TarotUnity/Assets/StreamingAssets/tarot_desktop_config.json`
-   读取后端地址，默认为 `http://localhost:8000/api/v1`。该配置面向本地开发，不代表公开发行地址。
-3. 客户端启动时先访问 `/api/v1/health/`，服务可达后再访问 `/api/v1/guest-session` 申请访客会话。
+```bash
+cd Server
+python -m pytest -q
+```
 
-后端负责认证、阅读记录、抽牌、AI 解读、限流、预算和 API Key；Unity 只负责客户端表现和交互。
-已在无模型密钥的本机 FastAPI 模拟环境中验证 Unity 的 1、3、10 张牌完整场景流程；
-这不等同于真实 AI 或公开发行环境验收。
+### 4. 小范围公测低预算自托管（自动 HTTPS）
 
-### 玩家发行包
+如果你使用自费 DeepSeek API 并希望分享给朋友试玩，请参考 [`Server/deploy/README.md`](Server/deploy/README.md) 使用单机 Docker Compose + Caddy 自动 HTTPS 模板：
 
-玩家不需要安装 Python、Conda、Docker 或 Unity 编辑器。正式发行包应从
-GitHub Releases 下载并解压运行；在线模式必须指向部署后的 HTTPS 后端，
-不能指向开发者电脑的 `localhost`。
+- 模板已默认关闭高价 `reasoner` 回退，预设每日 1 美元 / 每月 10 美元硬预算上限与每人每日 2 次访客额度；
+- 上线前一键体检：
+
+```bash
+python3 Server/check_release_hygiene.py
+python3 Server/check_config.py --production-check
+```
 
 ## 安全边界
 
-- API Key、数据库密码和管理员令牌只允许存在于后端安全配置中（`Server/.env` 或部署平台的密钥配置）。
-- Unity 配置文件只能包含公开的服务地址、超时时间和客户端选项。
-- `.env`、本地数据库、日志、构建目录和 Unity 缓存不得提交；根目录 `.gitignore` 已忽略它们。
-- 公开发行前必须完成客户端、构建产物和 Git 历史的秘密扫描。
+- API Key、JWT `SECRET_KEY`、数据库凭据**只存在于后端环境变量中**，绝不写入 Unity 工程或客户端安装包。
+- Unity 配置文件仅保存公开服务地址与请求超时时间。
+- `.env`、本地 SQLite 数据库、构建产物与 Unity 缓存均已由 `.gitignore` 隔离，并通过 `Server/check_release_hygiene.py` 自动化校验。
 
-## 仓库历史
+## 开源协议与素材致谢
 
-- 从 2026-09-11 起，本仓库是唯一的提交入口。后端以一次提交并入 `Server/`：除 `Server/README.md` 外的 80 个文件与旧后端仓库提交 `f19c7cd` 逐字节一致。
-- 旧后端仓库的 16 个提交保留在远端分支 `backend-main`（`f19c7cd`）。查看方法：先执行 `git fetch origin backend-main`，再执行 `git log origin/backend-main`。
-- 已废弃的 React Web 前端（`src/`、`public/`）和旧的 `docker-compose.yml` 只保留在 `backend-main`，不在 `main` 中维护。
+- 项目源码与原创 UI 资源采用 [MIT License](LICENSE)。
+- 第三方公共领域 / CC0 1.0 美术素材（1909 Rider-Waite-Smith 牌面、ambientCG 材质）与 SIL OFL 1.1 中文字体（霞鹜文楷、马善政楷书、思源宋体）来源与授权明细见 [`UnityClient/TarotUnity/Docs/THIRD_PARTY_ASSETS.md`](UnityClient/TarotUnity/Docs/THIRD_PARTY_ASSETS.md)。
 
-## 文档入口
+## 相关文档
 
-- [`UnityClient/README.md`](UnityClient/README.md)：Unity 工程目录、运行和发行说明。
-- [`Server/README.md`](Server/README.md)：后端启动、配置和测试。
-- [`UnityClient/TarotUnity/Docs/THIRD_PARTY_ASSETS.md`](UnityClient/TarotUnity/Docs/THIRD_PARTY_ASSETS.md)：资源来源和授权记录。
-
-## 当前下一步
-
-当前继续对齐已确认的 Unity 视觉预览，并完成独立程序试玩验收；正式部署地址在最终部署阶段配置。
-
-1. 继续校准光影、文字亮度和边缘细节，与预览逐阶段对照，再完成独立程序试玩。
-2. 确定后端托管方式和预算，补齐部署级访客限流，再部署到 HTTPS 地址。
-3. 将发行配置从 `localhost` 切换到正式地址；经明确同意后，以小额真实 AI 调用验证 1、3、10 张牌流程。
-4. 检查密钥与构建产物，并在 macOS/Windows 干净环境中验证下载安装和离线模式。
-5. 通过 1.0 验收后，将发行包放入 GitHub Release，而不是提交到源码历史。
+- [`UnityClient/README.md`](UnityClient/README.md) / [`UnityClient/TarotUnity/README.md`](UnityClient/TarotUnity/README.md)：Unity 客户端结构与本地无成本联调测试
+- [`Server/README.md`](Server/README.md)：后端接口、配置与迁移说明
+- [`Server/deploy/README.md`](Server/deploy/README.md)：小范围公测生产部署指南

@@ -16,7 +16,7 @@ cp deploy/Caddyfile.example deploy/Caddyfile
 1. `SECRET_KEY`：执行 `python3 -c "import secrets; print(secrets.token_urlsafe(48))"` 生成随机密钥。
 2. `DEEPSEEK_API_KEY`：填入你的 DeepSeek API Key（建议同时在 DeepSeek 控制台设月度消费上限）。
 3. `CORS_ORIGINS`：改为你的正式域名，例如 `https://tarot.yourdomain.com`。
-4. `AI_DAILY_BUDGET_USD` / `AI_MONTHLY_BUDGET_USD` / `GUEST_DAILY_READING_LIMIT`：默认已设保守值（每日 \$1、每月 \$10、每人每日 2 次、关闭 reasoner 回退），可按需再调低。
+4. `AI_DAILY_BUDGET_USD` / `AI_MONTHLY_BUDGET_USD` / `GUEST_DAILY_READING_LIMIT`：默认已设保守值（每日 1 美元、每月 10 美元、每人每日 2 次、关闭 reasoner 回退），可按需再调低。
 
 编辑 `Server/deploy/Caddyfile`，将 `tarot.example.com` 替换为你的真实域名（并确保域名 A 记录已解析到服务器公网 IP，防火墙放行 80/443 端口）。
 
