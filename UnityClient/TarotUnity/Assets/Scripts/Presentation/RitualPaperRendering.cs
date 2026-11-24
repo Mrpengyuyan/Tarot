@@ -100,6 +100,9 @@ namespace TarotUnity.Presentation
                 }
             foreach (var finish in FindObjectsByType<RitualPaperFinish>(FindObjectsSortMode.None))
                 if (finish.gameObject.scene == gameObject.scene && finish.IsReady) Track(finish.FrameRenderer);
+            foreach (var preview in FindObjectsByType<RitualSpreadPreview3D>(FindObjectsSortMode.None))
+                if (preview.gameObject.scene == gameObject.scene && preview.IsReady)
+                    foreach (var renderer in preview.PaperRenderers) Track(renderer);
         }
 
         private void BeforeCamera(ScriptableRenderContext context, Camera camera)

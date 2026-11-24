@@ -260,21 +260,26 @@ namespace TarotUnity.Tests.PlayMode
             var paper = canvas.GetComponent<RitualPaperRendering>();
             var registry = (System.Collections.IDictionary)typeof(RitualPaperRendering)
                 .GetField("layers", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(paper);
-            var shadow=deck.GetComponentsInChildren<Renderer>(true).Single(r=>r.name=="RitualDeckShadow");
-            var expected=Layers().Select(r=>r.gameObject).Append(shadow.gameObject).ToArray();
-            Assert.That(registry.Keys.Cast<GameObject>(), Is.EquivalentTo(expected));
+            var shadow = deck.GetComponentsInChildren<Renderer>(true).Single(r => r.name == "RitualDeckShadow");
+            var expected = Layers().Select(r => r.gameObject).Append(shadow.gameObject).ToArray();
+            var preview = Object.FindFirstObjectByType<RitualSpreadPreview3D>();
+            var previewObjects = preview != null
+                ? preview.GetComponentsInChildren<Renderer>(true).Select(r => r.gameObject).ToArray()
+                : Array.Empty<GameObject>();
+            var allExpected = expected.Concat(previewObjects).ToArray();
+            Assert.That(registry.Keys.Cast<GameObject>(), Is.EquivalentTo(allExpected));
             for (var i = 0; i < 2; i++)
             {
                 paper.enabled = false;
                 Assert.That(registry.Count, Is.Zero);
                 paper.enabled = true;
-                Assert.That(registry.Keys.Cast<GameObject>(), Is.EquivalentTo(expected));
+                Assert.That(registry.Keys.Cast<GameObject>(), Is.EquivalentTo(allExpected));
                 Assert.That(Layers().All(r => r.gameObject.layer == LayerMask.NameToLayer("RitualPaper")), Is.True);
-                Assert.That(shadow.gameObject.layer,Is.EqualTo(LayerMask.NameToLayer("RitualPaper")));
+                Assert.That(shadow.gameObject.layer, Is.EqualTo(LayerMask.NameToLayer("RitualPaper")));
                 yield return null;
             }
             ((Behaviour)presentation).enabled = false;
-            Assert.That(registry.Count, Is.Zero, "Removing the deck must unregister every generated plane.");
+            Assert.That(registry.Keys.Cast<GameObject>(), Is.EquivalentTo(previewObjects), "Removing the deck must unregister every generated plane.");
         }
 
         [UnityTest]

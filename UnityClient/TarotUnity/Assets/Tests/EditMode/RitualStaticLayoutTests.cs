@@ -8,10 +8,10 @@ namespace TarotUnity.Tests.EditMode
 {
     public sealed class RitualStaticLayoutTests
     {
-        [TestCase("cover", 1280, 720, "StartReadingButton", 518.718f, 504.516f, 242.564f, 60.104f)]
-        [TestCase("cover", 1024, 768, "StartReadingButton", 415.012f, 538.172f, 193.976f, 53.448f)]
-        [TestCase("cover", 1280, 720, "QuitButton", 605.633f, 586.164f, 68.734f, 39.5f)]
-        [TestCase("cover", 1024, 768, "QuitButton", 479.359f, 614.602f, 65.281f, 37.5f)]
+        [TestCase("cover", 1280, 720, "StartReadingButton", 518.718f, 497.016f, 242.564f, 60.104f)]
+        [TestCase("cover", 1024, 768, "StartReadingButton", 415.012f, 532.672f, 193.976f, 53.448f)]
+        [TestCase("cover", 1280, 720, "QuitButton", 597.833f, 578.660f, 84.334f, 47f)]
+        [TestCase("cover", 1024, 768, "QuitButton", 474.480f, 609.100f, 75.040f, 43f)]
         [TestCase("question", 1280, 720, "RitualQuestionLabel", 231.039f, 288.195f, 817.922f, 53f)]
         [TestCase("question", 1024, 768, "RitualQuestionLabel", 184.953f, 322.719f, 654.094f, 42.5f)]
         [TestCase("question", 1280, 720, "QuestionInput", 231.039f, 369.914f, 817.922f, 78.703f)]

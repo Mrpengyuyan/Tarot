@@ -99,6 +99,22 @@ namespace TarotUnity.Presentation
 
         public bool AreCardsVisible => visible;
 
+        internal IEnumerable<Renderer> PaperRenderers
+        {
+            get
+            {
+                for (var i = 0; i < formations.Count; i++)
+                {
+                    var f = formations[i];
+                    if (f.ShadowRenderer != null) yield return f.ShadowRenderer;
+                    for (var c = 0; c < f.Cards.Count; c++)
+                    {
+                        if (f.Cards[c].Renderer != null) yield return f.Cards[c].Renderer;
+                    }
+                }
+            }
+        }
+
         public static RitualSpreadPreview3D Attach(GameObject host, RitualReadingView view, Camera camera)
         {
             if (host == null || view == null || camera == null) return null;

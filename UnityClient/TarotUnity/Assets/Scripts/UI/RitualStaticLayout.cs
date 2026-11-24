@@ -30,8 +30,10 @@ namespace TarotUnity.UI
             }
             void Center(string key, float y, float rw, float rh, float font = 0f, float tracking = 0f, float rotation = 0f)
                 => Add(key, (designWidth - rw) * 0.5f, y, rw, rh, font, tracking, rotation);
-            var quiet = Mathf.Max(12f, w * 0.0105f);
-            var quietLine = Mathf.Lerp(17.5f, 19.5f, blend);
+            var quiet = Mathf.Max(16f, w * 0.0155f);
+            var quietLine = Mathf.Lerp(23f, 27f, blend);
+            var subtitleFont = Mathf.Max(14f, w * 0.0128f);
+            var subtitleLine = Mathf.Lerp(19f, 22f, blend);
             var roomBackY = 1f + h * (1f - 0.063f) - quietLine - 20f;
             if (stage == "cover")
             {
@@ -68,7 +70,7 @@ namespace TarotUnity.UI
                     var labelY = symbolY + symbolHeight + h * 0.035f;
                     Add(name + "/Title", x, labelY, column, titleLine, w * 0.0185f, 0.17f);
                     Add(name + "/RitualSpreadSubtitle", x, labelY + titleLine + h * 0.012f,
-                        column, quietLine + (i == 1 ? 0.5f : 0f), quiet, 0.06f);
+                        column, subtitleLine + (i == 1 ? 0.5f : 0f), subtitleFont, 0.06f);
                     var cards = i == 0 ? 1 : i == 1 ? 3 : 4;
                     for (var j = 0; j < cards; j++)
                     {
