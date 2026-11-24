@@ -159,6 +159,36 @@ namespace TarotUnity.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator InspirationChipsGuidePlaceholderWithoutAutoFillingQuestion()
+        {
+            Assert.That(Visible("RitualInspirationRow"), Is.False, "Inspiration chips stay hidden on Spread stage.");
+
+            canvas.Find("ThreeCardButton").GetComponent<Button>().onClick.Invoke();
+            yield return null;
+            Assert.That(Visible("RitualInspirationRow"), Is.True);
+
+            var input = canvas.Find("QuestionInput").GetComponent<TMP_InputField>();
+            var start = canvas.Find("DrawButton").GetComponent<Button>();
+            var placeholder = input.placeholder as TMP_Text;
+            Assert.That(placeholder, Is.Not.Null);
+            Assert.That(placeholder.text, Is.EqualTo(ReleaseUxCopy.DefaultQuestion));
+
+            var loveChip = canvas.Find("RitualInspirationRow/RitualInspiration_Love").GetComponent<Button>();
+            loveChip.onClick.Invoke();
+            yield return null;
+
+            Assert.That(input.text, Is.Empty, "Inspiration chips must guide the player rather than auto-fill their question.");
+            Assert.That(start.interactable, Is.False, "Blank question must remain non-submittable.");
+            Assert.That(placeholder.text, Is.Not.EqualTo(ReleaseUxCopy.DefaultQuestion));
+            Assert.That(placeholder.text, Does.Contain("关系"));
+
+            // Toggling the active chip again restores the default placeholder.
+            loveChip.onClick.Invoke();
+            yield return null;
+            Assert.That(placeholder.text, Is.EqualTo(ReleaseUxCopy.DefaultQuestion));
+        }
+
+        [UnityTest]
         public IEnumerator ResultKeepsItsScrollViewAndUsesTheNewReadableFace()
         {
             SceneManager.LoadScene("Result");
