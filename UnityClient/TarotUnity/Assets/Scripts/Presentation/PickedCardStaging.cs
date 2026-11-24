@@ -77,7 +77,10 @@ namespace TarotUnity.Presentation
         }
 
         public IEnumerator Settle(IReadOnlyList<CardView> cards, IList<Transform> finalSlots) =>
-            SettleRoutine(cards, finalSlots, generation);
+            SettleRoutine(cards, finalSlots, HoldSeconds, generation);
+
+        public IEnumerator SettleAfterHold(IReadOnlyList<CardView> cards, IList<Transform> finalSlots, float holdSeconds) =>
+            SettleRoutine(cards, finalSlots, Mathf.Max(0f, holdSeconds), generation);
 
         public void Clear()
         {
@@ -110,7 +113,7 @@ namespace TarotUnity.Presentation
             TransferStarted = null;
         }
 
-        private IEnumerator SettleRoutine(IReadOnlyList<CardView> cards, IList<Transform> finalSlots, int token)
+        private IEnumerator SettleRoutine(IReadOnlyList<CardView> cards, IList<Transform> finalSlots, float holdSeconds, int token)
         {
             if (!IsCurrent(token) || IsSettling || transferStarted || !ValidSelection(cards, finalSlots))
             {
@@ -130,7 +133,7 @@ namespace TarotUnity.Presentation
             var completed = false;
             try
             {
-                for (var elapsed = 0f; elapsed < HoldSeconds; elapsed += Time.deltaTime)
+                for (var elapsed = 0f; elapsed < holdSeconds; elapsed += Time.deltaTime)
                 {
                     if (!IsCurrent(token) || !SelectionStillExists(destinations))
                     {

@@ -507,20 +507,33 @@ namespace TarotUnity.UI
             FocusSocket(-1);
             if (pickedStaging != null)
             {
-                yield return pickedStaging.Settle(deckController.ActiveCards, slots);
+                // Keep picked cards stationary in the top staging slots while unpicked fan cards
+                // gather away first, then park the deck back to bottom-left before settling picks to center.
+                if (spreadFan.FanCards.Count > 0)
+                {
+                    yield return spreadFan.Gather(deckOrigin);
+                }
+                if (ritualDeck != null)
+                {
+                    ritualDeck.Park();
+                }
+                yield return pickedStaging.SettleAfterHold(deckController.ActiveCards, slots, 0.35f);
                 pickedStaging.Clear();
             }
-            if (gatherRoutine == null && spreadFan.FanCards.Count > 0)
+            else
             {
-                // No flight carried the gather (a delivery without one): gather now.
-                yield return spreadFan.Gather(deckOrigin);
-            }
+                if (gatherRoutine == null && spreadFan.FanCards.Count > 0)
+                {
+                    // No flight carried the gather (a delivery without one): gather now.
+                    yield return spreadFan.Gather(deckOrigin);
+                }
 
-            while (gatherRoutine != null)
-            {
-                yield return null;
+                while (gatherRoutine != null)
+                {
+                    yield return null;
+                }
+                if (ritualDeck != null) ritualDeck.Park();
             }
-            if (ritualDeck != null) ritualDeck.Park();
         }
 
         /// <summary>
@@ -674,7 +687,7 @@ namespace TarotUnity.UI
                 cameraFollowedPick = true;
             }
 
-            if (spreadFan != null && gatherRoutine == null)
+            if (spreadFan != null && spreadFan.FanCards.Count > 0 && gatherRoutine == null)
             {
                 gatherRoutine = StartCoroutine(GatherBehindLastPick());
             }
@@ -687,7 +700,7 @@ namespace TarotUnity.UI
                 cameraChoreography.FocusSpread(selectedCardCount, 0.7f + pickCameraLagSeconds);
                 cameraFollowedPick = true;
             }
-            if (spreadFan != null && gatherRoutine == null)
+            if (spreadFan != null && spreadFan.FanCards.Count > 0 && gatherRoutine == null)
             {
                 gatherRoutine = StartCoroutine(GatherBehindLastPick());
             }

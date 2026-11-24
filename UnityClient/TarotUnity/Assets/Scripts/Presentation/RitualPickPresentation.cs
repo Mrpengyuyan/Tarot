@@ -46,6 +46,10 @@ namespace TarotUnity.Presentation
         private Quaternion lastCamRot;
         private float lastCamFov;
         private int layoutVersion;
+        private int lastUiLayoutVersion = -1;
+        private int lastUiAccepted = -1;
+        private int lastUiCount = -1;
+        private readonly HashSet<CardView> landedSettled = new();
         private int count, accepted;
         private bool frozen;
         private bool movingToDraw;
@@ -69,7 +73,8 @@ namespace TarotUnity.Presentation
         {
             ClearUi();
             count=cardCount; accepted=0; frozen=false; movingToDraw=true; frame=null;
-            ink.Clear(); landed.Clear(); slots.Clear();
+            lastUiLayoutVersion = lastUiAccepted = lastUiCount = -1;
+            ink.Clear(); landed.Clear(); landedSettled.Clear(); slots.Clear();
             EnsureWorld();
             staging.Prepare(count,cameraView);
             uiRoot=new GameObject("RitualPickGuides",typeof(RectTransform));
@@ -111,36 +116,68 @@ namespace TarotUnity.Presentation
         }
 
         /// <summary>
-        /// Pre-attaches paper surface, collider sizing, and finish component while the card is still inactive
-        /// during shuffle preparation, avoiding a 78-card single-frame spike when Spread begins.
+        /// Pre-attaches paper surface, disables unused 3D flight trails, sizes collider, and pre-builds
+        /// the finish mesh while the card is active-but-hidden during the 5.8s shuffle so Spread/Gather
+        /// never call SetActive, new Mesh, or Destroy mid-animation.
         /// </summary>
         public void PrewarmFanCard(CardView card, int index)
         {
             if (card == null) return;
             EnsureWorld();
-            card.transform.SetParent(world, true);
+            if (card.transform.parent != world) card.transform.SetParent(world, true);
+            var trail = card.GetComponentInChildren<TrailRenderer>(true);
+            if (trail != null)
+            {
+                trail.emitting = false;
+                trail.enabled = false;
+            }
             var paper = RitualPaperSurface.Attach(card);
-            if (paper.Back != null) paper.Back.sortingOrder = index;
+            if (paper.Back != null)
+            {
+                paper.Back.sortingOrder = index;
+                paper.Back.enabled = false;
+            }
             var box = card.GetComponent<BoxCollider>();
-            if (box != null) { box.center = Vector3.zero; box.size = new Vector3(RitualPaperSurface.PaperWidth, 0.0001f, 1f); }
+            if (box != null)
+            {
+                box.center = Vector3.zero;
+                box.size = new Vector3(RitualPaperSurface.PaperWidth, 0.0001f, 1f);
+                box.enabled = false;
+            }
             RitualPaperFinish.AttachPick(card, cameraView, flow, this);
         }
 
-        public void PrepareFanCard(CardView card, int index)
+        public void PrepareFanCard(CardView card, int index) => PrepareFanCard(card, index, false);
+
+        public void PrepareFanCard(CardView card, int index, bool inTransit)
         {
             EnsureWorld();
             if (card.transform.parent != world) card.transform.SetParent(world, true);
+            var trail = card.GetComponentInChildren<TrailRenderer>(true);
+            if (trail != null)
+            {
+                trail.emitting = false;
+                trail.enabled = false;
+            }
             var paper = RitualPaperSurface.Attach(card);
             if (paper.Back != null)
             {
                 paper.Back.sortingOrder = index;
                 paper.Back.color = Color.white;
+                paper.Back.enabled = !inTransit;
             }
-            ink[card] = new FanInk { Surface = paper };
+            ink[card] = new FanInk { Surface = paper, InTransit = inTransit };
             var box = card.GetComponent<BoxCollider>();
             if (box != null) { box.center = Vector3.zero; box.size = new Vector3(RitualPaperSurface.PaperWidth, 0.0001f, 1f); }
             SetPose(card, frame.Fan[index], Depth(index));
             RitualPaperFinish.AttachPick(card, cameraView, flow, this);
+        }
+
+        public SpriteRenderer GetFanCardBack(CardView card)
+        {
+            return card != null && ink.TryGetValue(card, out var value) && value.Surface != null
+                ? value.Surface.Back
+                : null;
         }
 
         /// <summary>
@@ -160,6 +197,8 @@ namespace TarotUnity.Presentation
             var axes = cameraView != null ? cameraView.transform : transform;
             return axes.rotation * Quaternion.Euler(-110f, 0f, 0f);
         }
+
+        public Vector3 SpreadOriginScale(Vector3 fanScale) => fanScale * 1.62f;
 
         private static float Depth(int index) => 2.5f-index*0.0001f;
 
@@ -252,7 +291,14 @@ namespace TarotUnity.Presentation
         }
 
         private void Picked(CardView card) { accepted++; }
-        private void Landed(CardView card) { if(!frozen && slots.Count>0) landed[card]=Time.time; }
+        private void Landed(CardView card)
+        {
+            if (!frozen && slots.Count > 0)
+            {
+                landed[card] = Time.time;
+                landedSettled.Remove(card);
+            }
+        }
         private void Freeze() { frozen=true; if(uiRoot!=null)uiRoot.SetActive(false); }
         public void SetFanVisible(bool visible) { if(world!=null)world.gameObject.SetActive(visible); }
         public void DetachFan()
@@ -283,38 +329,57 @@ namespace TarotUnity.Presentation
                 lastCamFov = camFov;
                 layoutVersion++;
             }
-            if(movingToDraw && (choreography==null || !choreography.IsMoving)) movingToDraw=false;
-            for(var i=0;i<count;i++)
+            if (movingToDraw && (choreography == null || !choreography.IsMoving))
             {
-                if(slots[i]==null) continue;
-                Projection(frame.Selected[i],2.48f,out var position,out var rotation,out var scale);
-                slots[i].SetPositionAndRotation(position,rotation);slots[i].localScale=scale;
-                Place(guides[i].rectTransform,frame.Slots[i]);
-                guides[i].color=new Color(180f/255f,150f/255f,90f/255f,37f/255f);
-                Place(ticks[i].rectTransform,frame.Ticks[i]);
-                ticks[i].rectTransform.localRotation=Quaternion.Euler(0f,0f,45f);
-                ticks[i].Filled=i<accepted;
-                ticks[i].color=i<accepted?new Color(222f/255f,195f/255f,140f/255f):new Color(161f/255f,131f/255f,83f/255f);
-                var font=frame.LabelFont;
-                Place(labels[i].rectTransform,new Rect(frame.Labels[i]-new Vector2(frame.Slots[i].width,font*1.5f)*0.5f,new Vector2(frame.Slots[i].width,font*1.5f)));
-                labels[i].fontSize=font*canvas.rect.height/size.y;
-                labels[i].color=i<accepted?new Color(223f/255f,193f/255f,138f/255f):new Color(185f/255f,155f/255f,108f/255f,119f/255f);
-                if(i>=deck.ActiveCards.Count) continue;
-                var card=deck.ActiveCards[i];
-                if(card==null || !landed.TryGetValue(card,out var time)) continue;
-                var pulse=1f+0.035f*(1f-RitualPickLayout.HoverEase((Time.time-time)/0.3f));
-                SetPose(card,new RitualPickPose(frame.Selected[i].Center,frame.Selected[i].Size*pulse),2.48f);
+                movingToDraw = false;
+                layoutVersion++;
+            }
+            var uiDirty = layoutVersion != lastUiLayoutVersion || accepted != lastUiAccepted || count != lastUiCount;
+            if (uiDirty)
+            {
+                lastUiLayoutVersion = layoutVersion;
+                lastUiAccepted = accepted;
+                lastUiCount = count;
+                landedSettled.Clear();
+            }
+            for (var i = 0; i < count; i++)
+            {
+                if (slots[i] == null) continue;
+                if (uiDirty)
+                {
+                    Projection(frame.Selected[i], 2.48f, out var position, out var rotation, out var scale);
+                    slots[i].SetPositionAndRotation(position, rotation);
+                    slots[i].localScale = scale;
+                    Place(guides[i].rectTransform, frame.Slots[i]);
+                    guides[i].color = new Color(180f / 255f, 150f / 255f, 90f / 255f, 37f / 255f);
+                    Place(ticks[i].rectTransform, frame.Ticks[i]);
+                    ticks[i].rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+                    ticks[i].Filled = i < accepted;
+                    ticks[i].color = i < accepted ? new Color(222f / 255f, 195f / 255f, 140f / 255f) : new Color(161f / 255f, 131f / 255f, 83f / 255f);
+                    var font = frame.LabelFont;
+                    Place(labels[i].rectTransform, new Rect(frame.Labels[i] - new Vector2(frame.Slots[i].width, font * 1.5f) * 0.5f, new Vector2(frame.Slots[i].width, font * 1.5f)));
+                    labels[i].fontSize = font * canvas.rect.height / size.y;
+                    labels[i].color = i < accepted ? new Color(223f / 255f, 193f / 255f, 138f / 255f) : new Color(185f / 255f, 155f / 255f, 108f / 255f, 119f / 255f);
+                }
+                if (i >= deck.ActiveCards.Count) continue;
+                var card = deck.ActiveCards[i];
+                if (card == null || !landed.TryGetValue(card, out var time)) continue;
+                if (!uiDirty && landedSettled.Contains(card)) continue;
+                var elapsed = Time.time - time;
+                var pulse = elapsed >= 0.3f ? 1f : 1f + 0.035f * (1f - RitualPickLayout.HoverEase(elapsed / 0.3f));
+                SetPose(card, new RitualPickPose(frame.Selected[i].Center, frame.Selected[i].Size * pulse), 2.48f);
                 ink[card].Surface.EnforcePaper();
+                if (elapsed >= 0.3f) landedSettled.Add(card);
             }
             fan.RefreshPresentation();
-            if(progress!=null)
+            if (uiDirty && progress != null)
             {
-                progress.text=accepted<count?$"还可选 <size={frame.NumberFont*canvas.rect.height/size.y}><color=#F0D4A2> {count-accepted} </color></size> 张":$"已选 <color=#F0D4A2>{count} / {count}</color>";
-                progress.color=new Color(203f/255f,179f/255f,141f/255f);
-                Place(progress.rectTransform,frame.Progress);
-                progress.fontSize=frame.ProgressFont*canvas.rect.height/size.y;
-                progress.characterSpacing=15f;
-                var group=progress.GetComponent<CanvasGroup>();if(group!=null)group.alpha=1f;
+                progress.text = accepted < count ? $"还可选 <size={frame.NumberFont * canvas.rect.height / size.y}><color=#F0D4A2> {count - accepted} </color></size> 张" : $"已选 <color=#F0D4A2>{count} / {count}</color>";
+                progress.color = new Color(203f / 255f, 179f / 255f, 141f / 255f);
+                Place(progress.rectTransform, frame.Progress);
+                progress.fontSize = frame.ProgressFont * canvas.rect.height / size.y;
+                progress.characterSpacing = 15f;
+                var group = progress.GetComponent<CanvasGroup>(); if (group != null) group.alpha = 1f;
             }
         }
 

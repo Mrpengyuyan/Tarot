@@ -313,6 +313,45 @@ namespace TarotUnity.Tests.PlayMode
         }
 
         [UnityTest]
+        public IEnumerator UnpickedFanGathersBeforePickedCardsMoveToCenterSpread()
+        {
+            RequirePresentation();
+            canvas.Find("OneCardButton").GetComponent<Button>().onClick.Invoke();
+            canvas.Find("QuestionInput").GetComponent<TMP_InputField>().text = "A gather sequence test";
+            canvas.Find("DrawButton").GetComponent<Button>().onClick.Invoke();
+            var fan = Object.FindFirstObjectByType<SpreadFanController>();
+            var deckCtrl = Object.FindFirstObjectByType<DeckController>();
+            var flow = Object.FindFirstObjectByType<ReadingFlowController>();
+            yield return Until(() => fan.AcceptingPicks);
+
+            var chosen = fan.FanCards[fan.FanCards.Count / 2];
+            fan.RequestPick(chosen);
+            yield return Until(() => deckCtrl.ActiveCards.Count == 1);
+            // Wait a moment for landing pulse to finish, then record staged top position.
+            var stagedPos = chosen.transform.position;
+            var stagedY = camera.WorldToViewportPoint(stagedPos).y;
+            Assert.That(stagedY, Is.GreaterThan(0.65f), "Picked card starts in the upper staging area.");
+
+            // While unpicked fan cards are still present (gathering), the picked card must stay at the top staging slot.
+            var sawGatherWhilePickedStayedPut = false;
+            var deadline = Time.realtimeSinceStartup + 30f;
+            while (fan.FanCards.Count > 0)
+            {
+                Assert.That(Time.realtimeSinceStartup, Is.LessThan(deadline));
+                var currentVp = camera.WorldToViewportPoint(chosen.transform.position);
+                Assert.That(currentVp.y, Is.GreaterThan(0.65f),
+                    "Picked card must remain stationary at the top staging area while unpicked cards gather.");
+                sawGatherWhilePickedStayedPut = true;
+                yield return null;
+            }
+
+            Assert.That(sawGatherWhilePickedStayedPut, Is.True);
+            yield return Until(() => flow.State == ReadingFlowState.WaitingForFlip);
+            var finalVp = camera.WorldToViewportPoint(chosen.transform.position);
+            Assert.That(finalVp.y, Is.LessThan(0.65f), "After unpicked cards finish gathering, picked card settles to center spread.");
+        }
+
+        [UnityTest]
         public IEnumerator CancellingAnExternallyHostedNativePickupReleasesItsPartialPose()
         {
             RequirePresentation();
