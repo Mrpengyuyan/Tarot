@@ -10,38 +10,22 @@ import httpx
 
 from app.core.config import settings
 from app.db.session import SessionLocal
-from app.schemas.limits import MAX_DATABASE_INTEGER
+from app.services import ai_routing
+from app.services.ai_errors import (
+    AIBudgetExceededError,
+    AIProviderError,
+    AIProviderHttpStatusError,
+    AIProviderRequestError,
+    AIProviderTimeoutError,
+    CozeBudgetExceededError,
+    CozeError,
+    CozeHttpStatusError,
+    CozeRequestError,
+    CozeTimeoutError,
+)
 from app.services.budget_store import BudgetLimitExceeded, DatabaseBudgetStore
 
 logger = logging.getLogger(__name__)
-
-
-class CozeError(Exception):
-    """Compatibility error type retained for existing imports."""
-
-
-class CozeTimeoutError(CozeError):
-    """Timeout error from upstream model provider."""
-
-
-class CozeRequestError(CozeError):
-    """Network/request-level upstream error."""
-
-
-class CozeHttpStatusError(CozeError):
-    """HTTP status error from upstream provider."""
-
-    def __init__(self, status_code: int, detail: str):
-        super().__init__(detail)
-        self.status_code = int(status_code)
-
-
-class CozeBudgetExceededError(CozeError):
-    """Raised when budget guard blocks a request."""
-
-    def __init__(self, message: str, *, request_started: bool = False) -> None:
-        super().__init__(message)
-        self.request_started = request_started
 
 
 class CozeService:
@@ -284,78 +268,34 @@ class CozeService:
                     )
 
     def _extract_usage(self, result: Dict[str, Any]) -> Dict[str, int]:
-        unknown = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
-        usage = result.get("usage")
-        if not isinstance(usage, dict):
-            return unknown
-        try:
-            # Any invalid count makes usage unknown; keep the full budget reservation.
-            counts = {}
-            for field in ("prompt_tokens", "input_tokens", "completion_tokens", "output_tokens", "total_tokens"):
-                value = usage.get(field)
-                if value is None:
-                    continue
-                if isinstance(value, bool) or not isinstance(value, (int, float, str)):
-                    return unknown
-                if isinstance(value, float) and not value.is_integer():
-                    return unknown
-                if not 0 <= int(value) <= MAX_DATABASE_INTEGER:
-                    return unknown
-                counts[field] = int(value)
-            # Both sides must be known; aliases must agree, including explicit zeroes.
-            breakdown = []
-            for fields in (("prompt_tokens", "input_tokens"), ("completion_tokens", "output_tokens")):
-                values = {counts[field] for field in fields if field in counts}
-                if len(values) != 1:
-                    return unknown
-                breakdown.append(values.pop())
-            prompt_tokens, completion_tokens = breakdown
-            if prompt_tokens + completion_tokens > MAX_DATABASE_INTEGER:
-                return unknown
-            total_tokens = counts.get("total_tokens", prompt_tokens + completion_tokens)
-            if total_tokens != prompt_tokens + completion_tokens:
-                return unknown
-        except (TypeError, ValueError, OverflowError):
-            return unknown
-        return {
-            "prompt_tokens": prompt_tokens,
-            "completion_tokens": completion_tokens,
-            "total_tokens": total_tokens,
-        }
+        return ai_routing.extract_usage(result)
 
     def _estimate_cost_usd(self, *, model: str, usage: Dict[str, int]) -> float:
-        if model == self.reasoner_model:
-            input_cost = self.reasoner_input_cost_per_m
-            output_cost = self.reasoner_output_cost_per_m
-        else:
-            input_cost = self.chat_input_cost_per_m
-            output_cost = self.chat_output_cost_per_m
-
-        prompt_tokens = int(usage.get("prompt_tokens") or 0)
-        completion_tokens = int(usage.get("completion_tokens") or 0)
-
-        return (prompt_tokens / 1_000_000) * input_cost + (completion_tokens / 1_000_000) * output_cost
+        return ai_routing.estimate_cost_usd(
+            model=model,
+            usage=usage,
+            reasoner_model=self.reasoner_model,
+            chat_input_cost_per_m=self.chat_input_cost_per_m,
+            chat_output_cost_per_m=self.chat_output_cost_per_m,
+            reasoner_input_cost_per_m=self.reasoner_input_cost_per_m,
+            reasoner_output_cost_per_m=self.reasoner_output_cost_per_m,
+        )
 
     def _is_retryable_exception(self, exc: Exception) -> bool:
-        if isinstance(exc, CozeTimeoutError):
-            return self.retry_on_timeout
-        if isinstance(exc, CozeHttpStatusError):
-            if exc.status_code == 429:
-                return self.retry_on_429
-            if exc.status_code >= 500:
-                return self.retry_on_5xx
-            return False
-        if isinstance(exc, CozeRequestError):
-            return True
-        return False
+        return ai_routing.is_retryable_exception(
+            exc,
+            retry_on_timeout=self.retry_on_timeout,
+            retry_on_429=self.retry_on_429,
+            retry_on_5xx=self.retry_on_5xx,
+        )
 
     def _retry_delay_seconds(self, attempt_index: int) -> float:
-        if self.retry_backoff_ms <= 0:
-            return 0.0
-        factor = max(self.retry_backoff_factor, 1.0)
-        delay_ms = self.retry_backoff_ms * (factor**attempt_index)
-        delay_ms = min(delay_ms, max(self.retry_max_backoff_ms, self.retry_backoff_ms))
-        return float(delay_ms) / 1000.0
+        return ai_routing.retry_delay_seconds(
+            attempt_index,
+            retry_backoff_ms=self.retry_backoff_ms,
+            retry_backoff_factor=self.retry_backoff_factor,
+            retry_max_backoff_ms=self.retry_max_backoff_ms,
+        )
 
     async def _request_chat_completion(
         self,
@@ -461,48 +401,14 @@ class CozeService:
 
     @staticmethod
     def _normalize_content(content: Any) -> str:
-        if content is None:
-            return ""
-        if isinstance(content, str):
-            return content.strip()
-        if isinstance(content, list):
-            chunks: List[str] = []
-            for item in content:
-                if isinstance(item, dict):
-                    text = item.get("text")
-                    if isinstance(text, str) and text.strip():
-                        chunks.append(text.strip())
-                elif isinstance(item, str) and item.strip():
-                    chunks.append(item.strip())
-            return "\n".join(chunks).strip()
-        return str(content).strip()
+        return ai_routing.normalize_content(content)
 
     def _extract_answer_text(self, result: Dict[str, Any]) -> str:
-        choices = result.get("choices")
-        if not isinstance(choices, list) or not choices:
-            return ""
-        first = choices[0] if isinstance(choices[0], dict) else {}
-        message = first.get("message") if isinstance(first, dict) else {}
-        if not isinstance(message, dict):
-            return ""
-
-        content = self._normalize_content(message.get("content"))
-        if content:
-            return content
-        return self._normalize_content(first.get("text"))
+        return ai_routing.extract_answer_text(result)
 
     @staticmethod
     def _looks_like_json(text: str) -> bool:
-        raw = (text or "").strip()
-        if not raw:
-            return False
-        if not (raw.startswith("{") and raw.endswith("}")):
-            return False
-        try:
-            parsed = json.loads(raw)
-            return isinstance(parsed, dict)
-        except Exception:
-            return False
+        return ai_routing.looks_like_json(text)
 
     def _is_complex_request(
         self,
@@ -511,30 +417,13 @@ class CozeService:
         user_context: Optional[str],
         messages: List[Dict[str, Any]],
     ) -> bool:
-        text_parts: List[str] = []
-        if question:
-            text_parts.append(question)
-        if user_context:
-            text_parts.append(user_context)
-        if not text_parts:
-            for msg in messages:
-                if not isinstance(msg, dict):
-                    continue
-                role = str(msg.get("role", "")).lower()
-                if role != "user":
-                    continue
-                content = msg.get("content")
-                if isinstance(content, str):
-                    text_parts.append(content)
-                if len(" ".join(text_parts)) >= self.reasoner_trigger_chars:
-                    break
-
-        merged = " ".join(text_parts).lower().strip()
-        if not merged:
-            return False
-        if len(merged) >= max(self.reasoner_trigger_chars, 1):
-            return True
-        return any(keyword in merged for keyword in self.reasoner_keywords)
+        return ai_routing.is_complex_request(
+            question=question,
+            user_context=user_context,
+            messages=messages,
+            trigger_chars=self.reasoner_trigger_chars,
+            trigger_keywords=self.reasoner_keywords,
+        )
 
     def _should_try_reasoner(
         self,
@@ -545,19 +434,16 @@ class CozeService:
         chat_failed: bool,
         reasoner_allowed: bool,
     ) -> bool:
-        if not self.enable_reasoner_fallback or not reasoner_allowed:
-            return False
-        if not self.reasoner_model or self.reasoner_model == self.chat_model:
-            return False
-        if chat_failed:
-            return True
-        if not chat_text.strip():
-            return True
-        if expect_json and not self._looks_like_json(chat_text):
-            return True
-        if is_complex and len(chat_text.strip()) < 240:
-            return True
-        return False
+        return ai_routing.should_try_reasoner(
+            chat_text=chat_text,
+            expect_json=expect_json,
+            is_complex=is_complex,
+            chat_failed=chat_failed,
+            reasoner_allowed=reasoner_allowed,
+            enable_reasoner_fallback=self.enable_reasoner_fallback,
+            chat_model=self.chat_model,
+            reasoner_model=self.reasoner_model,
+        )
 
     async def _chat_once(
         self,
@@ -936,10 +822,5 @@ class CozeService:
 coze_service = CozeService(budget_store=DatabaseBudgetStore(SessionLocal))
 
 # Provider-accurate aliases; legacy Coze* names remain exported for compatibility.
-AIProviderError = CozeError
-AIProviderTimeoutError = CozeTimeoutError
-AIProviderRequestError = CozeRequestError
-AIProviderHttpStatusError = CozeHttpStatusError
-AIBudgetExceededError = CozeBudgetExceededError
 DeepSeekService = CozeService
 deepseek_service = coze_service
