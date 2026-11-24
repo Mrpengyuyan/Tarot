@@ -2,6 +2,7 @@ using System.Collections;
 using TarotUnity.Core;
 using TarotUnity.Gameplay;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 namespace TarotUnity.UI
@@ -155,6 +156,101 @@ namespace TarotUnity.UI
             }
 
             SceneManager.LoadScene(GameSceneId.Result.ToString());
+        }
+
+        private void HandleQuestionSubmit(string _)
+        {
+            if (IsOverlayModalOpen() || drawInProgress)
+            {
+                return;
+            }
+
+            if (drawButton != null && drawButton.gameObject.activeInHierarchy && drawButton.interactable)
+            {
+                BeginDraw();
+            }
+        }
+
+        /// <summary>Flips the next unrevealed dealt card when in WaitingForFlip state.</summary>
+        public bool TryFlipNextCard()
+        {
+            if (flowController == null || flowController.State != ReadingFlowState.WaitingForFlip
+                || deckController == null || AnyCardIsFlipping() || IsOverlayModalOpen())
+            {
+                return false;
+            }
+
+            foreach (var card in deckController.ActiveCards)
+            {
+                if (card != null && !card.IsFaceUp)
+                {
+                    HandleCardClicked(card);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool IsOverlayModalOpen()
+        {
+            if (cardInspection != null && cardInspection.IsOpen)
+            {
+                return true;
+            }
+
+            var settings = FindFirstObjectByType<RitualSettingsOverlay>();
+            if (settings != null && settings.IsOpen)
+            {
+                return true;
+            }
+
+            var history = FindFirstObjectByType<RitualHistoryOverlay>();
+            return history != null && history.IsOpen;
+        }
+
+        private void Update()
+        {
+            var keyboard = Keyboard.current;
+            if (keyboard == null || IsOverlayModalOpen())
+            {
+                return;
+            }
+
+            var inputFocused = questionInput != null && questionInput.isFocused;
+            if (inputFocused)
+            {
+                if (keyboard.escapeKey.wasPressedThisFrame)
+                {
+                    questionInput.DeactivateInputField();
+                }
+                else if (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame)
+                {
+                    HandleQuestionSubmit(questionInput.text);
+                }
+
+                return;
+            }
+
+            var spacePressed = keyboard.spaceKey.wasPressedThisFrame;
+            var enterPressed = keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame;
+            if (!spacePressed && !enterPressed)
+            {
+                return;
+            }
+
+            if (spacePressed && flowController != null && flowController.State == ReadingFlowState.WaitingForFlip)
+            {
+                TryFlipNextCard();
+                return;
+            }
+
+            if (flowController != null && flowController.State == ReadingFlowState.ResultReady
+                && revealResultButton != null && revealResultButton.gameObject.activeInHierarchy
+                && revealResultButton.interactable)
+            {
+                LoadResult();
+            }
         }
     }
 }

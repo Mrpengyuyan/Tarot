@@ -72,6 +72,8 @@ namespace TarotUnity.UI
         public void Open()
         {
             if (modalRoot == null || !triggerAllowed) return;
+            var history = GetComponent<RitualHistoryOverlay>();
+            if (history != null && history.IsOpen) history.Close();
             SyncControlsFromPreferences();
             modalRoot.transform.SetAsLastSibling();
             modalRoot.SetActive(true);

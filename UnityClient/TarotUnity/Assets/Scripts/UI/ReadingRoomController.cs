@@ -7,6 +7,7 @@ using TarotUnity.Network;
 using TarotUnity.Presentation;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -91,6 +92,11 @@ namespace TarotUnity.UI
                 revealResultButton.onClick.AddListener(LoadResult);
             }
 
+            if (questionInput != null)
+            {
+                questionInput.onSubmit.AddListener(HandleQuestionSubmit);
+            }
+
             if (flowController != null)
             {
                 flowController.StateChanged += HandleStateChanged;
@@ -166,6 +172,11 @@ namespace TarotUnity.UI
             if (revealResultButton != null)
             {
                 revealResultButton.onClick.RemoveListener(LoadResult);
+            }
+
+            if (questionInput != null)
+            {
+                questionInput.onSubmit.RemoveListener(HandleQuestionSubmit);
             }
 
             if (flowController != null)

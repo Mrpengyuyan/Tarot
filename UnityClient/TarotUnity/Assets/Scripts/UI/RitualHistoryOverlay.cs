@@ -51,6 +51,8 @@ namespace TarotUnity.UI
         public void Open()
         {
             if (modalRoot == null) return;
+            var settings = GetComponent<RitualSettingsOverlay>();
+            if (settings != null && settings.IsOpen) settings.Close();
             modalRoot.transform.SetAsLastSibling();
             modalRoot.SetActive(true);
             RebuildList();

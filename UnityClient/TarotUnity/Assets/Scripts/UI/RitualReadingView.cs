@@ -158,7 +158,16 @@ namespace TarotUnity.UI
             Refresh();
         }
 
-        private void ReturnToMenu() => SceneManager.LoadScene("MainMenu");
+        private void ReturnToMenu()
+        {
+            if (TarotUnity.Core.SceneFlowManager.Instance != null)
+            {
+                TarotUnity.Core.SceneFlowManager.Instance.LoadScene(TarotUnity.Core.GameSceneId.MainMenu);
+                return;
+            }
+
+            SceneManager.LoadScene("MainMenu");
+        }
 
         private void SubmitQuestion(string value)
         {
