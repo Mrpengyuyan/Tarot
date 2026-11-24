@@ -34,7 +34,7 @@ namespace TarotUnity.Tests.EditMode
         {
             var offenders = new List<string>();
 
-            foreach (var path in Directory.GetFiles(EditorFolder, "*.cs"))
+            foreach (var path in Directory.GetFiles(EditorFolder, "*.cs", SearchOption.AllDirectories))
             {
                 var name = Path.GetFileName(path);
                 if (Exempt.Contains(name))
