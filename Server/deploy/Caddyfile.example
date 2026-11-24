@@ -1,0 +1,10 @@
+# Replace tarot.example.com with your real domain pointing to this server's IP.
+# Caddy automatically provisions and renews Let's Encrypt HTTPS certificates.
+tarot.example.com {
+    encode gzip zstd
+
+    reverse_proxy tarot-api:8000 {
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+    }
+}

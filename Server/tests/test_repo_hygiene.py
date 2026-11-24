@@ -74,3 +74,15 @@ def test_release_hygiene_scanner_flags_secrets_and_passes_clean_repo(tmp_path):
     assert check_release_hygiene.scan_desktop_config(good_client) == []
 
     assert check_release_hygiene.collect_hygiene_issues(PROJECT_ROOT.parent) == []
+
+
+def test_production_env_template_uses_placeholders_and_safe_defaults():
+    content = (PROJECT_ROOT / ".env.production.example").read_text(encoding="utf-8")
+    assert "ENVIRONMENT=production" in content
+    assert "AUTH_COOKIE_SECURE=true" in content
+    assert "ALLOW_MOCK_AI_FALLBACK=false" in content
+    assert "AI_BUDGET_GUARD_ENABLED=true" in content
+    assert "DEEPSEEK_ENABLE_REASONER_FALLBACK=false" in content
+    assert "replace-with-a-long-random-secret" in content
+    assert "your_deepseek_api_key_here" in content
+    assert check_release_hygiene.scan_text_for_secrets(content, ".env.production.example") == []

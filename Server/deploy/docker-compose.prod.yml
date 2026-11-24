@@ -1,0 +1,37 @@
+services:
+  tarot-api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: tarot-api
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    volumes:
+      - tarot_data:/data
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/', timeout=5)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: tarot-caddy
+    restart: unless-stopped
+    depends_on:
+      - tarot-api
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  tarot_data:
+  caddy_data:
+  caddy_config:

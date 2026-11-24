@@ -41,6 +41,8 @@ UNITY_FRONTEND_PLAN.md
 .env
 .env.*
 !.env.example
+!.env.production.example
+Server/deploy/Caddyfile
 
 # Backend runtime artifacts (Server/)
 Server/**/*.db
