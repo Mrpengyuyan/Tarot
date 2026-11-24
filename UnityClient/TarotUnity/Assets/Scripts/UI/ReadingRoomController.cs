@@ -119,9 +119,10 @@ namespace TarotUnity.UI
             SetResultButtonVisible(false);
             SetStatus("先选一个牌阵，写下你的问题，再抽牌。");
             SetReleaseStatus(ReleaseUxCopy.LocalModeReady);
-            RitualReadingView.Attach(this, flowController, questionInput, drawButton, revealResultButton,
+            var readingView = RitualReadingView.Attach(this, flowController, questionInput, drawButton, revealResultButton,
                 new[] { oneCardButton, threeCardButton, celticCrossButton });
             RitualPaperRendering.Attach(gameObject, PresentationCamera());
+            RitualSpreadPreview3D.Attach(gameObject, readingView, PresentationCamera());
             cameraChoreography?.ApplyRitualTableFraming();
             if (deckShuffle != null)
             {

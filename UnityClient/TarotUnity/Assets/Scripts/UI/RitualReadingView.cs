@@ -15,6 +15,23 @@ namespace TarotUnity.UI
     {
         public enum ViewStage { Spread, Question, Shuffle, Pick, Reveal, Ready }
         public ViewStage Stage { get; private set; }
+        internal Button[] SpreadButtons => spreads;
+
+        internal void Set2DSpreadSymbolsHidden(bool hidden)
+        {
+            if (spreads == null) return;
+            for (var i = 0; i < spreads.Length; i++)
+            {
+                if (spreads[i] == null) continue;
+                var symbol = spreads[i].transform.Find("RitualSpreadSymbol");
+                if (symbol == null) continue;
+                var group = symbol.GetComponent<CanvasGroup>();
+                if (group == null) group = symbol.gameObject.AddComponent<CanvasGroup>();
+                group.alpha = hidden ? 0f : 1f;
+                group.interactable = false;
+                group.blocksRaycasts = false;
+            }
+        }
 
         private ReadingFlowController flow;
         private TMP_InputField question;

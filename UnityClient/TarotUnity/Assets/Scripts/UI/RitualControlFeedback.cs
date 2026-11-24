@@ -32,6 +32,8 @@ namespace TarotUnity.UI
         private bool hovering,keyboardFocus;
         private float hoverFrom,hoverTarget,hoverSince,haloFrom,haloTarget,haloSince;
 
+        internal float HoverAmount { get; private set; }
+
         internal static void Attach(Button button,Kind kind)
         {
             if(button==null || button.GetComponent<RitualControlFeedback>()!=null) return;
@@ -143,6 +145,7 @@ namespace TarotUnity.UI
             if (!usable) { keyboardFocus = false; hoverFrom = hoverTarget = haloFrom = haloTarget = 0f; }
             var focus = usable && keyboardFocus && EventSystem.current != null && EventSystem.current.currentSelectedGameObject == gameObject;
             var amount = Blend(ref hoverFrom, ref hoverTarget, ref hoverSince, usable && hovering ? 1f : 0f, kind == Kind.Spread ? .4f : kind == Kind.Quiet ? 0f : .2f);
+            HoverAmount = amount;
             var d = canvas.rect.width > 2f && canvas.rect.height > 2f ? RitualDeckLayout.Density(canvas.rect.width, canvas.rect.height) : 1f;
             if (ring != null)
             {
