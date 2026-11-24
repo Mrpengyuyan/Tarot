@@ -9,18 +9,35 @@ Tarot 3D 塔罗牌仪式游戏的产品仓库，包含 Unity 桌面客户端和 
 
 ```text
 Tarot/
-├── README.md                     本文件
+├── README.md                                  本文件
 ├── UnityClient/
 │   ├── README.md
-│   └── TarotUnity/               Unity 工程
+│   └── TarotUnity/                            Unity 工程
+│       ├── Assets/Scenes/                     Boot / MainMenu / ReadingRoom / Result
+│       ├── Assets/Scripts/
+│       │   ├── Core/                          音频、偏好设置、场景流转、历史记录存储
+│       │   ├── Data/                          API 模型与会话快照
+│       │   ├── Gameplay/                      牌组、78 张牌扇（含对象池）、翻牌与离线模拟
+│       │   ├── Network/                       统一 ApiClient 与异步解读轮询
+│       │   ├── Presentation/                  3D 牌桌镜头、洗牌编排、纸张质感与牌桌悬停
+│       │   └── UI/                            封面/牌桌/结果视图、设置与历史抽屉
+│       ├── Assets/Editor/
+│       │   ├── Release/                       桌面发行构建与视觉审查工具
+│       │   └── LegacyPhases/                  历史阶段搭建与抓图归档
+│       └── Assets/Tests/                      EditMode / PlayMode 自动化测试
 ├── Server/
-│   ├── README.md                 后端启动、配置和测试
-│   ├── app/                      FastAPI 应用
-│   ├── tests/                    后端测试
-│   ├── alembic/                  数据库迁移
-│   └── data/                     78 张牌和 6 个牌阵的参考数据
+│   ├── README.md                              后端启动、配置和测试
+│   ├── check_config.py                        运行配置与 --production-check 上线检查
+│   ├── app/
+│   │   ├── api/v1/endpoints/                  auth / records / cards / spreads / health
+│   │   ├── core/                              配置、原生 bcrypt 安全与邮箱规范化
+│   │   ├── crud/ & models/ & schemas/         数据持久化与 Pydantic 契约
+│   │   └── services/                          AI 客户端、路由/计费、预算存储、反代 IP 限流与解读编排
+│   ├── tests/                                 1,640+ 项隔离后端 pytest 用例
+│   ├── alembic/                               数据库迁移
+│   └── data/                                  78 张牌和 6 个牌阵的参考数据
 └── .github/workflows/
-│   └── backend-tests.yml         只在 Server/ 变动时运行
+    └── backend-tests.yml                      只在 Server/ 变动时运行
 ```
 
 Unity 工程位于 `UnityClient/TarotUnity/`。构建场景包括：

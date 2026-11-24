@@ -21,6 +21,8 @@
 
 # Unity test artifacts
 **/TestResults/
+UnityClient/TarotUnity/Assets/InitTestScene*.unity
+UnityClient/TarotUnity/Assets/InitTestScene*.unity.meta
 
 # Superpowers brainstorm server state (local tooling cache)
 **/.superpowers/

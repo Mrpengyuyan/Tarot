@@ -9,8 +9,12 @@ Unity frontend for the Tarot desktop game. The current baseline is Unity
 - `Assets/Scenes/MainMenu.unity` is the menu and spread selection screen.
 - `Assets/Scenes/ReadingRoom.unity` is the question, draw, and flip screen.
 - `Assets/Scenes/Result.unity` is the multi-card result and interpretation screen.
-- `Assets/Scripts/` contains runtime code grouped by core, data, gameplay,
-  network, presentation, and UI responsibilities.
+- `Assets/Scripts/` contains runtime code grouped by `Core`, `Data`, `Gameplay`,
+  `Network`, `Presentation`, and `UI` responsibilities (large controllers such as
+  `ReadingRoomController`, `SpreadFanController`, and `ResultPanelPresenter` are split
+  into focused `partial` files by flow, layout, hover, and backend concerns).
+- `Assets/Editor/` keeps active editor tools at top level, release/review builders under
+  `Release/`, and historical phase builders/captures archived under `LegacyPhases/`.
 - `Assets/Tests/` contains EditMode and PlayMode coverage for the vertical slice.
 
 ## Playable Flow
