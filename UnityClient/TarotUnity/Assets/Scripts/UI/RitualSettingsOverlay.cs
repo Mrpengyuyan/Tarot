@@ -1,4 +1,5 @@
 using TarotUnity.Core;
+using TarotUnity.Network;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -20,6 +21,8 @@ namespace TarotUnity.UI
         private RectTransform canvas;
         private Button triggerButton;
         private CanvasGroup triggerGroup;
+        private TMP_Text connectionBadge;
+        private CanvasGroup badgeGroup;
         private GameObject modalRoot;
         private Slider musicSlider;
         private Slider sfxSlider;
@@ -28,11 +31,16 @@ namespace TarotUnity.UI
         private TMP_Text muteValueLabel;
         private TMP_Text fastShuffleValueLabel;
         private TMP_Text fullScreenValueLabel;
+        private TMP_Text offlineModeValueLabel;
+        private TMP_Text connectionStatusLabel;
+        private BackendReadingService cachedBackendService;
+        private bool lastBackendReady;
         private bool triggerAllowed = true;
         private bool escapeHeld;
 
         public bool IsOpen => modalRoot != null && modalRoot.activeSelf;
         public Button TriggerButton => triggerButton;
+        public TMP_Text ConnectionBadge => connectionBadge;
 
         public static RitualSettingsOverlay Attach(GameObject host)
         {
@@ -48,10 +56,17 @@ namespace TarotUnity.UI
         {
             triggerAllowed = visible;
             if (!visible && IsOpen) Close();
-            if (triggerGroup == null) return;
-            triggerGroup.alpha = visible ? 1f : 0f;
-            triggerGroup.interactable = visible;
-            triggerGroup.blocksRaycasts = visible;
+            if (triggerGroup != null)
+            {
+                triggerGroup.alpha = visible ? 1f : 0f;
+                triggerGroup.interactable = visible;
+                triggerGroup.blocksRaycasts = visible;
+            }
+
+            if (badgeGroup != null)
+            {
+                badgeGroup.alpha = visible ? 1f : 0f;
+            }
         }
 
         public void Open()
@@ -81,16 +96,28 @@ namespace TarotUnity.UI
             canvas = (RectTransform)transform;
             triggerButton = CreateTrigger();
             triggerGroup = triggerButton.gameObject.AddComponent<CanvasGroup>();
+            connectionBadge = CreateConnectionBadge();
+            badgeGroup = connectionBadge.gameObject.AddComponent<CanvasGroup>();
+            badgeGroup.interactable = false;
+            badgeGroup.blocksRaycasts = false;
             modalRoot = CreateModal();
             modalRoot.SetActive(false);
             UserPreferences.Changed += SyncControlsFromPreferences;
             SyncControlsFromPreferences();
             RitualTypography.ApplyHierarchy(triggerButton.transform);
+            RitualTypography.ApplyHierarchy(connectionBadge.transform);
             RitualTypography.ApplyHierarchy(modalRoot.transform);
         }
 
         private void Update()
         {
+            var ready = IsBackendReady();
+            if (ready != lastBackendReady)
+            {
+                lastBackendReady = ready;
+                SyncConnectionIndicators();
+            }
+
             if (!IsOpen)
             {
                 escapeHeld = false;
@@ -110,7 +137,21 @@ namespace TarotUnity.UI
         {
             UserPreferences.Changed -= SyncControlsFromPreferences;
             if (triggerButton != null) Destroy(triggerButton.gameObject);
+            if (connectionBadge != null) Destroy(connectionBadge.gameObject);
             if (modalRoot != null) Destroy(modalRoot);
+        }
+
+        private TMP_Text CreateConnectionBadge()
+        {
+            var label = CreateText(canvas, "RitualConnectionBadge", "", 13f,
+                new Color(QuietGold.r, QuietGold.g, QuietGold.b, 0.72f), TextAlignmentOptions.Left);
+            var rect = label.rectTransform;
+            rect.anchorMin = rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = new Vector2(0f, 1f);
+            rect.anchoredPosition = new Vector2(36f, -30f);
+            rect.sizeDelta = new Vector2(220f, 26f);
+            label.characterSpacing = 6f;
+            return label;
         }
 
         private Button CreateTrigger()
@@ -166,7 +207,7 @@ namespace TarotUnity.UI
             var panelRect = (RectTransform)panel.transform;
             panelRect.anchorMin = panelRect.anchorMax = new Vector2(0.5f, 0.5f);
             panelRect.pivot = new Vector2(0.5f, 0.5f);
-            panelRect.sizeDelta = new Vector2(460f, 388f);
+            panelRect.sizeDelta = new Vector2(460f, 468f);
             var panelImage = panel.GetComponent<Image>();
             panelImage.color = PanelColor;
             panelImage.raycastTarget = true;
@@ -191,8 +232,14 @@ namespace TarotUnity.UI
                 () => UserPreferences.FastShuffle = !UserPreferences.FastShuffle);
             fullScreenValueLabel = CreateToggleRow(panel.transform, "FullScreenRow", "\u663e\u793a\u6a21\u5f0f", 292f,
                 () => UserPreferences.FullScreen = !UserPreferences.FullScreen);
+            offlineModeValueLabel = CreateToggleRow(panel.transform, "OfflineModeRow", "\u89e3\u8bfb\u6a21\u5f0f", 340f,
+                () => UserPreferences.PreferOfflineMode = !UserPreferences.PreferOfflineMode);
 
-            var closeButton = CreateActionButton(panel.transform, "CloseSettingsButton", "\u5173\u95ed", 338f, Close);
+            connectionStatusLabel = CreateText(panel.transform, "ConnectionStatus", "", 13f,
+                new Color(QuietGold.r, QuietGold.g, QuietGold.b, 0.85f), TextAlignmentOptions.Center);
+            PlaceTop(connectionStatusLabel.rectTransform, 386f, 408f, 24f);
+
+            var closeButton = CreateActionButton(panel.transform, "CloseSettingsButton", "\u5173\u95ed", 416f, Close);
             if (Application.isPlaying)
             {
                 RitualControlFeedback.Attach(closeButton, RitualControlFeedback.Kind.Primary);
@@ -341,6 +388,39 @@ namespace TarotUnity.UI
             if (muteValueLabel != null) muteValueLabel.text = UserPreferences.Muted ? "\u5df2\u9759\u97f3" : "\u5f00\u542f";
             if (fastShuffleValueLabel != null) fastShuffleValueLabel.text = UserPreferences.FastShuffle ? "\u5f00\u542f" : "\u5173\u95ed";
             if (fullScreenValueLabel != null) fullScreenValueLabel.text = UserPreferences.FullScreen ? "\u5168\u5c4f" : "\u7a97\u53e3";
+            if (offlineModeValueLabel != null) offlineModeValueLabel.text = UserPreferences.PreferOfflineMode ? "\u79bb\u7ebf\u724c\u4e49" : "\u5728\u7ebf\u4f18\u5148";
+            lastBackendReady = IsBackendReady();
+            SyncConnectionIndicators();
+        }
+
+        private bool IsBackendReady()
+        {
+            if (cachedBackendService == null)
+            {
+                cachedBackendService = FindFirstObjectByType<BackendReadingService>();
+            }
+
+            return cachedBackendService != null && cachedBackendService.CanCreateAuthenticatedReading;
+        }
+
+        private void SyncConnectionIndicators()
+        {
+            var preferOffline = UserPreferences.PreferOfflineMode;
+            if (connectionBadge != null)
+            {
+                connectionBadge.text = preferOffline
+                    ? "\u79bb\u7ebf\u724c\u4e49\u6a21\u5f0f"
+                    : (lastBackendReady ? "\u5728\u7ebf\u89e3\u8bfb\u5c31\u7eea" : "\u672c\u5730\u79bb\u7ebf\u6a21\u5f0f");
+            }
+
+            if (connectionStatusLabel != null)
+            {
+                connectionStatusLabel.text = preferOffline
+                    ? "\u5f53\u524d\u4f7f\u7528\u672c\u5730\u724c\u4e49\uff0c\u4e0d\u6d88\u8017\u5728\u7ebf\u89e3\u8bfb\u989d\u5ea6"
+                    : (lastBackendReady
+                        ? "\u5df2\u8fde\u63a5\u5728\u7ebf\u89e3\u8bfb\u670d\u52a1"
+                        : "\u672a\u8fde\u63a5\u5728\u7ebf\u670d\u52a1\uff0c\u62bd\u724c\u65f6\u5c06\u81ea\u52a8\u4f7f\u7528\u79bb\u7ebf\u724c\u4e49");
+            }
         }
 
         private static TMP_Text CreateText(Transform parent, string name, string value, float size, Color color, TextAlignmentOptions alignment)

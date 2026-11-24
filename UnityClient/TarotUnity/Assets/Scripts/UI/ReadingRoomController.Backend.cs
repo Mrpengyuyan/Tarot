@@ -210,6 +210,11 @@ namespace TarotUnity.UI
 
         private bool ShouldTryBackend()
         {
+            if (UserPreferences.PreferOfflineMode && backendMode != BackendIntegrationMode.BackendOnly)
+            {
+                return false;
+            }
+
             return backendMode != BackendIntegrationMode.LocalSimulation
                 && backendReadingService != null
                 && backendReadingService.CanCreateAuthenticatedReading;
@@ -218,6 +223,11 @@ namespace TarotUnity.UI
         private bool ShouldLoadBackendSpreads()
         {
             if (backendMode == BackendIntegrationMode.LocalSimulation || backendReadingService == null)
+            {
+                return false;
+            }
+
+            if (UserPreferences.PreferOfflineMode && backendMode != BackendIntegrationMode.BackendOnly)
             {
                 return false;
             }

@@ -88,10 +88,17 @@ namespace TarotUnity.Tests.PlayMode
             Assert.That(modal, Is.Not.Null);
             modal.transform.Find("Panel/FastShuffleRow/ToggleButton").GetComponent<Button>().onClick.Invoke();
             modal.transform.Find("Panel/MuteRow/ToggleButton").GetComponent<Button>().onClick.Invoke();
+            modal.transform.Find("Panel/OfflineModeRow/ToggleButton").GetComponent<Button>().onClick.Invoke();
             yield return null;
 
             Assert.That(UserPreferences.FastShuffle, Is.True);
             Assert.That(UserPreferences.Muted, Is.True);
+            Assert.That(UserPreferences.PreferOfflineMode, Is.True);
+            Assert.That(overlay.ConnectionBadge, Is.Not.Null);
+            Assert.That(overlay.ConnectionBadge.text, Is.EqualTo("\u79bb\u7ebf\u724c\u4e49\u6a21\u5f0f"));
+
+            UserPreferences.Reload();
+            Assert.That(UserPreferences.PreferOfflineMode, Is.True);
 
             modal.transform.Find("Panel/CloseSettingsButton").GetComponent<Button>().onClick.Invoke();
             yield return null;
@@ -125,6 +132,7 @@ namespace TarotUnity.Tests.PlayMode
             yield return null;
 
             Assert.That(overlay.TriggerButton.GetComponent<CanvasGroup>().alpha, Is.Zero.Within(0.01f));
+            Assert.That(overlay.ConnectionBadge.GetComponent<CanvasGroup>().alpha, Is.Zero.Within(0.01f));
             Assert.That(overlay.IsOpen, Is.False);
         }
     }
