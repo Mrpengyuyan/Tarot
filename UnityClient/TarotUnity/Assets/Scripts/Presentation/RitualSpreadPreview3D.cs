@@ -135,9 +135,9 @@ namespace TarotUnity.Presentation
             stageRoot.SetParent(transform, false);
 
             var buttons = view.SpreadButtons;
-            CreateFormation(0, buttons[0], SingleCardDefs(), 0.96f, -18f, -6f, 96f, 152f, 0f);
-            CreateFormation(1, buttons[1], ThreeCardDefs(), 0.82f, -20f, -8f, 176f, 150f, 1.4f);
-            CreateFormation(2, buttons[2], CelticCrossDefs(), 0.34f, -23f, -10f, 196f, 176f, 2.7f);
+            CreateFormation(0, buttons[0], SingleCardDefs(), 1.48f, 24f, 8f, 130f, 190f, 0f);
+            CreateFormation(1, buttons[1], ThreeCardDefs(), 1.32f, 26f, 10f, 230f, 190f, 1.35f);
+            CreateFormation(2, buttons[2], CelticCrossDefs(), 0.56f, 30f, 12f, 260f, 215f, 2.7f);
 
             view.Set2DSpreadSymbolsHidden(true);
             RefreshVisuals();
@@ -281,19 +281,21 @@ namespace TarotUnity.Presentation
                 var slotWorldHeight = slotPixelHeight * pixelUnit;
 
                 var cardHeight = slotWorldHeight * formation.CardHeightRatio;
-                var levitation = Mathf.Sin(time * 1.45f + formation.PhaseOffset) * (slotWorldHeight * 0.026f);
-                var hoverLiftY = hover * slotWorldHeight * 0.085f;
-                var hoverForwardZ = hover * 0.11f;
+                var baseElevationY = slotWorldHeight * 0.16f;
+                var levitation = Mathf.Sin(time * 1.35f + formation.PhaseOffset) * (slotWorldHeight * 0.055f);
+                var hoverLiftY = hover * slotWorldHeight * 0.11f;
+                var hoverForwardZ = hover * 0.13f;
 
                 var depth = ProjectionDepth - hoverForwardZ;
                 var depthRatio = depth / ProjectionDepth;
                 var localX = (screenCenter.x - viewCamera.pixelWidth * 0.5f) * pixelUnit * depthRatio;
-                var localY = (screenCenter.y - viewCamera.pixelHeight * 0.5f) * pixelUnit * depthRatio + levitation + hoverLiftY;
+                var localY = (screenCenter.y - viewCamera.pixelHeight * 0.5f) * pixelUnit * depthRatio + baseElevationY + levitation + hoverLiftY;
                 formation.Root.position = camPos + camRot * new Vector3(localX, localY, depth);
 
-                var pitch = Mathf.Lerp(formation.BasePitch, formation.HoverPitch, hover);
-                var swayYaw = Mathf.Sin(time * 0.85f + formation.PhaseOffset) * Mathf.Lerp(8.5f, 4.5f, hover);
-                var swayRoll = Mathf.Cos(time * 0.68f + formation.PhaseOffset) * Mathf.Lerp(2.2f, 1.0f, hover);
+                var breathPitch = Mathf.Sin(time * 1.35f + formation.PhaseOffset - 0.6f) * Mathf.Lerp(2.4f, 1.0f, hover);
+                var pitch = Mathf.Lerp(formation.BasePitch, formation.HoverPitch, hover) + breathPitch;
+                var swayYaw = Mathf.Sin(time * 0.65f + formation.PhaseOffset) * Mathf.Lerp(2.5f, 1.2f, hover);
+                var swayRoll = Mathf.Cos(time * 0.55f + formation.PhaseOffset) * Mathf.Lerp(1.1f, 0.5f, hover);
                 formation.Root.rotation = camRot * Quaternion.Euler(pitch, swayYaw, swayRoll);
 
                 var formationScale = Mathf.Lerp(1f, 1.075f, hover);
@@ -308,7 +310,7 @@ namespace TarotUnity.Presentation
                 {
                     var node = formation.Cards[c];
                     var def = node.Def;
-                    var wave = Mathf.Sin(time * 1.65f + formation.PhaseOffset + def.Phase) * (cardHeight * 0.028f);
+                    var wave = Mathf.Sin(time * 1.55f + formation.PhaseOffset + def.Phase) * (cardHeight * 0.032f);
                     var expand = 1f + hover * def.HoverExpand;
                     var localPos = new Vector3(
                         def.Position.x * cardHeight * expand,
@@ -327,18 +329,19 @@ namespace TarotUnity.Presentation
 
                 if (formation.ShadowRenderer != null)
                 {
-                    var shadowScale = slotWorldHeight * (1.02f + hover * 0.16f);
-                    var shadowOffsetY = -slotWorldHeight * (0.14f + hover * 0.08f) - levitation * 0.65f;
-                    var shadowDepthZ = 0.16f + hover * 0.08f;
+                    var levitationNorm = Mathf.InverseLerp(-slotWorldHeight * 0.055f, slotWorldHeight * 0.055f, levitation);
+                    var shadowScale = slotWorldHeight * (1.28f + levitationNorm * 0.08f + hover * 0.18f);
+                    var shadowOffsetY = -slotWorldHeight * (0.36f + hover * 0.10f) - levitation * 1.15f;
+                    var shadowDepthZ = 0.24f + hover * 0.10f;
                     formation.ShadowRenderer.transform.localPosition = new Vector3(0f, shadowOffsetY, shadowDepthZ);
-                    formation.ShadowRenderer.transform.localRotation = Quaternion.Euler(14f, 0f, 0f);
+                    formation.ShadowRenderer.transform.localRotation = Quaternion.Euler(28f, 0f, 0f);
                     formation.ShadowRenderer.transform.localScale = new Vector3(
                         shadowScale * (formation.ShadowWidth / 150f),
                         shadowScale * (formation.ShadowHeight / 150f),
                         1f);
 
                     shadowBlock.SetVector(PaperId, new Vector4(formation.ShadowWidth, formation.ShadowHeight, 1f, 1f));
-                    shadowBlock.SetFloat(ShadowOpacityId, Mathf.Lerp(0.58f, 0.34f, hover) * groupAlpha);
+                    shadowBlock.SetFloat(ShadowOpacityId, Mathf.Lerp(0.62f, 0.32f, hover) * Mathf.Lerp(1f, 0.84f, levitationNorm) * groupAlpha);
                     formation.ShadowRenderer.SetPropertyBlock(shadowBlock);
                 }
             }

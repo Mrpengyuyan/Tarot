@@ -68,11 +68,13 @@ namespace TarotUnity.UI
         private int selectedInspiration = -1;
         private readonly List<Transform> retired = new();
 
+        private static readonly Color PlaceholderTint = new(203f / 255f, 182f / 255f, 150f / 255f, 0.34f);
+
         private static readonly (string Key, string Label, string Prompt)[] InspirationThemes =
         {
-            ("Love", "\u60c5\u611f", "\u8fd9\u6bb5\u5173\u7cfb\u91cc\uff0c\u6211\u6b64\u523b\u6700\u8be5\u770b\u6e05\u4ec0\u4e48\uff1f"),
-            ("Career", "\u4e8b\u4e1a", "\u773c\u4e0b\u8fd9\u6bb5\u5de5\u4f5c\u6216\u5b66\u4e1a\uff0c\u6211\u6700\u9700\u8981\u805a\u7126\u54ea\u91cc\uff1f"),
-            ("Choice", "\u6289\u62e9", "\u9762\u5bf9\u773c\u524d\u7684\u9009\u62e9\uff0c\u54ea\u6761\u8def\u66f4\u5951\u5408\u6211\u6b64\u523b\u7684\u8282\u594f\uff1f"),
+            ("Love", "\u60c5\u611f", "\u4f8b\u5982\uff1a\u8fd9\u6bb5\u5173\u7cfb\u91cc\uff0c\u6211\u6b64\u523b\u6700\u8be5\u770b\u6e05\u4ec0\u4e48\uff1f"),
+            ("Career", "\u4e8b\u4e1a", "\u4f8b\u5982\uff1a\u773c\u4e0b\u8fd9\u6bb5\u5de5\u4f5c\u6216\u5b66\u4e1a\uff0c\u6211\u6700\u9700\u8981\u805a\u7126\u54ea\u91cc\uff1f"),
+            ("Choice", "\u6289\u62e9", "\u4f8b\u5982\uff1a\u9762\u5bf9\u773c\u524d\u7684\u9009\u62e9\uff0c\u54ea\u6761\u8def\u66f4\u5951\u5408\u6211\u6b64\u523b\u7684\u8282\u594f\uff1f"),
         };
 
         public static RitualReadingView Attach(ReadingRoomController room, ReadingFlowController flow,
@@ -326,7 +328,7 @@ namespace TarotUnity.UI
                     if (node == question.transform)
                     {
                         ApplyText(question.textComponent, entry.Value, new Color(242f/255f, 223f/255f, 190f/255f));
-                        if (question.placeholder is TMP_Text hint) ApplyText(hint, entry.Value, new Color(203f/255f, 182f/255f, 150f/255f, 0.85f));
+                        if (question.placeholder is TMP_Text hint) ApplyText(hint, entry.Value, PlaceholderTint);
                         continue;
                     }
                     var text = node.GetComponent<TMP_Text>() ?? node.GetComponentInChildren<TMP_Text>(true);
@@ -412,6 +414,8 @@ namespace TarotUnity.UI
                 placeholder.text = selectedInspiration >= 0
                     ? InspirationThemes[selectedInspiration].Prompt
                     : ReleaseUxCopy.DefaultQuestion;
+                placeholder.color = PlaceholderTint;
+                placeholder.fontStyle = selectedInspiration >= 0 ? FontStyles.Italic : FontStyles.Normal;
             }
 
             if (inspirationLabels != null)

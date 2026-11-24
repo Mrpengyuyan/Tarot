@@ -46,9 +46,9 @@ namespace TarotUnity.UI
                 Center("RitualCoverCaption", 1f + h * 0.962f - captionLine, w, captionLine, w * 0.008f, 0.5f);
                 var quitY = 1f + h * (1f - Mathf.Lerp(0.15f, 0.13f, blend)) - quietLine - 20f;
                 Center("QuitButton", quitY, quiet * 2.44f + 36f, quietLine + 20f, quiet, 0.22f);
-                var font = w * 0.018f;
-                var buttonHeight = Mathf.Max(44f, Mathf.Lerp(26.5f, 33f, blend) + h * 0.024f);
-                Center("StartReadingButton", quitY - h * 0.03f - buttonHeight, font * 5f + w * 0.06f, buttonHeight, font, 0.2f);
+                var font = w * 0.024f;
+                var buttonHeight = Mathf.Max(52f, Mathf.Lerp(32f, 40f, blend) + h * 0.028f);
+                Center("StartReadingButton", quitY - h * 0.03f - buttonHeight, font * 5.2f + w * 0.065f, buttonHeight, font, 0.2f);
             }
             else if (stage == "spread")
             {

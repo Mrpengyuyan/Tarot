@@ -142,7 +142,7 @@ namespace TarotUnity.Tests.PlayMode
             yield return null;
             Assert.That(((RectTransform)root.transform).rect.size, Is.EqualTo(size));
             Assert.That(input.textComponent.color, Is.EqualTo(new Color(242f/255f,223f/255f,190f/255f)).Using(ColorComparer));
-            Assert.That((input.placeholder as TMP_Text).color, Is.EqualTo(new Color(203f/255f,182f/255f,150f/255f,0.85f)).Using(ColorComparer));
+            Assert.That((input.placeholder as TMP_Text).color, Is.EqualTo(new Color(203f/255f,182f/255f,150f/255f,0.34f)).Using(ColorComparer));
         }
 
         [UnityTest]
