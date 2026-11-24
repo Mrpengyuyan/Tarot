@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+import check_release_hygiene
 from app.core.config import Settings
 
 
@@ -56,3 +57,20 @@ def test_published_example_secret_is_rejected_in_production():
 
     with pytest.raises(ValueError, match="Weak SECRET_KEY"):
         config.validate_runtime()
+
+
+def test_release_hygiene_scanner_flags_secrets_and_passes_clean_repo(tmp_path):
+    assert check_release_hygiene.scan_text_for_secrets("DEEPSEEK_API_KEY=your_deepseek_api_key_here", "clean") == []
+    synthetic_key = "sk-" + ("a" * 24)
+    flagged = check_release_hygiene.scan_text_for_secrets(f"DEEPSEEK_API_KEY={synthetic_key}", "leak")
+    assert len(flagged) == 1
+
+    bad_client = tmp_path / "tarot_desktop_config.json"
+    bad_client.write_text('{"backendBaseUrl":"https://api.example.com/api/v1","api_key":"secret"}', encoding="utf-8")
+    assert any("api_key" in item for item in check_release_hygiene.scan_desktop_config(bad_client))
+
+    good_client = tmp_path / "good_desktop_config.json"
+    good_client.write_text('{"backendBaseUrl":"https://api.example.com/api/v1","requestTimeoutSeconds":15}', encoding="utf-8")
+    assert check_release_hygiene.scan_desktop_config(good_client) == []
+
+    assert check_release_hygiene.collect_hygiene_issues(PROJECT_ROOT.parent) == []
