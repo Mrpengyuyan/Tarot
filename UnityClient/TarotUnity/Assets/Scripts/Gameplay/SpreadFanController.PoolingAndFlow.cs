@@ -21,14 +21,32 @@ namespace TarotUnity.Gameplay
             }
 
             preparing = true;
+            var usePick = PickPresentation != null;
+            var batch = usePick ? Mathf.Max(1, Mathf.Min(prepareBatch, 6)) : Mathf.Max(1, prepareBatch);
             var hidden = (origin != null ? origin.position : transform.position) + Vector3.down * 2f;
             for (var i = 0; i < CardCount; i++)
             {
                 // Phase 74: face down and switched off until the spread - a fresh prefab shows its
                 // face and its back at once, and nothing of it should show through the shuffle.
                 var card = AcquireCard(hidden, Quaternion.identity, false);
+                var tilt = card.GetComponent<CardHoverTiltController>();
+                if (tilt != null)
+                {
+                    tilt.Suspend();
+                }
+
+                if (card.GetComponent<CardClickHandler>() == null)
+                {
+                    card.gameObject.AddComponent<CardClickHandler>();
+                }
+
+                if (usePick)
+                {
+                    PickPresentation.PrewarmFanCard(card, i);
+                }
+
                 prepared.Add(card);
-                if ((i + 1) % Mathf.Max(1, prepareBatch) == 0)
+                if ((i + 1) % batch == 0)
                 {
                     yield return null;
                 }
@@ -51,14 +69,25 @@ namespace TarotUnity.Gameplay
                 yield return null;
             }
 
-            for (var i = 0; i < CardCount; i++)
+            var count = CardCount;
+            var usePick = PickPresentation != null;
+            var start = origin.position;
+            var startRotation = usePick ? PickPresentation.SpreadOriginRotation() : origin.rotation;
+
+            var cards = new CardView[count];
+            var trackedCards = new FanCard[count];
+            var inRows = new int[count];
+            var targetPos = new Vector3[count];
+            var targetRot = new Quaternion[count];
+            var launched = new bool[count];
+            var landed = new bool[count];
+
+            for (var i = 0; i < count; i++)
             {
                 var card = i < prepared.Count && prepared[i] != null
                     ? prepared[i]
-                    : AcquireCard(origin.position, origin.rotation, true);
+                    : AcquireCard(start, startRotation, !usePick);
                 card.name = $"FanCard_{i:00}";
-                card.transform.SetPositionAndRotation(origin.position, origin.rotation);
-                card.gameObject.SetActive(true);
                 card.SetFaceUp(false);
                 card.HoverHaloScale = fanHoverHaloScale;
                 var tilt = card.GetComponent<CardHoverTiltController>();
@@ -75,9 +104,44 @@ namespace TarotUnity.Gameplay
 
                 click.Clicked += RequestPick;
                 click.HoverChanged += SetHovered;
-                if (PickPresentation != null) PickPresentation.PrepareFanCard(card, i);
+                if (usePick)
+                {
+                    PickPresentation.PrepareFanCard(card, i);
+                    PickPresentation.SetFanCardInTransit(card, true);
+                }
+
+                var tracked = Track(card, i);
+                if (tracked.box != null)
+                {
+                    tracked.box.enabled = false;
+                }
+
+                Locate(i, out _, out inRows[i]);
+                GetFanPose(i, out targetPos[i], out targetRot[i]);
+                card.transform.SetPositionAndRotation(start, startRotation);
+
+                // In the ritual pick view, activate each card progressively as it peels off the deck
+                // (~2 cards/frame) instead of waking all 78 cards and their dynamic finish meshes on frame 0.
+                if (usePick)
+                {
+                    if (card.gameObject.activeSelf)
+                    {
+                        card.gameObject.SetActive(false);
+                    }
+                }
+                else
+                {
+                    if (!card.gameObject.activeSelf)
+                    {
+                        card.gameObject.SetActive(true);
+                    }
+                    launched[i] = true;
+                }
+
+                cards[i] = card;
+                trackedCards[i] = tracked;
                 fanCards.Add(card);
-                state[card] = Track(card, i);
+                state[card] = tracked;
             }
 
             prepared.Clear();
@@ -85,21 +149,54 @@ namespace TarotUnity.Gameplay
             baseScale = fanCards.Count > 0 ? fanCards[0].transform.localScale : Vector3.one;
             FadeLight(fanLightIntensity);
             CaptureDeck(origin);
-            var start = origin.position;
-            var startRotation = origin.rotation;
+            var arcHeight = usePick ? spreadArcHeight * 0.45f : spreadArcHeight;
             var total = spreadCardSeconds + spreadStagger * (LongestRow() - 1);
-            for (var elapsed = 0f; elapsed < total; elapsed += Time.deltaTime)
+            for (var elapsed = 0f; elapsed < total; elapsed += Mathf.Min(Time.deltaTime, 1f / 15f))
             {
-                foreach (var card in fanCards)
+                for (var i = 0; i < count; i++)
                 {
-                    var i = state[card].index;
-                    Locate(i, out _, out var inRow);
-                    var k = Mathf.Clamp01((elapsed - inRow * spreadStagger) / spreadCardSeconds);
-                    var e = 1f - (1f - k) * (1f - k);
-                    GetFanPose(i, out var p, out var r);
+                    if (landed[i])
+                    {
+                        continue;
+                    }
+
+                    var local = elapsed - inRows[i] * spreadStagger;
+                    if (local < 0f)
+                    {
+                        continue;
+                    }
+
+                    var card = cards[i];
+                    if (!launched[i])
+                    {
+                        launched[i] = true;
+                        if (!card.gameObject.activeSelf)
+                        {
+                            card.gameObject.SetActive(true);
+                        }
+                    }
+
+                    var k = local / spreadCardSeconds;
+                    if (k >= 1f)
+                    {
+                        landed[i] = true;
+                        card.transform.SetPositionAndRotation(targetPos[i], targetRot[i]);
+                        if (trackedCards[i].box != null)
+                        {
+                            trackedCards[i].box.enabled = true;
+                        }
+                        if (usePick)
+                        {
+                            PickPresentation.SetFanCardInTransit(card, false);
+                        }
+                        continue;
+                    }
+
+                    var inv = 1f - k;
+                    var e = 1f - inv * inv * inv;
                     card.transform.SetPositionAndRotation(
-                        Vector3.Lerp(start, p, e) + Vector3.up * (Mathf.Sin(k * Mathf.PI) * spreadArcHeight),
-                        Quaternion.Slerp(startRotation, r, e));
+                        Vector3.Lerp(start, targetPos[i], e) + Vector3.up * (Mathf.Sin(k * Mathf.PI) * arcHeight),
+                        Quaternion.Slerp(startRotation, targetRot[i], e));
                 }
 
                 ShowDeck(1f - elapsed / total);
@@ -107,28 +204,45 @@ namespace TarotUnity.Gameplay
             }
 
             ShowDeck(0f);
-            foreach (var card in fanCards)
+            for (var i = 0; i < count; i++)
             {
-                GetFanPose(state[card].index, out var p, out var r);
-                card.transform.SetPositionAndRotation(p, r);
+                var card = cards[i];
+                if (!card.gameObject.activeSelf)
+                {
+                    card.gameObject.SetActive(true);
+                }
+                card.transform.SetPositionAndRotation(targetPos[i], targetRot[i]);
+                if (trackedCards[i].box != null)
+                {
+                    trackedCards[i].box.enabled = true;
+                }
+                if (usePick)
+                {
+                    PickPresentation.SetFanCardInTransit(card, false);
+                }
             }
 
-            // The whole fan settles with one small squash.
-            var squashed = new Vector3(baseScale.x * (1f + settleSquash * 0.6f), baseScale.y * (1f - settleSquash), baseScale.z);
-            for (var elapsed = 0f; elapsed < settleSeconds; elapsed += Time.deltaTime)
+            // Legacy 3D tabletop fan keeps its brief settle squash; the ritual paper fan settles cleanly on landing
+            // so all 78 dynamic perimeter/shadow meshes do not rebuild 8 more times in a burst.
+            if (!usePick)
             {
-                var k = elapsed / settleSeconds;
-                foreach (var card in fanCards)
+                var squashed = new Vector3(baseScale.x * (1f + settleSquash * 0.6f), baseScale.y * (1f - settleSquash), baseScale.z);
+                for (var elapsed = 0f; elapsed < settleSeconds; elapsed += Time.deltaTime)
                 {
-                    card.transform.localScale = Vector3.Lerp(squashed, baseScale, 1f - (1f - k) * (1f - k));
+                    var k = elapsed / settleSeconds;
+                    var scale = Vector3.Lerp(squashed, baseScale, 1f - (1f - k) * (1f - k));
+                    for (var i = 0; i < count; i++)
+                    {
+                        cards[i].transform.localScale = scale;
+                    }
+
+                    yield return null;
                 }
 
-                yield return null;
-            }
-
-            foreach (var card in fanCards)
-            {
-                card.transform.localScale = baseScale;
+                for (var i = 0; i < count; i++)
+                {
+                    cards[i].transform.localScale = baseScale;
+                }
             }
 
             spreadDone = true;
@@ -139,38 +253,88 @@ namespace TarotUnity.Gameplay
             spreadDone = false;
             hovered = null;
             FadeLight(0f);
-            foreach (var card in fanCards)
-            {
-                LetGoOfHover(card, state[card]);
-            }
-
-            var cards = new List<CardView>(fanCards);
-            if (origin == null || cards.Count == 0)
+            var n = fanCards.Count;
+            if (origin == null || n == 0)
             {
                 Clear();
                 ShowDeck(1f);
                 yield break;
             }
 
-            var starts = new List<Vector3>();
-            foreach (var card in cards)
-            {
-                starts.Add(card.transform.position);
-            }
+            var usePick = PickPresentation != null;
+            var cards = new CardView[n];
+            var starts = new Vector3[n];
+            var startRots = new Quaternion[n];
+            var delays = new float[n];
+            var retired = new bool[n];
 
             // Each row gathers from both ends toward its middle.
             var mid = (LongestRow() - 1) / 2f;
-            var cardSeconds = gatherSeconds * 0.6f;
+            var cardSeconds = Mathf.Max(0.01f, gatherSeconds * 0.6f);
             var stagger = mid > 0f ? gatherSeconds * 0.4f / mid : 0f;
-            for (var elapsed = 0f; elapsed < gatherSeconds; elapsed += Time.deltaTime)
+
+            for (var i = 0; i < n; i++)
             {
-                for (var i = 0; i < cards.Count; i++)
+                var card = fanCards[i];
+                var tracked = state[card];
+                LetGoOfHover(card, tracked);
+                if (tracked.box != null)
                 {
-                    Locate(state[cards[i]].index, out var row, out var inRow);
-                    var rowMid = (rows[row].count - 1) / 2f;
-                    var order = rowMid - Mathf.Abs(inRow - rowMid);
-                    var k = Mathf.Clamp01((elapsed - order * stagger) / cardSeconds);
-                    cards[i].transform.position = Vector3.Lerp(starts[i], origin.position, k * k);
+                    tracked.box.enabled = false;
+                }
+                if (usePick)
+                {
+                    PickPresentation.SetFanCardInTransit(card, true);
+                }
+
+                cards[i] = card;
+                starts[i] = card.transform.position;
+                startRots[i] = card.transform.rotation;
+                Locate(tracked.index, out var row, out var inRow);
+                var rowMid = (rows[row].count - 1) / 2f;
+                var order = rowMid - Mathf.Abs(inRow - rowMid);
+                delays[i] = order * stagger;
+            }
+
+            var gatherRotation = usePick ? PickPresentation.SpreadOriginRotation() : origin.rotation;
+            for (var elapsed = 0f; elapsed < gatherSeconds; elapsed += Mathf.Min(Time.deltaTime, 1f / 15f))
+            {
+                var targetPos = origin.position;
+                for (var i = 0; i < n; i++)
+                {
+                    if (retired[i])
+                    {
+                        continue;
+                    }
+
+                    var local = elapsed - delays[i];
+                    if (local <= 0f)
+                    {
+                        continue;
+                    }
+
+                    var k = local / cardSeconds;
+                    if (k >= 1f)
+                    {
+                        retired[i] = true;
+                        if (cards[i].gameObject.activeSelf)
+                        {
+                            cards[i].gameObject.SetActive(false);
+                        }
+                        continue;
+                    }
+
+                    var e = k * k;
+                    if (usePick)
+                    {
+                        cards[i].transform.SetPositionAndRotation(
+                            Vector3.Lerp(starts[i], targetPos, e),
+                            Quaternion.Slerp(startRots[i], gatherRotation, e));
+                    }
+                    else
+                    {
+                        cards[i].transform.position = Vector3.Lerp(starts[i], targetPos, e);
+                    }
                 }
 
                 ShowDeck(elapsed / gatherSeconds);
@@ -222,6 +386,7 @@ namespace TarotUnity.Gameplay
         {
             deckLayers.Clear();
             capturedDeckOrigin = origin;
+            lastVisibleDeckLayers = -1;
             if (origin == null)
             {
                 return;
@@ -267,6 +432,12 @@ namespace TarotUnity.Gameplay
         private void ShowDeck(float fraction)
         {
             var visible = Mathf.RoundToInt(deckLayers.Count * Mathf.Clamp01(fraction));
+            if (visible == lastVisibleDeckLayers)
+            {
+                return;
+            }
+
+            lastVisibleDeckLayers = visible;
             for (var i = 0; i < deckLayers.Count; i++)
             {
                 foreach (var renderer in deckLayers[i])
@@ -285,6 +456,13 @@ namespace TarotUnity.Gameplay
             if (tracked.box != null)
             {
                 tracked.boxCenter = tracked.box.center;
+            }
+
+            // RitualPickPresentation drives hover lift directly in screen projection without tilting
+            // a child pivot or legacy 3D drop shadow, so skip 78x pivot creation and child reparenting.
+            if (PickPresentation != null)
+            {
+                return tracked;
             }
 
             // The visuals hang from a pivot while the card is in the fan; the root keeps the collider.
@@ -386,6 +564,7 @@ namespace TarotUnity.Gameplay
                 if (tracked.box != null)
                 {
                     tracked.box.center = tracked.boxCenter;
+                    tracked.box.enabled = true;
                 }
 
                 RestoreShadow(tracked);
@@ -443,7 +622,11 @@ namespace TarotUnity.Gameplay
             card.ClearHoverHaloScale();
             if (state.TryGetValue(card, out var tracked))
             {
-                if (tracked.box != null) tracked.box.center = tracked.boxCenter;
+                if (tracked.box != null)
+                {
+                    tracked.box.center = tracked.boxCenter;
+                    tracked.box.enabled = true;
+                }
                 RestoreShadow(tracked);
                 if (tracked.pivot != null)
                 {
@@ -455,17 +638,13 @@ namespace TarotUnity.Gameplay
                 }
             }
 
-            var finish = card.GetComponent<RitualPaperFinish>();
-            if (finish != null)
-            {
-                finish.enabled = false;
-                Destroy(finish);
-            }
-
             card.SetFaceUp(false);
             card.transform.SetParent(transform, false);
             card.transform.localScale = prefabScaleCaptured ? prefabScale : Vector3.one;
-            card.gameObject.SetActive(false);
+            if (card.gameObject.activeSelf)
+            {
+                card.gameObject.SetActive(false);
+            }
             pool.Push(card);
         }
 

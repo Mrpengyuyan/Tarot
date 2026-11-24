@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using TarotUnity.UI;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace TarotUnity.Presentation
@@ -99,7 +100,7 @@ namespace TarotUnity.Presentation
 
         public bool AreCardsVisible => visible;
 
-        internal IEnumerable<Renderer> PaperRenderers
+        public IEnumerable<Renderer> PaperRenderers
         {
             get
             {
@@ -148,7 +149,7 @@ namespace TarotUnity.Presentation
 
             uiCanvas = view.GetComponentInParent<Canvas>();
             stageRoot = new GameObject("RitualSpreadPreview3DStage").transform;
-            stageRoot.SetParent(transform, false);
+            SceneManager.MoveGameObjectToScene(stageRoot.gameObject, gameObject.scene);
 
             var buttons = view.SpreadButtons;
             CreateFormation(0, buttons[0], SingleCardDefs(), 1.48f, 24f, 8f, 130f, 190f, 0f);

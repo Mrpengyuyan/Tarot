@@ -156,18 +156,25 @@ namespace TarotUnity.Tests.PlayMode
             var original = deck.transform;
             var began = Time.time;
             var deadline = Time.realtimeSinceStartup + 30f;
-            var startedMovingCamera = false;
             var cameraStart = camera.transform.position;
+            var centeredDuringShuffle = false;
+            var native = (RitualDeckPresentation)presentation;
             canvas.Find("DrawButton").GetComponent<Button>().onClick.Invoke();
             while (flow.State == ReadingFlowState.Shuffling)
             {
                 Assert.That(Time.realtimeSinceStartup, Is.LessThan(deadline));
-                startedMovingCamera |= Vector3.Distance(cameraStart, camera.transform.position) > 0.3f;
+                Assert.That(Vector3.Distance(cameraStart, camera.transform.position), Is.LessThan(0.15f),
+                    "Shuffle must stay centered on the velvet table instead of panning to the upper-left corner.");
+                if (native.IsShuffling)
+                {
+                    var vp = camera.WorldToViewportPoint(deck.transform.position);
+                    centeredDuringShuffle |= Mathf.Abs(vp.x - 0.5f) < 0.05f && Mathf.Abs(vp.y - 0.5f) < 0.05f;
+                }
                 Assert.That(deck.transform, Is.SameAs(original));
                 yield return null;
             }
             Assert.That(Time.time - began, Is.InRange(6.6f, 7.2f));
-            Assert.That(startedMovingCamera, Is.True, "Keep the real camera journey toward the physical deck.");
+            Assert.That(centeredDuringShuffle, Is.True, "The deck must rise to screen center to shuffle.");
             while (!fan.AcceptingPicks) { Assert.That(Time.realtimeSinceStartup, Is.LessThan(deadline)); yield return null; }
             Assert.That(fan.FanCards.Count, Is.EqualTo(78));
             Assert.That(fan.DeckShowing, Is.Zero);
@@ -264,7 +271,7 @@ namespace TarotUnity.Tests.PlayMode
             var expected = Layers().Select(r => r.gameObject).Append(shadow.gameObject).ToArray();
             var preview = Object.FindFirstObjectByType<RitualSpreadPreview3D>();
             var previewObjects = preview != null
-                ? preview.GetComponentsInChildren<Renderer>(true).Select(r => r.gameObject).ToArray()
+                ? preview.PaperRenderers.Select(r => r.gameObject).ToArray()
                 : Array.Empty<GameObject>();
             var allExpected = expected.Concat(previewObjects).ToArray();
             Assert.That(registry.Keys.Cast<GameObject>(), Is.EquivalentTo(allExpected));
@@ -283,23 +290,26 @@ namespace TarotUnity.Tests.PlayMode
         }
 
         [UnityTest]
-        public IEnumerator TheCameraReallyApproachesTheRaisedDeckInsteadOfCarryingItAlong()
+        public IEnumerator TheRaisedDeckShufflesAtScreenCenterWithoutPanningCameraToUpperLeft()
         {
             RequirePresentation();
+            var cameraStart = camera.transform.position;
             canvas.Find("OneCardButton").GetComponent<Button>().onClick.Invoke();
-            canvas.Find("QuestionInput").GetComponent<TMP_InputField>().text = "A camera approach test";
+            canvas.Find("QuestionInput").GetComponent<TMP_InputField>().text = "A center shuffle test";
             canvas.Find("DrawButton").GetComponent<Button>().onClick.Invoke();
             var native = (RitualDeckPresentation)presentation;
             yield return Until(() => native.IsShuffling);
-            var startDistance = Vector3.Distance(camera.transform.position, deck.transform.position);
             var startDeck = deck.transform.position;
             var choreography = Object.FindFirstObjectByType<CameraChoreographyController>();
             yield return Until(() => !choreography.IsMoving);
             yield return null;
-            Assert.That(startDistance - Vector3.Distance(camera.transform.position, deck.transform.position), Is.GreaterThan(0.5f),
-                "Moving the room behind a camera-relative prop is not approaching the deck.");
-            Assert.That(Vector3.Distance(startDeck, deck.transform.position), Is.LessThan(0.001f),
-                "The raised stack stays in the room during the camera move.");
+            Assert.That(Vector3.Distance(cameraStart, camera.transform.position), Is.LessThan(0.15f),
+                "Camera must stay centered on the table instead of zooming into the upper-left corner.");
+            var viewport = camera.WorldToViewportPoint(deck.transform.position);
+            Assert.That(viewport.x, Is.EqualTo(0.5f).Within(0.05f), "Raised deck must sit horizontally centered.");
+            Assert.That(viewport.y, Is.EqualTo(0.5f).Within(0.05f), "Raised deck must sit vertically centered.");
+            Assert.That(Vector3.Distance(startDeck, deck.transform.position), Is.LessThan(0.05f),
+                "The raised stack stays steady at table center during the shuffle.");
         }
 
         [UnityTest]

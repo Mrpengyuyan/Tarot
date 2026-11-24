@@ -68,6 +68,7 @@ namespace TarotUnity.Presentation
             owner.pick = pick;
             owner.picking = picking;
             owner.geometryValid = false;
+            if (!owner.enabled) owner.enabled = true;
             owner.Build();
             owner.Refresh();
             return owner;
@@ -235,7 +236,7 @@ namespace TarotUnity.Presentation
             for (var i = 0; i < 4; i++)
                 vertices[i] = frameWorldToLocal.MultiplyPoint3x4(view.ScreenToWorldPoint(new Vector3(
                     i == 0 || i == 3 ? min.x : max.x, i < 2 ? max.y : min.y, depth + 0.001f)));
-            mesh.vertices = vertices;
+            mesh.SetVertices(vertices);
             mesh.RecalculateBounds();
             for (var i = 0; i < 4; i++) ink.SetVector(CornerProperties[i], new Vector4(points[i].x, points[i].y, 0f, 0f));
             ink.SetVector(ViewportProperty, new Vector4(viewport.x, viewport.y, viewport.width, viewport.height));

@@ -19,6 +19,7 @@ namespace TarotUnity.Presentation
             public RitualPaperSurface Surface;
             public float HoverFrom, HoverTarget, HoverSince;
             public FinishStage Stage;
+            public bool InTransit;
             public float LastAmount = -1f;
             public int LastLayoutVersion = -1;
             public bool Enforced;
@@ -69,12 +70,7 @@ namespace TarotUnity.Presentation
             ClearUi();
             count=cardCount; accepted=0; frozen=false; movingToDraw=true; frame=null;
             ink.Clear(); landed.Clear(); slots.Clear();
-            if (world == null)
-            {
-                world=new GameObject("RitualPickWorld",typeof(RitualSpreadCardLease)).transform;
-                world.GetComponent<RitualSpreadCardLease>().enabled=false;
-                SceneManager.MoveGameObjectToScene(world.gameObject,gameObject.scene);
-            }
+            EnsureWorld();
             staging.Prepare(count,cameraView);
             uiRoot=new GameObject("RitualPickGuides",typeof(RectTransform));
             uiRoot.transform.SetParent(canvas,false);
@@ -106,16 +102,63 @@ namespace TarotUnity.Presentation
             return graphic;
         }
 
-        public void PrepareFanCard(CardView card,int index)
+        private void EnsureWorld()
         {
-            card.transform.SetParent(world,true);
-            var paper=RitualPaperSurface.Attach(card);
-            paper.Back.sortingOrder=index;
-            ink[card]=new FanInk { Surface=paper };
-            var box=card.GetComponent<BoxCollider>();
-            if(box!=null) { box.center=Vector3.zero; box.size=new Vector3(RitualPaperSurface.PaperWidth,0.0001f,1f); }
-            SetPose(card,frame.Fan[index],Depth(index));
-            RitualPaperFinish.AttachPick(card,cameraView,flow,this);
+            if (world != null) return;
+            world = new GameObject("RitualPickWorld", typeof(RitualSpreadCardLease)).transform;
+            world.GetComponent<RitualSpreadCardLease>().enabled = false;
+            SceneManager.MoveGameObjectToScene(world.gameObject, gameObject.scene);
+        }
+
+        /// <summary>
+        /// Pre-attaches paper surface, collider sizing, and finish component while the card is still inactive
+        /// during shuffle preparation, avoiding a 78-card single-frame spike when Spread begins.
+        /// </summary>
+        public void PrewarmFanCard(CardView card, int index)
+        {
+            if (card == null) return;
+            EnsureWorld();
+            card.transform.SetParent(world, true);
+            var paper = RitualPaperSurface.Attach(card);
+            if (paper.Back != null) paper.Back.sortingOrder = index;
+            var box = card.GetComponent<BoxCollider>();
+            if (box != null) { box.center = Vector3.zero; box.size = new Vector3(RitualPaperSurface.PaperWidth, 0.0001f, 1f); }
+            RitualPaperFinish.AttachPick(card, cameraView, flow, this);
+        }
+
+        public void PrepareFanCard(CardView card, int index)
+        {
+            EnsureWorld();
+            if (card.transform.parent != world) card.transform.SetParent(world, true);
+            var paper = RitualPaperSurface.Attach(card);
+            if (paper.Back != null)
+            {
+                paper.Back.sortingOrder = index;
+                paper.Back.color = Color.white;
+            }
+            ink[card] = new FanInk { Surface = paper };
+            var box = card.GetComponent<BoxCollider>();
+            if (box != null) { box.center = Vector3.zero; box.size = new Vector3(RitualPaperSurface.PaperWidth, 0.0001f, 1f); }
+            SetPose(card, frame.Fan[index], Depth(index));
+            RitualPaperFinish.AttachPick(card, cameraView, flow, this);
+        }
+
+        /// <summary>
+        /// Pauses perimeter/shadow mesh rebuilds while a fan card is rapidly flying during 1->78 Spread
+        /// or 78->1 Gather, preventing 78 dynamic mesh uploads per frame.
+        /// </summary>
+        public void SetFanCardInTransit(CardView card, bool inTransit)
+        {
+            if (card != null && ink.TryGetValue(card, out var value))
+            {
+                value.InTransit = inTransit;
+            }
+        }
+
+        public Quaternion SpreadOriginRotation()
+        {
+            var axes = cameraView != null ? cameraView.transform : transform;
+            return axes.rotation * Quaternion.Euler(-110f, 0f, 0f);
         }
 
         private static float Depth(int index) => 2.5f-index*0.0001f;
@@ -192,7 +235,8 @@ namespace TarotUnity.Presentation
             stage=FinishStage.Fan;
             if(!isActiveAndEnabled || frozen || world==null || !world.gameObject.activeInHierarchy
                 || fan==null || !fan.isActiveAndEnabled || flow==null || flow.State!=ReadingFlowState.Drawing
-                || staging==null || staging.StagingRoot==null || card==null || !ink.TryGetValue(card,out var value)) return false;
+                || staging==null || staging.StagingRoot==null || card==null || !ink.TryGetValue(card,out var value)
+                || value.InTransit) return false;
             stage=value.Stage;
             return true;
         }

@@ -70,7 +70,7 @@ namespace TarotUnity.Presentation
         public bool IsPunching => activePunch != null;
         public float CurrentBaseFov => baseFov;
 
-        /// <summary>Keep the authored table tableau between rituals; the deck still has its own approach.</summary>
+        /// <summary>Keep the authored centered table tableau across every ritual stage, including center-stage shuffling.</summary>
         public void ApplyRitualTableFraming()
         {
             if (ritualTablePose != null || targetCamera == null) return;
@@ -119,11 +119,18 @@ namespace TarotUnity.Presentation
 
         public void FocusDeck()
         {
-            MoveTo(deckPose, deckFov);
+            MoveTo(ritualTablePose != null ? ritualTablePose : deckPose,
+                ritualTablePose != null ? ritualTableFov : deckFov);
         }
 
         public bool TryGetDeckPose(out Transform pose, out float fov)
         {
+            if (ritualTablePose != null)
+            {
+                pose = ritualTablePose;
+                fov = ritualTableFov;
+                return true;
+            }
             pose = deckPose;
             fov = deckFov;
             return pose != null;

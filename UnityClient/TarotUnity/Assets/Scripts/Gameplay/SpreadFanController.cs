@@ -111,6 +111,7 @@ namespace TarotUnity.Gameplay
         private readonly Stack<CardView> pool = new();
         private readonly List<List<Renderer>> deckLayers = new();
         private Transform capturedDeckOrigin;
+        private int lastVisibleDeckLayers = -1;
         private bool preparing;
         private Coroutine lightFade;
         private Vector3 baseScale = Vector3.one;

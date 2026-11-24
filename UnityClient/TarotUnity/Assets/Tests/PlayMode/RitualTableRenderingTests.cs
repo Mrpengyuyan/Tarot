@@ -68,8 +68,7 @@ namespace TarotUnity.Tests.PlayMode
                 {
                     choreography.FocusDeck();
                     yield return new WaitForSeconds(0.9f);
-                    Assert.That(Vector3.Distance(cameraView.transform.position, new Vector3(0f, 2.85f, -4.15f)),
-                        Is.GreaterThan(0.5f), "The camera must still travel toward the actual deck.");
+                    AssertTableShot(choreography);
                     choreography.FocusDraw(count);
                     yield return new WaitForSeconds(0.9f);
                     AssertTableShot(choreography);
@@ -150,6 +149,7 @@ namespace TarotUnity.Tests.PlayMode
             rect.offsetMin = rect.offsetMax = Vector2.zero;
             Object.FindFirstObjectByType<CameraChoreographyController>().enabled = false;
             foreach (var flicker in Object.FindObjectsByType<CandleFlickerController>(FindObjectsSortMode.None)) flicker.enabled = false;
+            foreach (var preview in Object.FindObjectsByType<RitualSpreadPreview3D>(FindObjectsSortMode.None)) preview.enabled = false;
             target = new RenderTexture(128, 128, 24);
             cameraView.targetTexture = target;
             cameraView.aspect = 1f;
