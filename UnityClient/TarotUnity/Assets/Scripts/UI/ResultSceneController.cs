@@ -19,6 +19,7 @@ namespace TarotUnity.UI
         [SerializeField] private Button offlineInterpretationButton;
 
         private InterpretationPoller poller;
+        private RitualResultView resultView;
 
         private void Awake()
         {
@@ -64,7 +65,16 @@ namespace TarotUnity.UI
             if (resultPanel != null)
             {
                 var canvas = resultPanel.GetComponentInParent<Canvas>();
-                if (canvas != null) RitualResultView.Attach(canvas.gameObject);
+                if (canvas != null)
+                {
+                    resultView = RitualResultView.Attach(canvas.gameObject);
+                    if (resultView != null)
+                    {
+                        resultView.ReadAgainButton?.onClick.AddListener(StartNewReading);
+                        resultView.CopyReadingButton?.onClick.AddListener(CopyCurrentReading);
+                        UpdateCopyAvailability(ReadingSessionStore.Current);
+                    }
+                }
             }
 
             cameraChoreography?.FocusResult();
@@ -77,6 +87,8 @@ namespace TarotUnity.UI
             backToMenuButton?.onClick.RemoveListener(BackToMenu);
             retryInterpretationButton?.onClick.RemoveListener(RetryInterpretation);
             offlineInterpretationButton?.onClick.RemoveListener(UseOfflineInterpretation);
+            resultView?.ReadAgainButton?.onClick.RemoveListener(StartNewReading);
+            resultView?.CopyReadingButton?.onClick.RemoveListener(CopyCurrentReading);
 
             if (poller != null)
             {
@@ -109,6 +121,7 @@ namespace TarotUnity.UI
             {
                 ReadingHistoryStore.Record(session);
                 resultPanel.ShowOffline(session);
+                UpdateCopyAvailability(session);
                 return;
             }
 
@@ -125,6 +138,7 @@ namespace TarotUnity.UI
                     resultPanel.ShowFailed(session);
                     break;
             }
+            UpdateCopyAvailability(session);
         }
 
         private void RetryInterpretation()
@@ -155,9 +169,38 @@ namespace TarotUnity.UI
 
             InterpretationPoller.ApplyOffline(session);
             resultPanel?.ShowOffline(session);
+            UpdateCopyAvailability(session);
+        }
+
+        private void UpdateCopyAvailability(ReadingSessionSnapshot session)
+        {
+            if (resultView == null) return;
+            var available = session != null
+                && (session.source == ReadingSource.Offline
+                    || session.interpretationState == InterpretationState.Ready);
+            resultView.SetCopyAvailable(available);
+        }
+
+        private void CopyCurrentReading()
+        {
+            var text = ReadingShareFormatter.Format(ReadingSessionStore.Current);
+            if (string.IsNullOrEmpty(text)) return;
+            GUIUtility.systemCopyBuffer = text;
+            resultView?.ShowCopiedFeedback();
+            AudioManager.Instance?.PlayCue(PresentationCueId.UiClickSoft, 0.7f);
+        }
+
+        private void StartNewReading()
+        {
+            LeaveResultScene(GameSceneId.ReadingRoom);
         }
 
         private void BackToMenu()
+        {
+            LeaveResultScene(GameSceneId.MainMenu);
+        }
+
+        private void LeaveResultScene(GameSceneId destination)
         {
             var activePoller = poller != null ? poller : InterpretationPoller.Instance;
             if (activePoller != null)
@@ -169,11 +212,11 @@ namespace TarotUnity.UI
 
             if (SceneFlowManager.Instance != null)
             {
-                SceneFlowManager.Instance.LoadScene(GameSceneId.MainMenu);
+                SceneFlowManager.Instance.LoadScene(destination);
                 return;
             }
 
-            SceneManager.LoadScene(GameSceneId.MainMenu.ToString());
+            SceneManager.LoadScene(destination.ToString());
         }
     }
 }

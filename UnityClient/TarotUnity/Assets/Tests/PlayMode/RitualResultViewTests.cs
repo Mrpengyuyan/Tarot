@@ -138,6 +138,44 @@ namespace TarotUnity.Tests.PlayMode
             Assert.That(notice.gameObject.activeSelf, Is.True);
         }
 
+        [UnityTest]
+        public IEnumerator CopyAndReadAgainActionsWorkAndPendingSealTracksPendingState()
+        {
+            var view = canvas.GetComponent<RitualResultView>();
+            Assert.That(view, Is.Not.Null);
+            Assert.That(view.ReadAgainButton, Is.Not.Null);
+            Assert.That(view.CopyReadingButton, Is.Not.Null);
+            Assert.That(view.ReadAgainButton.gameObject.activeInHierarchy, Is.True);
+            Assert.That(view.CopyReadingButton.gameObject.activeInHierarchy, Is.True);
+
+            var formatted = ReadingShareFormatter.Format(ReadingSessionStore.Current);
+            Assert.That(formatted, Does.Contain("A player question"));
+            Assert.That(formatted, Does.Contain("Spread"));
+
+            GUIUtility.systemCopyBuffer = string.Empty;
+            view.CopyReadingButton.onClick.Invoke();
+            yield return null;
+
+            Assert.That(GUIUtility.systemCopyBuffer, Is.EqualTo(formatted));
+            Assert.That(view.CopyReadingButton.GetComponentInChildren<TMP_Text>().text, Is.EqualTo("\u5df2\u590d\u5236"));
+
+            var presenter = Object.FindFirstObjectByType<ResultPanelPresenter>();
+            var pendingSession = LocalReadingSimulator.CreateSession(2, "Spread", "Pending question", "general",
+                LocalReadingSimulator.CreatePlaceholderDraws(3));
+            pendingSession.source = ReadingSource.Online;
+            pendingSession.interpretationState = InterpretationState.Pending;
+            presenter.ShowPending(pendingSession);
+            view.SetCopyAvailable(false);
+            yield return null;
+
+            Assert.That(view.CopyReadingButton.gameObject.activeSelf, Is.False);
+            var seal = canvas.transform.Find("RitualPendingSeal");
+            if (seal != null)
+            {
+                Assert.That(seal.gameObject.activeSelf, Is.True);
+            }
+        }
+
         private int RuleCount()
         {
             return Array.FindAll(canvas.GetComponentsInChildren<Transform>(true),
